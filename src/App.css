@@ -703,3 +703,107 @@ body {
     height: 50px;
   }
 }
+/* Gestione Manuale Punti - Styling */
+.manual-search {
+  margin-bottom: 20px;
+}
+
+.manual-search input {
+  width: 100%;
+  padding: 16px 20px;
+  border: 2px solid rgba(220, 38, 38, 0.2);
+  border-radius: 12px;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #2c1810;
+  margin-bottom: 16px;
+}
+
+.manual-search input:focus {
+  outline: none;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+}
+
+.found-customers {
+  background: rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(220, 38, 38, 0.2);
+  border-radius: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.found-customer-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid rgba(220, 38, 38, 0.1);
+  transition: all 0.3s ease;
+}
+
+.found-customer-item:hover {
+  background: rgba(220, 38, 38, 0.05);
+}
+
+.found-customer-item:last-child {
+  border-bottom: none;
+}
+
+.found-customer-item strong {
+  color: #2c1810;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.found-customer-item small {
+  color: #666;
+  font-size: 14px;
+}
+
+.points-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.points-controls input {
+  width: 100px !important;
+  padding: 10px 12px !important;
+  border: 2px solid rgba(220, 38, 38, 0.3) !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  text-align: center !important;
+  margin: 0 !important;
+}
+
+.points-controls input:focus {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}
+
+.points-controls button {
+  padding: 10px 16px !important;
+  font-size: 14px !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+  width: auto !important;
+  min-width: 80px !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .found-customer-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  
+  .points-controls {
+    justify-content: space-between;
+  }
+  
+  .points-controls input {
+    width: 120px !important;
+  }
+}
