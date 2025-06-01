@@ -4,6 +4,7 @@ import emailjs from '@emailjs/browser'
 import './App.css'
 
 function App() {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [customers, setCustomers] = useState([])
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -13,18 +14,18 @@ function App() {
   const [transactionAmount, setTransactionAmount] = useState('')
   const [settings, setSettings] = useState({ points_per_euro: 1, points_for_prize: 10 })
   const [activeView, setActiveView] = useState('customer')
-  
+
   // Stati per gestione manuale punti
   const [manualCustomerName, setManualCustomerName] = useState('')
   const [manualPoints, setManualPoints] = useState('')
   const [foundCustomers, setFoundCustomers] = useState([])
-  
+
   // Stati per i premi
   const [prizes, setPrizes] = useState([])
   const [newPrizeName, setNewPrizeName] = useState('')
   const [newPrizeDescription, setNewPrizeDescription] = useState('')
   const [newPrizeCost, setNewPrizeCost] = useState('')
-  
+
   // Stati per statistiche reali
   const [todayStats, setTodayStats] = useState({
     customers: 0,
@@ -65,9 +66,9 @@ function App() {
   const showNotification = (message, type = 'success') => {
     const id = Date.now()
     const notification = { id, message, type }
-    
+
     setNotifications(prev => [...prev, notification])
-    
+
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id))
     }, 4000)
@@ -103,8 +104,8 @@ function App() {
 
       if (data) {
         const totalSent = data.reduce((sum, log) => sum + log.recipients_count, 0)
-        setEmailStats({ 
-          sent: totalSent, 
+        setEmailStats({
+          sent: totalSent,
           opened: 0
         })
       }
@@ -119,7 +120,7 @@ function App() {
 
     try {
       const template = getEmailTemplate('welcome', customer.name)
-      
+
       const templateParams = {
         to_name: customer.name,
         to_email: customer.email,
@@ -136,7 +137,7 @@ function App() {
       )
 
       await saveEmailLog('welcome', [customer], template.subject, 'sent')
-      
+
       showNotification(`📧 Email di benvenuto inviata a ${customer.name}!`, 'success')
     } catch (error) {
       console.error('Errore invio email benvenuto:', error)
@@ -150,7 +151,7 @@ function App() {
 
     let milestoneReached = null
     let emailTitle = ''
-    
+
     if (points === 50) {
       milestoneReached = '50'
       emailTitle = 'Congratulazioni! 🎉'
@@ -161,12 +162,12 @@ function App() {
       milestoneReached = '150'
       emailTitle = 'Incredibile! 🚀'
     }
-    
+
     if (!milestoneReached) return
 
     try {
       const template = getEmailTemplate('points', customer.name, milestoneReached)
-      
+
       const templateParams = {
         to_name: customer.name,
         to_email: customer.email,
@@ -183,7 +184,7 @@ function App() {
       )
 
       await saveEmailLog('milestone', [customer], template.subject, 'sent')
-      
+
       showNotification(`${emailTitle} Email inviata a ${customer.name}`, 'success')
     } catch (error) {
       console.error('Errore invio email milestone:', error)
@@ -243,11 +244,11 @@ function App() {
         <div
           key={notification.id}
           style={{
-            background: notification.type === 'success' ? 
-              'linear-gradient(135deg, #4CAF50, #45a049)' : 
-              notification.type === 'error' ? 
-              'linear-gradient(135deg, #f44336, #da190b)' : 
-              'linear-gradient(135deg, #2196F3, #1976D2)',
+            background: notification.type === 'success' ?
+              'linear-gradient(135deg, #4CAF50, #45a049)' :
+              notification.type === 'error' ?
+                'linear-gradient(135deg, #f44336, #da190b)' :
+                'linear-gradient(135deg, #2196F3, #1976D2)',
             color: 'white',
             padding: '16px 20px',
             borderRadius: '12px',
@@ -262,8 +263,8 @@ function App() {
           }}
         >
           <span style={{ fontSize: '18px' }}>
-            {notification.type === 'success' ? '✅' : 
-             notification.type === 'error' ? '❌' : '📧'}
+            {notification.type === 'success' ? '✅' :
+              notification.type === 'error' ? '❌' : '📧'}
           </span>
           {notification.message}
           <button
@@ -304,7 +305,7 @@ function App() {
         .from('settings')
         .select('*')
         .single()
-      
+
       if (data) setSettings(data)
     } catch (error) {
       console.log('Errore caricamento impostazioni:', error)
@@ -338,11 +339,11 @@ function App() {
       if (transactions) {
         const purchases = transactions.filter(t => t.type === 'acquistare')
         const redeems = transactions.filter(t => t.type === 'riscattare')
-        
+
         const uniqueCustomers = new Set(transactions.map(t => t.customer_id)).size
         const totalPoints = purchases.reduce((sum, t) => sum + t.points_earned, 0)
         const totalRevenue = purchases.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0)
-        
+
         setTodayStats({
           customers: uniqueCustomers,
           points: totalPoints,
@@ -466,9 +467,9 @@ function App() {
 
     try {
       let recipients = []
-      
+
       if (emailRecipients === 'individual' && selectedIndividualCustomers.length > 0) {
-        recipients = allCustomersForEmail.filter(c => 
+        recipients = allCustomersForEmail.filter(c =>
           selectedIndividualCustomers.includes(c.id) && c.email
         )
       } else {
@@ -504,7 +505,7 @@ function App() {
       const emailPromises = recipients.map(async (customer) => {
         try {
           const template = getEmailTemplate(emailTemplate, customer.name, customMessage)
-          
+
           const templateParams = {
             to_name: customer.name,
             to_email: customer.email,
@@ -519,7 +520,7 @@ function App() {
             templateParams,
             EMAIL_CONFIG.publicKey
           )
-          
+
           successCount++
           return true
         } catch (error) {
@@ -603,11 +604,11 @@ function App() {
       loadTodayStats()
       loadTopCustomers()
       searchCustomersForManual(manualCustomerName)
-      
+
       if (selectedCustomer && selectedCustomer.id === customer.id) {
         setSelectedCustomer({ ...selectedCustomer, points: newPoints })
       }
-      
+
       setManualPoints('')
       showNotification(`${points > 0 ? 'Aggiunte' : 'Rimosse'} ${Math.abs(points)} GEMME a ${customer.name}`)
     } catch (error) {
@@ -722,11 +723,11 @@ function App() {
     try {
       const { data, error } = await supabase
         .from('customers')
-        .insert([{ 
-          name: newCustomerName, 
-          phone: newCustomerPhone, 
+        .insert([{
+          name: newCustomerName,
+          phone: newCustomerPhone,
           email: newCustomerEmail || null,
-          points: 0 
+          points: 0
         }])
         .select()
 
@@ -735,12 +736,12 @@ function App() {
         setNewCustomerName('')
         setNewCustomerPhone('')
         setNewCustomerEmail('')
-        
+
         // TODO 1: Invia email di benvenuto automatica
         if (data[0].email) {
           await sendWelcomeEmail(data[0])
         }
-        
+
         showNotification(`Cliente ${data[0].name} creato con successo! 👤`)
       }
       loadTodayStats()
@@ -892,7 +893,7 @@ function App() {
             <div className="stat-label">Clienti Oggi</div>
           </div>
         </div>
-        
+
         <div className="stat-card">
           <div className="stat-icon">
             <span className="gemma-icon-medium"></span>
@@ -902,7 +903,7 @@ function App() {
             <div className="stat-label">GEMME Distribuite</div>
           </div>
         </div>
-        
+
         <div className="stat-card">
           <div className="stat-icon">🎁</div>
           <div className="stat-content">
@@ -910,7 +911,7 @@ function App() {
             <div className="stat-label">Premi Riscattati</div>
           </div>
         </div>
-        
+
         <div className="stat-card">
           <div className="stat-icon">💰</div>
           <div className="stat-content">
@@ -960,6 +961,7 @@ function App() {
   // CUSTOMER VIEW COMPONENT
   const CustomerView = () => (
     <div className="customer-container">
+
       <div className="customer-header">
         <h1>Gestione Clienti</h1>
         <p>Cerca clienti, aggiungi vendite e gestisci GEMME</p>
@@ -978,8 +980,8 @@ function App() {
       {customers.length > 0 && (
         <div className="customers-grid">
           {customers.map((customer) => (
-            <div 
-              key={customer.id} 
+            <div
+              key={customer.id}
               className={`customer-card ${selectedCustomer?.id === customer.id ? 'selected' : ''}`}
               onClick={() => setSelectedCustomer(customer)}
             >
@@ -1079,7 +1081,7 @@ function App() {
                       {prize.points_cost} GEMME
                     </div>
                   </div>
-                  <button 
+                  <button
                     onClick={() => redeemPrize(prize)}
                     className={`btn-redeem ${selectedCustomer.points < prize.points_cost ? 'disabled' : ''}`}
                     disabled={selectedCustomer.points < prize.points_cost}
@@ -1096,8 +1098,8 @@ function App() {
       <div className="manual-points-section">
         <h3>🔧 Gestione Manuale GEMME</h3>
         <div className="manual-search">
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="Cerca cliente per nome..."
             value={manualCustomerName}
             onChange={(e) => {
@@ -1106,7 +1108,7 @@ function App() {
             }}
           />
         </div>
-        
+
         {foundCustomers.length > 0 && (
           <div className="found-customers">
             {foundCustomers.map((customer) => (
@@ -1120,13 +1122,13 @@ function App() {
                   {customer.email && <small>• {customer.email}</small>}
                 </div>
                 <div className="points-controls">
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     placeholder="±GEMME"
                     value={manualPoints}
                     onChange={(e) => setManualPoints(e.target.value)}
                   />
-                  <button 
+                  <button
                     onClick={() => modifyPoints(customer, manualPoints)}
                     className="btn-primary"
                   >
@@ -1191,7 +1193,7 @@ function App() {
                 </div>
               </div>
               <div className="prize-actions">
-                <button 
+                <button
                   onClick={() => deletePrize(prize.id)}
                   className="btn-danger"
                 >
@@ -1274,8 +1276,8 @@ function App() {
           <div className="composer-settings">
             <div className="setting-row">
               <label>Template:</label>
-              <select 
-                value={emailTemplate} 
+              <select
+                value={emailTemplate}
                 onChange={(e) => setEmailTemplate(e.target.value)}
               >
                 <option value="welcome">🎉 Benvenuto</option>
@@ -1283,11 +1285,11 @@ function App() {
                 <option value="promo">🔥 Promozione</option>
               </select>
             </div>
-            
+
             <div className="setting-row">
               <label>Destinatari:</label>
-              <select 
-                value={emailRecipients} 
+              <select
+                value={emailRecipients}
                 onChange={(e) => {
                   setEmailRecipients(e.target.value)
                   if (e.target.value === 'individual') {
@@ -1310,9 +1312,9 @@ function App() {
           {showIndividualSelection && (
             <div className="individual-selection">
               <h4>🎯 Seleziona Clienti Specifici</h4>
-              
+
               <div className="selection-controls">
-                <button 
+                <button
                   onClick={toggleAllCustomers}
                   className="btn-secondary"
                 >
@@ -1322,10 +1324,10 @@ function App() {
                   {selectedIndividualCustomers.length} di {allCustomersForEmail.length} clienti selezionati
                 </span>
               </div>
-              
+
               <div className="customers-selection-list">
                 {allCustomersForEmail.map((customer) => (
-                  <div 
+                  <div
                     key={customer.id}
                     className={`customer-selection-item ${selectedIndividualCustomers.includes(customer.id) ? 'selected' : ''}`}
                     onClick={() => toggleIndividualCustomer(customer.id)}
@@ -1441,12 +1443,12 @@ function App() {
               <span className="gemma-icon-small"></span>
               GEMME per ogni €1 speso:
             </label>
-            <input 
-              type="number" 
-              value={settings.points_per_euro} 
-              onChange={(e) => setSettings({...settings, points_per_euro: parseInt(e.target.value)})}
-              min="1" 
-              max="10" 
+            <input
+              type="number"
+              value={settings.points_per_euro}
+              onChange={(e) => setSettings({ ...settings, points_per_euro: parseInt(e.target.value) })}
+              min="1"
+              max="10"
             />
           </div>
           <div className="setting-item">
@@ -1454,12 +1456,12 @@ function App() {
               <span className="gemma-icon-small"></span>
               GEMME necessarie per premio base:
             </label>
-            <input 
-              type="number" 
-              value={settings.points_for_prize} 
-              onChange={(e) => setSettings({...settings, points_for_prize: parseInt(e.target.value)})}
-              min="5" 
-              max="100" 
+            <input
+              type="number"
+              value={settings.points_for_prize}
+              onChange={(e) => setSettings({ ...settings, points_for_prize: parseInt(e.target.value) })}
+              min="5"
+              max="100"
             />
           </div>
           <button className="btn-primary" onClick={saveSettings}>
@@ -1482,7 +1484,7 @@ function App() {
       <div className="settings-section">
         <h3>🔄 Azioni Sistema</h3>
         <div className="system-actions">
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="btn-secondary"
           >
@@ -1496,25 +1498,35 @@ function App() {
   return (
     <div className="app-container">
       <NotificationContainer />
-      
+      {/* HAMBURGER BUTTON - SOLO MOBILE */}
+      <button
+        className="hamburger-btn"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        aria-label="Apri menu"
+      >
+        <span className="hamburger-icon">&#9776;</span>
+      </button>
       {/* SIDEBAR MENU */}
-      <div className="sidebar">
+      <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <img 
-            src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" 
-            alt="Sapori e Colori Logo" 
+          <img
+            src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png"
+            alt="Sapori e Colori Logo"
             className="sidebar-logo"
           />
           <h2>Sapori & Colori</h2>
           <p>Sistema <span className="gemma-icon-small"></span>GEMME</p>
         </div>
-        
+
         <nav className="sidebar-nav">
           {menuItems.map((item) => (
             <button
               key={item.id}
               className={`nav-item ${activeView === item.id ? 'active' : ''}`}
-              onClick={() => setActiveView(item.id)}
+              onClick={() => {
+                setActiveView(item.id)
+                setSidebarOpen(false) // Chiude la sidebar su mobile
+              }}
             >
               <span className="nav-icon">{item.icon}</span>
               <div className="nav-content">
