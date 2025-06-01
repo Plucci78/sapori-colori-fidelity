@@ -12,7 +12,7 @@ function App() {
   const [newCustomerEmail, setNewCustomerEmail] = useState('')
   const [transactionAmount, setTransactionAmount] = useState('')
   const [settings, setSettings] = useState({ points_per_euro: 1, points_for_prize: 10 })
-  const [activeTab, setActiveTab] = useState('customer')
+  const [activeView, setActiveView] = useState('customer')
   
   // Stati per gestione manuale punti
   const [manualCustomerName, setManualCustomerName] = useState('')
@@ -41,10 +41,15 @@ function App() {
   const [customMessage, setCustomMessage] = useState('')
   const [emailStats, setEmailStats] = useState({ sent: 0, opened: 0 })
 
+  // TODO 3: Stati per selezione clienti individuali
+  const [selectedIndividualCustomers, setSelectedIndividualCustomers] = useState([])
+  const [showIndividualSelection, setShowIndividualSelection] = useState(false)
+  const [allCustomersForEmail, setAllCustomersForEmail] = useState([])
+
   // Sistema notifiche moderne
   const [notifications, setNotifications] = useState([])
 
-  // NUOVO: Configurazione EmailJS
+  // CONFIGURAZIONE EMAILJS
   const EMAIL_CONFIG = {
     serviceId: 'service_f6lj74h',
     templateId: 'template_kvxg4p9',
@@ -63,10 +68,164 @@ function App() {
     
     setNotifications(prev => [...prev, notification])
     
-    // Auto-rimuovi dopo 4 secondi
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id))
     }, 4000)
+  }
+
+  // TODO 4: Funzione per salvare statistiche email nel database
+  const saveEmailLog = async (emailType, recipients, subject, status) => {
+    try {
+      const { data, error } = await supabase
+        .from('email_logs')
+        .insert([{
+          email_type: emailType,
+          recipients_count: recipients.length,
+          subject: subject,
+          status: status,
+          sent_at: new Date().toISOString()
+        }])
+
+      if (error) {
+        console.error('Errore salvataggio log email:', error)
+      }
+    } catch (error) {
+      console.error('Errore salvataggio log email:', error)
+    }
+  }
+
+  // TODO 4: Carica statistiche email dal database
+  const loadEmailStats = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('email_logs')
+        .select('*')
+
+      if (data) {
+        const totalSent = data.reduce((sum, log) => sum + log.recipients_count, 0)
+        setEmailStats({ 
+          sent: totalSent, 
+          opened: 0
+        })
+      }
+    } catch (error) {
+      console.error('Errore caricamento statistiche email:', error)
+    }
+  }
+
+  // TODO 1: Funzione automatica per email di benvenuto
+  const sendWelcomeEmail = async (customer) => {
+    if (!customer.email) return
+
+    try {
+      const template = getEmailTemplate('welcome', customer.name)
+      
+      const templateParams = {
+        to_name: customer.name,
+        to_email: customer.email,
+        subject: template.subject,
+        message_html: template.html,
+        reply_to: 'saporiecolori.b@gmail.com'
+      }
+
+      await emailjs.send(
+        EMAIL_CONFIG.serviceId,
+        EMAIL_CONFIG.templateId,
+        templateParams,
+        EMAIL_CONFIG.publicKey
+      )
+
+      await saveEmailLog('welcome', [customer], template.subject, 'sent')
+      
+      showNotification(`📧 Email di benvenuto inviata a ${customer.name}!`, 'success')
+    } catch (error) {
+      console.error('Errore invio email benvenuto:', error)
+      await saveEmailLog('welcome', [customer], 'Benvenuto', 'failed')
+    }
+  }
+
+  // TODO 2: Funzione automatica per email milestone gemme
+  const sendPointsMilestoneEmail = async (customer, points) => {
+    if (!customer.email) return
+
+    let milestoneReached = null
+    let emailTitle = ''
+    
+    if (points === 50) {
+      milestoneReached = '50'
+      emailTitle = 'Congratulazioni! 🎉'
+    } else if (points === 100) {
+      milestoneReached = '100'
+      emailTitle = 'Cliente VIP! ⭐'
+    } else if (points === 150) {
+      milestoneReached = '150'
+      emailTitle = 'Incredibile! 🚀'
+    }
+    
+    if (!milestoneReached) return
+
+    try {
+      const template = getEmailTemplate('points', customer.name, milestoneReached)
+      
+      const templateParams = {
+        to_name: customer.name,
+        to_email: customer.email,
+        subject: template.subject,
+        message_html: template.html,
+        reply_to: 'saporiecolori.b@gmail.com'
+      }
+
+      await emailjs.send(
+        EMAIL_CONFIG.serviceId,
+        EMAIL_CONFIG.templateId,
+        templateParams,
+        EMAIL_CONFIG.publicKey
+      )
+
+      await saveEmailLog('milestone', [customer], template.subject, 'sent')
+      
+      showNotification(`${emailTitle} Email inviata a ${customer.name}`, 'success')
+    } catch (error) {
+      console.error('Errore invio email milestone:', error)
+      await saveEmailLog('milestone', [customer], `Milestone ${milestoneReached} GEMME`, 'failed')
+    }
+  }
+
+  // TODO 3: Carica tutti i clienti per selezione individuale
+  const loadAllCustomersForEmail = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .not('email', 'is', null)
+        .order('name')
+
+      if (data) {
+        setAllCustomersForEmail(data)
+      }
+    } catch (error) {
+      console.error('Errore caricamento clienti per email:', error)
+    }
+  }
+
+  // TODO 3: Toggle selezione cliente individuale
+  const toggleIndividualCustomer = (customerId) => {
+    setSelectedIndividualCustomers(prev => {
+      if (prev.includes(customerId)) {
+        return prev.filter(id => id !== customerId)
+      } else {
+        return [...prev, customerId]
+      }
+    })
+  }
+
+  // TODO 3: Seleziona/Deseleziona tutti i clienti
+  const toggleAllCustomers = () => {
+    if (selectedIndividualCustomers.length === allCustomersForEmail.length) {
+      setSelectedIndividualCustomers([])
+    } else {
+      setSelectedIndividualCustomers(allCustomersForEmail.map(c => c.id))
+    }
   }
 
   // Componente Notification
@@ -136,6 +295,7 @@ function App() {
     loadPrizes()
     loadTodayStats()
     loadTopCustomers()
+    loadEmailStats()
   }, [])
 
   const loadSettings = async () => {
@@ -151,7 +311,6 @@ function App() {
     }
   }
 
-  // Carica premi
   const loadPrizes = async () => {
     try {
       const { data, error } = await supabase
@@ -166,7 +325,6 @@ function App() {
     }
   }
 
-  // Carica statistiche reali
   const loadTodayStats = async () => {
     try {
       const today = new Date().toISOString().split('T')[0]
@@ -197,7 +355,6 @@ function App() {
     }
   }
 
-  // Carica top clienti reali
   const loadTopCustomers = async () => {
     try {
       const { data: customers, error } = await supabase
@@ -214,7 +371,7 @@ function App() {
     }
   }
 
-  // Template Email HTML
+  // Template Email HTML AGGIORNATI con GEMME
   const getEmailTemplate = (type, customerName, customMsg = '') => {
     const templates = {
       welcome: {
@@ -233,9 +390,9 @@ function App() {
               <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h3 style="color: #ff7e5f; margin-top: 0;">Come funziona:</h3>
                 <ul style="color: #666; line-height: 1.8;">
-                  <li>🛍️ <strong>1€ speso = 1 punto guadagnato</strong></li>
-                  <li>🎁 <strong>Accumula punti e riscatta premi esclusivi</strong></li>
-                  <li>✨ <strong>Offerte speciali riservate ai membri</strong></li>
+                  <li>🛍️ <strong>1€ speso = 1 GEMMA guadagnata</strong></li>
+                  <li>🎁 <strong>Accumula GEMME e riscatta premi esclusivi</strong></li>
+                  <li>✨ <strong>Offerte speciali riservate ai membri VIP</strong></li>
                 </ul>
               </div>
               <div style="text-align: center; margin: 30px 0;">
@@ -250,20 +407,20 @@ function App() {
         `
       },
       points: {
-        subject: `Hai raggiunto ${customMsg} punti! 🌟`,
+        subject: `Hai raggiunto ${customMsg} GEMME! 🔥`,
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);">
             <div style="padding: 40px; text-align: center;">
               <h1 style="color: white; margin: 0; font-size: 28px;">Congratulazioni ${customerName}! 🎉</h1>
-              <p style="color: #e1e8ff; font-size: 18px;">Hai raggiunto ${customMsg} punti fedeltà!</p>
+              <p style="color: #fecaca; font-size: 18px;">Hai raggiunto ${customMsg} GEMME fedeltà!</p>
             </div>
             <div style="background: white; padding: 40px; margin: 0 20px; border-radius: 10px;">
               <div style="text-align: center; margin-bottom: 30px;">
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; width: 100px; height: 100px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold;">
+                <div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; width: 120px; height: 120px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);">
                   ${customMsg}
                 </div>
               </div>
-              <h2 style="color: #333; text-align: center;">I tuoi punti crescono! 📈</h2>
+              <h2 style="color: #333; text-align: center;">Le tue GEMME crescono! 📈</h2>
               <p style="color: #666; text-align: center; font-size: 16px;">
                 Continua così! Sei sempre più vicino ai nostri premi esclusivi.
               </p>
@@ -287,7 +444,7 @@ function App() {
                 </div>
               </div>
               <p style="color: #666; text-align: center; font-size: 16px; margin-bottom: 20px;">
-                ${customMsg || 'Approfitta di questa offerta esclusiva valida fino alla fine del mese!'}
+                ${customMessage || 'Approfitta di questa offerta esclusiva valida fino alla fine del mese!'}
               </p>
               <div style="text-align: center; margin: 30px 0;">
                 <a href="#" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 18px; display: inline-block;">Vieni ora! 🏃‍♂️</a>
@@ -300,7 +457,7 @@ function App() {
     return templates[type]
   }
 
-  // NUOVO: Funzione invio email REALI tramite EmailJS
+  // TODO 3: Funzione invio email AGGIORNATA con selezione individuale
   const sendEmail = async () => {
     if (!emailSubject) {
       showNotification('Inserisci l\'oggetto dell\'email', 'error')
@@ -308,26 +465,32 @@ function App() {
     }
 
     try {
-      // Ottieni lista destinatari
       let recipients = []
-      const { data: allCustomers } = await supabase
-        .from('customers')
-        .select('*')
-        .not('email', 'is', null)
+      
+      if (emailRecipients === 'individual' && selectedIndividualCustomers.length > 0) {
+        recipients = allCustomersForEmail.filter(c => 
+          selectedIndividualCustomers.includes(c.id) && c.email
+        )
+      } else {
+        const { data: allCustomers } = await supabase
+          .from('customers')
+          .select('*')
+          .not('email', 'is', null)
 
-      switch (emailRecipients) {
-        case 'all':
-          recipients = allCustomers.filter(c => c.email)
-          break
-        case 'top':
-          recipients = allCustomers.filter(c => c.email && c.points >= 50)
-          break
-        case 'active':
-          recipients = allCustomers.filter(c => c.email && c.points > 0)
-          break
-        case 'inactive':
-          recipients = allCustomers.filter(c => c.email && c.points === 0)
-          break
+        switch (emailRecipients) {
+          case 'all':
+            recipients = allCustomers.filter(c => c.email)
+            break
+          case 'top':
+            recipients = allCustomers.filter(c => c.email && c.points >= 50)
+            break
+          case 'active':
+            recipients = allCustomers.filter(c => c.email && c.points > 0)
+            break
+          case 'inactive':
+            recipients = allCustomers.filter(c => c.email && c.points === 0)
+            break
+        }
       }
 
       if (recipients.length === 0) {
@@ -337,7 +500,6 @@ function App() {
 
       showNotification(`Invio ${recipients.length} email in corso...`, 'info')
 
-      // Invia email reali a tutti i destinatari
       let successCount = 0
       const emailPromises = recipients.map(async (customer) => {
         try {
@@ -366,14 +528,10 @@ function App() {
         }
       })
 
-      // Aspetta che tutte le email vengano inviate
       await Promise.all(emailPromises)
 
-      // Aggiorna statistiche
-      setEmailStats({ 
-        sent: emailStats.sent + successCount, 
-        opened: emailStats.opened 
-      })
+      await saveEmailLog(emailTemplate, recipients, emailSubject, 'sent')
+      await loadEmailStats()
 
       if (successCount === recipients.length) {
         showNotification(`🎉 Tutte le ${successCount} email inviate con successo!`, 'success')
@@ -383,14 +541,15 @@ function App() {
 
       setEmailSubject('')
       setCustomMessage('')
+      setSelectedIndividualCustomers([])
 
     } catch (error) {
       console.log('Errore invio email:', error)
+      await saveEmailLog(emailTemplate, [], emailSubject, 'failed')
       showNotification('Errore nell\'invio delle email', 'error')
     }
   }
 
-  // Cerca clienti per gestione manuale
   const searchCustomersForManual = async (searchName) => {
     if (searchName.length < 2) {
       setFoundCustomers([])
@@ -412,11 +571,11 @@ function App() {
     }
   }
 
-  // Modifica punti manualmente
+  // TODO 2: Modifica punti manualmente CON email automatica milestone
   const modifyPoints = async (customer, pointsToAdd) => {
     const points = parseInt(pointsToAdd)
     if (isNaN(points) || points === 0) {
-      showNotification('Inserisci un numero valido di punti', 'error')
+      showNotification('Inserisci un numero valido di GEMME', 'error')
       return
     }
 
@@ -437,6 +596,10 @@ function App() {
           type: points > 0 ? 'acquistare' : 'riscattare'
         }])
 
+      if (points > 0 && (newPoints === 50 || newPoints === 100 || newPoints === 150)) {
+        await sendPointsMilestoneEmail(customer, newPoints)
+      }
+
       loadTodayStats()
       loadTopCustomers()
       searchCustomersForManual(manualCustomerName)
@@ -446,14 +609,13 @@ function App() {
       }
       
       setManualPoints('')
-      showNotification(`${points > 0 ? 'Aggiunti' : 'Rimossi'} ${Math.abs(points)} punti a ${customer.name}`)
+      showNotification(`${points > 0 ? 'Aggiunte' : 'Rimosse'} ${Math.abs(points)} GEMME a ${customer.name}`)
     } catch (error) {
-      console.log('Errore modifica punti:', error)
-      showNotification('Errore nella modifica punti', 'error')
+      console.log('Errore modifica GEMME:', error)
+      showNotification('Errore nella modifica GEMME', 'error')
     }
   }
 
-  // Salva impostazioni
   const saveSettings = async () => {
     try {
       const { error } = await supabase
@@ -473,7 +635,6 @@ function App() {
     }
   }
 
-  // Aggiungi premio
   const addPrize = async () => {
     if (!newPrizeName || !newPrizeDescription || !newPrizeCost) {
       showNotification('Compila tutti i campi del premio', 'error')
@@ -504,7 +665,6 @@ function App() {
     }
   }
 
-  // Elimina premio
   const deletePrize = async (prizeId) => {
     if (!confirm('Sei sicuro di voler eliminare questo premio?')) return
 
@@ -524,7 +684,6 @@ function App() {
     }
   }
 
-  // Cerca clienti
   const searchCustomers = async () => {
     if (searchTerm.length < 2) {
       setCustomers([])
@@ -548,7 +707,7 @@ function App() {
     searchCustomers()
   }, [searchTerm])
 
-  // Crea nuovo cliente - CON EMAIL
+  // TODO 1: Crea nuovo cliente CON email benvenuto automatica
   const createCustomer = async () => {
     if (!newCustomerName || !newCustomerPhone) {
       showNotification('Inserisci nome e telefono', 'error')
@@ -576,6 +735,12 @@ function App() {
         setNewCustomerName('')
         setNewCustomerPhone('')
         setNewCustomerEmail('')
+        
+        // TODO 1: Invia email di benvenuto automatica
+        if (data[0].email) {
+          await sendWelcomeEmail(data[0])
+        }
+        
         showNotification(`Cliente ${data[0].name} creato con successo! 👤`)
       }
       loadTodayStats()
@@ -585,7 +750,7 @@ function App() {
     }
   }
 
-  // Aggiungi transazione
+  // TODO 2: Aggiungi transazione CON email automatica milestone
   const addTransaction = async () => {
     if (!selectedCustomer || !transactionAmount) return
 
@@ -608,9 +773,14 @@ function App() {
         .update({ points: newPoints })
         .eq('id', selectedCustomer.id)
 
+      // TODO 2: Controlla milestone email automatiche
+      if (pointsEarned > 0 && (newPoints === 50 || newPoints === 100 || newPoints === 150)) {
+        await sendPointsMilestoneEmail(selectedCustomer, newPoints)
+      }
+
       setSelectedCustomer({ ...selectedCustomer, points: newPoints })
       setTransactionAmount('')
-      showNotification(`+${pointsEarned} punti guadagnati! 🎯`)
+      showNotification(`+${pointsEarned} GEMME guadagnate! 🔥`)
       loadTodayStats()
     } catch (error) {
       console.log('Errore transazione:', error)
@@ -618,7 +788,6 @@ function App() {
     }
   }
 
-  // Riscatta premio specifico
   const redeemPrize = async (prize) => {
     if (!selectedCustomer || selectedCustomer.points < prize.points_cost) return
 
@@ -647,409 +816,720 @@ function App() {
     }
   }
 
-  return (
-    <div className="app">
-      {/* Container notifiche moderne */}
-      <NotificationContainer />
-      
-      {/* CSS per animazioni */}
-      <style jsx>{`
-        @keyframes slideIn {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-      `}</style>
+  // MENU ITEMS CONFIGURATION
+  const menuItems = [
+    {
+      id: 'dashboard',
+      title: 'Dashboard',
+      icon: '📊',
+      description: 'Panoramica generale'
+    },
+    {
+      id: 'customer',
+      title: 'Clienti',
+      icon: '👥',
+      description: 'Gestione clienti e vendite'
+    },
+    {
+      id: 'prizes',
+      title: 'Premi',
+      icon: '🎁',
+      description: 'Catalogo premi'
+    },
+    {
+      id: 'email',
+      title: 'Email Marketing',
+      icon: '📧',
+      description: 'Campagne email'
+    },
+    {
+      id: 'analytics',
+      title: 'Analytics',
+      icon: '📈',
+      description: 'Statistiche avanzate'
+    },
+    {
+      id: 'settings',
+      title: 'Impostazioni',
+      icon: '⚙️',
+      description: 'Configurazione sistema'
+    }
+  ]
 
-      <header className="header">
-        <div className="header-content">
-          <img 
-            src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" 
-            alt="Sapori e Colori Logo" 
-            className="header-logo"
-          />
-          <div className="header-text">
-            <h1>Sapori & Colori Fidelity</h1>
-          </div>
-        </div>
-      </header>
+  // RENDER CONTENT BASED ON ACTIVE VIEW
+  const renderContent = () => {
+    switch (activeView) {
+      case 'dashboard':
+        return <DashboardView />
+      case 'customer':
+        return <CustomerView />
+      case 'prizes':
+        return <PrizesView />
+      case 'email':
+        return <EmailView />
+      case 'analytics':
+        return <AnalyticsView />
+      case 'settings':
+        return <SettingsView />
+      default:
+        return <DashboardView />
+    }
+  }
 
-      <div className="tabs">
-        <button 
-          className={activeTab === 'customer' ? 'tab active' : 'tab'}
-          onClick={() => setActiveTab('customer')}
-        >
-          👤 Cliente
-        </button>
-        <button 
-          className={activeTab === 'admin' ? 'tab active' : 'tab'}
-          onClick={() => setActiveTab('admin')}
-        >
-          ⚙️ Gestione
-        </button>
+  // DASHBOARD VIEW COMPONENT
+  const DashboardView = () => (
+    <div className="dashboard-container">
+      <div className="dashboard-header">
+        <h1>Dashboard</h1>
+        <p>Panoramica generale del sistema</p>
       </div>
 
-      {activeTab === 'customer' && (
-        <div className="screen">
-          <div className="search-section">
-            <input
-              type="text"
-              placeholder="Cerca cliente per nome o telefono..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-icon">👥</div>
+          <div className="stat-content">
+            <div className="stat-number">{todayStats.customers}</div>
+            <div className="stat-label">Clienti Oggi</div>
           </div>
-
-          {customers.length > 0 && (
-            <div className="customers-list">
-              {customers.map((customer) => (
-                <div 
-                  key={customer.id} 
-                  className="customer-item"
-                  onClick={() => setSelectedCustomer(customer)}
-                >
-                  <div>
-                    <h4>{customer.name}</h4>
-                    <p>{customer.phone}</p>
-                    {customer.email && <p style={{color: '#666', fontSize: '14px'}}>📧 {customer.email}</p>}
-                  </div>
-                  <div className="points-badge">{customer.points} punti</div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="new-customer">
-            <h3>Nuovo Cliente</h3>
-            <input
-              type="text"
-              placeholder="Nome"
-              value={newCustomerName}
-              onChange={(e) => setNewCustomerName(e.target.value)}
-            />
-            <input
-              type="tel"
-              placeholder="Telefono"
-              value={newCustomerPhone}
-              onChange={(e) => setNewCustomerPhone(e.target.value)}
-            />
-            <input
-              type="email"
-              placeholder="Email (opzionale)"
-              value={newCustomerEmail}
-              onChange={(e) => setNewCustomerEmail(e.target.value)}
-            />
-            <button onClick={createCustomer} className="btn-primary">
-              Crea Cliente
-            </button>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon">
+            <span className="gemma-icon-medium"></span>
           </div>
+          <div className="stat-content">
+            <div className="stat-number">{todayStats.points}</div>
+            <div className="stat-label">GEMME Distribuite</div>
+          </div>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon">🎁</div>
+          <div className="stat-content">
+            <div className="stat-number">{todayStats.redeems}</div>
+            <div className="stat-label">Premi Riscattati</div>
+          </div>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon">💰</div>
+          <div className="stat-content">
+            <div className="stat-number">€{todayStats.revenue.toFixed(2)}</div>
+            <div className="stat-label">Fatturato Oggi</div>
+          </div>
+        </div>
+      </div>
 
-          {selectedCustomer && (
-            <div className="selected-customer">
-              <div className="customer-card">
-                <h2>{selectedCustomer.name}</h2>
-                <div className="points-display">{selectedCustomer.points}</div>
-                <p>Punti Fedeltà</p>
-                {selectedCustomer.email && (
-                  <p style={{color: '#666', fontSize: '14px'}}>📧 {selectedCustomer.email}</p>
-                )}
+      <div className="dashboard-grid">
+        <div className="dashboard-card">
+          <h3>📈 Top Clienti</h3>
+          <div className="top-customers">
+            {topCustomers.length > 0 ? (
+              topCustomers.map((customer, index) => (
+                <div key={customer.id} className="customer-rank">
+                  <span className="rank-number">{index + 1}</span>
+                  <span className="customer-name">{customer.name}</span>
+                  <span className="customer-points">
+                    <span className="gemma-icon-tiny"></span>{customer.points} GEMME
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="empty-state">Nessun cliente ancora</div>
+            )}
+          </div>
+        </div>
+
+        <div className="dashboard-card">
+          <h3>📧 Email Stats</h3>
+          <div className="email-stats">
+            <div className="email-stat">
+              <div className="email-stat-number">{emailStats.sent}</div>
+              <div className="email-stat-label">Email Inviate</div>
+            </div>
+            <div className="email-stat">
+              <div className="email-stat-number">{emailStats.opened}</div>
+              <div className="email-stat-label">Email Aperte</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  // CUSTOMER VIEW COMPONENT
+  const CustomerView = () => (
+    <div className="customer-container">
+      <div className="customer-header">
+        <h1>Gestione Clienti</h1>
+        <p>Cerca clienti, aggiungi vendite e gestisci GEMME</p>
+      </div>
+
+      <div className="customer-search">
+        <input
+          type="text"
+          placeholder="🔍 Cerca cliente per nome o telefono..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input"
+        />
+      </div>
+
+      {customers.length > 0 && (
+        <div className="customers-grid">
+          {customers.map((customer) => (
+            <div 
+              key={customer.id} 
+              className={`customer-card ${selectedCustomer?.id === customer.id ? 'selected' : ''}`}
+              onClick={() => setSelectedCustomer(customer)}
+            >
+              <div className="customer-info">
+                <h4>{customer.name}</h4>
+                <p className="customer-phone">{customer.phone}</p>
+                {customer.email && <p className="customer-email">📧 {customer.email}</p>}
               </div>
-
-              <div className="transaction-section">
-                <h3>Nuova Spesa</h3>
-                <div className="quick-amounts">
-                  <button onClick={() => setTransactionAmount('2.25')}>Pane 500g - €2,25</button>
-                  <button onClick={() => setTransactionAmount('4.50')}>Pane 1kg - €4,50</button>
-                  <button onClick={() => setTransactionAmount('1.80')}>Cornetto - €1,80</button>
-                </div>
-                <input
-                  type="number"
-                  placeholder="Importo €"
-                  value={transactionAmount}
-                  onChange={(e) => setTransactionAmount(e.target.value)}
-                  step="0.01"
-                />
-                <button onClick={addTransaction} className="btn-primary">
-                  Registra Spesa
-                </button>
-
-                <div className="prizes-section">
-                  <h3>🎁 Premi Disponibili</h3>
-                  <div className="prizes-list">
-                    {prizes.map((prize) => (
-                      <div key={prize.id} className="prize-item">
-                        <div className="prize-info">
-                          <h4>{prize.name}</h4>
-                          <p>{prize.description}</p>
-                          <span className="prize-cost">{prize.points_cost} punti</span>
-                        </div>
-                        <button 
-                          onClick={() => redeemPrize(prize)}
-                          className="btn-redeem"
-                          disabled={selectedCustomer.points < prize.points_cost}
-                        >
-                          Riscatta
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div className="customer-points">
+                <span className="gemma-icon-small"></span>
+                <span className="points-count">{customer.points}</span>
+                <span className="points-label">GEMME</span>
               </div>
             </div>
-          )}
+          ))}
         </div>
       )}
 
-      {activeTab === 'admin' && (
-        <div className="screen">
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
-            <h2>Pannello Amministratore</h2>
-            <button 
-              onClick={() => {
-                window.location.reload()
-              }}
-              className="btn-primary"
-              style={{width: 'auto', padding: '12px 20px', fontSize: '14px'}}
-            >
-              🔄 Aggiorna Dati
-            </button>
-          </div>
-          
-          <div className="admin-section">
-            <h3>📊 Statistiche di Oggi</h3>
-            <div className="stats-grid">
-              <div className="stat-item">
-                <div className="stat-number">{todayStats.customers}</div>
-                <div className="stat-label">Clienti Serviti</div>
+      <div className="new-customer-section">
+        <h3>➕ Nuovo Cliente</h3>
+        <div className="new-customer-form">
+          <input
+            type="text"
+            placeholder="Nome completo"
+            value={newCustomerName}
+            onChange={(e) => setNewCustomerName(e.target.value)}
+          />
+          <input
+            type="tel"
+            placeholder="Telefono"
+            value={newCustomerPhone}
+            onChange={(e) => setNewCustomerPhone(e.target.value)}
+          />
+          <input
+            type="email"
+            placeholder="Email (opzionale - per email automatiche)"
+            value={newCustomerEmail}
+            onChange={(e) => setNewCustomerEmail(e.target.value)}
+          />
+          <button onClick={createCustomer} className="btn-primary">
+            Crea Cliente
+          </button>
+        </div>
+      </div>
+
+      {selectedCustomer && (
+        <div className="selected-customer-section">
+          <div className="customer-detail-card">
+            <div className="customer-avatar">
+              <span className="avatar-initial">{selectedCustomer.name.charAt(0)}</span>
+            </div>
+            <div className="customer-details">
+              <h2>{selectedCustomer.name}</h2>
+              <div className="customer-gemme">
+                <span className="gemma-icon-large"></span>
+                <span className="gemme-count">{selectedCustomer.points}</span>
+                <span className="gemme-label">GEMME</span>
               </div>
-              <div className="stat-item">
-                <div className="stat-number">{todayStats.points}</div>
-                <div className="stat-label">Punti Distribuiti</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-number">{todayStats.redeems}</div>
-                <div className="stat-label">Premi Riscattati</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-number">€{todayStats.revenue.toFixed(2)}</div>
-                <div className="stat-label">Fatturato Oggi</div>
-              </div>
+              {selectedCustomer.email && (
+                <p className="customer-contact">📧 {selectedCustomer.email}</p>
+              )}
             </div>
           </div>
 
-          {/* Sezione Email Marketing con EMAIL REALI */}
-          <div className="admin-section">
-            <h3>📧 Email Marketing - EMAIL REALI ✨</h3>
-            
-            <div className="email-stats" style={{display: 'flex', gap: '20px', marginBottom: '20px'}}>
-              <div className="stat-item">
-                <div className="stat-number">{emailStats.sent}</div>
-                <div className="stat-label">Email Inviate</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-number">{emailStats.opened}</div>
-                <div className="stat-label">Email Aperte</div>
-              </div>
+          <div className="transaction-section">
+            <h3>💰 Nuova Vendita</h3>
+            <div className="quick-amounts">
+              <button onClick={() => setTransactionAmount('2.25')}>Pane 500g - €2,25</button>
+              <button onClick={() => setTransactionAmount('4.50')}>Pane 1kg - €4,50</button>
+              <button onClick={() => setTransactionAmount('1.80')}>Cornetto - €1,80</button>
+              <button onClick={() => setTransactionAmount('3.50')}>Focaccia - €3,50</button>
             </div>
-
-            <div className="email-composer">
-              <h4>🚀 Invia Email Reali ai Clienti</h4>
-              
-              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px'}}>
-                <div>
-                  <label>Template:</label>
-                  <select 
-                    value={emailTemplate} 
-                    onChange={(e) => setEmailTemplate(e.target.value)}
-                    style={{width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px'}}
-                  >
-                    <option value="welcome">🎉 Benvenuto</option>
-                    <option value="points">⭐ Punti Raggiunti</option>
-                    <option value="promo">🔥 Promozione</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label>Destinatari:</label>
-                  <select 
-                    value={emailRecipients} 
-                    onChange={(e) => setEmailRecipients(e.target.value)}
-                    style={{width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px'}}
-                  >
-                    <option value="all">Tutti i Clienti</option>
-                    <option value="top">Top Clienti (50+ punti)</option>
-                    <option value="active">Clienti Attivi</option>
-                    <option value="inactive">Clienti Inattivi</option>
-                  </select>
-                </div>
-              </div>
-
+            <div className="amount-input">
               <input
-                type="text"
-                placeholder="Oggetto email..."
-                value={emailSubject}
-                onChange={(e) => setEmailSubject(e.target.value)}
-                style={{width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '4px', marginBottom: '15px'}}
+                type="number"
+                placeholder="Importo €"
+                value={transactionAmount}
+                onChange={(e) => setTransactionAmount(e.target.value)}
+                step="0.01"
               />
-
-              <textarea
-                placeholder="Messaggio personalizzato (opzionale)..."
-                value={customMessage}
-                onChange={(e) => setCustomMessage(e.target.value)}
-                style={{width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '4px', height: '80px', marginBottom: '15px'}}
-              />
-
-              <button onClick={sendEmail} className="btn-primary" style={{width: '100%', background: 'linear-gradient(135deg, #4CAF50, #45a049)'}}>
-                📧 INVIA EMAIL REALI
+              <button onClick={addTransaction} className="btn-primary">
+                Registra Vendita
               </button>
             </div>
           </div>
 
-          <div className="admin-section">
-            <h3>⚙️ Configurazione Sistema</h3>
-            <div className="config-item">
-              <label>Punti per ogni €1 speso:</label>
-              <input 
-                type="number" 
-                value={settings.points_per_euro} 
-                onChange={(e) => setSettings({...settings, points_per_euro: parseInt(e.target.value)})}
-                min="1" 
-                max="10" 
-              />
-            </div>
-            <div className="config-item">
-              <label>Punti necessari per premio:</label>
-              <input 
-                type="number" 
-                value={settings.points_for_prize} 
-                onChange={(e) => setSettings({...settings, points_for_prize: parseInt(e.target.value)})}
-                min="5" 
-                max="100" 
-              />
-            </div>
-            <button className="btn-primary" onClick={saveSettings}>Salva Configurazione</button>
-          </div>
-
-          <div className="admin-section">
-            <h3>🎁 Gestione Premi</h3>
-            
-            <div className="add-prize">
-              <h4>Aggiungi Nuovo Premio</h4>
-              <input
-                type="text"
-                placeholder="Nome premio (es. Cornetto Gratis)"
-                value={newPrizeName}
-                onChange={(e) => setNewPrizeName(e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="Descrizione (es. Un cornetto della casa)"
-                value={newPrizeDescription}
-                onChange={(e) => setNewPrizeDescription(e.target.value)}
-              />
-              <input
-                type="number"
-                placeholder="Costo in punti"
-                value={newPrizeCost}
-                onChange={(e) => setNewPrizeCost(e.target.value)}
-                min="1"
-              />
-              <button onClick={addPrize} className="btn-primary">Aggiungi Premio</button>
-            </div>
-
-            <div className="prizes-management">
-              <h4>Premi Esistenti</h4>
+          <div className="prizes-section">
+            <h3>🎁 Riscatta Premi</h3>
+            <div className="prizes-grid">
               {prizes.map((prize) => (
-                <div key={prize.id} className="prize-management-item">
-                  <div>
-                    <strong>{prize.name}</strong> - {prize.points_cost} punti
-                    <br />
-                    <small>{prize.description}</small>
+                <div key={prize.id} className="prize-card">
+                  <div className="prize-info">
+                    <h4>{prize.name}</h4>
+                    <p>{prize.description}</p>
+                    <div className="prize-cost">
+                      <span className="gemma-icon-small"></span>
+                      {prize.points_cost} GEMME
+                    </div>
                   </div>
                   <button 
-                    onClick={() => deletePrize(prize.id)}
-                    className="btn-danger"
+                    onClick={() => redeemPrize(prize)}
+                    className={`btn-redeem ${selectedCustomer.points < prize.points_cost ? 'disabled' : ''}`}
+                    disabled={selectedCustomer.points < prize.points_cost}
                   >
-                    Elimina
+                    {selectedCustomer.points >= prize.points_cost ? 'Riscatta' : 'GEMME insufficienti'}
                   </button>
                 </div>
               ))}
             </div>
           </div>
+        </div>
+      )}
 
-          <div className="admin-section">
-            <h3>👥 Gestione Manuale Punti</h3>
-            
-            <div className="manual-search">
-              <input 
-                type="text" 
-                placeholder="Cerca cliente per nome..."
-                value={manualCustomerName}
-                onChange={(e) => {
-                  setManualCustomerName(e.target.value)
-                  searchCustomersForManual(e.target.value)
-                }}
-              />
-              
-              {foundCustomers.length > 0 && (
-                <div className="found-customers">
-                  {foundCustomers.map((customer) => (
-                    <div key={customer.id} className="found-customer-item">
-                      <div>
-                        <strong>{customer.name}</strong> - {customer.points} punti
-                        <br />
-                        <small>{customer.phone}</small>
-                        {customer.email && <small style={{color: '#666'}}> • {customer.email}</small>}
-                      </div>
-                      <div className="points-controls">
-                        <input 
-                          type="number" 
-                          placeholder="±punti"
-                          value={manualPoints}
-                          onChange={(e) => setManualPoints(e.target.value)}
-                          style={{width: '100px', marginRight: '10px'}}
-                        />
-                        <button 
-                          onClick={() => modifyPoints(customer, manualPoints)}
-                          className="btn-primary"
-                          style={{padding: '8px 16px', fontSize: '14px'}}
-                        >
-                          Modifica
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+      <div className="manual-points-section">
+        <h3>🔧 Gestione Manuale GEMME</h3>
+        <div className="manual-search">
+          <input 
+            type="text" 
+            placeholder="Cerca cliente per nome..."
+            value={manualCustomerName}
+            onChange={(e) => {
+              setManualCustomerName(e.target.value)
+              searchCustomersForManual(e.target.value)
+            }}
+          />
+        </div>
+        
+        {foundCustomers.length > 0 && (
+          <div className="found-customers">
+            {foundCustomers.map((customer) => (
+              <div key={customer.id} className="found-customer-item">
+                <div className="customer-info">
+                  <strong>{customer.name}</strong>
+                  <span className="customer-points">
+                    <span className="gemma-icon-tiny"></span>{customer.points} GEMME
+                  </span>
+                  <small>{customer.phone}</small>
+                  {customer.email && <small>• {customer.email}</small>}
                 </div>
-              )}
+                <div className="points-controls">
+                  <input 
+                    type="number" 
+                    placeholder="±GEMME"
+                    value={manualPoints}
+                    onChange={(e) => setManualPoints(e.target.value)}
+                  />
+                  <button 
+                    onClick={() => modifyPoints(customer, manualPoints)}
+                    className="btn-primary"
+                  >
+                    Modifica
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  // PRIZES VIEW COMPONENT
+  const PrizesView = () => (
+    <div className="prizes-container">
+      <div className="prizes-header">
+        <h1>Gestione Premi</h1>
+        <p>Crea e gestisci il catalogo premi</p>
+      </div>
+
+      <div className="add-prize-section">
+        <h3>➕ Aggiungi Nuovo Premio</h3>
+        <div className="add-prize-form">
+          <input
+            type="text"
+            placeholder="Nome premio (es. Cornetto Gratis)"
+            value={newPrizeName}
+            onChange={(e) => setNewPrizeName(e.target.value)}
+          />
+          <input
+            type="text"
+            placeholder="Descrizione (es. Un cornetto della casa)"
+            value={newPrizeDescription}
+            onChange={(e) => setNewPrizeDescription(e.target.value)}
+          />
+          <input
+            type="number"
+            placeholder="Costo in GEMME"
+            value={newPrizeCost}
+            onChange={(e) => setNewPrizeCost(e.target.value)}
+            min="1"
+          />
+          <button onClick={addPrize} className="btn-primary">
+            Aggiungi Premio
+          </button>
+        </div>
+      </div>
+
+      <div className="current-prizes-section">
+        <h3>🎁 Premi Attivi</h3>
+        <div className="prizes-management-grid">
+          {prizes.map((prize) => (
+            <div key={prize.id} className="prize-management-card">
+              <div className="prize-content">
+                <h4>{prize.name}</h4>
+                <p>{prize.description}</p>
+                <div className="prize-cost">
+                  <span className="gemma-icon-small"></span>
+                  {prize.points_cost} GEMME
+                </div>
+              </div>
+              <div className="prize-actions">
+                <button 
+                  onClick={() => deletePrize(prize.id)}
+                  className="btn-danger"
+                >
+                  Elimina
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+
+  // EMAIL VIEW COMPONENT
+  const EmailView = () => (
+    <div className="email-container">
+      <div className="email-header">
+        <h1>Email Marketing</h1>
+        <p>Campagne email automatiche e manuali</p>
+      </div>
+
+      <div className="email-stats-section">
+        <div className="email-stats-grid">
+          <div className="email-stat-card">
+            <div className="stat-icon">📧</div>
+            <div className="stat-content">
+              <div className="stat-number">{emailStats.sent}</div>
+              <div className="stat-label">Email Inviate</div>
             </div>
           </div>
-
-          <div className="admin-section">
-            <h3>📈 Top Clienti</h3>
-            <div className="top-customers">
-              {topCustomers.length > 0 ? (
-                topCustomers.map((customer, index) => (
-                  <div key={customer.id} className="customer-rank">
-                    <span>{index + 1}. {customer.name}</span>
-                    <span>{customer.points} punti</span>
-                  </div>
-                ))
-              ) : (
-                <div className="customer-rank">
-                  <span>Nessun cliente ancora</span>
-                  <span>0 punti</span>
-                </div>
-              )}
+          <div className="email-stat-card">
+            <div className="stat-icon">📖</div>
+            <div className="stat-content">
+              <div className="stat-number">{emailStats.opened}</div>
+              <div className="stat-label">Email Aperte</div>
             </div>
           </div>
         </div>
-      )}
+      </div>
+
+      <div className="email-automation-info">
+        <h3>✨ Email Automatiche Attive</h3>
+        <div className="automation-cards">
+          <div className="automation-card">
+            <div className="automation-icon">🎉</div>
+            <div className="automation-content">
+              <h4>Benvenuto</h4>
+              <p>Invio automatico alla creazione cliente con email</p>
+            </div>
+          </div>
+          <div className="automation-card">
+            <div className="automation-icon">
+              <span className="gemma-icon-small"></span>
+            </div>
+            <div className="automation-content">
+              <h4>50 GEMME</h4>
+              <p>Email "Congratulazioni" automatica</p>
+            </div>
+          </div>
+          <div className="automation-card">
+            <div className="automation-icon">⭐</div>
+            <div className="automation-content">
+              <h4>100 GEMME</h4>
+              <p>Email "Cliente VIP" automatica</p>
+            </div>
+          </div>
+          <div className="automation-card">
+            <div className="automation-icon">🚀</div>
+            <div className="automation-content">
+              <h4>150 GEMME</h4>
+              <p>Email "Incredibile" automatica</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="email-composer-section">
+        <h3>📝 Componi Email Manuale</h3>
+        <div className="email-composer">
+          <div className="composer-settings">
+            <div className="setting-row">
+              <label>Template:</label>
+              <select 
+                value={emailTemplate} 
+                onChange={(e) => setEmailTemplate(e.target.value)}
+              >
+                <option value="welcome">🎉 Benvenuto</option>
+                <option value="points">🔥 GEMME Raggiunte</option>
+                <option value="promo">🔥 Promozione</option>
+              </select>
+            </div>
+            
+            <div className="setting-row">
+              <label>Destinatari:</label>
+              <select 
+                value={emailRecipients} 
+                onChange={(e) => {
+                  setEmailRecipients(e.target.value)
+                  if (e.target.value === 'individual') {
+                    setShowIndividualSelection(true)
+                    loadAllCustomersForEmail()
+                  } else {
+                    setShowIndividualSelection(false)
+                  }
+                }}
+              >
+                <option value="all">Tutti i Clienti</option>
+                <option value="top">Top Clienti (50+ GEMME)</option>
+                <option value="active">Clienti Attivi</option>
+                <option value="inactive">Clienti Inattivi</option>
+                <option value="individual">🆕 Selezione Individuale</option>
+              </select>
+            </div>
+          </div>
+
+          {showIndividualSelection && (
+            <div className="individual-selection">
+              <h4>🎯 Seleziona Clienti Specifici</h4>
+              
+              <div className="selection-controls">
+                <button 
+                  onClick={toggleAllCustomers}
+                  className="btn-secondary"
+                >
+                  {selectedIndividualCustomers.length === allCustomersForEmail.length ? 'Deseleziona Tutti' : 'Seleziona Tutti'}
+                </button>
+                <span className="selection-count">
+                  {selectedIndividualCustomers.length} di {allCustomersForEmail.length} clienti selezionati
+                </span>
+              </div>
+              
+              <div className="customers-selection-list">
+                {allCustomersForEmail.map((customer) => (
+                  <div 
+                    key={customer.id}
+                    className={`customer-selection-item ${selectedIndividualCustomers.includes(customer.id) ? 'selected' : ''}`}
+                    onClick={() => toggleIndividualCustomer(customer.id)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIndividualCustomers.includes(customer.id)}
+                      onChange={() => toggleIndividualCustomer(customer.id)}
+                    />
+                    <div className="customer-selection-info">
+                      <strong>{customer.name}</strong>
+                      <span className="customer-points">
+                        <span className="gemma-icon-tiny"></span>{customer.points} GEMME
+                      </span>
+                      <small>{customer.email}</small>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="composer-inputs">
+            <input
+              type="text"
+              placeholder="Oggetto email..."
+              value={emailSubject}
+              onChange={(e) => setEmailSubject(e.target.value)}
+              className="subject-input"
+            />
+
+            <textarea
+              placeholder="Messaggio personalizzato (opzionale)..."
+              value={customMessage}
+              onChange={(e) => setCustomMessage(e.target.value)}
+              className="message-input"
+            />
+
+            <button onClick={sendEmail} className="btn-send-email">
+              📧 INVIA EMAIL
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  // ANALYTICS VIEW COMPONENT
+  const AnalyticsView = () => (
+    <div className="analytics-container">
+      <div className="analytics-header">
+        <h1>Analytics Avanzate</h1>
+        <p>Statistiche dettagliate e insights</p>
+      </div>
+
+      <div className="analytics-grid">
+        <div className="analytics-card">
+          <h3>📊 Statistiche Generali</h3>
+          <div className="analytics-stats">
+            <div className="analytics-stat">
+              <span className="stat-label">Clienti Totali</span>
+              <span className="stat-value">{topCustomers.length > 0 ? '5+' : '0'}</span>
+            </div>
+            <div className="analytics-stat">
+              <span className="stat-label">GEMME Totali</span>
+              <span className="stat-value">
+                <span className="gemma-icon-tiny"></span>
+                {topCustomers.reduce((sum, c) => sum + c.points, 0)}
+              </span>
+            </div>
+            <div className="analytics-stat">
+              <span className="stat-label">Premi Attivi</span>
+              <span className="stat-value">{prizes.length}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="analytics-card">
+          <h3>📈 Trend Oggi</h3>
+          <div className="trend-stats">
+            <div className="trend-item">
+              <span className="trend-label">Fatturato</span>
+              <span className="trend-value">€{todayStats.revenue.toFixed(2)}</span>
+              <span className="trend-change positive">+12%</span>
+            </div>
+            <div className="trend-item">
+              <span className="trend-label">GEMME Distribuite</span>
+              <span className="trend-value">
+                <span className="gemma-icon-tiny"></span>
+                {todayStats.points}
+              </span>
+              <span className="trend-change positive">+8%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  // SETTINGS VIEW COMPONENT
+  const SettingsView = () => (
+    <div className="settings-container">
+      <div className="settings-header">
+        <h1>Impostazioni Sistema</h1>
+        <p>Configurazione generale</p>
+      </div>
+
+      <div className="settings-section">
+        <h3>⚙️ Configurazione GEMME</h3>
+        <div className="settings-form">
+          <div className="setting-item">
+            <label>
+              <span className="gemma-icon-small"></span>
+              GEMME per ogni €1 speso:
+            </label>
+            <input 
+              type="number" 
+              value={settings.points_per_euro} 
+              onChange={(e) => setSettings({...settings, points_per_euro: parseInt(e.target.value)})}
+              min="1" 
+              max="10" 
+            />
+          </div>
+          <div className="setting-item">
+            <label>
+              <span className="gemma-icon-small"></span>
+              GEMME necessarie per premio base:
+            </label>
+            <input 
+              type="number" 
+              value={settings.points_for_prize} 
+              onChange={(e) => setSettings({...settings, points_for_prize: parseInt(e.target.value)})}
+              min="5" 
+              max="100" 
+            />
+          </div>
+          <button className="btn-primary" onClick={saveSettings}>
+            Salva Configurazione
+          </button>
+        </div>
+      </div>
+
+      <div className="settings-section">
+        <h3>📧 Configurazione Email</h3>
+        <div className="email-config">
+          <div className="config-info">
+            <p><strong>Service ID:</strong> {EMAIL_CONFIG.serviceId}</p>
+            <p><strong>Template ID:</strong> {EMAIL_CONFIG.templateId}</p>
+            <p><strong>Status:</strong> <span className="status-active">Attivo ✅</span></p>
+          </div>
+        </div>
+      </div>
+
+      <div className="settings-section">
+        <h3>🔄 Azioni Sistema</h3>
+        <div className="system-actions">
+          <button 
+            onClick={() => window.location.reload()}
+            className="btn-secondary"
+          >
+            🔄 Ricarica Dati
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="app-container">
+      <NotificationContainer />
+      
+      {/* SIDEBAR MENU */}
+      <div className="sidebar">
+        <div className="sidebar-header">
+          <img 
+            src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" 
+            alt="Sapori e Colori Logo" 
+            className="sidebar-logo"
+          />
+          <h2>Sapori & Colori</h2>
+          <p>Sistema <span className="gemma-icon-small"></span>GEMME</p>
+        </div>
+        
+        <nav className="sidebar-nav">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              className={`nav-item ${activeView === item.id ? 'active' : ''}`}
+              onClick={() => setActiveView(item.id)}
+            >
+              <span className="nav-icon">{item.icon}</span>
+              <div className="nav-content">
+                <span className="nav-title">{item.title}</span>
+                <span className="nav-description">{item.description}</span>
+              </div>
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* MAIN CONTENT */}
+      <div className="main-content">
+        {renderContent()}
+      </div>
     </div>
   )
 }
