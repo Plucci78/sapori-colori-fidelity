@@ -13,7 +13,13 @@ const NFCView = memo(({ showNotification }) => {
 
   // Carica dati all'avvio
   useEffect(() => {
-    showNotification('🎮 Modalità DEMO NFC attivata', 'info')
+    // Check se NFC è supportato
+    if ('NDEFReader' in window) {
+      showNotification('📱 NFC supportato! Puoi usare la modalità reale', 'info')
+    } else {
+      showNotification('🎮 NFC non supportato. Usa la modalità DEMO', 'warning')
+    }
+    
     loadCustomers()
     loadNFCTags()
     loadNFCLogs()
@@ -68,7 +74,16 @@ const NFCView = memo(({ showNotification }) => {
     }
   }
 
-  // Simula lettura NFC
+  // Controlla supporto NFC
+  const checkNFCSupport = () => {
+    if (!('NDEFReader' in window)) {
+      showNotification('❌ NFC non supportato su questo browser/dispositivo', 'error')
+      return false
+    }
+    return true
+  }
+
+  // Simula lettura NFC (DEMO MODE)
   const simulateNFCRead = () => {
     const tagId = 'NFC' + Date.now()
     setLastReadTag({ id: tagId, time: new Date() })
@@ -79,13 +94,87 @@ const NFCView = memo(({ showNotification }) => {
     showNotification(`🎮 Tag simulato: ${tagId}`, 'success')
   }
 
-  // Avvia simulazione
-  const startReading = () => {
+  // Avvia simulazione DEMO
+  const startDemoReading = () => {
     setIsReading(true)
     setTimeout(() => {
       simulateNFCRead()
       setIsReading(false)
     }, 2000)
+  }
+
+  // Lettura NFC REALE
+  const startRealNFCReading = async () => {
+    // Check supporto
+    if (!checkNFCSupport()) {
+      setIsDemoMode(true) // Forza modalità demo se non supportato
+      return
+    }
+    
+    // Check HTTPS
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      showNotification('❌ NFC richiede HTTPS! Usa la modalità DEMO per testare.', 'error')
+      return
+    }
+    
+    setIsReading(true)
+    
+    try {
+      const ndef = new NDEFReader()
+      
+      // Richiede permessi e inizia scansione
+      await ndef.scan()
+      
+      showNotification('📱 Avvicina il tag NFC al telefono...', 'info')
+      
+      // Vibrazione feedback
+      if ('vibrate' in navigator) {
+        navigator.vibrate(100)
+      }
+      
+      // Listener per lettura tag
+      ndef.addEventListener("reading", ({ message, serialNumber }) => {
+        console.log('Tag letto:', serialNumber)
+        
+        // Vibrazione successo
+        if ('vibrate' in navigator) {
+          navigator.vibrate([100, 50, 100])
+        }
+        
+        // Rimuovi i : dal serial number
+        const tagId = serialNumber.replace(/:/g, '').toUpperCase()
+        
+        setLastReadTag({ 
+          id: tagId, 
+          time: new Date() 
+        })
+        
+        setIsReading(false)
+        
+        // Salva log
+        saveLog(tagId, 'read')
+        
+        showNotification(`✅ Tag NFC letto: ${tagId}`, 'success')
+      })
+      
+      // Listener per errori
+      ndef.addEventListener("readingerror", () => {
+        showNotification('❌ Errore nella lettura del tag', 'error')
+        setIsReading(false)
+      })
+      
+    } catch (error) {
+      setIsReading(false)
+      
+      if (error.name === 'NotAllowedError') {
+        showNotification('❌ Permesso NFC negato! Abilita NFC nelle impostazioni del browser.', 'error')
+      } else if (error.name === 'NotSupportedError') {
+        showNotification('❌ NFC non supportato su questo dispositivo', 'error')
+        setIsDemoMode(true)
+      } else {
+        showNotification(`❌ Errore: ${error.message}`, 'error')
+      }
+    }
   }
 
   // Salva log nel database
@@ -96,6 +185,7 @@ const NFCView = memo(({ showNotification }) => {
         .insert([{
           tag_id: tagId,
           action_type: action,
+          is_demo: isDemoMode,
           created_at: new Date().toISOString()
         }])
       
@@ -123,6 +213,7 @@ const NFCView = memo(({ showNotification }) => {
           customer_id: selectedCustomer.id,
           tag_name: tagName || `Tag ${selectedCustomer.name}`,
           is_active: true,
+          is_demo: isDemoMode,
           created_at: new Date().toISOString()
         }])
 
@@ -152,30 +243,57 @@ const NFCView = memo(({ showNotification }) => {
 
       {/* Status */}
       <div className="nfc-status-section">
-        <div className="nfc-status-card supported">
-          <div className="status-icon">🎮</div>
+        <div className={`nfc-status-card ${isDemoMode ? 'demo' : 'supported'}`}>
+          <div className="status-icon">{isDemoMode ? '🎮' : '📱'}</div>
           <div className="status-content">
-            <h3>Modalità DEMO Attiva</h3>
-            <p>Simulazione completa delle funzionalità NFC</p>
+            <h3>{isDemoMode ? 'Modalità DEMO Attiva' : 'NFC Reale Attivo'}</h3>
+            <p>{isDemoMode ? 'Simulazione completa delle funzionalità NFC' : 'Lettura tag NFC reali abilitata'}</p>
           </div>
         </div>
       </div>
 
       {/* Lettore */}
       <div className="nfc-reader-section">
-        <h3>📡 Lettore NFC (DEMO)</h3>
+        <h3>📡 Lettore NFC</h3>
+        
+        {/* Toggle Modalità */}
+        <div className="mode-toggle">
+          <label className="toggle-label">
+            <input
+              type="checkbox"
+              checked={!isDemoMode}
+              onChange={(e) => setIsDemoMode(!e.target.checked)}
+              disabled={!('NDEFReader' in window)}
+            />
+            <span className="toggle-slider"></span>
+            <span className="toggle-text">
+              {isDemoMode ? '🎮 Modalità DEMO' : '📱 NFC Reale'}
+            </span>
+          </label>
+        </div>
+        
         <div className="nfc-reader-controls">
-          <button 
-            onClick={startReading}
-            className={`btn-nfc-read ${isReading ? 'reading' : ''}`}
-            disabled={isReading}
-          >
-            {isReading ? '🔄 Lettura in corso...' : '🎮 Simula Lettura NFC'}
-          </button>
+          {isDemoMode ? (
+            <button 
+              onClick={startDemoReading}
+              className={`btn-nfc-read ${isReading ? 'reading' : ''}`}
+              disabled={isReading}
+            >
+              {isReading ? '🔄 Simulazione in corso...' : '🎮 Simula Lettura NFC'}
+            </button>
+          ) : (
+            <button 
+              onClick={startRealNFCReading}
+              className={`btn-nfc-read ${isReading ? 'reading' : ''}`}
+              disabled={isReading}
+            >
+              {isReading ? '📡 Scansione NFC attiva...' : '📱 Avvia Lettura NFC'}
+            </button>
+          )}
           
           {lastReadTag && (
             <div className="last-read-tag">
-              <h4>🏷️ Ultimo Tag Letto (SIMULATO):</h4>
+              <h4>🏷️ Ultimo Tag Letto {isDemoMode ? '(SIMULATO)' : ''}:</h4>
               <p><strong>ID:</strong> {lastReadTag.id}</p>
               <p><strong>Ora:</strong> {lastReadTag.time.toLocaleTimeString()}</p>
             </div>
@@ -234,6 +352,7 @@ const NFCView = memo(({ showNotification }) => {
                       <span className="gemma-icon-small"></span>
                       {customer?.points || 0} GEMME
                     </div>
+                    {tag.is_demo && <span className="demo-badge">🎮 DEMO</span>}
                   </div>
                 </div>
               )
@@ -242,7 +361,7 @@ const NFCView = memo(({ showNotification }) => {
         ) : (
           <div className="empty-state">
             <p>Nessun tag NFC associato</p>
-            <p>💡 Usa il simulatore per testare!</p>
+            <p>💡 {isDemoMode ? 'Usa il simulatore per testare!' : 'Leggi un tag NFC per iniziare!'}</p>
           </div>
         )}
       </div>
@@ -258,7 +377,7 @@ const NFCView = memo(({ showNotification }) => {
                   <span className="log-action">{log.action_type}</span>
                   <span className="log-tag">Tag: {log.tag_id}</span>
                   <span className="log-time">{new Date(log.created_at).toLocaleString()}</span>
-                  <span className="demo-badge">🎮 DEMO</span>
+                  {log.is_demo && <span className="demo-badge">🎮 DEMO</span>}
                 </div>
               </div>
             ))}
@@ -266,10 +385,82 @@ const NFCView = memo(({ showNotification }) => {
         ) : (
           <div className="empty-state">
             <p>Nessuna attività registrata</p>
-            <p>💡 Prova il simulatore!</p>
+            <p>💡 {isDemoMode ? 'Prova il simulatore!' : 'Leggi un tag per iniziare!'}</p>
           </div>
         )}
       </div>
+
+      <style jsx>{`
+        .mode-toggle {
+          margin: 20px 0;
+          display: flex;
+          justify-content: center;
+        }
+
+        .toggle-label {
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          gap: 10px;
+        }
+
+        .toggle-slider {
+          width: 50px;
+          height: 25px;
+          background: #ccc;
+          border-radius: 25px;
+          position: relative;
+          transition: 0.3s;
+        }
+
+        .toggle-slider::after {
+          content: '';
+          position: absolute;
+          width: 20px;
+          height: 20px;
+          background: white;
+          border-radius: 50%;
+          top: 2.5px;
+          left: 2.5px;
+          transition: 0.3s;
+        }
+
+        input[type="checkbox"]:checked + .toggle-slider {
+          background: #dc2626;
+        }
+
+        input[type="checkbox"]:checked + .toggle-slider::after {
+          transform: translateX(25px);
+        }
+
+        input[type="checkbox"] {
+          display: none;
+        }
+
+        input[type="checkbox"]:disabled + .toggle-slider {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .toggle-text {
+          font-weight: 600;
+          color: #333;
+        }
+
+        .nfc-status-card.demo {
+          background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        }
+
+        .btn-nfc-read.reading {
+          animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.7; }
+          100% { opacity: 1; }
+        }
+      `}</style>
     </div>
   )
 })
