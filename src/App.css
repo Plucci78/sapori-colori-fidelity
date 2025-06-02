@@ -536,6 +536,31 @@ body {
   margin-bottom: 30px;
 }
 
+.search-section {
+  margin-bottom: 20px;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.close-search-button {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.close-search-button:hover {
+  opacity: 1;
+}
+
 .customer-detail-card {
   background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(184, 101, 31, 0.1));
   border: 2px solid rgba(220, 38, 38, 0.2);
@@ -642,12 +667,20 @@ body {
 
 .amount-input {
   display: flex;
-  gap: 15px;
-  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.input-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.input-wrapper input {
+  width: 100%;
 }
 
 .amount-input input {
-  flex: 1;
   padding: 16px 20px;
   border: 2px solid rgba(72, 187, 120, 0.2);
   border-radius: 12px;
