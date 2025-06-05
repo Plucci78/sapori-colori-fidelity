@@ -1,10 +1,14 @@
 import { memo } from 'react'
 
 const AnalyticsView = memo(({ todayStats, topCustomers, prizes }) => (
-  <div className="analytics-container">
-    <div className="analytics-header">
-      <h1>Analytics Avanzate</h1>
-      <p>Statistiche dettagliate e insights</p>
+  <div className="p-6">
+    {/* Dashboard Header */}
+    <div className="dashboard-header flex items-center gap-4 mb-8 p-6 rounded-xl bg-gradient-to-r from-blue-100 to-cyan-100 shadow">
+      <div className="text-5xl">📊</div>
+      <div>
+        <h1 className="text-3xl font-extrabold text-brand mb-1">Analytics Avanzate</h1>
+        <p className="text-secondary">Statistiche dettagliate e insights</p>
+      </div>
     </div>
 
     <div className="analytics-grid">

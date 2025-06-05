@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, memo } from 'react'
 import { supabase } from './supabase'
 import emailjs from '@emailjs/browser'
 import './App.css'
+
+// Import dei componenti
 import NotificationContainer from './components/Common/NotificationContainer'
 import DashboardView from './components/Dashboard/DashboardView'
 import CustomerView from './components/Customers/CustomerView'
@@ -11,10 +13,24 @@ import AnalyticsView from './components/Analytics/AnalyticsView'
 import SettingsView from './components/Settings/SettingsView'
 import NFCView from './components/NFC/NFCView'
 
-
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [allCustomers, setAllCustomers] = useState([]) // <-- AGGIUNTO
   const [customers, setCustomers] = useState([])
+
+  useEffect(() => {
+    // Carica tutti i clienti solo una volta all'avvio
+    const loadAllCustomers = async () => {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+      if (data) {
+        setAllCustomers(data)      // <-- AGGIUNTO
+        setCustomers(data)         // <-- Mostra tutti i clienti di default
+      }
+    }
+    loadAllCustomers()
+  }, [])
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [newCustomerName, setNewCustomerName] = useState('')
@@ -22,7 +38,7 @@ function App() {
   const [newCustomerEmail, setNewCustomerEmail] = useState('')
   const [transactionAmount, setTransactionAmount] = useState('')
   const [settings, setSettings] = useState({ points_per_euro: 1, points_for_prize: 10 })
-  const [activeView, setActiveView] = useState('customer')
+  const [activeView, setActiveView] = useState('dashboard')
 
   // Stati per gestione manuale punti
   const [manualCustomerName, setManualCustomerName] = useState('')
@@ -51,7 +67,7 @@ function App() {
   const [customMessage, setCustomMessage] = useState('')
   const [emailStats, setEmailStats] = useState({ sent: 0, opened: 0 })
 
-  // TODO 3: Stati per selezione clienti individuali
+  // Stati per selezione clienti individuali
   const [selectedIndividualCustomers, setSelectedIndividualCustomers] = useState([])
   const [showIndividualSelection, setShowIndividualSelection] = useState(false)
   const [allCustomersForEmail, setAllCustomersForEmail] = useState([])
@@ -81,7 +97,86 @@ function App() {
     }, 4000)
   }, [])
 
-  // TODO 4: Funzione per salvare statistiche email nel database
+  // [... RESTO DELLE FUNZIONI ESISTENTI ...]
+  // (Le funzioni email, database, etc. rimangono identiche)
+
+  // MENU ITEMS CONFIGURATION - ICONE SVG PROFESSIONALI
+  const menuItems = [
+    {
+      id: 'dashboard',
+      title: 'Dashboard',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      ),
+      description: 'Panoramica generale'
+    },
+    {
+      id: 'customer',
+      title: 'Clienti',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+      description: 'Gestione clienti e vendite'
+    },
+    {
+      id: 'prizes',
+      title: 'Premi',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      ),
+      description: 'Catalogo premi'
+    },
+    {
+      id: 'email',
+      title: 'Email Marketing',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+        </svg>
+      ),
+      description: 'Campagne email'
+    },
+    {
+      id: 'analytics',
+      title: 'Analytics',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      ),
+      description: 'Statistiche avanzate'
+    },
+    {
+      id: 'nfc',
+      title: 'NFC',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+      ),
+      description: 'Gestione tag NFC'
+    },
+    {
+      id: 'settings',
+      title: 'Impostazioni',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
+      description: 'Configurazione sistema'
+    }
+  ]
+
+  // [... RESTO DELLE FUNZIONI BUSINESS LOGIC ...]
+  // Funzione per salvare statistiche email nel database
   const saveEmailLog = useCallback(async (emailType, recipients, subject, status) => {
     try {
       const { data, error } = await supabase
@@ -102,18 +197,21 @@ function App() {
     }
   }, [])
 
-  // TODO 4: Carica statistiche email dal database
+  // Carica statistiche email dal database
   const loadEmailStats = useCallback(async () => {
     try {
+      const today = new Date().toISOString().split('T')[0]
       const { data, error } = await supabase
         .from('email_logs')
         .select('*')
+        .gte('sent_at', today + 'T00:00:00')
+        .lte('sent_at', today + 'T23:59:59')
 
       if (data) {
         const totalSent = data.reduce((sum, log) => sum + log.recipients_count, 0)
         setEmailStats({
           sent: totalSent,
-          opened: 0
+          opened: 0 // vedi sotto per il tasso di apertura
         })
       }
     } catch (error) {
@@ -125,12 +223,12 @@ function App() {
   const getEmailTemplate = useCallback((type, customerName, customMsg = '') => {
     const templates = {
       welcome: {
-        subject: `Benvenuto in Sapori & Colori, ${customerName}! 🍞`,
+        subject: `Benvenuto in Sapori & Colori, ${customerName}!`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);">
             <div style="padding: 40px; text-align: center;">
               <img src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" alt="Sapori & Colori" style="max-width: 200px; margin-bottom: 20px;">
-              <h1 style="color: white; margin: 0; font-size: 28px;">Benvenuto ${customerName}! 🎉</h1>
+              <h1 style="color: white; margin: 0; font-size: 28px;">Benvenuto ${customerName}!</h1>
             </div>
             <div style="background: white; padding: 40px; margin: 0 20px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
               <h2 style="color: #333; text-align: center; margin-bottom: 20px;">Il tuo viaggio nei sapori inizia qui!</h2>
@@ -140,13 +238,13 @@ function App() {
               <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h3 style="color: #ff7e5f; margin-top: 0;">Come funziona:</h3>
                 <ul style="color: #666; line-height: 1.8;">
-                  <li>🛍️ <strong>1€ speso = 1 GEMMA guadagnata</strong></li>
-                  <li>🎁 <strong>Accumula GEMME e riscatta premi esclusivi</strong></li>
-                  <li>✨ <strong>Offerte speciali riservate ai membri VIP</strong></li>
+                  <li><strong>1€ speso = 1 GEMMA guadagnata</strong></li>
+                  <li><strong>Accumula GEMME e riscatta premi esclusivi</strong></li>
+                  <li><strong>Offerte speciali riservate ai membri VIP</strong></li>
                 </ul>
               </div>
               <div style="text-align: center; margin: 30px 0;">
-                <a href="#" style="background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">Vieni a trovarci! 🏪</a>
+                <a href="#" style="background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">Vieni a trovarci!</a>
               </div>
               <p style="color: #999; font-size: 14px; text-align: center;">
                 Ti aspettiamo per la tua prima visita!<br>
@@ -157,11 +255,11 @@ function App() {
         `
       },
       points: {
-        subject: `Hai raggiunto ${customMsg} GEMME! 🔥`,
+        subject: `Hai raggiunto ${customMsg} GEMME!`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);">
             <div style="padding: 40px; text-align: center;">
-              <h1 style="color: white; margin: 0; font-size: 28px;">Congratulazioni ${customerName}! 🎉</h1>
+              <h1 style="color: white; margin: 0; font-size: 28px;">Congratulazioni ${customerName}!</h1>
               <p style="color: #fecaca; font-size: 18px;">Hai raggiunto ${customMsg} GEMME fedeltà!</p>
             </div>
             <div style="background: white; padding: 40px; margin: 0 20px; border-radius: 10px;">
@@ -170,7 +268,7 @@ function App() {
                   ${customMsg}
                 </div>
               </div>
-              <h2 style="color: #333; text-align: center;">Le tue GEMME crescono! 📈</h2>
+              <h2 style="color: #333; text-align: center;">Le tue GEMME crescono!</h2>
               <p style="color: #666; text-align: center; font-size: 16px;">
                 Continua così! Sei sempre più vicino ai nostri premi esclusivi.
               </p>
@@ -179,11 +277,11 @@ function App() {
         `
       },
       promo: {
-        subject: `Offerta Speciale per te, ${customerName}! 🔥`,
+        subject: `Offerta Speciale per te, ${customerName}!`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
             <div style="padding: 40px; text-align: center;">
-              <h1 style="color: white; margin: 0; font-size: 32px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">🔥 OFFERTA SPECIALE 🔥</h1>
+              <h1 style="color: white; margin: 0; font-size: 32px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">OFFERTA SPECIALE</h1>
               <p style="color: white; font-size: 20px; margin: 10px 0;">Solo per te, ${customerName}!</p>
             </div>
             <div style="background: white; padding: 40px; margin: 0 20px; border-radius: 10px;">
@@ -197,7 +295,7 @@ function App() {
                 ${customMessage || 'Approfitta di questa offerta esclusiva valida fino alla fine del mese!'}
               </p>
               <div style="text-align: center; margin: 30px 0;">
-                <a href="#" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 18px; display: inline-block;">Vieni ora! 🏃‍♂️</a>
+                <a href="#" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 18px; display: inline-block;">Vieni ora!</a>
               </div>
             </div>
           </div>
@@ -207,7 +305,7 @@ function App() {
     return templates[type]
   }, [customMessage])
 
-  // TODO 1: Funzione automatica per email di benvenuto
+  // Funzione automatica per email di benvenuto
   const sendWelcomeEmail = useCallback(async (customer) => {
     if (!customer.email) return
 
@@ -230,14 +328,14 @@ function App() {
       )
 
       await saveEmailLog('welcome', [customer], template.subject, 'sent')
-      showNotification(`📧 Email di benvenuto inviata a ${customer.name}!`, 'success')
+      showNotification(`Email di benvenuto inviata a ${customer.name}!`, 'success')
     } catch (error) {
       console.error('Errore invio email benvenuto:', error)
       await saveEmailLog('welcome', [customer], 'Benvenuto', 'failed')
     }
   }, [getEmailTemplate, saveEmailLog, showNotification, EMAIL_CONFIG])
 
-  // TODO 2: Funzione automatica per email milestone gemme
+  // Funzione automatica per email milestone gemme
   const sendPointsMilestoneEmail = useCallback(async (customer, points) => {
     if (!customer.email) return
 
@@ -246,13 +344,13 @@ function App() {
 
     if (points === 50) {
       milestoneReached = '50'
-      emailTitle = 'Congratulazioni! 🎉'
+      emailTitle = 'Congratulazioni!'
     } else if (points === 100) {
       milestoneReached = '100'
-      emailTitle = 'Cliente VIP! ⭐'
+      emailTitle = 'Cliente VIP!'
     } else if (points === 150) {
       milestoneReached = '150'
-      emailTitle = 'Incredibile! 🚀'
+      emailTitle = 'Incredibile!'
     }
 
     if (!milestoneReached) return
@@ -365,7 +463,7 @@ function App() {
     }
   }, [])
 
-  // TODO 3: Carica tutti i clienti per selezione individuale
+  // Carica tutti i clienti per selezione individuale
   const loadAllCustomersForEmail = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -382,7 +480,7 @@ function App() {
     }
   }, [])
 
-  // TODO 3: Toggle selezione cliente individuale
+  // Toggle selezione cliente individuale
   const toggleIndividualCustomer = useCallback((customerId) => {
     setSelectedIndividualCustomers(prev => {
       if (prev.includes(customerId)) {
@@ -393,7 +491,7 @@ function App() {
     })
   }, [])
 
-  // TODO 3: Seleziona/Deseleziona tutti i clienti
+  // Seleziona/Deseleziona tutti i clienti
   const toggleAllCustomers = useCallback(() => {
     if (selectedIndividualCustomers.length === allCustomersForEmail.length) {
       setSelectedIndividualCustomers([])
@@ -402,9 +500,9 @@ function App() {
     }
   }, [selectedIndividualCustomers.length, allCustomersForEmail])
 
-  // TODO 3: Funzione invio email AGGIORNATA con selezione individuale
-  const sendEmail = useCallback(async () => {
-    if (!emailSubject) {
+  // Funzione invio email AGGIORNATA con selezione individuale
+  const sendEmail = useCallback(async ({ subject, content, template }) => {
+    if (!subject.trim()) {
       showNotification('Inserisci l\'oggetto dell\'email', 'error')
       return
     }
@@ -448,13 +546,28 @@ function App() {
       let successCount = 0
       const emailPromises = recipients.map(async (customer) => {
         try {
-          const template = getEmailTemplate(emailTemplate, customer.name, customMessage)
+          // Sostituzione variabili nel subject e nel content
+          let personalizedSubject = subject
+            .replace(/{{nome}}/g, customer.name)
+            .replace(/{{gemme}}/g, customer.points)
+            .replace(/{{email}}/g, customer.email)
+            .replace(/{{telefono}}/g, customer.phone || '')
+            .replace(/{{negozio}}/g, 'Sapori & Colori')
+            .replace(/{{data}}/g, new Date().toLocaleDateString('it-IT'))
+
+          let personalizedContent = content
+            .replace(/{{nome}}/g, customer.name)
+            .replace(/{{gemme}}/g, customer.points)
+            .replace(/{{email}}/g, customer.email)
+            .replace(/{{telefono}}/g, customer.phone || '')
+            .replace(/{{negozio}}/g, 'Sapori & Colori')
+            .replace(/{{data}}/g, new Date().toLocaleDateString('it-IT'))
 
           const templateParams = {
             to_name: customer.name,
             to_email: customer.email,
-            subject: emailSubject || template.subject,
-            message_html: template.html,
+            subject: personalizedSubject,
+            message_html: personalizedContent,
             reply_to: 'saporiecolori.b@gmail.com'
           }
 
@@ -475,13 +588,13 @@ function App() {
 
       await Promise.all(emailPromises)
 
-      await saveEmailLog(emailTemplate, recipients, emailSubject, 'sent')
+      await saveEmailLog(emailTemplate, recipients, subject, 'sent')
       await loadEmailStats()
 
       if (successCount === recipients.length) {
-        showNotification(`🎉 Tutte le ${successCount} email inviate con successo!`, 'success')
+        showNotification(`Tutte le ${successCount} email inviate con successo!`, 'success')
       } else {
-        showNotification(`⚠️ ${successCount}/${recipients.length} email inviate correttamente`, 'info')
+        showNotification(`${successCount}/${recipients.length} email inviate correttamente`, 'info')
       }
 
       setEmailSubject('')
@@ -490,10 +603,18 @@ function App() {
 
     } catch (error) {
       console.log('Errore invio email:', error)
-      await saveEmailLog(emailTemplate, [], emailSubject, 'failed')
+      await saveEmailLog(emailTemplate, [], subject, 'failed')
       showNotification('Errore nell\'invio delle email', 'error')
     }
-  }, [emailSubject, emailRecipients, selectedIndividualCustomers, allCustomersForEmail, emailTemplate, customMessage, getEmailTemplate, saveEmailLog, loadEmailStats, showNotification, EMAIL_CONFIG])
+  }, [
+    emailRecipients,
+    selectedIndividualCustomers,
+    allCustomersForEmail,
+    saveEmailLog,
+    loadEmailStats,
+    showNotification,
+    EMAIL_CONFIG
+  ])
 
   const searchCustomersForManual = useCallback(async (searchName) => {
     if (searchName.length < 2) {
@@ -516,7 +637,7 @@ function App() {
     }
   }, [])
 
-  // TODO 2: Modifica punti manualmente CON email automatica milestone
+  // Modifica punti manualmente CON email automatica milestone
   const modifyPoints = useCallback(async (customer, pointsToAdd) => {
     const points = parseInt(pointsToAdd)
     if (isNaN(points) || points === 0) {
@@ -602,7 +723,7 @@ function App() {
         setNewPrizeName('')
         setNewPrizeDescription('')
         setNewPrizeCost('')
-        showNotification('Premio aggiunto con successo! 🎁')
+        showNotification('Premio aggiunto con successo!')
       }
     } catch (error) {
       console.log('Errore aggiunta premio:', error)
@@ -631,7 +752,7 @@ function App() {
 
   const searchCustomers = useCallback(async () => {
     if (searchTerm.length < 2) {
-      setCustomers([])
+      setCustomers(allCustomers) // <-- Mostra tutti i clienti se la ricerca è vuota
       return
     }
 
@@ -646,13 +767,13 @@ function App() {
     } catch (error) {
       console.log('Errore ricerca:', error)
     }
-  }, [searchTerm])
+  }, [searchTerm, allCustomers]) // <-- AGGIUNTO allCustomers tra le dipendenze
 
   useEffect(() => {
     searchCustomers()
   }, [searchCustomers])
 
-  // TODO 1: Crea nuovo cliente CON email benvenuto automatica
+  // Crea nuovo cliente CON email benvenuto automatica
   const createCustomer = useCallback(async () => {
     if (!newCustomerName || !newCustomerPhone) {
       showNotification('Inserisci nome e telefono', 'error')
@@ -681,12 +802,12 @@ function App() {
         setNewCustomerPhone('')
         setNewCustomerEmail('')
 
-        // TODO 1: Invia email di benvenuto automatica
+        // Invia email di benvenuto automatica
         if (data[0].email) {
           await sendWelcomeEmail(data[0])
         }
 
-        showNotification(`Cliente ${data[0].name} creato con successo! 👤`)
+        showNotification(`Cliente ${data[0].name} creato con successo!`)
       }
       loadTodayStats()
     } catch (error) {
@@ -695,7 +816,7 @@ function App() {
     }
   }, [newCustomerName, newCustomerPhone, newCustomerEmail, sendWelcomeEmail, loadTodayStats, showNotification])
 
-  // TODO 2: Aggiungi transazione CON email automatica milestone
+  // Aggiungi transazione CON email automatica milestone
   const addTransaction = useCallback(async () => {
     if (!selectedCustomer || !transactionAmount) return
 
@@ -718,14 +839,14 @@ function App() {
         .update({ points: newPoints })
         .eq('id', selectedCustomer.id)
 
-      // TODO 2: Controlla milestone email automatiche
+      // Controlla milestone email automatiche
       if (pointsEarned > 0 && (newPoints === 50 || newPoints === 100 || newPoints === 150)) {
         await sendPointsMilestoneEmail(selectedCustomer, newPoints)
       }
 
       setSelectedCustomer({ ...selectedCustomer, points: newPoints })
       setTransactionAmount('')
-      showNotification(`+${pointsEarned} GEMME guadagnate! 🔥`)
+      showNotification(`+${pointsEarned} GEMME guadagnate!`)
       loadTodayStats()
     } catch (error) {
       console.log('Errore transazione:', error)
@@ -753,59 +874,13 @@ function App() {
         .eq('id', selectedCustomer.id)
 
       setSelectedCustomer({ ...selectedCustomer, points: newPoints })
-      showNotification(`${prize.name} riscattato con successo! 🎉`)
+      showNotification(`${prize.name} riscattato con successo!`)
       loadTodayStats()
     } catch (error) {
       console.log('Errore riscatto:', error)
       showNotification('Errore nel riscatto del premio', 'error')
     }
   }, [selectedCustomer, loadTodayStats, showNotification])
-
-  // MENU ITEMS CONFIGURATION
-  const menuItems = [
-    {
-      id: 'dashboard',
-      title: 'Dashboard',
-      icon: '📊',
-      description: 'Panoramica generale'
-    },
-    {
-      id: 'customer',
-      title: 'Clienti',
-      icon: '👥',
-      description: 'Gestione clienti e vendite'
-    },
-    {
-      id: 'prizes',
-      title: 'Premi',
-      icon: '🎁',
-      description: 'Catalogo premi'
-    },
-    {
-      id: 'email',
-      title: 'Email Marketing',
-      icon: '📧',
-      description: 'Campagne email'
-    },
-    {
-      id: 'analytics',
-      title: 'Analytics',
-      icon: '📈',
-      description: 'Statistiche avanzate'
-    },
-    {
-      id: 'nfc',
-      title: 'NFC',
-      icon: '📱',
-      description: 'Gestione tag NFC'
-    },
-    {
-      id: 'settings',
-      title: 'Impostazioni',
-      icon: '⚙️',
-      description: 'Configurazione sistema'
-    }
-  ]
 
   // RENDER CONTENT BASED ON ACTIVE VIEW
   const renderContent = () => {
@@ -842,6 +917,7 @@ function App() {
           manualPoints={manualPoints}
           setManualPoints={setManualPoints}
           modifyPoints={modifyPoints}
+          showNotification={showNotification}
         />
       case 'prizes':
         return <PrizesView
@@ -874,6 +950,9 @@ function App() {
           customMessage={customMessage}
           setCustomMessage={setCustomMessage}
           sendEmail={sendEmail}
+          showNotification={showNotification}
+          supabase={supabase}
+          customers={allCustomers} // <-- PASSA allCustomers QUI!
         />
       case 'analytics':
         return <AnalyticsView
@@ -912,10 +991,10 @@ function App() {
         onClick={() => setSidebarOpen(!sidebarOpen)}
         aria-label="Apri menu"
       >
-        <span className="hamburger-icon">&#9776;</span>
+        <span className="hamburger-icon">☰</span>
       </button>
 
-      {/* SIDEBAR MENU */}
+      {/* SIDEBAR MENU CON ICONE SVG PROFESSIONALI */}
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <img
@@ -924,7 +1003,7 @@ function App() {
             className="sidebar-logo"
           />
           <h2>Sapori & Colori</h2>
-          <p>Sistema <span className="gemma-icon-small"></span>GEMME</p>
+          <p>Sistema GEMME</p>
         </div>
 
         <nav className="sidebar-nav">
