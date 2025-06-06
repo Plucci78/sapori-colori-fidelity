@@ -5,16 +5,13 @@ const EmailView = memo(({
   loadAllCustomersForEmail,
   sendEmail,
   showNotification,
-  customers,
-  emailSubject,        // <-- AGGIUNTO
-  setEmailSubject,     // <-- AGGIUNTO
-  // ...altre props se servono
+  customers
 }) => {
   // Stati locali per l'editor professionale
   const [activePanel, setActivePanel] = useState('templates')
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [emailContent, setEmailContent] = useState('')
-  // const [emailSubject, setEmailSubject] = useState('') // <-- RIMOSSO!
+  const [emailSubject, setEmailSubject] = useState('')
   const [previewDevice, setPreviewDevice] = useState('desktop')
   const [isScheduled, setIsScheduled] = useState(false)
   const [scheduleDate, setScheduleDate] = useState('')
@@ -23,7 +20,6 @@ const EmailView = memo(({
   const [isTesting, setIsTesting] = useState(false)
   const [savedTemplates, setSavedTemplates] = useState([])
   const [isEditorReady, setIsEditorReady] = useState(false)
-  const [editorBg, setEditorBg] = useState('#f8f4f0') // colore di default
   const editorRef = useRef(null)
 
   // Template professionali predefiniti
@@ -61,7 +57,7 @@ const EmailView = memo(({
       id: 'milestone',
       name: 'Traguardo GEMME',
       category: 'engagement',
-      icon: 'award',
+      icon: 'trophy',
       thumbnail: '/template-milestone.png',
       subject: 'Congratulazioni {{nome}}! Hai raggiunto {{gemme}} GEMME!',
       content: `
@@ -112,24 +108,19 @@ const EmailView = memo(({
   ]
 
   // Segmenti cliente predefiniti
-
-  const safeCustomers = customers || [];
-
   const segments = [
-    { id: 'all', name: 'Tutti i clienti', icon: 'users', count: safeCustomers.length },
-    { id: 'vip', name: 'VIP (100+ GEMME)', icon: 'star', count: safeCustomers.filter(c => c.points >= 100).length },
-    { id: 'active', name: 'Attivi (ultimi 30gg)', icon: 'activity', count: safeCustomers.filter(c => c.points > 0).length },
-    {
-      id: 'new', name: 'Nuovi (ultimi 7gg)', icon: 'user-check', count: safeCustomers.filter(c => {
-        const created = new Date(c.created_at)
-        const weekAgo = new Date()
-        weekAgo.setDate(weekAgo.getDate() - 7)
-        return created > weekAgo
-      }).length
-    },
-    { id: 'inactive', name: 'Inattivi', icon: 'user-x', count: safeCustomers.filter(c => c.points === 0).length },
+    { id: 'all', name: 'Tutti i clienti', icon: 'user-round', count: customers?.length || 0 },
+    { id: 'vip', name: 'VIP (100+ GEMME)', icon: 'star', count: customers?.filter(c => c.points >= 100).length || 0 },
+    { id: 'active', name: 'Attivi (ultimi 30gg)', icon: 'activity', count: customers?.filter(c => c.points > 0).length || 0 },
+    { id: 'new', name: 'Nuovi (ultimi 7gg)', icon: 'user-check', count: customers?.filter(c => {
+      const created = new Date(c.created_at)
+      const weekAgo = new Date()
+      weekAgo.setDate(weekAgo.getDate() - 7)
+      return created > weekAgo
+    }).length || 0 },
+    { id: 'inactive', name: 'Inattivi', icon: 'user-x', count: customers?.filter(c => c.points === 0).length || 0 },
     { id: 'birthday', name: 'Compleanno questo mese', icon: 'gift', count: 0 },
-  ];
+  ]
 
   // Variabili disponibili
   const variables = [
@@ -141,9 +132,15 @@ const EmailView = memo(({
     { key: 'negozio', label: 'Nome Negozio', icon: 'home' },
   ]
 
-  // Inizializza TinyMCE
+  // Inizializza TinyMCE e Lucide Icons
   useEffect(() => {
-    if (window.tinymce && editorRef.current) {
+    // Inizializza Lucide Icons
+    if (window.lucide) {
+      window.lucide.createIcons()
+    }
+    
+    // Inizializza TinyMCE
+    if (window.tinymce && editorRef.current && !isEditorReady) {
       window.tinymce.init({
         target: editorRef.current,
         height: 500,
@@ -153,13 +150,15 @@ const EmailView = memo(({
           'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
           'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
         ],
-        toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | image | removeformat | help',
-        content_style: `body { font-family:Helvetica,Arial,sans-serif; font-size:14px; background: ${editorBg}; }`,
+        toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
         setup: (editor) => {
           editor.on('change', () => {
             setEmailContent(editor.getContent())
           })
         }
+      }).then(() => {
+        setIsEditorReady(true)
       })
     }
 
@@ -168,7 +167,14 @@ const EmailView = memo(({
         window.tinymce.remove()
       }
     }
-  }, [editorBg])
+  }, [])
+
+  // Re-inizializza Lucide Icons quando cambiano i componenti
+  useEffect(() => {
+    if (window.lucide) {
+      setTimeout(() => window.lucide.createIcons(), 100)
+    }
+  }, [activePanel, selectedTemplate, selectedSegments])
 
   // Inserisci variabile nell'editor
   const insertVariable = (variable) => {
@@ -189,8 +195,8 @@ const EmailView = memo(({
 
   // Toggle selezione segmento
   const toggleSegment = (segmentId) => {
-    setSelectedSegments(prev =>
-      prev.includes(segmentId)
+    setSelectedSegments(prev => 
+      prev.includes(segmentId) 
         ? prev.filter(id => id !== segmentId)
         : [...prev, segmentId]
     )
@@ -210,12 +216,26 @@ const EmailView = memo(({
 
   // Invia email test
   const sendTestEmail = async () => {
+    if (!emailSubject || !emailContent) {
+      showNotification('Compila oggetto e contenuto prima di inviare il test', 'error')
+      return
+    }
+    
     setIsTesting(true)
-    // Simulazione invio test
-    setTimeout(() => {
-      showNotification('Email di test inviata con successo!', 'success')
+    
+    try {
+      // Invia email di test all'admin
+      await sendEmail({
+        subject: `[TEST] ${emailSubject}`,
+        content: emailContent,
+        template: selectedTemplate?.id || 'test'
+      })
+    } catch (error) {
+      console.error('Errore test email:', error)
+      showNotification('Errore nell\'invio dell\'email di test', 'error')
+    } finally {
       setIsTesting(false)
-    }, 2000)
+    }
   }
 
   // Salva template
@@ -258,13 +278,13 @@ const EmailView = memo(({
         {/* Pannello Sinistro - Template Gallery */}
         <div className="email-panel-left">
           <div className="panel-tabs">
-            <button
+            <button 
               className={`panel-tab ${activePanel === 'templates' ? 'active' : ''}`}
               onClick={() => setActivePanel('templates')}
             >
               Template
             </button>
-            <button
+            <button 
               className={`panel-tab ${activePanel === 'saved' ? 'active' : ''}`}
               onClick={() => setActivePanel('saved')}
             >
@@ -278,21 +298,13 @@ const EmailView = memo(({
                 <h3>Template Predefiniti</h3>
                 <div className="template-grid">
                   {defaultTemplates.map(template => (
-                    <div
+                    <div 
                       key={template.id}
                       className={`template-card ${selectedTemplate?.id === template.id ? 'selected' : ''}`}
                       onClick={() => loadTemplate(template)}
                     >
                       <div className="template-icon">
-                        <span className={`icon icon-${template.icon}`}>
-                          {template.icon === 'user-plus' && <span></span>}
-                          {template.icon === 'star' && (
-                            <>
-                              <span></span>
-                              <span></span>
-                            </>
-                          )}
-                        </span>
+                        <span className={`icon icon-${template.icon}`}></span>
                       </div>
                       <div className="template-info">
                         <h4>{template.name}</h4>
@@ -313,7 +325,7 @@ const EmailView = memo(({
                 ) : (
                   <div className="template-grid">
                     {savedTemplates.map(template => (
-                      <div
+                      <div 
                         key={template.id}
                         className={`template-card ${selectedTemplate?.id === template.id ? 'selected' : ''}`}
                         onClick={() => loadTemplate(template)}
@@ -373,7 +385,6 @@ const EmailView = memo(({
             ))}
           </div>
 
-          {/* TinyMCE editor */}
           <div className="editor-container">
             <textarea ref={editorRef} id="email-editor"></textarea>
           </div>
@@ -384,14 +395,14 @@ const EmailView = memo(({
           <div className="preview-controls">
             <h3>Anteprima</h3>
             <div className="device-toggle">
-              <button
+              <button 
                 className={`device-btn ${previewDevice === 'desktop' ? 'active' : ''}`}
                 onClick={() => setPreviewDevice('desktop')}
               >
                 <span className="icon-small icon-monitor"></span>
                 Desktop
               </button>
-              <button
+              <button 
                 className={`device-btn ${previewDevice === 'mobile' ? 'active' : ''}`}
                 onClick={() => setPreviewDevice('mobile')}
               >
@@ -406,7 +417,7 @@ const EmailView = memo(({
               <small>Da: Sapori & Colori</small>
               <h4>{emailSubject || 'Oggetto email...'}</h4>
             </div>
-            <div
+            <div 
               className="preview-content"
               dangerouslySetInnerHTML={{ __html: getPreviewContent() }}
             />
@@ -416,32 +427,22 @@ const EmailView = memo(({
             <h3>Destinatari</h3>
             <div className="segments-grid">
               {segments.map(segment => (
-                <div
+                <div 
                   key={segment.id}
                   className={`segment-card ${selectedSegments.includes(segment.id) ? 'selected' : ''}`}
                   onClick={() => toggleSegment(segment.id)}
                 >
                   <span className="segment-icon">
-                    <span className={`icon icon-${segment.icon}`}>
-                      {segment.icon === 'user-check' && <span></span>}
-                      {segment.icon === 'user-x' && <span></span>}
-                      {segment.icon === 'activity' && <span></span>}
-                      {segment.icon === 'star' && (
-                        <>
-                          <span></span>
-                          <span></span>
-                        </>
-                      )}
-                    </span>
+                    <span className={`icon icon-${segment.icon}`}></span>
                   </span>
                   <div className="segment-info">
                     <h4>{segment.name}</h4>
                     <small>{segment.count} clienti</small>
                   </div>
-                  <input
-                    type="checkbox"
+                  <input 
+                    type="checkbox" 
                     checked={selectedSegments.includes(segment.id)}
-                    onChange={() => { }}
+                    onChange={() => {}}
                     className="segment-checkbox"
                   />
                 </div>
@@ -451,7 +452,7 @@ const EmailView = memo(({
 
           <div className="schedule-section">
             <label className="schedule-toggle">
-              <input
+              <input 
                 type="checkbox"
                 checked={isScheduled}
                 onChange={(e) => setIsScheduled(e.target.checked)}
@@ -460,7 +461,7 @@ const EmailView = memo(({
               <span>Programma invio</span>
             </label>
             {isScheduled && (
-              <input
+              <input 
                 type="datetime-local"
                 value={scheduleDate}
                 onChange={(e) => setScheduleDate(e.target.value)}
@@ -473,18 +474,18 @@ const EmailView = memo(({
             <div className="recipients-summary">
               <h4>Riepilogo Invio</h4>
               <p>
-                {selectedSegments.length === 0
-                  ? 'Seleziona almeno un segmento'
+                {selectedSegments.length === 0 
+                  ? 'Seleziona almeno un segmento' 
                   : `${segments.filter(s => selectedSegments.includes(s.id)).reduce((acc, s) => acc + s.count, 0)} destinatari selezionati`
                 }
               </p>
             </div>
-            <button
+            <button 
               className="btn-send-campaign"
               onClick={() => sendEmail({
                 subject: emailSubject,
                 content: emailContent,
-                template: selectedTemplate
+                template: selectedTemplate?.id || 'custom'
               })}
               disabled={selectedSegments.length === 0 || !emailSubject || !emailContent}
             >
@@ -492,20 +493,6 @@ const EmailView = memo(({
               {isScheduled ? 'Programma Invio' : 'Invia Campagna'}
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* Impostazioni Editor */}
-      <div className="editor-settings">
-        <h3>Impostazioni Editor</h3>
-        <div style={{ margin: '10px 0' }}>
-          <label style={{ marginRight: 8 }}>Sfondo editor:</label>
-          <input
-            type="color"
-            value={editorBg}
-            onChange={e => setEditorBg(e.target.value)}
-            style={{ verticalAlign: 'middle', width: 32, height: 32, border: 'none', cursor: 'pointer' }}
-          />
         </div>
       </div>
     </div>

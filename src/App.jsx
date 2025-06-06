@@ -4,12 +4,12 @@ import emailjs from '@emailjs/browser'
 import './App.css'
 
 // Import dei componenti
+import AdvancedAnalytics from './components/Analytics/AdvancedAnalytics'
 import NotificationContainer from './components/Common/NotificationContainer'
 import DashboardView from './components/Dashboard/DashboardView'
 import CustomerView from './components/Customers/CustomerView'
 import EmailView from './components/Email/EmailView'
 import PrizesView from './components/Prizes/PrizesView'
-import AnalyticsView from './components/Analytics/AnalyticsView'
 import SettingsView from './components/Settings/SettingsView'
 import NFCView from './components/NFC/NFCView'
 
@@ -701,7 +701,7 @@ function App() {
     }
   }, [settings, showNotification])
 
-  const addPrize = useCallback(async () => {
+  const addPrize = useCallback(async (imageUrl = null) => {
     if (!newPrizeName || !newPrizeDescription || !newPrizeCost) {
       showNotification('Compila tutti i campi del premio', 'error')
       return
@@ -714,6 +714,7 @@ function App() {
           name: newPrizeName,
           description: newPrizeDescription,
           points_cost: parseInt(newPrizeCost),
+          image_url: imageUrl,  // ← AGGIUNTO QUESTO
           active: true
         }])
         .select()
@@ -955,11 +956,14 @@ function App() {
           customers={allCustomers} // <-- PASSA allCustomers QUI!
         />
       case 'analytics':
-        return <AnalyticsView
-          todayStats={todayStats}
-          topCustomers={topCustomers}
-          prizes={prizes}
-        />
+        return (
+          <AdvancedAnalytics
+            showNotification={showNotification}
+            todayStats={todayStats}
+            topCustomers={topCustomers}
+            prizes={prizes}
+          />
+        )
       case 'nfc':
         return <NFCView showNotification={showNotification} />
       case 'settings':

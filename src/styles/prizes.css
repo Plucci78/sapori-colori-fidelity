@@ -1,0 +1,475 @@
+/* =====================================================
+   PRIZES SECTION - STILI DEDICATI
+   Usa le variabili CSS del design system principale
+   ===================================================== */
+
+/* Container principale - sfondo visibile */
+.prizes-view {
+  background-color: var(--bg-secondary);
+  min-height: 100vh;
+  padding: var(--space-6);
+}
+
+.prizes-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* === FORM CREAZIONE PREMIO === */
+.prize-form-card {
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  border: 1.5px solid var(--brand-primary);
+  margin-bottom: var(--space-8);
+  overflow: hidden;
+}
+
+.prize-form-inner {
+  padding: var(--space-8);
+}
+
+.prize-form-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.prize-form-header h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+  margin: 0;
+}
+
+/* Upload area con colori brand */
+.upload-area {
+  border: 3px dashed var(--brand-secondary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-12);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: rgba(212, 175, 55, 0.05);
+  position: relative;
+}
+
+.upload-area:hover {
+  border-color: var(--brand-primary);
+  background: rgba(139, 69, 19, 0.05);
+  transform: translateY(-2px);
+}
+
+.upload-area.dragging {
+  border-color: var(--brand-accent);
+  background: rgba(205, 133, 63, 0.1);
+}
+
+.upload-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--space-4);
+  color: var(--brand-primary);
+}
+
+/* Form inputs con stile brand */
+.prize-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  margin-top: var(--space-6);
+}
+
+.modern-input {
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius-lg);
+  font-size: 1rem;
+  transition: all 0.2s;
+  background: var(--bg-primary);
+}
+
+.modern-input:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+}
+
+.submit-btn {
+  grid-column: 1 / -1;
+  background: var(--bg-brand);
+  color: white;
+  border: none;
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-lg);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(139, 69, 19, 0.3);
+}
+
+/* === GRIGLIA PREMI === */
+.prizes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-6);
+}
+
+/* Card premio con forte contrasto */
+.prize-card {
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 2px solid var(--gray-300);
+  box-shadow: var(--shadow-lg);
+  transition: all 0.3s ease;
+  position: relative;
+  cursor: pointer;
+}
+
+.prize-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--brand-primary);
+}
+
+/* Immagine premio */
+.prize-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-400);
+  font-size: 3rem;
+}
+
+/* Badge GEMME rosso */
+.prize-badge {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  background: linear-gradient(135deg, var(--gemme-red) 0%, var(--gemme-dark) 100%);
+  color: white;
+  padding: var(--space-2) var(--space-4);
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* Contenuto card */
+.prize-content {
+  padding: var(--space-6);
+  background: var(--bg-primary);
+}
+
+.prize-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.prize-description {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: var(--space-4);
+}
+
+/* Azioni card */
+.prize-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--gray-200);
+}
+
+.action-btn {
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-size: 0.9rem;
+}
+
+.edit-btn {
+  background: var(--gray-100);
+  color: var(--brand-primary);
+  border: 1px solid var(--gray-300);
+}
+
+.edit-btn:hover {
+  background: var(--brand-secondary);
+  color: var(--brand-primary);
+  border-color: var(--brand-primary);
+}
+
+.delete-btn {
+  background: var(--gemme-light);
+  color: var(--gemme-red);
+  border: 1px solid var(--gemme-red);
+}
+
+.delete-btn:hover {
+  background: var(--gemme-red);
+  color: white;
+}
+
+/* Preview immagine */
+.image-preview {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--gray-100);
+  aspect-ratio: 16/9;
+  border: 2px solid var(--gray-300);
+}
+
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  background: rgba(255, 255, 255, 0.95);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: var(--shadow-md);
+}
+
+.remove-image-btn:hover {
+  background: white;
+  transform: scale(1.1);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Stati vuoti e loading */
+.empty-prizes {
+  text-align: center;
+  padding: var(--space-16) var(--space-8);
+  color: var(--text-muted);
+}
+
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--space-4);
+  color: var(--gray-300);
+}
+
+.empty-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.upload-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  color: var(--brand-primary);
+  padding: var(--space-8);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--gray-300);
+  border-top-color: var(--brand-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .prizes-view {
+    padding: var(--space-4);
+  }
+  
+  .prize-form-inner {
+    padding: var(--space-6);
+  }
+  
+  .prize-form-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+  
+  .prizes-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+  
+  .upload-area {
+    padding: var(--space-8);
+  }
+}
+
+/* Animazioni */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.prize-card {
+  animation: fadeInUp 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+.prize-card:nth-child(1) { animation-delay: 0.1s; }
+.prize-card:nth-child(2) { animation-delay: 0.2s; }
+.prize-card:nth-child(3) { animation-delay: 0.3s; }
+.prize-card:nth-child(4) { animation-delay: 0.4s; }
+.prize-card:nth-child(5) { animation-delay: 0.5s; }
+.prize-card:nth-child(6) { animation-delay: 0.6s; }
+
+/* Fix per lucide-react icons */
+.prize-form-header svg,
+.prize-actions svg,
+.upload-area svg {
+  width: 1em;
+  height: 1em;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+/* Effetto hover più pronunciato */
+.prize-card:hover .prize-image {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}
+
+/* Ombra più forte per le card */
+.prize-card {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Badge GEMME con effetto glow */
+.prize-badge {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4); }
+  50% { box-shadow: 0 4px 20px rgba(220, 38, 38, 0.6); }
+  100% { box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4); }
+}
+/* === FIX BOTTONI AZIONI PREMI === */
+
+/* Bottone Modifica più visibile */
+.edit-btn {
+  background: var(--brand-secondary);  /* Oro */
+  color: white;
+  border: none;
+}
+
+.edit-btn:hover {
+  background: var(--brand-primary);    /* Marrone */
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(139, 69, 19, 0.3);
+}
+
+/* Bottone Elimina rosso */
+.delete-btn {
+  background: var(--gemme-red);        /* Rosso gemme */
+  color: white;
+  border: none;
+}
+
+.delete-btn:hover {
+  background: var(--gemme-dark);       /* Rosso scuro */
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+/* Design con gradiente e glow */
+.prize-card {
+  background: white;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+}
+
+.prize-card::after {
+  content: '';
+  position: absolute;
+  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  background: linear-gradient(45deg, var(--brand-primary), var(--brand-secondary));
+  border-radius: 20px;
+  z-index: -1;
+}
+
+.prize-card:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 
+    0 20px 40px rgba(139, 69, 19, 0.3),
+    0 0 60px rgba(212, 175, 55, 0.2);
+}
+/* === GRIGLIA PREMI RESPONSIVE === */
+.prizes-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  margin-top: 2rem;
+}
+
+/* Mobile: 1 colonna */
+@media (max-width: 768px) {
+  .prizes-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Desktop grande: massimo 4 colonne */
+@media (min-width: 1400px) {
+  .prizes-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
