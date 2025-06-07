@@ -28,6 +28,7 @@ const CustomerView = ({
   modifyPoints,
   showNotification
 }) => {
+  const [showGemmeRain, setShowGemmeRain] = useState(false);
 
   // Callback quando NFC trova un cliente
   const handleNFCCustomerFound = (customer) => {
@@ -49,6 +50,22 @@ const CustomerView = ({
     (customer.phone && customer.phone.includes(searchTerm)) ||
     (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase()))
   )
+
+  const playCoinSound = () => {
+    const audio = new Audio('/sounds/coin.wav')
+    audio.play()
+  }
+
+  const handleAddTransaction = async () => {
+    playCoinSound();
+    await addTransaction();
+    startGemmeRain();
+  }
+
+  const startGemmeRain = () => {
+    setShowGemmeRain(true);
+    setTimeout(() => setShowGemmeRain(false), 1200); // durata animazione
+  };
 
   return (
     <div className="p-6">
@@ -214,7 +231,7 @@ const CustomerView = ({
                   />
                 </div>
                 <button 
-                  onClick={addTransaction}
+                  onClick={handleAddTransaction}
                   disabled={!transactionAmount || parseFloat(transactionAmount) <= 0}
                   className="btn btn-warning px-8 py-4 text-lg"
                 >
@@ -284,7 +301,7 @@ const CustomerView = ({
                       {canRedeem ? (
                         <>
                           <svg className="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                           </svg>
                           Riscatta Premio
                         </>
@@ -450,6 +467,23 @@ const CustomerView = ({
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {showGemmeRain && (
+        <div className="gemme-rain">
+          {[...Array(18)].map((_, i) => (
+            <img
+              key={i}
+              src="/gemma-rossa.png"
+              alt="gemma"
+              className="gemma-drop"
+              style={{
+                left: `${Math.random() * 95}%`,
+                animationDelay: `${Math.random() * 0.7}s`
+              }}
+            />
+          ))}
         </div>
       )}
     </div>

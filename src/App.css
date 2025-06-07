@@ -6676,3 +6676,27 @@ body {
   box-shadow: 0 12px 32px rgba(0,0,0,0.18) !important;
   transform: translateY(-4px) !important;
 }
+.gemme-rain {
+  pointer-events: none;
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  z-index: 9999;
+  overflow: hidden;
+}
+.gemma-drop {
+  position: absolute;
+  top: -40px;
+  width: 54px;      /* aumentato */
+  height: 54px;     /* aumentato */
+  opacity: 0.88;
+  animation: gemmeFall 1.2s linear forwards;
+  user-select: none;
+  filter: drop-shadow(0 2px 8px #b91c1c88);
+}
+@keyframes gemmeFall {
+  to {
+    top: 90vh;
+    opacity: 0;
+    transform: rotate(40deg) scale(0.7);
+  }
+}
