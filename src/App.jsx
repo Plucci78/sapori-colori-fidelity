@@ -12,6 +12,8 @@ import EmailView from './components/Email/EmailView'
 import PrizesView from './components/Prizes/PrizesView'
 import SettingsView from './components/Settings/SettingsView'
 import NFCView from './components/NFC/NFCView'
+import ClientPortal from './components/Clients/ClientPortal'
+import { generateClientToken, isValidToken } from './utils/tokenUtils'
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -97,9 +99,6 @@ function App() {
     }, 4000)
   }, [])
 
-  // [... RESTO DELLE FUNZIONI ESISTENTI ...]
-  // (Le funzioni email, database, etc. rimangono identiche)
-
   // MENU ITEMS CONFIGURATION - ICONE SVG PROFESSIONALI
   const menuItems = [
     {
@@ -175,7 +174,6 @@ function App() {
     }
   ]
 
-  // [... RESTO DELLE FUNZIONI BUSINESS LOGIC ...]
   // Funzione per salvare statistiche email nel database
   const saveEmailLog = useCallback(async (emailType, recipients, subject, status) => {
     try {
@@ -919,6 +917,7 @@ function App() {
           setManualPoints={setManualPoints}
           modifyPoints={modifyPoints}
           showNotification={showNotification}
+          generateClientTokenForCustomer={generateClientTokenForCustomer}
         />
       case 'prizes':
         return <PrizesView
@@ -982,6 +981,66 @@ function App() {
     }
   }
 
+  // Funzione per generare token univoco e salvarlo nel DB
+  const generateClientTokenForCustomer = useCallback(async (customerId) => {
+    try {
+      let token = generateClientToken()
+      // Verifica che il token sia univoco
+      let { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('client_token', token)
+        .single()
+      while (existingCustomer) {
+        token = generateClientToken()
+        const { data } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('client_token', token)
+          .single()
+        existingCustomer = data
+      }
+      // Salva il token nel database
+      const { error } = await supabase
+        .from('customers')
+        .update({ client_token: token })
+        .eq('id', customerId)
+      if (error) {
+        showNotification('Errore nella generazione del link cliente', 'error')
+        return null
+      }
+      showNotification('Link cliente generato con successo!', 'success')
+      return token
+    } catch (error) {
+      console.error('Errore generazione token:', error)
+      showNotification('Errore nella generazione del link cliente', 'error')
+      return null
+    }
+  }, [showNotification])
+
+  // Check per mostrare solo il portale cliente se siamo su /cliente/:token
+  useEffect(() => {
+    const path = window.location.pathname
+    const clientMatch = path.match(/^\/cliente\/(.+)$/)
+    if (clientMatch) {
+      const token = clientMatch[1]
+      if (isValidToken(token)) {
+        setClientPortalToken(token)
+        return
+      } else {
+        window.location.href = '/'
+      }
+    }
+  }, [])
+
+  const [clientPortalToken, setClientPortalToken] = useState(null)
+
+  // Se siamo nel portale clienti, mostra solo quello
+  if (clientPortalToken) {
+    return <ClientPortal token={clientPortalToken} />
+  }
+
+  // Altrimenti mostra l'app gestionale normale
   return (
     <div className="app-container">
       <NotificationContainer

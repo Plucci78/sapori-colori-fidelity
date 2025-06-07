@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import NFCQuickReader from '../NFC/NFCQuickReader'
+import { generateClientURL } from '../../utils/tokenUtils'
 
 const CustomerView = ({
   searchTerm,
@@ -26,9 +27,11 @@ const CustomerView = ({
   manualPoints,
   setManualPoints,
   modifyPoints,
-  showNotification
+  showNotification,
+  generateClientTokenForCustomer,
 }) => {
   const [showGemmeRain, setShowGemmeRain] = useState(false);
+  const [clientLinks, setClientLinks] = useState({})
 
   // Callback quando NFC trova un cliente
   const handleNFCCustomerFound = (customer) => {
@@ -66,6 +69,23 @@ const CustomerView = ({
     setShowGemmeRain(true);
     setTimeout(() => setShowGemmeRain(false), 1200); // durata animazione
   };
+
+  const handleGenerateClientLink = async (customer) => {
+    const token = await generateClientTokenForCustomer(customer.id)
+    if (token) {
+      const url = `${window.location.origin}/cliente/${token}`
+      setClientLinks(prev => ({
+        ...prev,
+        [customer.id]: { token, url }
+      }))
+      try {
+        await navigator.clipboard.writeText(url)
+        showNotification('Link copiato negli appunti!', 'success')
+      } catch (err) {
+        showNotification('Impossibile copiare automaticamente', 'error')
+      }
+    }
+  }
 
   return (
     <div className="p-6">
@@ -466,6 +486,55 @@ const CustomerView = ({
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {selectedCustomer && (
+        <div className="customer-actions">
+          <h4>🔗 Link Cliente</h4>
+          <div className="client-link-section">
+            <button 
+              onClick={() => handleGenerateClientLink(selectedCustomer)}
+              className="generate-link-btn"
+            >
+              📱 Genera Link Cliente
+            </button>
+            {clientLinks[selectedCustomer.id] && (
+              <div className="generated-link">
+                <p>Link generato:</p>
+                <div className="link-container">
+                  <input 
+                    type="text" 
+                    value={clientLinks[selectedCustomer.id].url}
+                    readOnly
+                    className="link-input"
+                  />
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(clientLinks[selectedCustomer.id].url)
+                      showNotification('Link copiato!', 'success')
+                    }}
+                    className="copy-link-btn"
+                  >
+                    📋
+                  </button>
+                  <a
+                    href={`mailto:${selectedCustomer.email || ''}?subject=Il%20tuo%20link%20cliente%20Sapori%20e%20Colori&body=Ecco%20il%20tuo%20link%20personale%20per%20vedere%20le%20tue%20GEMME:%0A${encodeURIComponent(clientLinks[selectedCustomer.id].url)}`}
+                    className="copy-link-btn"
+                    style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={selectedCustomer.email ? "Invia via email" : "Nessuna email cliente"}
+                  >
+                    📧
+                  </a>
+                </div>
+                <p className="link-description">
+                  Il cliente può salvare questo link per vedere le sue GEMME
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
