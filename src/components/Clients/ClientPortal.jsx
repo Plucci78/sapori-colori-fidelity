@@ -1,35 +1,43 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../supabase'
+import { getCustomerLevel, getNextLevelInfo } from '../../utils/levelsUtils'
 
 const ClientPortal = ({ token }) => {
   const [customer, setCustomer] = useState(null)
   const [transactions, setTransactions] = useState([])
   const [prizes, setPrizes] = useState([])
+  const [levels, setLevels] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     loadClientData()
+    // eslint-disable-next-line
   }, [token])
 
   const loadClientData = async () => {
     setLoading(true)
     setError(null)
-
     try {
+      // Carica livelli configurati
+      const { data: levelsData } = await supabase
+        .from('customer_levels')
+        .select('*')
+        .eq('active', true)
+        .order('sort_order')
+      setLevels(levelsData || [])
+
       // Carica dati cliente
       const { data: customerData, error: customerError } = await supabase
         .from('customers')
         .select('*')
         .eq('client_token', token)
         .single()
-
       if (customerError || !customerData) {
         setError('Cliente non trovato o link non valido')
         setLoading(false)
         return
       }
-
       setCustomer(customerData)
 
       // Carica transazioni cliente (ultime 10)
@@ -39,16 +47,19 @@ const ClientPortal = ({ token }) => {
         .eq('customer_id', customerData.id)
         .order('created_at', { ascending: false })
         .limit(10)
-
       setTransactions(transactionsData || [])
 
-      // Carica premi disponibili
+      // Carica premi del livello cliente o inferiore
+      const customerLevel = getCustomerLevel(customerData.points, levelsData || [])
+      const availableLevels = (levelsData || [])
+        .filter(level => level.sort_order <= customerLevel.sort_order)
+        .map(level => level.name)
       const { data: prizesData } = await supabase
         .from('prizes')
         .select('*')
         .eq('active', true)
+        .in('required_level', availableLevels)
         .order('points_cost')
-
       setPrizes(prizesData || [])
 
     } catch (err) {
@@ -67,13 +78,6 @@ const ClientPortal = ({ token }) => {
       hour: '2-digit',
       minute: '2-digit'
     })
-  }
-
-  const getCustomerLevel = (points) => {
-    if (points >= 150) return { level: 'Diamante', color: '#9333ea', icon: '💎' }
-    if (points >= 100) return { level: 'Oro', color: '#f59e0b', icon: '🥇' }
-    if (points >= 50) return { level: 'Argento', color: '#6b7280', icon: '🥈' }
-    return { level: 'Bronzo', color: '#a3a3a3', icon: '🥉' }
   }
 
   if (loading) {
@@ -96,10 +100,12 @@ const ClientPortal = ({ token }) => {
     )
   }
 
-  const customerLevel = getCustomerLevel(customer.points)
+  // Calcola livello e progressione
+  const customerLevel = getCustomerLevel(customer.points, levels)
+  const nextLevelInfo = getNextLevelInfo(customer.points, levels)
 
   return (
-    <div className="client-portal">
+    <div className="client-portal" style={{ background: customerLevel.background }}>
       {/* HEADER CLIENTE */}
       <div className="client-header">
         <img
@@ -110,7 +116,9 @@ const ClientPortal = ({ token }) => {
         <div className="client-info">
           <h1>Ciao {customer.name}! 👋</h1>
           <div className="client-level" style={{ backgroundColor: customerLevel.color }}>
-            <span className="level-icon">{customerLevel.icon}</span>
+            <span className="level-icon">
+              <div dangerouslySetInnerHTML={{ __html: customerLevel.icon }} />
+            </span>
             <span>Cliente {customerLevel.level}</span>
           </div>
         </div>
@@ -119,7 +127,7 @@ const ClientPortal = ({ token }) => {
       {/* GEMME ATTUALI */}
       <div className="client-gems-card">
         <div className="gems-display">
-          <div className="gems-icon"></div>
+          <div className="gems-icon">💎</div>
           <div className="gems-info">
             <h2>{customer.points}</h2>
             <p>GEMME Disponibili</p>
@@ -129,41 +137,81 @@ const ClientPortal = ({ token }) => {
           <div className="progress-bar">
             <div 
               className="progress-fill" 
-              style={{ width: `${Math.min((customer.points % 50) * 2, 100)}%` }}
+              style={{ 
+                width: `${nextLevelInfo.progress}%`,
+                background: customerLevel.color
+              }}
             ></div>
           </div>
-          <p>Prossimo livello: {50 - (customer.points % 50)} GEMME</p>
+          {nextLevelInfo.hasNextLevel ? (
+            <p>Prossimo livello ({nextLevelInfo.nextLevelName}): {nextLevelInfo.gemsNeeded} GEMME</p>
+          ) : (
+            <p>🏆 Hai raggiunto il livello massimo!</p>
+          )}
         </div>
       </div>
 
       {/* PREMI DISPONIBILI */}
       <div className="client-section">
-        <h3>🎁 Premi Disponibili</h3>
+        <h3>🎁 Premi Disponibili per il tuo livello</h3>
         <div className="prizes-grid">
-          {prizes.map(prize => (
-            <div 
-              key={prize.id} 
-              className={`prize-card ${customer.points >= prize.points_cost ? 'available' : 'unavailable'}`}
-            >
-              {prize.image_url && (
-                <img src={prize.image_url} alt={prize.name} className="prize-image" />
-              )}
-              <div className="prize-info">
-                <h4>{prize.name}</h4>
-                <p>{prize.description}</p>
-                <div className="prize-cost">
-                  <span className="cost-gems">💎 {prize.points_cost}</span>
-                  {customer.points >= prize.points_cost ? (
-                    <span className="cost-status available">✅ Disponibile</span>
-                  ) : (
-                    <span className="cost-status unavailable">
-                      📍 Ti mancano {prize.points_cost - customer.points} GEMME
+          {prizes.map(prize => {
+            const prizeLevel = levels.find(l => l.name === prize.required_level)
+            return (
+              <div 
+                key={prize.id} 
+                className={`prize-card ${customer.points >= prize.points_cost ? 'available' : 'unavailable'}`}
+              >
+                {prize.image_url && (
+                  <img src={prize.image_url} alt={prize.name} className="prize-image" />
+                )}
+                <div className="prize-info">
+                  <div className="prize-header">
+                    <h4>{prize.name}</h4>
+                    {prizeLevel && (
+                      <div 
+                        className="prize-level-badge"
+                        style={{ 
+                          backgroundColor: prizeLevel.primary_color,
+                          color: 'white',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          borderRadius: 8,
+                          padding: '2px 8px',
+                          marginLeft: 8
+                        }}
+                      >
+                        <span
+                          className="prize-level-icon"
+                          dangerouslySetInnerHTML={{ __html: prizeLevel.icon_svg }}
+                        />
+                        <span>{prizeLevel.name}</span>
+                      </div>
+                    )}
+                  </div>
+                  <p>{prize.description}</p>
+                  <div className="prize-cost">
+                    <span className="cost-gems">
+                      <img
+                        src="/gemma-rossa.png"
+                        alt="gemma"
+                        style={{ width: 22, height: 22, marginRight: 4, verticalAlign: 'middle', display: 'inline-block' }}
+                      />
+                      {prize.points_cost}
                     </span>
-                  )}
+                    {customer.points >= prize.points_cost ? (
+                      <span className="cost-status available">✅ Disponibile</span>
+                    ) : (
+                      <span className="cost-status unavailable">
+                        📍 Ti mancano {prize.points_cost - customer.points} GEMME
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 

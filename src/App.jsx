@@ -930,6 +930,7 @@ function App() {
           addPrize={addPrize}
           prizes={prizes}
           deletePrize={deletePrize}
+          showNotification={showNotification}   // <--- AGGIUNGI QUESTA RIGA!
         />
       case 'email':
         return <EmailView

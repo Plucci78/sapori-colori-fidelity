@@ -287,52 +287,122 @@ const CustomerView = ({
             </h2>
             <p className="card-subtitle">Premi disponibili per {selectedCustomer.name}</p>
           </div>
-          
           <div className="card-body">
             <div className="grid grid-auto gap-4">
               {prizes.map(prize => {
-                const canRedeem = selectedCustomer.points >= prize.points_cost
+                // Gestione livello minimo
+                const levelOrder = ['Bronzo', 'Argento', 'Oro', 'Diamante']
+                const customerLevelIndex = selectedCustomer.level
+                  ? levelOrder.indexOf(selectedCustomer.level)
+                  : 0
+                const prizeLevelIndex = prize.min_level
+                  ? levelOrder.indexOf(prize.min_level)
+                  : 0
+                const hasLevel = customerLevelIndex >= prizeLevelIndex
+                const hasPoints = selectedCustomer.points >= prize.points_cost
+
                 return (
-                  <div key={prize.id} className={`p-6 rounded-xl transition-all ${
-                    canRedeem 
-                      ? 'prize-card-available' 
-                      : 'prize-card-unavailable'
-                  }`}>
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <h4 className="text-lg font-bold text-brand mb-2">{prize.name}</h4>
-                        <p className="text-secondary text-sm">{prize.description}</p>
-                      </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        <div className="gemme-icon"></div>
-                        <span className="text-xl font-bold text-red-600">{prize.points_cost}</span>
-                        <span className="text-sm font-semibold text-red-700">GEMME</span>
+                  <div
+                    key={prize.id}
+                    className={`p-6 rounded-xl border transition-all shadow-sm bg-white flex flex-col gap-3 ${
+                      hasLevel && hasPoints
+                        ? 'border-green-500'
+                        : !hasLevel
+                        ? 'border-gray-300 opacity-60'
+                        : 'border-orange-300 opacity-80'
+                    }`}
+                    style={{ minWidth: 260, maxWidth: 340 }}
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      {prize.image_url ? (
+                        <img
+                          src={prize.image_url}
+                          alt={prize.name}
+                          className="rounded-lg"
+                          style={{ width: 60, height: 60, objectFit: 'cover', background: '#f3f4f6' }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: 60,
+                            height: 60,
+                            background: '#f3f4f6',
+                            borderRadius: 12,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#bbb',
+                            fontSize: 28,
+                          }}
+                        >
+                          🎁
+                        </div>
+                      )}
+                      <div>
+                        <h4 className="font-bold text-brand text-lg">{prize.name}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <img
+                            src="/gemma-rossa.png"
+                            alt="gemma"
+                            style={{ width: 22, height: 22, marginRight: 2, verticalAlign: 'middle', display: 'inline-block' }}
+                          />
+                          <span className="text-xl font-bold text-red-600">{prize.points_cost}</span>
+                          <span className="text-xs font-semibold text-red-700">GEMME</span>
+                        </div>
+                        {prize.min_level && (
+                          <div
+                            className="prize-min-level"
+                            style={{
+                              marginTop: 4,
+                              color: '#9333ea',
+                              fontWeight: 500,
+                              fontSize: 13,
+                            }}
+                          >
+                            Richiede livello <b>{prize.min_level}</b>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <button 
+                    {prize.description && (
+                      <p className="text-secondary text-sm mb-2">{prize.description}</p>
+                    )}
+                    <button
                       onClick={() => redeemPrize(prize)}
-                      disabled={!canRedeem}
-                      className={`w-full py-3 px-4 rounded-lg font-semibold transition-all ${
-                        canRedeem 
-                          ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl' 
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      disabled={!(hasLevel && hasPoints)}
+                      className={`w-full py-3 px-4 rounded-lg font-semibold transition-all mt-auto ${
+                        hasLevel && hasPoints
+                          ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl'
+                          : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                       }`}
                     >
-                      {canRedeem ? (
-                        <>
-                          <svg className="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                          </svg>
-                          Riscatta Premio
-                        </>
-                      ) : (
-                        <>
-                          <svg className="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                          </svg>
-                          GEMME Insufficienti
-                        </>
-                      )}
+                      {hasLevel && hasPoints
+                        ? (
+                          <>
+                            <svg className="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            Riscatta Premio
+                          </>
+                        )
+                        : !hasLevel
+                        ? (
+                          <>
+                            <svg className="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            Solo per livello {prize.min_level}
+                          </>
+                        )
+                        : (
+                          <>
+                            <svg className="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            GEMME insufficienti
+                          </>
+                        )
+                      }
                     </button>
                   </div>
                 )
@@ -354,41 +424,51 @@ const CustomerView = ({
             </h2>
             <p className="card-subtitle">Registra un nuovo cliente nel sistema</p>
           </div>
-          
           <div className="card-body">
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Nome completo *"
-                value={newCustomerName}
-                onChange={(e) => setNewCustomerName(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-brand focus:outline-none transition-colors"
-              />
-              <input
-                type="tel"
-                placeholder="Telefono *"
-                value={newCustomerPhone}
-                onChange={(e) => setNewCustomerPhone(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-brand focus:outline-none transition-colors"
-              />
-              <input
-                type="email"
-                placeholder="Email (opzionale per offerte)"
-                value={newCustomerEmail}
-                onChange={(e) => setNewCustomerEmail(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-brand focus:outline-none transition-colors"
-              />
+            <form className="space-y-4" onSubmit={e => { e.preventDefault(); createCustomer(); }}>
+              <div>
+                <label className="block text-sm font-semibold text-brand mb-1">Nome completo *</label>
+                <input
+                  type="text"
+                  placeholder="Mario Rossi"
+                  value={newCustomerName}
+                  onChange={(e) => setNewCustomerName(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-brand focus:outline-none transition-colors bg-gray-50"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-brand mb-1">Telefono *</label>
+                <input
+                  type="tel"
+                  placeholder="Telefono"
+                  value={newCustomerPhone}
+                  onChange={(e) => setNewCustomerPhone(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-brand focus:outline-none transition-colors bg-gray-50"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-brand mb-1">Email (opzionale)</label>
+                <input
+                  type="email"
+                  placeholder="Email (opzionale per offerte)"
+                  value={newCustomerEmail}
+                  onChange={(e) => setNewCustomerEmail(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-brand focus:outline-none transition-colors bg-gray-50"
+                />
+              </div>
               <button 
-                onClick={createCustomer}
+                type="submit"
                 disabled={!newCustomerName.trim() || !newCustomerPhone.trim()}
-                className="btn btn-success w-full py-3"
+                className="btn btn-success w-full py-3 text-lg font-semibold shadow-sm hover:shadow-md transition"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
                 Crea Cliente
               </button>
-            </div>
+            </form>
           </div>
         </div>
 
@@ -401,25 +481,26 @@ const CustomerView = ({
             </h2>
             <p className="card-subtitle">Aggiungi o rimuovi GEMME per situazioni speciali</p>
           </div>
-          
           <div className="card-body">
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Cerca cliente per nome..."
-                value={manualCustomerName}
-                onChange={(e) => {
-                  setManualCustomerName(e.target.value)
-                  searchCustomersForManual(e.target.value)
-                }}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-brand focus:outline-none transition-colors"
-              />
-              
+            <form className="space-y-4" onSubmit={e => e.preventDefault()}>
+              <div>
+                <label className="block text-sm font-semibold text-brand mb-1">Cerca cliente</label>
+                <input
+                  type="text"
+                  placeholder="Cerca cliente per nome..."
+                  value={manualCustomerName}
+                  onChange={(e) => {
+                    setManualCustomerName(e.target.value)
+                    searchCustomersForManual(e.target.value)
+                  }}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-brand focus:outline-none transition-colors bg-gray-50"
+                />
+              </div>
               {foundCustomers.length > 0 && (
                 <div className="space-y-3">
                   {foundCustomers.map(customer => (
-                    <div key={customer.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <div className="flex justify-between items-center mb-3">
+                    <div key={customer.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200 flex flex-col gap-2">
+                      <div className="flex justify-between items-center">
                         <div>
                           <div className="font-semibold text-brand">{customer.name}</div>
                           <div className="flex items-center gap-2 text-sm text-secondary">
@@ -428,18 +509,19 @@ const CustomerView = ({
                           </div>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 mt-2">
                         <input
                           type="number"
                           placeholder="±GEMME"
                           value={manualPoints}
                           onChange={(e) => setManualPoints(e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:border-brand focus:outline-none"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:border-brand focus:outline-none bg-white"
                         />
                         <button 
+                          type="button"
                           onClick={() => modifyPoints(customer, manualPoints)}
                           disabled={!manualPoints || parseInt(manualPoints) === 0}
-                          className="btn btn-primary"
+                          className="btn btn-primary flex items-center gap-2"
                         >
                           <div className="gemme-icon-sm"></div>
                           Modifica
@@ -449,7 +531,7 @@ const CustomerView = ({
                   ))}
                 </div>
               )}
-            </div>
+            </form>
           </div>
         </div>
       </div>
