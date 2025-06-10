@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import DarkModeToggle from '../DarkModeToggle'
+import { useAuth } from '../../auth/AuthContext' // <--- AGGIUNGI QUESTA RIGA
 
 const DashboardView = ({
   todayStats = { customers: 0, points: 0, revenue: 0, redeems: 0 },
@@ -12,7 +13,10 @@ const DashboardView = ({
   const [showVenditaForm, setShowVenditaForm] = useState(false)
   const [showPremioForm, setShowPremioForm] = useState(false)
   const [nfcResult, setNfcResult] = useState(null)
-  const [activePanel, setActivePanel] = useState(null) // 'nuovo', 'vendita', 'premio', null
+  const [activePanel, setActivePanel] = useState(null)
+
+  // AGGIUNGI QUESTO BLOCCO:
+  const { signOut, profile } = useAuth()
 
   // Funzione per aprire la modale generica (puoi tenerla per altri messaggi)
   const openModal = (text) => {
@@ -87,6 +91,16 @@ const DashboardView = ({
   return (
     <div className="p-6">
       <DarkModeToggle />
+
+      {/* LOGOUT + NOME UTENTE */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 24 }}>
+        <span style={{ marginRight: 16, fontWeight: 600 }}>
+          {profile?.full_name}
+        </span>
+        <button className="logout-btn" onClick={signOut}>
+          Logout
+        </button>
+      </div>
 
       {/* MODALI FORM */}
       {showNuovoClienteForm && <NuovoClienteForm />}

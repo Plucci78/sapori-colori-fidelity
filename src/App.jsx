@@ -3,7 +3,16 @@ import { supabase } from './supabase'
 import emailjs from '@emailjs/browser'
 import './App.css'
 
-// Import dei componenti
+// ===================================
+// AUTH SYSTEM IMPORTS (AGGIUNTI)
+// ===================================
+import { AuthProvider, useAuth } from './auth/AuthContext'
+import LoginForm from './auth/LoginForm'
+import { ProtectedComponent } from './auth/ProtectedComponent'
+import { usePermissions } from './hooks/usePermissions'
+import { activityService } from './services/activityService'
+
+// Import dei componenti (ESISTENTI)
 import AdvancedAnalytics from './components/Analytics/AdvancedAnalytics'
 import NotificationContainer from './components/Common/NotificationContainer'
 import DashboardView from './components/Dashboard/DashboardView'
@@ -15,24 +24,39 @@ import NFCView from './components/NFC/NFCView'
 import ClientPortal from './components/Clients/ClientPortal'
 import { generateClientToken, isValidToken } from './utils/tokenUtils'
 
-function App() {
+// ===================================
+// COMPONENTE APP PRINCIPALE (con auth)
+// ===================================
+function AppContent() {
+  // ===================================
+  // AUTH HOOKS (AGGIUNTI)
+  // ===================================
+  const { isAuthenticated, loading: authLoading, profile, signOut } = useAuth()
+  const { permissions, userRole, userName } = usePermissions()
+
+  // ===================================
+  // STATI ESISTENTI (INVARIATI)
+  // ===================================
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [allCustomers, setAllCustomers] = useState([]) // <-- AGGIUNTO
+  const [allCustomers, setAllCustomers] = useState([])
   const [customers, setCustomers] = useState([])
 
   useEffect(() => {
     // Carica tutti i clienti solo una volta all'avvio
     const loadAllCustomers = async () => {
+      if (!isAuthenticated) return // ← AGGIUNTO CHECK AUTH
+      
       const { data, error } = await supabase
         .from('customers')
         .select('*')
       if (data) {
-        setAllCustomers(data)      // <-- AGGIUNTO
-        setCustomers(data)         // <-- Mostra tutti i clienti di default
+        setAllCustomers(data)
+        setCustomers(data)
       }
     }
     loadAllCustomers()
-  }, [])
+  }, [isAuthenticated]) // ← AGGIUNTA DIPENDENZA AUTH
+
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [newCustomerName, setNewCustomerName] = useState('')
@@ -86,8 +110,26 @@ function App() {
 
   // Inizializza EmailJS
   useEffect(() => {
-    emailjs.init(EMAIL_CONFIG.publicKey)
-  }, [])
+    if (isAuthenticated) { // ← AGGIUNTO CHECK AUTH
+      emailjs.init(EMAIL_CONFIG.publicKey)
+    }
+  }, [isAuthenticated]) // ← AGGIUNTA DIPENDENZA AUTH
+
+  // ===================================
+  // FUNZIONE LOGOUT (AGGIUNTA)
+  // ===================================
+  const handleLogout = async () => {
+    const confirmed = window.confirm('Sei sicuro di voler uscire?')
+    if (confirmed) {
+      try {
+        await signOut()
+        showNotification('👋 Logout effettuato con successo', 'success')
+      } catch (error) {
+        console.error('Logout error:', error)
+        showNotification('❌ Errore durante il logout', 'error')
+      }
+    }
+  }
 
   // Funzione per mostrare notifiche moderne
   const showNotification = useCallback((message, type = 'success') => {
@@ -99,7 +141,9 @@ function App() {
     }, 4000)
   }, [])
 
-  // MENU ITEMS CONFIGURATION - ICONE SVG PROFESSIONALI
+  // ===================================
+  // MENU ITEMS CON PROTEZIONI AUTH (AGGIORNATO)
+  // ===================================
   const menuItems = [
     {
       id: 'dashboard',
@@ -109,7 +153,8 @@ function App() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       ),
-      description: 'Panoramica generale'
+      description: 'Panoramica generale',
+      permission: null // Tutti possono vedere
     },
     {
       id: 'customer',
@@ -119,7 +164,8 @@ function App() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       ),
-      description: 'Gestione clienti e vendite'
+      description: 'Gestione clienti e vendite',
+      permission: 'canViewCustomers'
     },
     {
       id: 'prizes',
@@ -129,7 +175,8 @@ function App() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
       ),
-      description: 'Catalogo premi'
+      description: 'Catalogo premi',
+      permission: 'canManagePrizes'
     },
     {
       id: 'email',
@@ -139,7 +186,8 @@ function App() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
         </svg>
       ),
-      description: 'Campagne email'
+      description: 'Campagne email',
+      permission: 'canSendEmails'
     },
     {
       id: 'analytics',
@@ -149,7 +197,8 @@ function App() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       ),
-      description: 'Statistiche avanzate'
+      description: 'Statistiche avanzate',
+      permission: 'canViewStats'
     },
     {
       id: 'nfc',
@@ -159,7 +208,8 @@ function App() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
       ),
-      description: 'Gestione tag NFC'
+      description: 'Gestione tag NFC',
+      permission: 'canViewCustomers'
     },
     {
       id: 'settings',
@@ -170,9 +220,14 @@ function App() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       ),
-      description: 'Configurazione sistema'
+      description: 'Configurazione sistema',
+      permission: 'canViewSettings'
     }
   ]
+
+  // ===================================
+  // TUTTE LE FUNZIONI ESISTENTI (INVARIATE + LOG ACTIVITY)
+  // ===================================
 
   // Funzione per salvare statistiche email nel database
   const saveEmailLog = useCallback(async (emailType, recipients, subject, status) => {
@@ -190,6 +245,14 @@ function App() {
       if (error) {
         console.error('Errore salvataggio log email:', error)
       }
+
+      // ← AGGIUNTO ACTIVITY LOG
+      await activityService.logEmail('EMAIL_CAMPAIGN_SENT', {
+        email_type: emailType,
+        recipients_count: recipients.length,
+        subject: subject,
+        status: status
+      })
     } catch (error) {
       console.error('Errore salvataggio log email:', error)
     }
@@ -209,7 +272,7 @@ function App() {
         const totalSent = data.reduce((sum, log) => sum + log.recipients_count, 0)
         setEmailStats({
           sent: totalSent,
-          opened: 0 // vedi sotto per il tasso di apertura
+          opened: 0
         })
       }
     } catch (error) {
@@ -303,7 +366,7 @@ function App() {
     return templates[type]
   }, [customMessage])
 
-  // Funzione automatica per email di benvenuto
+  // Funzione automatica per email di benvenuto (+ ACTIVITY LOG)
   const sendWelcomeEmail = useCallback(async (customer) => {
     if (!customer.email) return
 
@@ -327,13 +390,20 @@ function App() {
 
       await saveEmailLog('welcome', [customer], template.subject, 'sent')
       showNotification(`Email di benvenuto inviata a ${customer.name}!`, 'success')
+
+      // ← AGGIUNTO ACTIVITY LOG
+      await activityService.logEmail('WELCOME_EMAIL_SENT', {
+        customer_id: customer.id,
+        customer_name: customer.name,
+        customer_email: customer.email
+      })
     } catch (error) {
       console.error('Errore invio email benvenuto:', error)
       await saveEmailLog('welcome', [customer], 'Benvenuto', 'failed')
     }
   }, [getEmailTemplate, saveEmailLog, showNotification, EMAIL_CONFIG])
 
-  // Funzione automatica per email milestone gemme
+  // Funzione automatica per email milestone gemme (+ ACTIVITY LOG)
   const sendPointsMilestoneEmail = useCallback(async (customer, points) => {
     if (!customer.email) return
 
@@ -373,6 +443,13 @@ function App() {
 
       await saveEmailLog('milestone', [customer], template.subject, 'sent')
       showNotification(`${emailTitle} Email inviata a ${customer.name}`, 'success')
+
+      // ← AGGIUNTO ACTIVITY LOG
+      await activityService.logEmail('MILESTONE_EMAIL_SENT', {
+        customer_id: customer.id,
+        customer_name: customer.name,
+        milestone: milestoneReached
+      })
     } catch (error) {
       console.error('Errore invio email milestone:', error)
       await saveEmailLog('milestone', [customer], `Milestone ${milestoneReached} GEMME`, 'failed')
@@ -381,12 +458,14 @@ function App() {
 
   // Carica impostazioni e premi
   useEffect(() => {
-    loadSettings()
-    loadPrizes()
-    loadTodayStats()
-    loadTopCustomers()
-    loadEmailStats()
-  }, [loadEmailStats])
+    if (isAuthenticated) { // ← AGGIUNTO CHECK AUTH
+      loadSettings()
+      loadPrizes()
+      loadTodayStats()
+      loadTopCustomers()
+      loadEmailStats()
+    }
+  }, [isAuthenticated, loadEmailStats]) // ← AGGIUNTA DIPENDENZA AUTH
 
   const loadSettings = useCallback(async () => {
     try {
@@ -635,7 +714,7 @@ function App() {
     }
   }, [])
 
-  // Modifica punti manualmente CON email automatica milestone
+  // Modifica punti manualmente CON email automatica milestone (+ ACTIVITY LOG)
   const modifyPoints = useCallback(async (customer, pointsToAdd) => {
     const points = parseInt(pointsToAdd)
     if (isNaN(points) || points === 0) {
@@ -659,6 +738,9 @@ function App() {
           points_earned: points,
           type: points > 0 ? 'acquistare' : 'riscattare'
         }])
+
+      // ← AGGIUNTO ACTIVITY LOG
+      await activityService.logCustomer('POINTS_MODIFIED', customer.id, { points: newPoints }, { points: customer.points })
 
       if (points > 0 && (newPoints === 50 || newPoints === 100 || newPoints === 150)) {
         await sendPointsMilestoneEmail(customer, newPoints)
@@ -691,6 +773,8 @@ function App() {
         .eq('id', settings.id)
 
       if (!error) {
+        // ← AGGIUNTO ACTIVITY LOG
+        await activityService.logSystem('SETTINGS_UPDATED', { settings })
         showNotification('Configurazione salvata con successo!')
       }
     } catch (error) {
@@ -712,7 +796,7 @@ function App() {
           name: newPrizeName,
           description: newPrizeDescription,
           points_cost: parseInt(newPrizeCost),
-          image_url: imageUrl,  // ← AGGIUNTO QUESTO
+          image_url: imageUrl,
           active: true
         }])
         .select()
@@ -722,6 +806,9 @@ function App() {
         setNewPrizeName('')
         setNewPrizeDescription('')
         setNewPrizeCost('')
+
+        // ← AGGIUNTO ACTIVITY LOG
+        await activityService.logSystem('PRIZE_CREATED', { prize: data[0] })
         showNotification('Premio aggiunto con successo!')
       }
     } catch (error) {
@@ -740,7 +827,11 @@ function App() {
         .eq('id', prizeId)
 
       if (!error) {
+        const deletedPrize = prizes.find(p => p.id === prizeId)
         setPrizes(prizes.filter(p => p.id !== prizeId))
+
+        // ← AGGIUNTO ACTIVITY LOG
+        await activityService.logSystem('PRIZE_DELETED', { prize: deletedPrize })
         showNotification('Premio eliminato con successo!')
       }
     } catch (error) {
@@ -751,7 +842,7 @@ function App() {
 
   const searchCustomers = useCallback(async () => {
     if (searchTerm.length < 2) {
-      setCustomers(allCustomers) // <-- Mostra tutti i clienti se la ricerca è vuota
+      setCustomers(allCustomers)
       return
     }
 
@@ -766,13 +857,15 @@ function App() {
     } catch (error) {
       console.log('Errore ricerca:', error)
     }
-  }, [searchTerm, allCustomers]) // <-- AGGIUNTO allCustomers tra le dipendenze
+  }, [searchTerm, allCustomers])
 
   useEffect(() => {
-    searchCustomers()
-  }, [searchCustomers])
+    if (isAuthenticated) { // ← AGGIUNTO CHECK AUTH
+      searchCustomers()
+    }
+  }, [searchCustomers, isAuthenticated]) // ← AGGIUNTA DIPENDENZA AUTH
 
-  // Crea nuovo cliente CON email benvenuto automatica
+  // Crea nuovo cliente CON email benvenuto automatica (+ ACTIVITY LOG)
   const createCustomer = useCallback(async () => {
     if (!newCustomerName || !newCustomerPhone) {
       showNotification('Inserisci nome e telefono', 'error')
@@ -801,6 +894,9 @@ function App() {
         setNewCustomerPhone('')
         setNewCustomerEmail('')
 
+        // ← AGGIUNTO ACTIVITY LOG
+        await activityService.logCustomer('CUSTOMER_CREATED', data[0].id, data[0])
+
         // Invia email di benvenuto automatica
         if (data[0].email) {
           await sendWelcomeEmail(data[0])
@@ -815,7 +911,7 @@ function App() {
     }
   }, [newCustomerName, newCustomerPhone, newCustomerEmail, sendWelcomeEmail, loadTodayStats, showNotification])
 
-  // Aggiungi transazione CON email automatica milestone
+  // Aggiungi transazione CON email automatica milestone (+ ACTIVITY LOG)
   const addTransaction = useCallback(async () => {
     if (!selectedCustomer || !transactionAmount) return
 
@@ -823,7 +919,7 @@ function App() {
     const pointsEarned = Math.floor(amount * settings.points_per_euro)
 
     try {
-      await supabase
+      const { data: transaction, error } = await supabase
         .from('transactions')
         .insert([{
           customer_id: selectedCustomer.id,
@@ -831,12 +927,19 @@ function App() {
           points_earned: pointsEarned,
           type: 'acquistare'
         }])
+        .select()
+        .single()
+
+      if (error) throw error
 
       const newPoints = selectedCustomer.points + pointsEarned
       await supabase
         .from('customers')
         .update({ points: newPoints })
         .eq('id', selectedCustomer.id)
+
+      // ← AGGIUNTO ACTIVITY LOG
+      await activityService.logTransaction('TRANSACTION_CREATED', transaction.id, transaction)
 
       // Controlla milestone email automatiche
       if (pointsEarned > 0 && (newPoints === 50 || newPoints === 100 || newPoints === 150)) {
@@ -857,7 +960,7 @@ function App() {
     if (!selectedCustomer || selectedCustomer.points < prize.points_cost) return
 
     try {
-      await supabase
+      const { data: transaction, error } = await supabase
         .from('transactions')
         .insert([{
           customer_id: selectedCustomer.id,
@@ -865,12 +968,23 @@ function App() {
           points_earned: -prize.points_cost,
           type: 'riscattare'
         }])
+        .select()
+        .single()
+
+      if (error) throw error
 
       const newPoints = selectedCustomer.points - prize.points_cost
       await supabase
         .from('customers')
         .update({ points: newPoints })
         .eq('id', selectedCustomer.id)
+
+      // ← AGGIUNTO ACTIVITY LOG
+      await activityService.logTransaction('PRIZE_REDEEMED', transaction.id, {
+        ...transaction,
+        prize_name: prize.name,
+        customer_name: selectedCustomer.name
+      })
 
       setSelectedCustomer({ ...selectedCustomer, points: newPoints })
       showNotification(`${prize.name} riscattato con successo!`)
@@ -880,107 +994,6 @@ function App() {
       showNotification('Errore nel riscatto del premio', 'error')
     }
   }, [selectedCustomer, loadTodayStats, showNotification])
-
-  // RENDER CONTENT BASED ON ACTIVE VIEW
-  const renderContent = () => {
-    switch (activeView) {
-      case 'dashboard':
-        return <DashboardView
-          todayStats={todayStats}
-          topCustomers={topCustomers}
-          emailStats={emailStats}
-        />
-      case 'customer':
-        return <CustomerView
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          customers={customers}
-          selectedCustomer={selectedCustomer}
-          setSelectedCustomer={setSelectedCustomer}
-          newCustomerName={newCustomerName}
-          setNewCustomerName={setNewCustomerName}
-          newCustomerPhone={newCustomerPhone}
-          setNewCustomerPhone={setNewCustomerPhone}
-          newCustomerEmail={newCustomerEmail}
-          setNewCustomerEmail={setNewCustomerEmail}
-          createCustomer={createCustomer}
-          transactionAmount={transactionAmount}
-          setTransactionAmount={setTransactionAmount}
-          addTransaction={addTransaction}
-          prizes={prizes}
-          redeemPrize={redeemPrize}
-          manualCustomerName={manualCustomerName}
-          setManualCustomerName={setManualCustomerName}
-          searchCustomersForManual={searchCustomersForManual}
-          foundCustomers={foundCustomers}
-          manualPoints={manualPoints}
-          setManualPoints={setManualPoints}
-          modifyPoints={modifyPoints}
-          showNotification={showNotification}
-          generateClientTokenForCustomer={generateClientTokenForCustomer}
-        />
-      case 'prizes':
-        return <PrizesView
-          newPrizeName={newPrizeName}
-          setNewPrizeName={setNewPrizeName}
-          newPrizeDescription={newPrizeDescription}
-          setNewPrizeDescription={setNewPrizeDescription}
-          newPrizeCost={newPrizeCost}
-          setNewPrizeCost={setNewPrizeCost}
-          addPrize={addPrize}
-          prizes={prizes}
-          deletePrize={deletePrize}
-          showNotification={showNotification}   // <--- AGGIUNGI QUESTA RIGA!
-        />
-      case 'email':
-        return <EmailView
-          emailStats={emailStats}
-          emailTemplate={emailTemplate}
-          setEmailTemplate={setEmailTemplate}
-          emailRecipients={emailRecipients}
-          setEmailRecipients={setEmailRecipients}
-          showIndividualSelection={showIndividualSelection}
-          setShowIndividualSelection={setShowIndividualSelection}
-          loadAllCustomersForEmail={loadAllCustomersForEmail}
-          selectedIndividualCustomers={selectedIndividualCustomers}
-          allCustomersForEmail={allCustomersForEmail}
-          toggleAllCustomers={toggleAllCustomers}
-          toggleIndividualCustomer={toggleIndividualCustomer}
-          emailSubject={emailSubject}
-          setEmailSubject={setEmailSubject}
-          customMessage={customMessage}
-          setCustomMessage={setCustomMessage}
-          sendEmail={sendEmail}
-          showNotification={showNotification}
-          supabase={supabase}
-          customers={allCustomers} // <-- PASSA allCustomers QUI!
-        />
-      case 'analytics':
-        return (
-          <AdvancedAnalytics
-            showNotification={showNotification}
-            todayStats={todayStats}
-            topCustomers={topCustomers}
-            prizes={prizes}
-          />
-        )
-      case 'nfc':
-        return <NFCView showNotification={showNotification} />
-      case 'settings':
-        return <SettingsView
-          settings={settings}
-          setSettings={setSettings}
-          saveSettings={saveSettings}
-          EMAIL_CONFIG={EMAIL_CONFIG}
-        />
-      default:
-        return <DashboardView
-          todayStats={todayStats}
-          topCustomers={topCustomers}
-          emailStats={emailStats}
-        />
-    }
-  }
 
   // Funzione per generare token univoco e salvarlo nel DB
   const generateClientTokenForCustomer = useCallback(async (customerId) => {
@@ -1010,6 +1023,10 @@ function App() {
         showNotification('Errore nella generazione del link cliente', 'error')
         return null
       }
+
+      // ← AGGIUNTO ACTIVITY LOG
+      await activityService.logCustomer('CLIENT_TOKEN_GENERATED', customerId, { token })
+
       showNotification('Link cliente generato con successo!', 'success')
       return token
     } catch (error) {
@@ -1036,18 +1053,200 @@ function App() {
 
   const [clientPortalToken, setClientPortalToken] = useState(null)
 
+  // ===================================
+  // AUTH LOADING & LOGIN SCREENS (AGGIUNTI)
+  // ===================================
+
+  // Se l'auth sta caricando
+  if (authLoading) {
+    return (
+      <div className="app-loading">
+        <div className="loading-container">
+          <img 
+            src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" 
+            alt="Sapori & Colori" 
+            className="loading-logo"
+          />
+          <h2>Sapori & Colori</h2>
+          <div className="loading-spinner">⏳</div>
+          <p>Caricamento sistema...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Se non autenticato, mostra login
+  if (!isAuthenticated) {
+    return (
+      <div className="login-page">
+        <LoginForm 
+          onSuccess={() => {
+            showNotification(`🎉 Benvenuto ${userName}!`, 'success')
+            setActiveView('dashboard') // Reset al dashboard
+          }}
+        />
+      </div>
+    )
+  }
+
   // Se siamo nel portale clienti, mostra solo quello
   if (clientPortalToken) {
     return <ClientPortal token={clientPortalToken} />
   }
 
-  // Altrimenti mostra l'app gestionale normale
+  // ===================================
+  // RENDER CONTENT CON PROTEZIONI AUTH (AGGIORNATO)
+  // ===================================
+  const renderContent = () => {
+    switch (activeView) {
+      case 'dashboard':
+        return <DashboardView
+          todayStats={todayStats}
+          topCustomers={topCustomers}
+          emailStats={emailStats}
+        />
+      case 'customer':
+        return (
+          <ProtectedComponent permission="canViewCustomers">
+            <CustomerView
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              customers={customers}
+              selectedCustomer={selectedCustomer}
+              setSelectedCustomer={setSelectedCustomer}
+              newCustomerName={newCustomerName}
+              setNewCustomerName={setNewCustomerName}
+              newCustomerPhone={newCustomerPhone}
+              setNewCustomerPhone={setNewCustomerPhone}
+              newCustomerEmail={newCustomerEmail}
+              setNewCustomerEmail={setNewCustomerEmail}
+              createCustomer={createCustomer}
+              transactionAmount={transactionAmount}
+              setTransactionAmount={setTransactionAmount}
+              addTransaction={addTransaction}
+              prizes={prizes}
+              redeemPrize={redeemPrize}
+              manualCustomerName={manualCustomerName}
+              setManualCustomerName={setManualCustomerName}
+              searchCustomersForManual={searchCustomersForManual}
+              foundCustomers={foundCustomers}
+              manualPoints={manualPoints}
+              setManualPoints={setManualPoints}
+              modifyPoints={modifyPoints}
+              showNotification={showNotification}
+              generateClientTokenForCustomer={generateClientTokenForCustomer}
+            />
+          </ProtectedComponent>
+        )
+      case 'prizes':
+        return (
+          <ProtectedComponent permission="canManagePrizes">
+            <PrizesView
+              newPrizeName={newPrizeName}
+              setNewPrizeName={setNewPrizeName}
+              newPrizeDescription={newPrizeDescription}
+              setNewPrizeDescription={setNewPrizeDescription}
+              newPrizeCost={newPrizeCost}
+              setNewPrizeCost={setNewPrizeCost}
+              addPrize={addPrize}
+              prizes={prizes}
+              deletePrize={deletePrize}
+              showNotification={showNotification}
+            />
+          </ProtectedComponent>
+        )
+      case 'email':
+        return (
+          <ProtectedComponent permission="canSendEmails">
+            <EmailView
+              emailStats={emailStats}
+              emailTemplate={emailTemplate}
+              setEmailTemplate={setEmailTemplate}
+              emailRecipients={emailRecipients}
+              setEmailRecipients={setEmailRecipients}
+              showIndividualSelection={showIndividualSelection}
+              setShowIndividualSelection={setShowIndividualSelection}
+              loadAllCustomersForEmail={loadAllCustomersForEmail}
+              selectedIndividualCustomers={selectedIndividualCustomers}
+              allCustomersForEmail={allCustomersForEmail}
+              toggleAllCustomers={toggleAllCustomers}
+              toggleIndividualCustomer={toggleIndividualCustomer}
+              emailSubject={emailSubject}
+              setEmailSubject={setEmailSubject}
+              customMessage={customMessage}
+              setCustomMessage={setCustomMessage}
+              sendEmail={sendEmail}
+              showNotification={showNotification}
+              supabase={supabase}
+              customers={allCustomers}
+            />
+          </ProtectedComponent>
+        )
+      case 'analytics':
+        return (
+          <ProtectedComponent permission="canViewStats">
+            <AdvancedAnalytics
+              showNotification={showNotification}
+              todayStats={todayStats}
+              topCustomers={topCustomers}
+              prizes={prizes}
+            />
+          </ProtectedComponent>
+        )
+      case 'nfc':
+        return (
+          <ProtectedComponent permission="canViewCustomers">
+            <NFCView showNotification={showNotification} />
+          </ProtectedComponent>
+        )
+      case 'settings':
+        return (
+          <ProtectedComponent permission="canViewSettings">
+            <SettingsView
+              settings={settings}
+              setSettings={setSettings}
+              saveSettings={saveSettings}
+              EMAIL_CONFIG={EMAIL_CONFIG}
+              showNotification={showNotification}
+            />
+          </ProtectedComponent>
+        )
+      default:
+        return <DashboardView
+          todayStats={todayStats}
+          topCustomers={topCustomers}
+          emailStats={emailStats}
+        />
+    }
+  }
+
+  // ===================================
+  // RENDER APP PRINCIPALE (CON AUTH HEADER)
+  // ===================================
   return (
     <div className="app-container">
       <NotificationContainer
         notifications={notifications}
         setNotifications={setNotifications}
       />
+
+      {/* ===================================
+          AUTH HEADER (AGGIUNTO)
+          =================================== */}
+      <div className="auth-header">
+        <div className="auth-user-info">
+          <div className="user-avatar">
+            {userName.charAt(0).toUpperCase()}
+          </div>
+          <div className="user-details">
+            <span className="user-name">{userName}</span>
+            <span className="user-role">{userRole?.toUpperCase()}</span>
+          </div>
+        </div>
+        <button className="logout-btn" onClick={handleLogout}>
+          🚪 Logout
+        </button>
+      </div>
 
       {/* HAMBURGER BUTTON - SOLO MOBILE */}
       <button
@@ -1058,7 +1257,7 @@ function App() {
         <span className="hamburger-icon">☰</span>
       </button>
 
-      {/* SIDEBAR MENU CON ICONE SVG PROFESSIONALI */}
+      {/* SIDEBAR MENU CON PROTEZIONI AUTH (AGGIORNATO) */}
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <img
@@ -1071,22 +1270,29 @@ function App() {
         </div>
 
         <nav className="sidebar-nav">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              className={`nav-item ${activeView === item.id ? 'active' : ''}`}
-              onClick={() => {
-                setActiveView(item.id)
-                setSidebarOpen(false) // Chiude la sidebar su mobile
-              }}
-            >
-              <span className="nav-icon">{item.icon}</span>
-              <div className="nav-content">
-                <span className="nav-title">{item.title}</span>
-                <span className="nav-description">{item.description}</span>
-              </div>
-            </button>
-          ))}
+          {menuItems.map((item) => {
+            // ← AGGIUNTO CONTROLLO PERMESSI
+            if (item.permission && !permissions[item.permission]) {
+              return null // Non mostrare il menu se mancano i permessi
+            }
+
+            return (
+              <button
+                key={item.id}
+                className={`nav-item ${activeView === item.id ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveView(item.id)
+                  setSidebarOpen(false) // Chiude la sidebar su mobile
+                }}
+              >
+                <span className="nav-icon">{item.icon}</span>
+                <div className="nav-content">
+                  <span className="nav-title">{item.title}</span>
+                  <span className="nav-description">{item.description}</span>
+                </div>
+              </button>
+            )
+          })}
         </nav>
       </div>
 
@@ -1095,6 +1301,17 @@ function App() {
         {renderContent()}
       </div>
     </div>
+  )
+}
+
+// ===================================
+// APP WRAPPER CON AUTH PROVIDER (AGGIUNTO)
+// ===================================
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }
 
