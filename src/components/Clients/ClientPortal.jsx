@@ -105,7 +105,14 @@ const ClientPortal = ({ token }) => {
   const nextLevelInfo = getNextLevelInfo(customer.points, levels)
 
   return (
-    <div className="client-portal" style={{ background: customerLevel.background }}>
+    <div
+      className="client-portal"
+      style={{
+        background: customerLevel.background_gradient || '#fff', // CAMBIATO
+        minHeight: '100vh',
+        transition: 'background 0.5s'
+      }}
+    >
       {/* HEADER CLIENTE */}
       <div className="client-header">
         <img
@@ -115,11 +122,11 @@ const ClientPortal = ({ token }) => {
         />
         <div className="client-info">
           <h1>Ciao {customer.name}! 👋</h1>
-          <div className="client-level" style={{ backgroundColor: customerLevel.color }}>
+          <div className="client-level" style={{ backgroundColor: customerLevel.primary_color }}> {/* CAMBIATO */}
             <span className="level-icon">
-              <div dangerouslySetInnerHTML={{ __html: customerLevel.icon }} />
+              <div dangerouslySetInnerHTML={{ __html: customerLevel.icon_svg }} /> {/* CAMBIATO */}
             </span>
-            <span>Cliente {customerLevel.level}</span>
+            <span>Cliente {customerLevel.name}</span> {/* CAMBIATO */}
           </div>
         </div>
       </div>
@@ -134,12 +141,15 @@ const ClientPortal = ({ token }) => {
           </div>
         </div>
         <div className="gems-progress">
-          <div className="progress-bar">
-            <div 
-              className="progress-fill" 
-              style={{ 
+          <div
+            className="progress-bar"
+            title={`${Math.round(nextLevelInfo.progress)}% completato - ${customer.points}/${levels.find(l => l.name === nextLevelInfo.nextLevelName)?.min_gems || 150} GEMME`}
+          >
+            <div
+              className="progress-fill"
+              style={{
                 width: `${nextLevelInfo.progress}%`,
-                background: customerLevel.color
+                background: customerLevel.primary_color
               }}
             ></div>
           </div>
@@ -158,8 +168,8 @@ const ClientPortal = ({ token }) => {
           {prizes.map(prize => {
             const prizeLevel = levels.find(l => l.name === prize.required_level)
             return (
-              <div 
-                key={prize.id} 
+              <div
+                key={prize.id}
                 className={`prize-card ${customer.points >= prize.points_cost ? 'available' : 'unavailable'}`}
               >
                 {prize.image_url && (
@@ -169,9 +179,9 @@ const ClientPortal = ({ token }) => {
                   <div className="prize-header">
                     <h4>{prize.name}</h4>
                     {prizeLevel && (
-                      <div 
+                      <div
                         className="prize-level-badge"
-                        style={{ 
+                        style={{
                           backgroundColor: prizeLevel.primary_color,
                           color: 'white',
                           display: 'inline-flex',
@@ -250,11 +260,11 @@ const ClientPortal = ({ token }) => {
       <div className="client-footer">
         <p>
           <strong>Sapori & Colori</strong><br />
-          Via Example 123, Roma<br />
-          Tel: 06 1234567
+          Via Bagaladi 7, 00132 Roma<br />
+          Tel: 06 39911640<br />
         </p>
         <p className="footer-note">
-          💡 Presenta questo link in negozio per identificarti rapidamente!
+          💡 Ricorda di portare il tuo badge fisico per accumulare punti e riscattare premi!
         </p>
       </div>
     </div>
