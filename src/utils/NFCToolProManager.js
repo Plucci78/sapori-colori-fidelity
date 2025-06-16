@@ -27,8 +27,22 @@ class NFCToolProManager {
 
   // Auto-rilevamento NFC Tool Pro
   async detectNFCToolPro() {
+    // Check WebUSB support
     if (!navigator.usb) {
-      throw new Error('WebUSB non supportato su questo browser/tablet')
+      const userAgent = navigator.userAgent
+      const isIOS = /iPad|iPhone|iPod/.test(userAgent)
+      const isSafari = /^((?!chrome|android).)*safari/i.test(userAgent)
+      
+      let errorMsg = 'WebUSB non supportato su questo browser.'
+      if (isIOS) {
+        errorMsg += ' iOS non supporta WebUSB. Usa Chrome su Android o PC/Mac.'
+      } else if (isSafari) {
+        errorMsg += ' Safari non supporta WebUSB. Usa Chrome o Edge.'
+      } else {
+        errorMsg += ' Prova con Chrome, Edge o Firefox (versioni recenti).'
+      }
+      
+      throw new Error(errorMsg)
     }
 
     try {

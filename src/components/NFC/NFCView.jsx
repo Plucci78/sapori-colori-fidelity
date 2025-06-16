@@ -34,12 +34,12 @@ const NFCView = memo(({ showNotification }) => {
     const detected = detectDeviceType()
     setDeviceType(detected)
     
-    if ('NDEFReader' in window && detected !== 'tablet') {
+    if (detected === 'tablet') {
+      showNotification('🖥️ Modalità Tablet rilevata - Lettore NFC Tool Pro disponibile', 'info')
+    } else if ('NDEFReader' in window) {
       showNotification('NFC supportato! Puoi usare la modalità produzione', 'info')
-    } else if (detected === 'tablet') {
-      showNotification('🖥️ Modalità Tablet rilevata - Usa lettore NFC esterno', 'info')
     } else {
-      showNotification('NFC non supportato. Usa la modalità test', 'warning')
+      showNotification('NFC non supportato su questo browser. Usa la modalità test o prova su tablet', 'warning')
     }
     
     loadCustomers()

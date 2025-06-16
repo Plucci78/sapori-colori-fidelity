@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../supabase'
 import NFCToolProManager from '../../utils/NFCToolProManager'
+import NFCDebugInfo from './NFCDebugInfo'
 
 const TabletNFCReader = ({ onCustomerFound, showNotification }) => {
   const [nfcManager] = useState(new NFCToolProManager())
@@ -150,6 +151,9 @@ const TabletNFCReader = ({ onCustomerFound, showNotification }) => {
       </div>
 
       <div className="card-body">
+        {/* Debug info temporaneo */}
+        <NFCDebugInfo />
+        
         {/* Status lettore */}
         <div className="d-flex align-items-center mb-4">
           <div className={`badge ${readerStatus.connected ? 'bg-success' : 'bg-danger'} me-3 p-2`}>
