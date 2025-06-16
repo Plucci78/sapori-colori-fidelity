@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, memo, useRef } from 'react'
+/* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from './supabase'
 import emailjs from '@emailjs/browser'
 import './App.css'
@@ -12,7 +13,6 @@ import { ProtectedComponent } from './auth/ProtectedComponent'
 import { usePermissions } from './hooks/usePermissions'
 import { activityService } from './services/activityService'
 import { emailQuotaService } from './services/emailQuotaService'
-import { playGemmeSound } from './utils/soundUtils'
 import { getLevelsForEmails, checkLevelUpForEmail, generateLevelEmailContent } from './utils/levelEmailUtils'
 
 // Test component import

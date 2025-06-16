@@ -1,5 +1,6 @@
 import { useState, useEffect, memo } from 'react'
 import { supabase } from '../../supabase'
+import TabletNFCReader from './TabletNFCReader'
 
 const NFCView = memo(({ showNotification }) => {
   const [isDemoMode, setIsDemoMode] = useState(true)
@@ -12,11 +13,31 @@ const NFCView = memo(({ showNotification }) => {
   const [nfcLogs, setNfcLogs] = useState([])
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [existingTag, setExistingTag] = useState(null)
+  const [deviceType, setDeviceType] = useState('unknown') // 'mobile', 'tablet', 'desktop'
+
+  // Rileva tipo dispositivo
+  const detectDeviceType = () => {
+    const hasTouch = 'ontouchstart' in window
+    const screenWidth = window.screen.width
+    
+    if (hasTouch && screenWidth >= 768 && screenWidth <= 1024) {
+      return 'tablet'
+    } else if (hasTouch && screenWidth < 768) {
+      return 'mobile'  
+    } else {
+      return 'desktop'
+    }
+  }
 
   // Carica dati all'avvio
   useEffect(() => {
-    if ('NDEFReader' in window) {
+    const detected = detectDeviceType()
+    setDeviceType(detected)
+    
+    if ('NDEFReader' in window && detected !== 'tablet') {
       showNotification('NFC supportato! Puoi usare la modalità produzione', 'info')
+    } else if (detected === 'tablet') {
+      showNotification('🖥️ Modalità Tablet rilevata - Usa lettore NFC esterno', 'info')
     } else {
       showNotification('NFC non supportato. Usa la modalità test', 'warning')
     }
@@ -24,7 +45,14 @@ const NFCView = memo(({ showNotification }) => {
     loadCustomers()
     loadNFCTags()
     loadNFCLogs()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Gestisce cliente trovato dal lettore tablet
+  const handleCustomerFound = (customer) => {
+    showNotification(`Cliente selezionato: ${customer.name}`, 'success')
+    // Qui puoi aggiungere logica per aprire il pannello cliente
+    // o navigare verso CustomerView con i dati del cliente
+  }
 
   // Carica clienti - CORRETTO
   const loadCustomers = async () => {
@@ -142,7 +170,7 @@ const NFCView = memo(({ showNotification }) => {
     setIsReading(true)
     
     try {
-      const ndef = new NDEFReader()
+      const ndef = new window.NDEFReader()
       await ndef.scan()
       
       showNotification('Avvicina il tag NFC al telefono...', 'info')
@@ -151,7 +179,7 @@ const NFCView = memo(({ showNotification }) => {
         navigator.vibrate(100)
       }
       
-      ndef.addEventListener("reading", ({ message, serialNumber }) => {
+      ndef.addEventListener("reading", ({ serialNumber }) => {
         console.log('Tag letto:', serialNumber)
         
         if ('vibrate' in navigator) {
@@ -345,6 +373,16 @@ const NFCView = memo(({ showNotification }) => {
           <p className="dashboard-subtitle">Sistema di identificazione e transazioni veloci con tag NFC</p>
         </div>
       </div>
+
+      {/* Lettore NFC Tablet - Mostrato solo in modalità tablet */}
+      {deviceType === 'tablet' && (
+        <div className="dashboard-section mb-4">
+          <TabletNFCReader 
+            onCustomerFound={handleCustomerFound}
+            showNotification={showNotification}
+          />
+        </div>
+      )}
 
       {/* Status Card Dashboard Style - REDESIGNED */}
       <div className="dashboard-section">

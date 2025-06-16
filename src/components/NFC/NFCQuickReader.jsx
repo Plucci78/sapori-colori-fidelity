@@ -1,15 +1,34 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../supabase'
+import NFCBridge from '../../utils/NFCBridge'
 
 const NFCQuickReader = ({ onCustomerFound, showNotification }) => {
   const [isScanning, setIsScanning] = useState(false)
   const [nfcSupported, setNfcSupported] = useState(false)
   const [scanTimeout, setScanTimeout] = useState(null)
+  const [nfcBridge] = useState(new NFCBridge())
+  const [readerStatus, setReaderStatus] = useState({ mode: 'none', webNFCSupported: false, hardwareConnected: false })
 
   useEffect(() => {
-    // Check supporto NFC
-    setNfcSupported('NDEFReader' in window)
-  }, [])
+    // Check supporto NFC e hardware
+    checkNFCSupport()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const checkNFCSupport = async () => {
+    const method = await nfcBridge.detectBestReader()
+    const status = nfcBridge.getStatus()
+    
+    setReaderStatus(status)
+    setNfcSupported(method !== 'none')
+    
+    if (method === 'web') {
+      showNotification('✅ Web NFC disponibile', 'success')
+    } else if (method === 'hardware') {
+      showNotification('✅ Lettore NFC hardware rilevato', 'success')
+    } else {
+      showNotification('⚠️ Nessun lettore NFC disponibile', 'warning')
+    }
+  }
 
   const startQuickScan = async () => {
     if (!nfcSupported) {
@@ -17,40 +36,23 @@ const NFCQuickReader = ({ onCustomerFound, showNotification }) => {
       return
     }
 
-    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-      showNotification('NFC richiede HTTPS. Usa modalità locale per testare.', 'warning')
-      return
-    }
-
     setIsScanning(true)
-    showNotification('Appoggia la tessera del cliente...', 'info')
+    showNotification(`📡 Lettura con ${readerStatus.mode === 'web' ? 'Web NFC' : 'Hardware'}...`, 'info')
 
     try {
-      const ndef = new NDEFReader()
-      await ndef.scan()
-
-      // Vibrazione di feedback
-      if ('vibrate' in navigator) {
-        navigator.vibrate(100)
-      }
-
-      // Timeout di 15 secondi
-      const timeout = setTimeout(() => {
-        setIsScanning(false)
-        showNotification('Scansione scaduta. Riprova.', 'info')
-      }, 15000)
-      setScanTimeout(timeout)
-
-      ndef.addEventListener("reading", async ({ serialNumber }) => {
+      // Usa il bridge unificato invece della logica specifica
+      const stopScan = await nfcBridge.startScan(async ({ tagId, method }) => {
+        console.log(`🏷️ Tag letto con ${method}:`, tagId)
+        
         // Ferma timeout
-        clearTimeout(timeout)
+        clearTimeout(scanTimeout)
         
         // Vibrazione successo
         if ('vibrate' in navigator) {
           navigator.vibrate([100, 50, 100])
         }
 
-        const tagId = serialNumber.replace(/:/g, '').toUpperCase()
+        tagId = tagId.replace(/:/g, '').toUpperCase()
         
         try {
           // Cerca cliente associato al tag
@@ -82,13 +84,14 @@ const NFCQuickReader = ({ onCustomerFound, showNotification }) => {
           // Cliente trovato!
           const customer = tagData.customers
           
-          // Log accesso NFC
+          // Log accesso NFC con metodo di lettura
           await supabase
             .from('nfc_logs')
             .insert([{
               tag_id: tagId,
               customer_id: customer.id,
               action_type: 'customer_access',
+              read_method: method, // Aggiunge il metodo di lettura
               created_at: new Date().toISOString()
             }])
 
@@ -100,7 +103,6 @@ const NFCQuickReader = ({ onCustomerFound, showNotification }) => {
 
           // Callback al componente padre con i dati del cliente
           onCustomerFound(customer)
-          
           setIsScanning(false)
 
         } catch (error) {
@@ -110,18 +112,24 @@ const NFCQuickReader = ({ onCustomerFound, showNotification }) => {
         }
       })
 
-      ndef.addEventListener("readingerror", () => {
-        clearTimeout(timeout)
-        showNotification('Errore lettura tessera. Riprova.', 'error')
-        setIsScanning(false)
-      })
+      // Salva funzione di stop per cleanup
+      setScanTimeout(stopScan)
+      
+      // Timeout di 15 secondi
+      setTimeout(() => {
+        if (isScanning) {
+          stopScan()
+          setIsScanning(false)
+          showNotification('Scansione scaduta. Riprova.', 'info')
+        }
+      }, 15000)
 
     } catch (error) {
       setIsScanning(false)
       
-      if (error.name === 'NotAllowedError') {
+      if (error.message.includes('negato')) {
         showNotification('Permesso NFC negato. Controlla le impostazioni.', 'error')
-      } else if (error.name === 'NotSupportedError') {
+      } else if (error.message.includes('non supportato')) {
         showNotification('NFC non supportato su questo dispositivo', 'error')
       } else {
         showNotification(`Errore NFC: ${error.message}`, 'error')
