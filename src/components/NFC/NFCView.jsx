@@ -40,11 +40,31 @@ const NFCView = memo(({ showNotification }) => {
       platform: navigator.platform
     })
     
-    // Logica rilevamento migliorata
-    if (hasTouch && screenWidth >= 768 && screenWidth <= 1024) {
-      console.log('✅ Rilevato: TABLET')
+    // Rilevamento SPECIFICO per Lenovo Tab M11 e altri tablet
+    const userAgent = navigator.userAgent.toLowerCase()
+    const isAndroidTablet = userAgent.includes('android') && !userAgent.includes('mobile')
+    const isLenovoTablet = userAgent.includes('lenovo')
+    const isTabM11 = userAgent.includes('lenovo') && userAgent.includes('tab')
+    
+    // FORZATURA SPECIFICA PER LENOVO TAB M11
+    if (isTabM11 || isLenovoTablet) {
+      console.log('✅ LENOVO TAB M11 RICONOSCIUTO! Modalità tablet attivata')
       return 'tablet'
-    } else if (hasTouch && screenWidth < 768) {
+    }
+    
+    // Rileva tablet anche per schermi grandi (fino a 1920px per Tab M11)
+    if (hasTouch && screenWidth >= 768 && screenWidth <= 1920) {
+      console.log('✅ Rilevato: TABLET (schermo grande compatibile)')
+      return 'tablet'
+    } 
+    
+    // Android tablet senza "mobile" nel user agent
+    if (isAndroidTablet) {
+      console.log('✅ Rilevato: TABLET (Android tablet)')
+      return 'tablet'
+    }
+    
+    if (hasTouch && screenWidth < 768) {
       console.log('✅ Rilevato: MOBILE')
       return 'mobile'  
     } else {
@@ -396,39 +416,77 @@ const NFCView = memo(({ showNotification }) => {
           </h1>
           <p className="dashboard-subtitle">Sistema di identificazione e transazioni veloci con tag NFC</p>
           
-          {/* Debug Controls - Solo in development */}
-          {(window.location.hostname === 'localhost' || window.location.search.includes('debug=true')) && (
-            <div style={{
-              margin: '10px 0',
-              padding: '10px',
-              background: '#f0f0f0',
-              borderRadius: '5px',
-              fontSize: '12px'
-            }}>
-              <strong>🔧 DEBUG MODE:</strong> Dispositivo rilevato: <code>{deviceType}</code>
-              <div style={{ marginTop: '5px' }}>
-                <button 
-                  onClick={() => {
-                    setDeviceType('tablet')
-                    showNotification('🔧 Modalità tablet forzata!', 'info')
-                  }}
-                  style={{ marginRight: '5px', padding: '2px 8px', fontSize: '11px' }}
-                >
-                  Forza Tablet
-                </button>
-                <button 
-                  onClick={() => {
-                    const detected = detectDeviceType()
-                    setDeviceType(detected)
-                    showNotification(`🔍 Rilevamento automatico: ${detected}`, 'info')
-                  }}
-                  style={{ padding: '2px 8px', fontSize: '11px' }}
-                >
-                  Auto-Rileva
-                </button>
-              </div>
+          {/* Info Dispositivo - Sempre visibile per debug */}
+          <div style={{
+            margin: '10px 0',
+            padding: '10px',
+            background: deviceType === 'tablet' ? '#e8f5e8' : '#fff3cd',
+            border: `2px solid ${deviceType === 'tablet' ? '#28a745' : '#ffc107'}`,
+            borderRadius: '8px',
+            fontSize: '14px'
+          }}>
+            <div style={{ marginBottom: '8px' }}>
+              <strong>📱 DISPOSITIVO RILEVATO:</strong> <code style={{ 
+                background: deviceType === 'tablet' ? '#d4edda' : '#ffeaa7',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                fontWeight: 'bold'
+              }}>{deviceType.toUpperCase()}</code>
+              
+              {deviceType !== 'tablet' && (
+                <span style={{ color: '#856404', marginLeft: '10px' }}>
+                  ⚠️ Per NFC Tool Pro serve modalità Tablet
+                </span>
+              )}
             </div>
-          )}
+            
+            <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>
+              Screen: {window.screen.width}x{window.screen.height} | 
+              Touch: {'ontouchstart' in window ? '✅' : '❌'} |
+              Browser: {navigator.userAgent.includes('Chrome') ? 'Chrome' : 
+                       navigator.userAgent.includes('Safari') ? 'Safari' : 
+                       navigator.userAgent.includes('Firefox') ? 'Firefox' : 'Altri'}
+            </div>
+
+            <div style={{ marginTop: '8px' }}>
+              <button 
+                onClick={() => {
+                  setDeviceType('tablet')
+                  showNotification('🔧 Modalità tablet forzata!', 'info')
+                }}
+                style={{ 
+                  marginRight: '8px', 
+                  padding: '6px 12px', 
+                  fontSize: '12px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                🔧 Forza Modalità Tablet
+              </button>
+              <button 
+                onClick={() => {
+                  const detected = detectDeviceType()
+                  setDeviceType(detected)
+                  showNotification(`🔍 Rilevamento automatico: ${detected}`, 'info')
+                }}
+                style={{ 
+                  padding: '6px 12px', 
+                  fontSize: '12px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                🔍 Rileva di Nuovo
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -154,6 +154,81 @@ const TabletNFCReader = ({ onCustomerFound, showNotification }) => {
         {/* Debug info temporaneo */}
         <NFCDebugInfo />
         
+        {/* Test WebUSB veloce */}
+        <div style={{ 
+          margin: '10px 0', 
+          padding: '10px', 
+          background: '#e3f2fd', 
+          borderRadius: '5px',
+          border: '1px solid #2196f3'
+        }}>
+          <strong>🔌 TEST USB:</strong>
+          <div style={{ marginTop: '5px' }}>
+            <button 
+              onClick={async () => {
+                try {
+                  console.log('🔍 Testing WebUSB support...')
+                  if (!navigator.usb) {
+                    alert('❌ WebUSB non supportato')
+                    return
+                  }
+                  
+                  const devices = await navigator.usb.getDevices()
+                  console.log('📱 Dispositivi USB trovati:', devices)
+                  alert(`✅ WebUSB OK! Dispositivi trovati: ${devices.length}`)
+                  
+                  if (devices.length === 0) {
+                    alert('💡 Nessun dispositivo USB autorizzato. Collega il lettore NFC e clicca "Connetti"')
+                  }
+                } catch (error) {
+                  console.error('❌ Errore test USB:', error)
+                  alert(`❌ Errore: ${error.message}`)
+                }
+              }}
+              style={{ 
+                padding: '5px 10px', 
+                marginRight: '5px',
+                backgroundColor: '#2196f3',
+                color: 'white',
+                border: 'none',
+                borderRadius: '3px',
+                fontSize: '12px'
+              }}
+            >
+              Test WebUSB
+            </button>
+            <button 
+              onClick={async () => {
+                try {
+                  console.log('🔍 Requesting USB device...')
+                  const device = await navigator.usb.requestDevice({
+                    filters: [
+                      { vendorId: 0x04e6 }, // SCM Microsystems
+                      { vendorId: 0x072f }, // ACS
+                      {} // Tutti i dispositivi
+                    ]
+                  })
+                  console.log('✅ Dispositivo selezionato:', device)
+                  alert(`✅ Dispositivo selezionato: ${device.productName || 'Sconosciuto'}`)
+                } catch (error) {
+                  console.error('❌ Errore selezione USB:', error)
+                  alert(`❌ Errore selezione: ${error.message}`)
+                }
+              }}
+              style={{ 
+                padding: '5px 10px',
+                backgroundColor: '#ff9800',
+                color: 'white',
+                border: 'none',
+                borderRadius: '3px',
+                fontSize: '12px'
+              }}
+            >
+              Cerca Dispositivi
+            </button>
+          </div>
+        </div>
+        
         {/* Status lettore */}
         <div className="d-flex align-items-center mb-4">
           <div className={`badge ${readerStatus.connected ? 'bg-success' : 'bg-danger'} me-3 p-2`}>
