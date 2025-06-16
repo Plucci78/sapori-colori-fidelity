@@ -15,16 +15,40 @@ const NFCView = memo(({ showNotification }) => {
   const [existingTag, setExistingTag] = useState(null)
   const [deviceType, setDeviceType] = useState('unknown') // 'mobile', 'tablet', 'desktop'
 
-  // Rileva tipo dispositivo
+  // Rileva tipo dispositivo con debug e override
   const detectDeviceType = () => {
+    // Check for manual override
+    const urlParams = new URLSearchParams(window.location.search)
+    const forceDevice = urlParams.get('device')
+    if (forceDevice === 'tablet') {
+      console.log('🔧 MODALITÀ TABLET FORZATA VIA URL')
+      return 'tablet'
+    }
+    
     const hasTouch = 'ontouchstart' in window
     const screenWidth = window.screen.width
+    const screenHeight = window.screen.height
+    const windowWidth = window.innerWidth
     
+    // Debug info
+    console.log('🔍 Device Detection Debug:', {
+      hasTouch,
+      screenWidth,
+      screenHeight,
+      windowWidth,
+      userAgent: navigator.userAgent.substring(0, 100),
+      platform: navigator.platform
+    })
+    
+    // Logica rilevamento migliorata
     if (hasTouch && screenWidth >= 768 && screenWidth <= 1024) {
+      console.log('✅ Rilevato: TABLET')
       return 'tablet'
     } else if (hasTouch && screenWidth < 768) {
+      console.log('✅ Rilevato: MOBILE')
       return 'mobile'  
     } else {
+      console.log('✅ Rilevato: DESKTOP')
       return 'desktop'
     }
   }
@@ -371,6 +395,40 @@ const NFCView = memo(({ showNotification }) => {
             Gestione NFC
           </h1>
           <p className="dashboard-subtitle">Sistema di identificazione e transazioni veloci con tag NFC</p>
+          
+          {/* Debug Controls - Solo in development */}
+          {(window.location.hostname === 'localhost' || window.location.search.includes('debug=true')) && (
+            <div style={{
+              margin: '10px 0',
+              padding: '10px',
+              background: '#f0f0f0',
+              borderRadius: '5px',
+              fontSize: '12px'
+            }}>
+              <strong>🔧 DEBUG MODE:</strong> Dispositivo rilevato: <code>{deviceType}</code>
+              <div style={{ marginTop: '5px' }}>
+                <button 
+                  onClick={() => {
+                    setDeviceType('tablet')
+                    showNotification('🔧 Modalità tablet forzata!', 'info')
+                  }}
+                  style={{ marginRight: '5px', padding: '2px 8px', fontSize: '11px' }}
+                >
+                  Forza Tablet
+                </button>
+                <button 
+                  onClick={() => {
+                    const detected = detectDeviceType()
+                    setDeviceType(detected)
+                    showNotification(`🔍 Rilevamento automatico: ${detected}`, 'info')
+                  }}
+                  style={{ padding: '2px 8px', fontSize: '11px' }}
+                >
+                  Auto-Rileva
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
