@@ -4,7 +4,7 @@ import UserManagement from './UserManagement'
 import ActivityLog from './ActivityLog'
 import { ProtectedComponent } from '../../auth/ProtectedComponent'
 
-const SettingsView = ({ settings, setSettings, saveSettings, EMAIL_CONFIG, showNotification }) => {
+const SettingsView = ({ settings, setSettings, saveSettings, EMAIL_CONFIG, showNotification, assignMissingReferralCodes }) => {
   const [activeSettingsTab, setActiveSettingsTab] = useState('general')
 
   const settingsTabs = [
@@ -123,6 +123,58 @@ const SettingsView = ({ settings, setSettings, saveSettings, EMAIL_CONFIG, showN
                 </div>
               </div>
             </div>
+            <div className="settings-section">
+              <h4>🎁 Sistema Referral</h4>
+              <div className="settings-grid">
+                <div className="setting-field">
+                  <label>Gestione Codici Referral:</label>
+                  <button 
+                    onClick={() => assignMissingReferralCodes && assignMissingReferralCodes()}
+                    className="btn btn-secondary"
+                    style={{ marginTop: '8px' }}
+                  >
+                    🔗 Genera Codici Mancanti
+                  </button>
+                  <p className="setting-description">
+                    Assegna automaticamente codici referral ai clienti che non ne hanno uno
+                  </p>
+                </div>
+                <div className="setting-field">
+                  <label>Moltiplicatore Weekend:</label>
+                  <span className="status-indicator">
+                    🔥 ATTIVO (Sabato & Domenica 2x bonus)
+                  </span>
+                  <p className="setting-description">
+                    Durante i weekend il bonus referral viene raddoppiato da 20 a 40 gemme
+                  </p>
+                </div>
+                <div className="setting-field">
+                  <label>Test Clipboard:</label>
+                  <button 
+                    onClick={async () => {
+                      const testText = 'TEST-COPY-123';
+                      if (navigator.clipboard && window.isSecureContext) {
+                        try {
+                          await navigator.clipboard.writeText(testText);
+                          showNotification(`✅ Test riuscito! Clipboard API funziona`, 'success');
+                        } catch (err) {
+                          showNotification(`❌ Test fallito: ${err.message}`, 'error');
+                        }
+                      } else {
+                        showNotification('⚠️ Clipboard API non disponibile (servono HTTPS o localhost)', 'warning');
+                      }
+                    }}
+                    className="btn btn-outline"
+                    style={{ marginTop: '8px' }}
+                  >
+                    🧪 Testa Copia/Incolla
+                  </button>
+                  <p className="setting-description">
+                    Verifica che la funzione di copia negli appunti funzioni correttamente
+                  </p>
+                </div>
+              </div>
+            </div>
             <div className="settings-actions">
               <button onClick={saveSettings} className="save-settings-btn">
                 💾 Salva Configurazioni
@@ -175,8 +227,11 @@ const SettingsView = ({ settings, setSettings, saveSettings, EMAIL_CONFIG, showN
                   </div>
                   <div className="automation-item">
                     <div className="automation-info">
-                      <h5>🏆 Email Milestone GEMME</h5>
-                      <p>Inviate automaticamente al raggiungimento di 50, 100 e 150 GEMME</p>
+                      <h5>🏆 Email Livelli Dinamiche</h5>
+                      <p>Inviate automaticamente quando un cliente raggiunge un nuovo livello configurato</p>
+                      <small className="text-secondary">
+                        Basate sui livelli nella sezione "Livelli" - si adattano automaticamente alle tue configurazioni
+                      </small>
                     </div>
                     <span className="automation-status active">✅ Attiva</span>
                   </div>

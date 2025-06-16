@@ -100,6 +100,38 @@ const LevelsConfig = ({ showNotification }) => {
     return generateLevelGradient(color, 1)
   }, [])
 
+  const testLevelEmails = useCallback(async () => {
+    try {
+      setLoading(true)
+      showNotification('🧪 Test email livelli in corso...', 'info')
+      
+      // Test con diversi punteggi per verificare i level up
+      const testScenarios = [
+        { from: 0, to: 25, name: 'Mario Test' },
+        { from: 25, to: 60, name: 'Luigi Test' },
+        { from: 60, to: 110, name: 'Peach Test' },
+        { from: 110, to: 160, name: 'Bowser Test' }
+      ]
+      
+      for (const scenario of testScenarios) {
+        const { checkLevelUpForEmail, generateLevelEmailContent } = await import('../../utils/levelEmailUtils')
+        
+        const levelUpInfo = checkLevelUpForEmail(scenario.from, scenario.to, levels)
+        if (levelUpInfo && levelUpInfo.levelUpOccurred) {
+          const emailContent = generateLevelEmailContent(levelUpInfo.newLevel, scenario.name, scenario.to)
+          console.log(`📧 Email test per ${scenario.name}: ${emailContent.subject}`)
+        }
+      }
+      
+      showNotification('✅ Test email livelli completato! Controlla la console per i dettagli.', 'success')
+    } catch (error) {
+      console.error('Errore test email livelli:', error)
+      showNotification('❌ Errore nel test email livelli', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }, [levels, showNotification])
+
   const LevelEditor = ({ level }) => {
     const [localLevel, setLocalLevel] = useState(level)
 
@@ -289,8 +321,20 @@ const LevelsConfig = ({ showNotification }) => {
   return (
     <div className="levels-config">
       <div className="levels-config-header">
-        <h3>🏆 Configurazione Livelli Clienti</h3>
-        <p>Personalizza i livelli, i colori e le icone per il sistema di fidelizzazione</p>
+        <div>
+          <h3>🏆 Configurazione Livelli Clienti</h3>
+          <p>Personalizza i livelli, i colori e le icone per il sistema di fidelizzazione</p>
+        </div>
+        <div className="levels-config-actions">
+          <button 
+            onClick={testLevelEmails}
+            className="test-emails-btn"
+            disabled={loading || levels.length === 0}
+            title="Testa il sistema di email automatiche per i livelli"
+          >
+            🧪 Test Email Livelli
+          </button>
+        </div>
       </div>
 
       {editingLevel ? (

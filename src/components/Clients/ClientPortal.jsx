@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../supabase'
 import { getCustomerLevel, getNextLevelInfo } from '../../utils/levelsUtils'
+import QRCodeGenerator from '../Common/QRCodeGenerator'
 
 const ClientPortal = ({ token }) => {
   const [customer, setCustomer] = useState(null)
@@ -158,6 +159,55 @@ const ClientPortal = ({ token }) => {
           ) : (
             <p>🏆 Hai raggiunto il livello massimo!</p>
           )}
+        </div>
+      </div>
+
+      {/* QR CODE RICONOSCIMENTO - SEZIONE CENTRALE */}
+      <div className="qr-recognition-section">
+        <div className="qr-section-header">
+          <h3 className="qr-recognition-title">📱 Il tuo QR Code di Riconoscimento</h3>
+          <p className="qr-recognition-subtitle">
+            Mostra questo codice in negozio per essere riconosciuto istantaneamente
+          </p>
+        </div>
+        
+        <div className="qr-central-container">
+          <div className="qr-wrapper">
+            <div className="qr-display-card">
+              <QRCodeGenerator
+                value={`CUSTOMER:${customer.id}`}
+                size={240}
+                title=""
+                backgroundColor="#ffffff"
+                foregroundColor={customerLevel.primary_color || "#2563eb"}
+                className="customer-qr-code"
+              />
+            </div>
+            <div className="qr-info-card">
+              <div className="qr-customer-info">
+                <h4>👤 {customer.name}</h4>
+                <p>ID Cliente: #{customer.id}</p>
+                <div className="qr-level-badge" style={{ backgroundColor: customerLevel.primary_color }}>
+                  <span dangerouslySetInnerHTML={{ __html: customerLevel.icon_svg }} />
+                  <span>{customerLevel.name}</span>
+                </div>
+              </div>
+              <div className="qr-instructions">
+                <div className="instruction-item">
+                  <span className="step">1️⃣</span>
+                  <span>Mostra il QR al personale</span>
+                </div>
+                <div className="instruction-item">
+                  <span className="step">2️⃣</span>
+                  <span>Verrai riconosciuto automaticamente</span>
+                </div>
+                <div className="instruction-item">
+                  <span className="step">3️⃣</span>
+                  <span>Accumula GEMME con i tuoi acquisti</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

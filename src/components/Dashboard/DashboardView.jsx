@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import DarkModeToggle from '../DarkModeToggle'
-import { useAuth } from '../../auth/AuthContext' // <--- AGGIUNGI QUESTA RIGA
+import { useAuth } from '../../auth/AuthContext'
+import EmailQuotaWidget from '../Email/EmailQuotaWidget'
 
 const DashboardView = ({
   todayStats = { customers: 0, points: 0, revenue: 0, redeems: 0 },
   topCustomers = [],
-  emailStats = { sent: 0, opened: 0 }
+  emailStats = { sent: 0, opened: 0 },
+  showNotification = () => {} // Default fallback
 }) => {
   const [modalOpen, setModalOpen] = useState(false)
   const [modalText, setModalText] = useState("")
@@ -15,7 +17,6 @@ const DashboardView = ({
   const [nfcResult, setNfcResult] = useState(null)
   const [activePanel, setActivePanel] = useState(null)
 
-  // AGGIUNGI QUESTO BLOCCO:
   const { signOut, profile } = useAuth()
 
   // Funzione per aprire la modale generica (puoi tenerla per altri messaggi)
@@ -78,12 +79,31 @@ const DashboardView = ({
   const PremioForm = () => (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-900 rounded-xl p-8 shadow-xl max-w-xs w-full text-center">
-        <h2 className="text-xl font-bold mb-4">Riscatta Premio</h2>
-        <form onSubmit={e => { e.preventDefault(); setShowPremioForm(false); openModal("Premio riscattato!"); }}>
-          <input className="input mb-3 w-full" placeholder="Premio" required />
-          <button className="btn btn-gemme w-full" type="submit">Riscatta</button>
+        <div className="mb-4">
+          <div className="gemme-icon-lg w-16 h-16 mx-auto mb-3 opacity-80"></div>
+          <h2 className="text-xl font-bold text-brand mb-2">💎 Riscatta Premio</h2>
+          <p className="text-sm text-secondary">Inserisci il nome del premio da riscattare</p>
+        </div>
+        <form onSubmit={e => { e.preventDefault(); setShowPremioForm(false); openModal("🎉 Premio riscattato con successo!"); }}>
+          <input 
+            className="input mb-3 w-full" 
+            placeholder="es. Cornetto gratuito" 
+            required 
+            style={{
+              border: '2px solid #dc2626',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              fontSize: '1rem'
+            }}
+          />
+          <button className="redeem-prize-btn active w-full mb-3" type="submit">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+            </svg>
+            🎁 Conferma Riscatto
+          </button>
         </form>
-        <button className="btn btn-secondary w-full mt-2" onClick={() => setShowPremioForm(false)}>Annulla</button>
+        <button className="btn btn-secondary w-full" onClick={() => setShowPremioForm(false)}>❌ Annulla</button>
       </div>
     </div>
   )
@@ -261,27 +281,11 @@ const DashboardView = ({
               </div>
             </div>
 
-            {/* QUICK ACTIONS */}
-            <div className="space-y-3">
-              <button
-                className="btn btn-primary w-full"
-                onClick={() => openModal("Nuova Campagna Email in arrivo!")}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Nuova Campagna Email
-              </button>
-              <button
-                className="btn btn-secondary w-full"
-                onClick={() => openModal("Statistiche dettagliate in arrivo!")}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                Vedi Tutte le Statistiche
-              </button>
-            </div>
+            {/* WIDGET QUOTA EMAIL ACCORDION */}
+            <EmailQuotaWidget 
+              showNotification={showNotification}
+              accordion={true}
+            />
           </div>
         </div>
       </div>
@@ -319,7 +323,7 @@ const DashboardView = ({
               onClick={handleRiscattaPremio}
             >
               <div className="gemme-icon w-4 h-4"></div>
-              Riscatta Premio
+              💎 Riscatta Premio
             </button>
             
             <button

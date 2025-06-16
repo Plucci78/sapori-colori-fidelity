@@ -1,4 +1,5 @@
 import { memo, useState, useEffect, useRef } from 'react'
+import EmailQuotaWidget from './EmailQuotaWidget'
 
 const EmailView = memo(({
   emailStats,
@@ -271,7 +272,19 @@ const EmailView = memo(({
             <span className="stat-mini-value">{emailStats.opened}%</span>
           </div>
         </div>
+        <div className="header-quota">
+          <EmailQuotaWidget 
+            showNotification={showNotification}
+            compact={true}
+          />
+        </div>
       </div>
+
+      {/* WIDGET QUOTA EMAIL ACCORDION (sostituisce la versione completa) */}
+      <EmailQuotaWidget 
+        showNotification={showNotification}
+        accordion={true}
+      />
 
       {/* Layout a 3 pannelli */}
       <div className="email-editor-panels">

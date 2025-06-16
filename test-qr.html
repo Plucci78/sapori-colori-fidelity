@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test QR Code per Forno Loyalty</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .qr-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            margin: 20px 0;
+        }
+        .qr-code {
+            margin: 20px 0;
+        }
+        .qr-text {
+            font-family: monospace;
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        button {
+            background: #8B4513;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #6B3410;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test QR Code - Forno Loyalty</h1>
+    <p>Questa pagina genera QR codes di test per verificare il funzionamento del scanner QR nell'applicazione Forno Loyalty.</p>
+
+    <div class="qr-container">
+        <h2>QR Code Cliente Valido (ID: 1)</h2>
+        <div id="qr-customer-1" class="qr-code"></div>
+        <div class="qr-text">CUSTOMER:1</div>
+        <p>Questo QR code simula un cliente con ID 1</p>
+    </div>
+
+    <div class="qr-container">
+        <h2>QR Code Cliente Test (ID: 999)</h2>
+        <div id="qr-customer-999" class="qr-code"></div>
+        <div class="qr-text">CUSTOMER:999</div>
+        <p>Questo QR code simula un cliente con ID 999 (per test)</p>
+    </div>
+
+    <div class="qr-container">
+        <h2>QR Code Non Valido</h2>
+        <div id="qr-invalid" class="qr-code"></div>
+        <div class="qr-text">https://example.com/random</div>
+        <p>Questo QR code non è un codice cliente valido</p>
+    </div>
+
+    <div class="qr-container">
+        <h2>Istruzioni per il Test</h2>
+        <ol>
+            <li>Apri l'applicazione Forno Loyalty su <a href="http://localhost:5181" target="_blank">http://localhost:5181</a></li>
+            <li>Vai nella sezione "Gestione Clienti"</li>
+            <li>Clicca su "Apri Scanner QR"</li>
+            <li>Punta la webcam verso uno dei QR codes qui sopra</li>
+            <li>Verifica che il sistema riconosca correttamente i codici</li>
+        </ol>
+        <p><strong>Note:</strong></p>
+        <ul>
+            <li>I QR codes con formato <code>CUSTOMER:X</code> dovrebbero essere riconosciuti come clienti</li>
+            <li>Altri formati dovrebbero mostrare un messaggio di "QR non valido"</li>
+            <li>Assicurati di avere almeno un cliente nel database con ID 1 per testare il primo QR</li>
+        </ul>
+    </div>
+
+    <script>
+        // Genera QR codes
+        QRCode.toCanvas(document.getElementById('qr-customer-1'), 'CUSTOMER:1', {
+            width: 200,
+            margin: 2,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            }
+        });
+
+        QRCode.toCanvas(document.getElementById('qr-customer-999'), 'CUSTOMER:999', {
+            width: 200,
+            margin: 2,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            }
+        });
+
+        QRCode.toCanvas(document.getElementById('qr-invalid'), 'https://example.com/random', {
+            width: 200,
+            margin: 2,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            }
+        });
+
+        console.log('✅ QR codes di test generati!');
+    </script>
+</body>
+</html>

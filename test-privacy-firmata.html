@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Privacy Firmata</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .signature-canvas {
+            border: 2px solid #27ae60;
+            border-radius: 8px;
+            cursor: crosshair;
+            background: white;
+            margin: 10px 0;
+        }
+        .btn {
+            padding: 12px 24px;
+            margin: 5px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .test-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+        .signature-section {
+            background: #f8fff8;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #27ae60;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Test Privacy Firmata Digitalmente</h1>
+        
+        <div class="test-info">
+            <h3>📋 Scenario Test</h3>
+            <p><strong>Cliente:</strong> Mario Rossi</p>
+            <p><strong>Email:</strong> mario.rossi@example.com</p>
+            <p><strong>Telefono:</strong> +39 123 456 7890</p>
+            <p><strong>Data Registrazione:</strong> 15 giugno 2025</p>
+        </div>
+
+        <div class="signature-section">
+            <h3>✍️ Firma Digitale</h3>
+            <p>Disegna la tua firma nel riquadro sottostante:</p>
+            <canvas id="signatureCanvas" class="signature-canvas" width="400" height="150"></canvas>
+            <br>
+            <button class="btn btn-danger" onclick="clearSignature()">🗑️ Cancella Firma</button>
+            <button class="btn btn-primary" onclick="testSignature()">🔍 Test Firma</button>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <h3>🎯 Test Funzionalità</h3>
+            <button class="btn btn-success" onclick="generateStandardPDF()">📄 PDF Standard (senza firma)</button>
+            <button class="btn btn-warning" onclick="generateSignedPDF()">✍️ PDF con Firma Digitale</button>
+        </div>
+
+        <div id="results" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('signatureCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let hasSignature = false;
+
+        // Setup canvas per la firma
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch events per mobile
+        canvas.addEventListener('touchstart', handleTouch);
+        canvas.addEventListener('touchmove', handleTouch);
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#333';
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+            
+            hasSignature = true;
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 
+                                            e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        }
+
+        function clearSignature() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hasSignature = false;
+            showResult('🗑️ Firma cancellata', 'info');
+        }
+
+        function testSignature() {
+            if (hasSignature) {
+                const dataURL = canvas.toDataURL();
+                showResult(`✅ Firma acquisita! Dimensione: ${dataURL.length} caratteri`, 'success');
+                console.log('Firma data URL:', dataURL.substring(0, 100) + '...');
+            } else {
+                showResult('❌ Nessuna firma presente. Disegna prima la tua firma.', 'error');
+            }
+        }
+
+        function generateStandardPDF() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Dati cliente
+                const customer = {
+                    name: 'Mario Rossi',
+                    email: 'mario.rossi@example.com',
+                    phone: '+39 123 456 7890'
+                };
+                
+                const consents = {
+                    fidelity: true,
+                    marketing: true,
+                    newsletter: false,
+                    profiling: true
+                };
+
+                let y = 15;
+
+                // Header
+                doc.setFontSize(16);
+                doc.setFont(undefined, 'bold');
+                doc.text("🍞 SAPORI & COLORI", 10, y);
+                y += 8;
+                doc.setFontSize(12);
+                doc.text("Modulo Privacy e Consensi - STANDARD", 10, y);
+                y += 15;
+
+                // Info cliente
+                const oggi = new Date();
+                const dataString = oggi.toLocaleDateString('it-IT');
+                
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                doc.text(`Cliente: ${customer.name}`, 10, y);
+                y += 5;
+                doc.text(`Email: ${customer.email}`, 10, y);
+                y += 5;
+                doc.text(`Telefono: ${customer.phone}`, 10, y);
+                y += 10;
+
+                // Informativa privacy compatta
+                doc.setFontSize(9);
+                const privacyText = `INFORMATIVA PRIVACY - PROGRAMMA FEDELTÀ GEMME
+
+TITOLARE: Sapori & Colori B srl, Via Bagaladi 7, 00132 Roma
+
+FINALITÀ: Gestione programma fedeltà, erogazione servizi, comunicazioni commerciali (con consenso), 
+profilazione (con consenso), adempimenti fiscali e contabili.
+
+BASE GIURIDICA: Consenso (art. 6 lett. a GDPR), esecuzione contratto (art. 6 lett. b GDPR), 
+obblighi legali (art. 6 lett. c GDPR).
+
+DATI TRATTATI: Nome, telefono, email, data nascita, città, preferenze, cronologia acquisti.
+
+CONSERVAZIONE: Fino a revoca consenso o 10 anni per obblighi fiscali.
+
+DIRITTI: Accesso, rettifica, cancellazione, limitazione, portabilità, opposizione, revoca consenso.
+
+CONTATTI: privacy@saporiecolori.it - Tel: 06-XXXXXXX`;
+
+                doc.text(privacyText, 10, y, { maxWidth: 190 });
+                y += 55;
+
+                // Consensi
+                doc.setFont(undefined, 'bold');
+                doc.text("CONSENSI PRESTATI:", 10, y);
+                y += 8;
+                doc.setFont(undefined, 'normal');
+                doc.text(`✓ Programma fedeltà: ${consents.fidelity ? 'SÌ' : 'NO'}`, 15, y);
+                y += 5;
+                doc.text(`✓ Marketing email: ${consents.marketing ? 'SÌ' : 'NO'}`, 15, y);
+                y += 5;
+                doc.text(`✓ Newsletter: ${consents.newsletter ? 'SÌ' : 'NO'}`, 15, y);
+                y += 5;
+                doc.text(`✓ Profilazione: ${consents.profiling ? 'SÌ' : 'NO'}`, 15, y);
+
+                // Footer
+                y += 20;
+                doc.setFontSize(8);
+                doc.text("Documento generato automaticamente dal sistema di gestione Sapori & Colori", 10, y);
+
+                // Salva PDF
+                doc.save(`privacy_standard_${customer.name.replace(/\s+/g, '_')}_${dataString.replace(/\//g, '-')}.pdf`);
+                
+                showResult('📄 PDF Standard generato e scaricato con successo!', 'success');
+                
+            } catch (error) {
+                console.error('Errore PDF standard:', error);
+                showResult('❌ Errore nella generazione del PDF standard', 'error');
+            }
+        }
+
+        function generateSignedPDF() {
+            if (!hasSignature) {
+                showResult('❌ Prima disegna la tua firma nel canvas!', 'error');
+                return;
+            }
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Dati cliente
+                const customer = {
+                    name: 'Mario Rossi',
+                    email: 'mario.rossi@example.com',
+                    phone: '+39 123 456 7890'
+                };
+                
+                const consents = {
+                    fidelity: true,
+                    marketing: true,
+                    newsletter: false,
+                    profiling: true
+                };
+
+                let y = 15;
+
+                // Header
+                doc.setFontSize(16);
+                doc.setFont(undefined, 'bold');
+                doc.text("🍞 SAPORI & COLORI", 10, y);
+                y += 8;
+                doc.setFontSize(12);
+                doc.text("Modulo Privacy e Consensi - CON FIRMA DIGITALE", 10, y);
+                y += 15;
+
+                // Data e info cliente
+                const oggi = new Date();
+                const dataString = oggi.toLocaleDateString('it-IT');
+                const timeString = oggi.toLocaleTimeString('it-IT');
+                
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                doc.text(`Documento generato il: ${dataString} alle ${timeString}`, 10, y);
+                y += 8;
+                doc.text(`Cliente: ${customer.name}`, 10, y);
+                y += 5;
+                doc.text(`Email: ${customer.email}`, 10, y);
+                y += 5;
+                doc.text(`Telefono: ${customer.phone}`, 10, y);
+                y += 10;
+
+                // Informativa privacy compatta
+                doc.setFontSize(9);
+                const privacyText = `INFORMATIVA PRIVACY - PROGRAMMA FEDELTÀ GEMME
+
+TITOLARE: Sapori & Colori B srl, Via Bagaladi 7, 00132 Roma
+
+FINALITÀ: Gestione programma fedeltà, erogazione servizi, comunicazioni commerciali (con consenso), 
+profilazione (con consenso), adempimenti fiscali e contabili.
+
+BASE GIURIDICA: Consenso (art. 6 lett. a GDPR), esecuzione contratto (art. 6 lett. b GDPR), 
+obblighi legali (art. 6 lett. c GDPR).
+
+DATI TRATTATI: Nome, telefono, email, data nascita, città, preferenze, cronologia acquisti.
+
+CONSERVAZIONE: Fino a revoca consenso o 10 anni per obblighi fiscali.
+
+DIRITTI: Accesso, rettifica, cancellazione, limitazione, portabilità, opposizione, revoca consenso.
+
+CONTATTI: privacy@saporiecolori.it - Tel: 06-XXXXXXX`;
+
+                doc.text(privacyText, 10, y, { maxWidth: 190 });
+                y += 55;
+
+                // Consensi
+                doc.setFont(undefined, 'bold');
+                doc.text("CONSENSI PRESTATI:", 10, y);
+                y += 8;
+                doc.setFont(undefined, 'normal');
+                doc.text(`✓ Programma fedeltà: ${consents.fidelity ? 'SÌ' : 'NO'}`, 15, y);
+                y += 5;
+                doc.text(`✓ Marketing email: ${consents.marketing ? 'SÌ' : 'NO'}`, 15, y);
+                y += 5;
+                doc.text(`✓ Newsletter: ${consents.newsletter ? 'SÌ' : 'NO'}`, 15, y);
+                y += 5;
+                doc.text(`✓ Profilazione: ${consents.profiling ? 'SÌ' : 'NO'}`, 15, y);
+                y += 15;
+
+                // Sezione firma digitale
+                doc.setFont(undefined, 'bold');
+                doc.text("FIRMA DIGITALE ACQUISITA:", 10, y);
+                y += 8;
+                
+                doc.setFont(undefined, 'normal');
+                doc.text(`✅ Firma apposta il ${dataString} alle ${timeString}`, 15, y);
+                y += 8;
+                doc.text("Firma acquisita digitalmente e valida ai sensi dell'art. 20 DPR 445/2000", 15, y);
+                y += 10;
+
+                // Aggiungi immagine della firma
+                try {
+                    const signatureImg = canvas.toDataURL();
+                    // Dimensioni ottimali per la firma nel PDF
+                    const imgWidth = 80;
+                    const imgHeight = 30;
+                    
+                    doc.addImage(signatureImg, 'PNG', 15, y, imgWidth, imgHeight);
+                    y += imgHeight + 10;
+                    
+                    // Bordo attorno alla firma
+                    doc.rect(13, y - imgHeight - 12, imgWidth + 4, imgHeight + 4);
+                    
+                } catch (imgError) {
+                    console.error('Errore aggiunta immagine firma:', imgError);
+                    doc.text("❌ Errore nel caricamento dell'immagine della firma", 15, y);
+                    y += 10;
+                }
+
+                // Footer
+                y += 10;
+                doc.setFontSize(8);
+                doc.text("Documento generato automaticamente dal sistema di gestione Sapori & Colori", 10, y);
+                y += 5;
+                doc.text("Via Bagaladi 7, 00132 Roma - Tel: 06-XXXXXXX", 10, y);
+
+                // Salva il PDF
+                const fileName = `privacy_firmata_${customer.name.replace(/\s+/g, '_')}_${dataString.replace(/\//g, '-')}.pdf`;
+                doc.save(fileName);
+                
+                showResult('📄 PDF con Firma Digitale generato e scaricato con successo!', 'success');
+                
+            } catch (error) {
+                console.error('Errore PDF firmato:', error);
+                showResult('❌ Errore nella generazione del PDF firmato', 'error');
+            }
+        }
+
+        function showResult(message, type) {
+            const resultsDiv = document.getElementById('results');
+            const colors = {
+                success: '#27ae60',
+                error: '#e74c3c',
+                info: '#3498db',
+                warning: '#f39c12'
+            };
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                info: 'ℹ️',
+                warning: '⚠️'
+            };
+
+            resultsDiv.innerHTML = `
+                <div style="background: ${colors[type]}20; border: 2px solid ${colors[type]}; border-radius: 8px; padding: 15px; margin: 10px 0;">
+                    <strong style="color: ${colors[type]};">${icons[type]} ${message}</strong>
+                </div>
+            `;
+        }
+
+        // Messaggio iniziale
+        showResult('🧪 Test pronto! Disegna una firma e prova i pulsanti.', 'info');
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from 'react'
+import { useState, useEffect, useCallback, memo, useRef } from 'react'
 import { supabase } from './supabase'
 import emailjs from '@emailjs/browser'
 import './App.css'
@@ -11,6 +11,12 @@ import LoginForm from './auth/LoginForm'
 import { ProtectedComponent } from './auth/ProtectedComponent'
 import { usePermissions } from './hooks/usePermissions'
 import { activityService } from './services/activityService'
+import { emailQuotaService } from './services/emailQuotaService'
+import { playGemmeSound } from './utils/soundUtils'
+import { getLevelsForEmails, checkLevelUpForEmail, generateLevelEmailContent } from './utils/levelEmailUtils'
+
+// Test component import
+import LevelsTest from './components/Test/LevelsTest'
 
 // Import dei componenti (ESISTENTI)
 import AdvancedAnalytics from './components/Analytics/AdvancedAnalytics'
@@ -34,6 +40,19 @@ function AppContent() {
   const { isAuthenticated, loading: authLoading, profile, signOut } = useAuth()
   const { permissions, userRole, userName } = usePermissions()
 
+  // Funzione per controllare se il multiplier è attivo (weekend per ora)
+  const checkMultiplierActive = () => {
+    const today = new Date().getDay();
+    return today === 0 || today === 6; // Domenica o Sabato
+    // In futuro: return settings?.referral_multiplier_active || false;
+  };
+  const isMultiplierActive = checkMultiplierActive();
+
+  // Stati per sistema referral
+  const [referredFriends, setReferredFriends] = useState([]);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+
   // ===================================
   // STATI ESISTENTI (INVARIATI)
   // ===================================
@@ -45,7 +64,7 @@ function AppContent() {
     // Carica tutti i clienti solo una volta all'avvio
     const loadAllCustomers = async () => {
       if (!isAuthenticated) return // ← AGGIUNTO CHECK AUTH
-      
+
       const { data, error } = await supabase
         .from('customers')
         .select('*')
@@ -58,6 +77,9 @@ function AppContent() {
   }, [isAuthenticated]) // ← AGGIUNTA DIPENDENZA AUTH
 
   const [selectedCustomer, setSelectedCustomer] = useState(null)
+  // Stati per gestione modifica cliente
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingCustomer, setEditingCustomer] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [newCustomerName, setNewCustomerName] = useState('')
   const [newCustomerPhone, setNewCustomerPhone] = useState('')
@@ -100,6 +122,400 @@ function AppContent() {
 
   // Sistema notifiche moderne
   const [notifications, setNotifications] = useState([])
+  const loadCustomers = async () => {
+    const { data } = await supabase.from('customers').select('*')
+    if (data) {
+      setAllCustomers(data)
+      setCustomers(data)
+    }
+  }
+// ========== FUNZIONI SISTEMA REFERRAL ==========
+
+// Genera codice referral unico
+const generateReferralCode = (customerName) => {
+  const namePart = customerName.split(' ')[0].toUpperCase().slice(0, 5).replace(/[^A-Z]/g, '');
+  const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `${namePart}-${randomPart}`;
+};
+
+// Carica lista amici invitati da un cliente CON AUTO-CORREZIONE
+const loadReferredFriends = async (customerId) => {
+  if (!customerId) return;
+  
+  try {
+    console.log('🔍 loadReferredFriends chiamata per customerId:', customerId);
+    
+    const { data, error } = await supabase
+      .from('referrals')
+      .select(`
+        *,
+        referred:customers!referrals_referred_id_fkey(name, created_at)
+      `)
+      .eq('referrer_id', customerId)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('❌ Errore caricamento referral:', error);
+      return;
+    }
+    
+    console.log('📊 Referral trovati per customerId', customerId, ':', data);
+    console.log('📊 Numero totale referral:', data?.length || 0);
+    
+    // Debug dettagliato
+    if (data && data.length > 0) {
+      data.forEach((ref, index) => {
+        console.log(`📋 Referral #${index + 1}:`, {
+          id: ref.id,
+          status: ref.status,
+          referred_id: ref.referred_id,
+          referred_name: ref.referred?.name,
+          created_at: ref.created_at
+        });
+      });
+    }
+    
+    setReferredFriends(data || []);
+    
+    // ✨ AUTO-CORREZIONE: Verifica e corregge automaticamente i dati
+    await autoFixReferralData(customerId, data || []);
+    
+  } catch (error) {
+    console.error('❌ Errore:', error);
+  }
+};
+
+// Calcola il livello in base ai referral
+const getReferralLevel = (count) => {
+  if (count >= 20) return 'LEGGENDA';
+  if (count >= 10) return 'MAESTRO';
+  if (count >= 5) return 'ESPERTO';
+  if (count >= 1) return 'AMICO';
+  return 'NUOVO';
+};
+
+// Completa referral dopo il primo acquisto
+const completeReferral = async (customerId) => {
+  try {
+    console.log('🔍 completeReferral chiamata per customerId:', customerId);
+    
+    // METODO MIGLIORATO: Prima cerca direttamente un referral pending
+    let { data: referrals, error: referralError } = await supabase
+      .from('referrals')
+      .select('*')
+      .eq('referred_id', customerId)
+      .eq('status', 'pending');
+      
+    console.log('📊 Query referrals risultato:', { referrals, error: referralError });
+    
+    let referral = referrals && referrals.length > 0 ? referrals[0] : null;
+    console.log('📊 Referral selezionato:', referral);
+      
+    if (!referral) {
+      console.log('📊 Nessun referral pending trovato, controllo referred_by nel customer...');
+      // Se non c'è referral pending, controlla se c'è un referred_by nel cliente
+      // per compatibilità con clienti aggiunti manualmente
+      const { data: customer, error: customerError } = await supabase
+        .from('customers')
+        .select('referred_by, name')
+        .eq('id', customerId)
+        .single();
+        
+      console.log('📊 Customer data:', { customer, error: customerError });
+        
+      if (!customer?.referred_by) {
+        console.log('❌ Nessun referred_by trovato per il customer');
+        showNotification('❌ Questo cliente non ha un referrer', 'error');
+        return;
+      }
+      
+      console.log('✨ Creando record referral mancante...');
+      // Se c'è referred_by ma non il record referral, crealo
+      const { data: newReferral, error: createError } = await supabase
+        .from('referrals')
+        .insert([{
+          referrer_id: customer.referred_by,
+          referred_id: customerId,
+          status: 'pending',
+          created_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+        
+      if (createError) {
+        console.error('❌ Errore creazione referral mancante:', createError);
+        showNotification('❌ Errore nella creazione del referral', 'error');
+        return;
+      }
+      
+      console.log('✅ Nuovo referral creato:', newReferral);
+      // Usa il nuovo referral appena creato
+      referral = newReferral;
+    }
+    
+    if (!referral) {
+      console.log('❌ Nessun referral trovato dopo tutti i controlli');
+      showNotification('❌ Impossibile trovare il referral', 'error');
+      return;
+    }
+    
+    console.log('✅ Procedendo con il completamento del referral:', referral);
+    
+    // Calcola bonus con moltiplicatore se attivo
+    const BASE_REFERRAL_BONUS = 20;
+    const finalBonus = isMultiplierActive ? BASE_REFERRAL_BONUS * 2 : BASE_REFERRAL_BONUS;
+    
+    console.log('💰 Bonus calcolato:', finalBonus, 'Moltiplicatore attivo:', isMultiplierActive);
+    
+    // Prima recupera i dati attuali del referrer
+    console.log('📝 Recuperando dati attuali del referrer ID:', referral.referrer_id);
+    const { data: referrerData, error: referrerError } = await supabase
+      .from('customers')
+      .select('points, referral_count, referral_points_earned')
+      .eq('id', referral.referrer_id)
+      .single();
+      
+    if (referrerError) {
+      console.error('❌ Errore recupero dati referrer:', referrerError);
+      // Se la query fallisce, potrebbe essere che alcuni campi non esistono
+      // Proviamo con solo points
+      const { data: basicReferrerData, error: basicError } = await supabase
+        .from('customers')
+        .select('points')
+        .eq('id', referral.referrer_id)
+        .single();
+        
+      if (basicError) {
+        console.error('❌ Errore anche con query base:', basicError);
+        throw basicError;
+      }
+      
+      // Usa solo i dati base disponibili
+      console.log('⚠️ Usando dati base referrer:', basicReferrerData);
+      const { error: updateError } = await supabase
+        .from('customers')
+        .update({
+          points: (basicReferrerData.points || 0) + finalBonus
+        })
+        .eq('id', referral.referrer_id);
+        
+      if (updateError) {
+        console.error('❌ Errore aggiornamento punti base:', updateError);
+        throw updateError;
+      }
+      
+    } else {
+      console.log('📊 Dati attuali referrer:', referrerData);
+      
+      // Aggiorna punti e contatori del referrer con tutti i campi disponibili
+      console.log('📝 Aggiornando punti del referrer ID:', referral.referrer_id);
+      const updateData = {
+        points: (referrerData.points || 0) + finalBonus
+      };
+      
+      // Aggiungi i campi aggiuntivi solo se esistono
+      if ('referral_count' in referrerData) {
+        updateData.referral_count = (referrerData.referral_count || 0) + 1;
+      }
+      if ('referral_points_earned' in referrerData) {
+        updateData.referral_points_earned = (referrerData.referral_points_earned || 0) + finalBonus;
+      }
+      
+      const { error: updateError } = await supabase
+        .from('customers')
+        .update(updateData)
+        .eq('id', referral.referrer_id);
+        
+      if (updateError) {
+        console.error('❌ Errore aggiornamento punti referrer:', updateError);
+        throw updateError;
+      }
+    }
+    
+    console.log('✅ Punti referrer aggiornati con successo');
+    
+    // Marca il referral come completato
+    console.log('📝 Marcando referral come completato...');
+    const { error: referralUpdateError } = await supabase
+      .from('referrals')
+      .update({
+        status: 'completed',
+        points_awarded: finalBonus,
+        completed_at: new Date().toISOString()
+        // multiplier_applied: isMultiplierActive // RIMOSSO: campo non esiste nella tabella
+      })
+      .eq('id', referral.id);
+      
+    if (referralUpdateError) {
+      console.error('❌ Errore aggiornamento referral:', referralUpdateError);
+      throw referralUpdateError;
+    }
+    
+    console.log('✅ Referral marcato come completato');
+    
+    // Crea transazione per tracciare il bonus
+    console.log('📝 Creando transazione di tracciamento...');
+    const { error: transactionError } = await supabase
+      .from('transactions')
+      .insert({
+        customer_id: referral.referrer_id,
+        amount: 0,
+        points_earned: finalBonus,
+        type: isMultiplierActive ? 'referral_bonus_2x' : 'referral_bonus'
+      });
+      
+    if (transactionError) {
+      console.error('❌ Errore creazione transazione:', transactionError);
+      throw transactionError;
+    }
+    
+    console.log('✅ Transazione creata con successo');
+      
+    const bonusMessage = isMultiplierActive 
+      ? `🔥 Referral completato con BONUS 2X! +${finalBonus} gemme assegnate` 
+      : `🎉 Referral completato! +${finalBonus} gemme assegnate`;
+    showNotification(bonusMessage, 'success');
+    
+    console.log('🔄 Ricaricando dati clienti...');
+    loadCustomers(); // Ricarica per aggiornare i punti
+    console.log('🎉 completeReferral completata con successo!');
+    
+    // ✨ AUTO-CORREZIONE: Verifica dati dopo completamento
+    setTimeout(() => {
+      // Ricarica anche i referral per attivare l'auto-correzione
+      loadReferredFriends(referral.referrer_id);
+    }, 500);
+    
+  } catch (error) {
+    console.error('❌ Errore completamento referral:', error);
+    showNotification('❌ Errore nel completamento del referral: ' + error.message, 'error');
+  }
+};
+
+// ✨ NUOVA FUNZIONE: Completa manualmente un referral
+const forceCompleteReferral = async (customerId, customerName) => {
+  if (!confirm(`Vuoi completare manualmente il referral per ${customerName}?\n\nQuesto assegnerà i bonus al referrer.`)) {
+    return;
+  }
+  
+  try {
+    await completeReferral(customerId);
+    showNotification(`✅ Referral di ${customerName} completato manualmente!`, 'success');
+  } catch (error) {
+    console.error('Errore forzatura referral:', error);
+    showNotification('❌ Errore nel completamento del referral', 'error');
+  }
+};
+
+// ========== FUNZIONE CORREZIONE DATI REFERRAL ==========
+
+// Corregge automaticamente i dati inconsistenti dei referral (silenzioso)
+const autoFixReferralData = async (customerId, referralData) => {
+  try {
+    // Calcola i valori corretti dai dati effettivi
+    const actualCount = referralData?.length || 0;
+    const completedReferrals = referralData?.filter(r => r.status === 'completed') || [];
+    const actualPointsEarned = completedReferrals.reduce((sum, r) => sum + (r.points_awarded || 20), 0);
+    
+    // Recupera i dati attuali del cliente
+    const { data: currentCustomer } = await supabase
+      .from('customers')
+      .select('referral_count, referral_points_earned, name')
+      .eq('id', customerId)
+      .single();
+      
+    if (!currentCustomer) return;
+    
+    const currentCount = currentCustomer.referral_count || 0;
+    const currentPoints = currentCustomer.referral_points_earned || 0;
+    
+    // Verifica se serve correzione
+    const needsCountFix = currentCount !== actualCount;
+    const needsPointsFix = currentPoints !== actualPointsEarned;
+    
+    if (needsCountFix || needsPointsFix) {
+      console.log('🔧 Auto-correzione necessaria per:', currentCustomer.name, {
+        conteggio: `${currentCount} → ${actualCount}`,
+        punti: `${currentPoints} → ${actualPointsEarned}`
+      });
+      
+      // Aggiorna automaticamente
+      const { error: updateError } = await supabase
+        .from('customers')
+        .update({
+          referral_count: actualCount,
+          referral_points_earned: actualPointsEarned
+        })
+        .eq('id', customerId);
+        
+      if (!updateError) {
+        console.log('✅ Dati referral auto-corretti silenziosamente');
+        // Ricarica solo se c'è stata una modifica significativa
+        if (Math.abs(currentCount - actualCount) > 0 || Math.abs(currentPoints - actualPointsEarned) > 10) {
+          loadCustomers(); // Ricarica per aggiornare la UI
+        }
+      }
+    }
+  } catch (error) {
+    console.log('⚠️ Auto-correzione fallita (non critico):', error);
+  }
+};
+
+// Corregge i dati inconsistenti dei referral (con notifica)
+const fixReferralData = async (customerId) => {
+  try {
+    console.log('🔧 Correggendo dati referral per customerId:', customerId);
+    
+    // 1. Conta i referral effettivi nella tabella referrals
+    const { data: actualReferrals, error: referralsError } = await supabase
+      .from('referrals')
+      .select('id, status, points_awarded')
+      .eq('referrer_id', customerId);
+      
+    if (referralsError) {
+      console.error('❌ Errore nel recupero referral:', referralsError);
+      return;
+    }
+    
+    console.log('📊 Referral effettivi trovati:', actualReferrals);
+    
+    // 2. Calcola i valori corretti
+    const actualCount = actualReferrals?.length || 0;
+    const completedReferrals = actualReferrals?.filter(r => r.status === 'completed') || [];
+    const actualPointsEarned = completedReferrals.reduce((sum, r) => sum + (r.points_awarded || 20), 0);
+    
+    console.log('📊 Valori corretti:', {
+      count: actualCount,
+      completed: completedReferrals.length,
+      pointsEarned: actualPointsEarned
+    });
+    
+    // 3. Aggiorna il cliente con i valori corretti
+    const { error: updateError } = await supabase
+      .from('customers')
+      .update({
+        referral_count: actualCount,
+        referral_points_earned: actualPointsEarned
+      })
+      .eq('id', customerId);
+      
+    if (updateError) {
+      console.error('❌ Errore aggiornamento cliente:', updateError);
+      return;
+    }
+    
+    console.log('✅ Dati referral corretti con successo!');
+    showNotification(`✅ Dati referral corretti: ${actualCount} inviti, ${actualPointsEarned} gemme`, 'success');
+    
+    // 4. Ricarica i dati
+    loadCustomers();
+    loadReferredFriends(customerId);
+    
+  } catch (error) {
+    console.error('❌ Errore correzione dati:', error);
+    showNotification('❌ Errore nella correzione dei dati', 'error');
+  }
+};
 
   // CONFIGURAZIONE EMAILJS
   const EMAIL_CONFIG = {
@@ -131,15 +547,132 @@ function AppContent() {
     }
   }
 
+  // Counter per notifiche univoche
+  const notificationCounter = useRef(0);
+  
   // Funzione per mostrare notifiche moderne
   const showNotification = useCallback((message, type = 'success') => {
-    const id = Date.now()
+    const id = Date.now() + (++notificationCounter.current)
     const notification = { id, message, type }
     setNotifications(prev => [...prev, notification])
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id))
     }, 4000)
   }, [])
+  // ========== FUNZIONI MODIFICA E DISATTIVAZIONE CLIENTI ==========
+
+  // FUNZIONE 1: Disattiva Cliente
+  const deactivateCustomer = async (customer) => {
+    const reason = prompt(`Motivo disattivazione per ${customer.name}:`);
+    if (!reason) {
+      showNotification('⚠️ Inserisci un motivo per la disattivazione', 'warning');
+      return;
+    }
+    if (confirm(`Confermi di voler disattivare ${customer.name}?`)) {
+      try {
+        const { error } = await supabase
+          .from('customers')
+          .update({
+            is_active: false,
+            deactivated_at: new Date().toISOString(),
+            deactivation_reason: reason
+          })
+          .eq('id', customer.id);
+
+        if (error) throw error;
+
+        // Aggiorna anche il selectedCustomer se è lo stesso cliente
+        if (selectedCustomer && selectedCustomer.id === customer.id) {
+          setSelectedCustomer({
+            ...selectedCustomer,
+            is_active: false,
+            deactivated_at: new Date().toISOString(),
+            deactivation_reason: reason
+          });
+        }
+
+        showNotification(`✅ Cliente ${customer.name} disattivato`, 'success');
+        await loadCustomers(); // <--- ora funziona
+
+      } catch (error) {
+        console.error('Errore:', error);
+        showNotification('❌ Errore durante la disattivazione', 'error');
+      }
+    }
+  };
+
+  // FUNZIONE 2: Riattiva Cliente
+  const reactivateCustomer = async (customer) => {
+    if (confirm(`Vuoi riattivare ${customer.name}?`)) {
+      try {
+        const { error } = await supabase
+          .from('customers')
+          .update({
+            is_active: true,
+            deactivated_at: null,
+            deactivation_reason: null
+          })
+          .eq('id', customer.id);
+
+        if (error) throw error;
+
+        // Aggiorna anche il selectedCustomer se è lo stesso cliente
+        if (selectedCustomer && selectedCustomer.id === customer.id) {
+          setSelectedCustomer({
+            ...selectedCustomer,
+            is_active: true,
+            deactivated_at: null,
+            deactivation_reason: null
+          });
+        }
+
+        showNotification(`✅ Cliente ${customer.name} riattivato`, 'success');
+        await loadCustomers(); // <--- ora funziona
+
+      } catch (error) {
+        console.error('Errore:', error);
+        showNotification('❌ Errore durante la riattivazione', 'error');
+      }
+    }
+  };
+
+  // FUNZIONE 3: Salva Modifiche Cliente
+  const saveCustomerEdits = async () => {
+    if (!editingCustomer.name || !editingCustomer.phone) {
+      showNotification('⚠️ Nome e telefono sono obbligatori', 'warning');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('customers')
+        .update({
+          name: editingCustomer.name,
+          phone: editingCustomer.phone,
+          email: editingCustomer.email,
+          birth_date: editingCustomer.birth_date,
+          notes: editingCustomer.notes,
+          category: editingCustomer.category || 'Bronze',
+          marketing_accepted: editingCustomer.marketing_accepted,
+          newsletter_accepted: editingCustomer.newsletter_accepted
+        })
+        .eq('id', editingCustomer.id);
+
+      if (error) throw error;
+
+      showNotification('✅ Cliente aggiornato con successo', 'success');
+      setShowEditModal(false);
+      setEditingCustomer(null);
+      loadCustomers();
+
+    } catch (error) {
+      console.error('Errore:', error);
+      showNotification('❌ Errore durante l\'aggiornamento', 'error');
+    }
+  };
+
+
+
 
   // ===================================
   // MENU ITEMS CON PROTEZIONI AUTH (AGGIORNATO)
@@ -325,7 +858,7 @@ function AppContent() {
             </div>
             <div style="background: white; padding: 40px; margin: 0 20px; border-radius: 10px;">
               <div style="text-align: center; margin-bottom: 30px;">
-                <div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; width: 120px; height: 120px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);">
+                <div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; width: 120px, height: 120px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);">
                   ${customMsg}
                 </div>
               </div>
@@ -366,11 +899,18 @@ function AppContent() {
     return templates[type]
   }, [customMessage])
 
-  // Funzione automatica per email di benvenuto (+ ACTIVITY LOG)
+  // Funzione automatica per email di benvenuto (+ ACTIVITY LOG + CONTROLLO QUOTE)
   const sendWelcomeEmail = useCallback(async (customer) => {
     if (!customer.email) return
 
     try {
+      // ========== CONTROLLO QUOTE EMAIL ==========
+      const canSend = await emailQuotaService.canSendEmails(1)
+      if (!canSend.allowed) {
+        console.warn(`❌ Email benvenuto non inviata a ${customer.name}: ${canSend.message}`)
+        return
+      }
+
       const template = getEmailTemplate('welcome', customer.name)
 
       const templateParams = {
@@ -389,7 +929,7 @@ function AppContent() {
       )
 
       await saveEmailLog('welcome', [customer], template.subject, 'sent')
-      showNotification(`Email di benvenuto inviata a ${customer.name}!`, 'success')
+      showNotification(`✅ Email di benvenuto inviata a ${customer.name}!`, 'success')
 
       // ← AGGIUNTO ACTIVITY LOG
       await activityService.logEmail('WELCOME_EMAIL_SENT', {
@@ -403,34 +943,45 @@ function AppContent() {
     }
   }, [getEmailTemplate, saveEmailLog, showNotification, EMAIL_CONFIG])
 
-  // Funzione automatica per email milestone gemme (+ ACTIVITY LOG)
-  const sendPointsMilestoneEmail = useCallback(async (customer, points) => {
+  // Funzione automatica per email milestone gemme DINAMICA basata sui livelli (+ ACTIVITY LOG)
+  const sendPointsMilestoneEmail = useCallback(async (customer, oldPoints, newPoints) => {
     if (!customer.email) return
 
-    let milestoneReached = null
-    let emailTitle = ''
-
-    if (points === 50) {
-      milestoneReached = '50'
-      emailTitle = 'Congratulazioni!'
-    } else if (points === 100) {
-      milestoneReached = '100'
-      emailTitle = 'Cliente VIP!'
-    } else if (points === 150) {
-      milestoneReached = '150'
-      emailTitle = 'Incredibile!'
-    }
-
-    if (!milestoneReached) return
-
     try {
-      const template = getEmailTemplate('points', customer.name, milestoneReached)
+      // Recupera i livelli configurati
+      const levels = await getLevelsForEmails()
+      if (levels.length === 0) {
+        console.log('Nessun livello configurato per email automatiche')
+        return
+      }
+
+      // Verifica se c'è stato un level up
+      const levelUpInfo = checkLevelUpForEmail(oldPoints, newPoints, levels)
+      
+      if (!levelUpInfo || !levelUpInfo.levelUpOccurred) {
+        console.log(`Nessun level up per ${customer.name}: ${oldPoints} → ${newPoints} GEMME`)
+        return
+      }
+
+      const { newLevel, isFirstLevel } = levelUpInfo
+      
+      // ========== CONTROLLO QUOTE EMAIL ==========
+      const canSend = await emailQuotaService.canSendEmails(1)
+      if (!canSend.allowed) {
+        console.warn(`❌ Email milestone non inviata a ${customer.name}: ${canSend.message}`)
+        return
+      }
+      
+      console.log(`🎉 Level up per ${customer.name}: ${isFirstLevel ? 'Primo livello' : 'Nuovo livello'} ${newLevel.name}`)
+
+      // Genera contenuto email personalizzato per il livello
+      const emailContent = generateLevelEmailContent(newLevel, customer.name, newPoints)
 
       const templateParams = {
         to_name: customer.name,
         to_email: customer.email,
-        subject: template.subject,
-        message_html: template.html,
+        subject: emailContent.subject,
+        message_html: emailContent.html,
         reply_to: 'saporiecolori.b@gmail.com'
       }
 
@@ -441,20 +992,24 @@ function AppContent() {
         EMAIL_CONFIG.publicKey
       )
 
-      await saveEmailLog('milestone', [customer], template.subject, 'sent')
-      showNotification(`${emailTitle} Email inviata a ${customer.name}`, 'success')
+      await saveEmailLog('level_milestone', [customer], emailContent.subject, 'sent')
+      showNotification(`🎉 Email livello ${newLevel.name} inviata a ${customer.name}!`, 'success')
 
       // ← AGGIUNTO ACTIVITY LOG
-      await activityService.logEmail('MILESTONE_EMAIL_SENT', {
+      await activityService.logEmail('LEVEL_MILESTONE_EMAIL_SENT', {
         customer_id: customer.id,
         customer_name: customer.name,
-        milestone: milestoneReached
+        level_name: newLevel.name,
+        level_id: newLevel.id,
+        gems_reached: newPoints,
+        old_points: oldPoints,
+        is_first_level: isFirstLevel
       })
     } catch (error) {
-      console.error('Errore invio email milestone:', error)
-      await saveEmailLog('milestone', [customer], `Milestone ${milestoneReached} GEMME`, 'failed')
+      console.error('Errore invio email milestone livello:', error)
+      await saveEmailLog('level_milestone', [customer], `Livello ${newPoints} GEMME`, 'failed')
     }
-  }, [getEmailTemplate, saveEmailLog, showNotification, EMAIL_CONFIG])
+  }, [saveEmailLog, showNotification, EMAIL_CONFIG])
 
   // Carica impostazioni e premi
   useEffect(() => {
@@ -577,7 +1132,7 @@ function AppContent() {
     }
   }, [selectedIndividualCustomers.length, allCustomersForEmail])
 
-  // Funzione invio email AGGIORNATA con selezione individuale
+  // Funzione invio email AGGIORNATA con selezione individuale + CONTROLLO QUOTE
   const sendEmail = useCallback(async ({ subject, content, template }) => {
     if (!subject.trim()) {
       showNotification('Inserisci l\'oggetto dell\'email', 'error')
@@ -616,6 +1171,18 @@ function AppContent() {
       if (recipients.length === 0) {
         showNotification('Nessun destinatario trovato per i criteri selezionati', 'error')
         return
+      }
+
+      // ========== CONTROLLO QUOTE EMAIL ==========
+      const canSend = await emailQuotaService.canSendEmails(recipients.length)
+      if (!canSend.allowed) {
+        showNotification(canSend.message, 'error')
+        return
+      }
+
+      // Avviso se vicini al limite
+      if (canSend.warning) {
+        showNotification(canSend.warning, 'warning')
       }
 
       showNotification(`Invio ${recipients.length} email in corso...`, 'info')
@@ -665,13 +1232,13 @@ function AppContent() {
 
       await Promise.all(emailPromises)
 
-      await saveEmailLog(emailTemplate, recipients, subject, 'sent')
+      await saveEmailLog(template || 'custom', recipients, subject, 'sent')
       await loadEmailStats()
 
       if (successCount === recipients.length) {
-        showNotification(`Tutte le ${successCount} email inviate con successo!`, 'success')
+        showNotification(`✅ Tutte le ${successCount} email inviate con successo!`, 'success')
       } else {
-        showNotification(`${successCount}/${recipients.length} email inviate correttamente`, 'info')
+        showNotification(`⚠️ ${successCount}/${recipients.length} email inviate correttamente`, 'info')
       }
 
       setEmailSubject('')
@@ -680,8 +1247,8 @@ function AppContent() {
 
     } catch (error) {
       console.log('Errore invio email:', error)
-      await saveEmailLog(emailTemplate, [], subject, 'failed')
-      showNotification('Errore nell\'invio delle email', 'error')
+      await saveEmailLog(template || 'custom', [], subject, 'failed')
+      showNotification('❌ Errore nell\'invio delle email', 'error')
     }
   }, [
     emailRecipients,
@@ -716,20 +1283,28 @@ function AppContent() {
 
   // Modifica punti manualmente CON email automatica milestone (+ ACTIVITY LOG)
   const modifyPoints = useCallback(async (customer, pointsToAdd) => {
+    console.log('🔧 ModifyPoints chiamata con:', { customer: customer?.name, pointsToAdd })
+    
     const points = parseInt(pointsToAdd)
+    console.log('🔧 Points parsato:', points)
+    
     if (isNaN(points) || points === 0) {
+      console.log('❌ Validazione fallita:', { isNaN: isNaN(points), isZero: points === 0 })
       showNotification('Inserisci un numero valido di GEMME', 'error')
       return
     }
 
     try {
       const newPoints = Math.max(0, customer.points + points)
+      console.log('🔧 Nuovi punti calcolati:', { oldPoints: customer.points, points, newPoints })
 
+      console.log('🔧 Aggiornamento database customers...')
       await supabase
         .from('customers')
         .update({ points: newPoints })
         .eq('id', customer.id)
 
+      console.log('🔧 Inserimento transazione...')
       await supabase
         .from('transactions')
         .insert([{
@@ -739,13 +1314,18 @@ function AppContent() {
           type: points > 0 ? 'acquistare' : 'riscattare'
         }])
 
+      console.log('🔧 Activity log...')
       // ← AGGIUNTO ACTIVITY LOG
       await activityService.logCustomer('POINTS_MODIFIED', customer.id, { points: newPoints }, { points: customer.points })
 
-      if (points > 0 && (newPoints === 50 || newPoints === 100 || newPoints === 150)) {
-        await sendPointsMilestoneEmail(customer, newPoints)
+      // Nota: I suoni sono ora gestiti dal CustomerView per permettere personalizzazione
+
+      console.log('🔧 Controllo milestone email...')
+      if (points > 0) {
+        await sendPointsMilestoneEmail(customer, customer.points, newPoints)
       }
 
+      console.log('🔧 Aggiornamento interfaccia...')
       loadTodayStats()
       loadTopCustomers()
       searchCustomersForManual(manualCustomerName)
@@ -755,9 +1335,10 @@ function AppContent() {
       }
 
       setManualPoints('')
+      console.log('✅ ModifyPoints completata con successo')
       showNotification(`${points > 0 ? 'Aggiunte' : 'Rimosse'} ${Math.abs(points)} GEMME a ${customer.name}`)
     } catch (error) {
-      console.log('Errore modifica GEMME:', error)
+      console.log('❌ Errore modifica GEMME:', error)
       showNotification('Errore nella modifica GEMME', 'error')
     }
   }, [sendPointsMilestoneEmail, loadTodayStats, loadTopCustomers, searchCustomersForManual, manualCustomerName, selectedCustomer, showNotification])
@@ -941,10 +1522,22 @@ function AppContent() {
       // ← AGGIUNTO ACTIVITY LOG
       await activityService.logTransaction('TRANSACTION_CREATED', transaction.id, transaction)
 
-      // Controlla milestone email automatiche
-      if (pointsEarned > 0 && (newPoints === 50 || newPoints === 100 || newPoints === 150)) {
-        await sendPointsMilestoneEmail(selectedCustomer, newPoints)
+      // Controlla milestone email automatiche DINAMICHE
+      if (pointsEarned > 0) {
+        await sendPointsMilestoneEmail(selectedCustomer, selectedCustomer.points, newPoints)
       }
+
+      // === AGGIUNGI QUESTO BLOCCO PER IL REFERRAL ===
+      // Controlla se è il primo acquisto del cliente
+      const { count } = await supabase
+        .from('transactions')
+        .select('id', { count: 'exact', head: true })
+        .eq('customer_id', selectedCustomer.id)
+        .eq('type', 'acquistare');
+      if (count === 1) {
+        await completeReferral(selectedCustomer.id);
+      }
+      // === FINE BLOCCO REFERRAL ===
 
       setSelectedCustomer({ ...selectedCustomer, points: newPoints })
       setTransactionAmount('')
@@ -954,7 +1547,7 @@ function AppContent() {
       console.log('Errore transazione:', error)
       showNotification('Errore nella registrazione della transazione', 'error')
     }
-  }, [selectedCustomer, transactionAmount, settings.points_per_euro, sendPointsMilestoneEmail, loadTodayStats, showNotification])
+  }, [selectedCustomer, transactionAmount, settings.points_per_euro, sendPointsMilestoneEmail, loadTodayStats, showNotification, completeReferral])
 
   const redeemPrize = useCallback(async (prize) => {
     if (!selectedCustomer || selectedCustomer.points < prize.points_cost) return
@@ -995,10 +1588,72 @@ function AppContent() {
     }
   }, [selectedCustomer, loadTodayStats, showNotification])
 
-  // Funzione per generare token univoco e salvarlo nel DB
+  // Funzione per generare token univoco e salvarlo nel DB (MIGLIORATA)
   const generateClientTokenForCustomer = useCallback(async (customerId) => {
     try {
+      // 1. Prima controlla se il cliente ha già un token valido
+      const { data: currentCustomer } = await supabase
+        .from('customers')
+        .select('client_token')
+        .eq('id', customerId)
+        .single();
+      
+      // 2. Se ha già un token, riutilizzalo
+      if (currentCustomer?.client_token) {
+        console.log('🔄 Riutilizzo token esistente:', currentCustomer.client_token);
+        showNotification('✅ Link cliente recuperato (token esistente)', 'success');
+        return currentCustomer.client_token;
+      }
+      
+      // 3. Se non ha token, generane uno nuovo
+      console.log('🆕 Generando nuovo token per cliente:', customerId);
       let token = generateClientToken()
+      
+      // 4. Verifica che il token sia univoco
+      let { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('client_token', token)
+        .single()
+      while (existingCustomer) {
+        token = generateClientToken()
+        const { data } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('client_token', token)
+          .single()
+        existingCustomer = data
+      }
+      
+      // 5. Salva il token nel database
+      const { error } = await supabase
+        .from('customers')
+        .update({ client_token: token })
+        .eq('id', customerId)
+      if (error) {
+        showNotification('Errore nella generazione del link cliente', 'error')
+        return null
+      }
+
+      // ← AGGIUNTO ACTIVITY LOG
+      await activityService.logCustomer('CLIENT_TOKEN_GENERATED', customerId, { token })
+
+      showNotification('✅ Nuovo link cliente generato con successo!', 'success')
+      return token
+    } catch (error) {
+      console.error('Errore generazione token:', error)
+      showNotification('Errore nella generazione del link cliente', 'error')
+      return null
+    }
+  }, [showNotification])
+
+  // Funzione per rigenerare forzatamente un nuovo token
+  const regenerateClientToken = useCallback(async (customerId) => {
+    try {
+      console.log('🔄 Rigenerando forzatamente token per cliente:', customerId);
+      
+      let token = generateClientToken()
+      
       // Verifica che il token sia univoco
       let { data: existingCustomer } = await supabase
         .from('customers')
@@ -1014,24 +1669,23 @@ function AppContent() {
           .single()
         existingCustomer = data
       }
-      // Salva il token nel database
+      
+      // Salva il nuovo token nel database
       const { error } = await supabase
         .from('customers')
         .update({ client_token: token })
         .eq('id', customerId)
       if (error) {
-        showNotification('Errore nella generazione del link cliente', 'error')
+        showNotification('Errore nella rigenerazione del link cliente', 'error')
         return null
       }
 
-      // ← AGGIUNTO ACTIVITY LOG
-      await activityService.logCustomer('CLIENT_TOKEN_GENERATED', customerId, { token })
-
-      showNotification('Link cliente generato con successo!', 'success')
+      await activityService.logCustomer('CLIENT_TOKEN_REGENERATED', customerId, { token })
+      showNotification('🔄 Link cliente rigenerato! Il vecchio link non funziona più', 'success')
       return token
     } catch (error) {
-      console.error('Errore generazione token:', error)
-      showNotification('Errore nella generazione del link cliente', 'error')
+      console.error('Errore rigenerazione token:', error)
+      showNotification('Errore nella rigenerazione del link cliente', 'error')
       return null
     }
   }, [showNotification])
@@ -1049,22 +1703,39 @@ function AppContent() {
         window.location.href = '/'
       }
     }
+    
+    // Check per mostrare test dei livelli
+    if (path === '/test-livelli') {
+      setShowLevelsTest(true)
+      return
+    }
   }, [])
 
   const [clientPortalToken, setClientPortalToken] = useState(null)
+  const [showLevelsTest, setShowLevelsTest] = useState(false)
 
   // ===================================
   // AUTH LOADING & LOGIN SCREENS (AGGIUNTI)
   // ===================================
 
-  // Se l'auth sta caricando
+  // PRIORITÀ 1: Se siamo nel portale clienti, mostra solo quello (PRIMA dell'auth check)
+  if (clientPortalToken) {
+    return <ClientPortal token={clientPortalToken} />
+  }
+
+  // PRIORITÀ 1.5: Se siamo nel test dei livelli, mostra solo quello
+  if (showLevelsTest) {
+    return <LevelsTest />
+  }
+
+  // PRIORITÀ 2: Se l'auth sta caricando
   if (authLoading) {
     return (
       <div className="app-loading">
         <div className="loading-container">
-          <img 
-            src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" 
-            alt="Sapori & Colori" 
+          <img
+            src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png"
+            alt="Sapori & Colori"
             className="loading-logo"
           />
           <h2>Sapori & Colori</h2>
@@ -1075,11 +1746,11 @@ function AppContent() {
     )
   }
 
-  // Se non autenticato, mostra login
+  // PRIORITÀ 3: Se non autenticato, mostra login
   if (!isAuthenticated) {
     return (
       <div className="login-page">
-        <LoginForm 
+        <LoginForm
           onSuccess={() => {
             showNotification(`🎉 Benvenuto ${userName}!`, 'success')
             setActiveView('dashboard') // Reset al dashboard
@@ -1087,11 +1758,6 @@ function AppContent() {
         />
       </div>
     )
-  }
-
-  // Se siamo nel portale clienti, mostra solo quello
-  if (clientPortalToken) {
-    return <ClientPortal token={clientPortalToken} />
   }
 
   // ===================================
@@ -1104,23 +1770,19 @@ function AppContent() {
           todayStats={todayStats}
           topCustomers={topCustomers}
           emailStats={emailStats}
+          showNotification={showNotification}
         />
       case 'customer':
         return (
           <ProtectedComponent permission="canViewCustomers">
+            {/* Lista clienti e funzionalità esistenti */}
             <CustomerView
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               customers={customers}
+              setCustomers={setCustomers}
               selectedCustomer={selectedCustomer}
               setSelectedCustomer={setSelectedCustomer}
-              newCustomerName={newCustomerName}
-              setNewCustomerName={setNewCustomerName}
-              newCustomerPhone={newCustomerPhone}
-              setNewCustomerPhone={setNewCustomerPhone}
-              newCustomerEmail={newCustomerEmail}
-              setNewCustomerEmail={setNewCustomerEmail}
-              createCustomer={createCustomer}
               transactionAmount={transactionAmount}
               setTransactionAmount={setTransactionAmount}
               addTransaction={addTransaction}
@@ -1130,11 +1792,32 @@ function AppContent() {
               setManualCustomerName={setManualCustomerName}
               searchCustomersForManual={searchCustomersForManual}
               foundCustomers={foundCustomers}
+              setFoundCustomers={setFoundCustomers}
               manualPoints={manualPoints}
               setManualPoints={setManualPoints}
               modifyPoints={modifyPoints}
               showNotification={showNotification}
               generateClientTokenForCustomer={generateClientTokenForCustomer}
+              regenerateClientToken={regenerateClientToken}
+              loadCustomers={loadCustomers}
+              deactivateCustomer={deactivateCustomer}
+              reactivateCustomer={reactivateCustomer}
+              showEditModal={showEditModal}
+              setShowEditModal={setShowEditModal}
+              editingCustomer={editingCustomer}
+              setEditingCustomer={setEditingCustomer}
+              saveCustomerEdits={saveCustomerEdits}
+              // AGGIUNGI QUESTE PROPS
+              referredFriends={referredFriends}
+              loadReferredFriends={loadReferredFriends}
+              getReferralLevel={getReferralLevel}
+              showQRModal={showQRModal}
+              setShowQRModal={setShowQRModal}
+              showShareModal={showShareModal}
+              setShowShareModal={setShowShareModal}
+              isMultiplierActive={isMultiplierActive}
+              completeReferral={completeReferral} // ✅ AGGIUNTA QUESTA PROP
+              fixReferralData={fixReferralData} // ✅ AGGIUNTA FUNZIONE CORREZIONE
             />
           </ProtectedComponent>
         )
@@ -1208,6 +1891,7 @@ function AppContent() {
               saveSettings={saveSettings}
               EMAIL_CONFIG={EMAIL_CONFIG}
               showNotification={showNotification}
+              // assignMissingReferralCodes={assignMissingReferralCodes} // TEMPORANEO: commentato per debug
             />
           </ProtectedComponent>
         )
@@ -1281,6 +1965,20 @@ function AppContent() {
                 key={item.id}
                 className={`nav-item ${activeView === item.id ? 'active' : ''}`}
                 onClick={() => {
+                  // Reset cliente selezionato quando si cambia vista
+                  if (activeView === 'customer' && item.id !== 'customer' && selectedCustomer) {
+                    setSelectedCustomer(null)
+                    setSearchTerm('')
+                    showNotification('🔄 Cliente deselezionato per nuova ricerca', 'info')
+                  }
+                  
+                  // Reset anche quando si torna alla vista clienti da altre viste
+                  if (activeView !== 'customer' && item.id === 'customer' && selectedCustomer) {
+                    setSelectedCustomer(null)
+                    setSearchTerm('')
+                    showNotification('🔄 Pronto per nuova ricerca cliente', 'info')
+                  }
+                  
                   setActiveView(item.id)
                   setSidebarOpen(false) // Chiude la sidebar su mobile
                 }}

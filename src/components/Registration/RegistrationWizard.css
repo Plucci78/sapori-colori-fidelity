@@ -1,0 +1,751 @@
+/* ========================================
+   REGISTRATION WIZARD - STILE GESTIONALE PROFESSIONALE
+   ======================================== */
+
+/* OVERLAY DI SFONDO - ISOLA IL WIZARD */
+.wizard-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(3px);
+}
+
+/* CONTAINER PRINCIPALE - DESIGN MODERNO E PROFESSIONALE */
+.registration-wizard {
+  width: 100%;
+  max-width: 1200px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  position: relative;
+  z-index: 10000; /* Molto alto per essere sopra tutto */
+  border: 2px solid rgba(255, 126, 95, 0.2);
+}
+
+/* CONTENT WRAPPER - PADDING INTERNO */
+.wizard-content {
+  background: transparent;
+  padding: 40px;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+}
+
+/* PROGRESS INDICATOR */
+.progress-indicator {
+  margin-bottom: 30px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 15px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff7e5f 0%, #feb47b 100%);
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.progress-text {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* STEP CONTENT */
+.registration-step {
+  min-height: 400px;
+}
+
+.step-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #ff7e5f;
+}
+
+/* FORM ELEMENTS - STILE GESTIONALE */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.form-input-large {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  background: white;
+  transition: all 0.2s ease;
+  color: #333;
+  font-weight: 400;
+}
+
+.form-input-large:focus {
+  outline: none;
+  border-color: #ff7e5f;
+  box-shadow: 0 0 0 3px rgba(255, 126, 95, 0.1);
+}
+
+.form-input-large.error {
+  border-color: #dc3545;
+  background: #fff5f5;
+}
+
+.form-textarea-large {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  background: white;
+  transition: all 0.2s ease;
+  resize: vertical;
+  font-family: inherit;
+  color: #333;
+  line-height: 1.5;
+}
+
+.form-textarea-large:focus {
+  outline: none;
+  border-color: #ff7e5f;
+  box-shadow: 0 0 0 3px rgba(255, 126, 95, 0.1);
+}
+
+.form-hint {
+  display: block;
+  font-size: 13px;
+  color: #6c757d;
+  margin-top: 6px;
+}
+
+.error-message {
+  display: block;
+  color: #dc3545;
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 6px;
+}
+
+/* PRIVACY SECTION */
+.privacy-section {
+  margin-bottom: 25px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.privacy-section h3 {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.privacy-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #666;
+}
+
+.privacy-scroll-area {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 15px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  line-height: 1.6;
+  font-size: 14px;
+  color: #666;
+}
+
+.privacy-scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.privacy-scroll-area::-webkit-scrollbar-track {
+  background: #f1f3f4;
+  border-radius: 4px;
+}
+
+.privacy-scroll-area::-webkit-scrollbar-thumb {
+  background: #dadce0;
+  border-radius: 4px;
+}
+
+.privacy-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: #bdc1c6;
+}
+
+.privacy-scroll-area p {
+  margin-bottom: 12px;
+}
+
+.privacy-scroll-area strong {
+  color: #333;
+  font-weight: 600;
+}
+
+/* CONSENTS SECTION */
+.consents-section {
+  margin-bottom: 25px;
+}
+
+.consents-section h3 {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.consent-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 15px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.consent-item:hover {
+  border-color: #ff7e5f;
+  background: #fff5f2;
+}
+
+.consent-item.required {
+  border-color: #ff7e5f;
+  background: #fff5f2;
+}
+
+.consent-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  accent-color: #ff7e5f;
+}
+
+.consent-item span {
+  color: #333;
+  line-height: 1.4;
+}
+
+/* SEZIONE FIRMA DIGITALE - DESIGN PROFESSIONALE E SICURO */
+.signature-section {
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 10001; /* Sopra il wizard ma non troppo alto */
+  background: #f8fffe;
+  padding: 25px;
+  border-radius: 12px;
+  border: 2px solid #e8f5e8;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.signature-section h3 {
+  font-size: 20px;
+  color: #2d5a27;
+  margin-bottom: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.signature-description {
+  font-size: 15px;
+  color: #5a6c57;
+  margin-bottom: 20px;
+  font-style: normal;
+  line-height: 1.5;
+  background: #f0f9f0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 4px solid #4ade80;
+}
+
+.signature-canvas {
+  width: 100%;
+  height: 200px;
+  border: 3px solid #d1fae5;
+  border-radius: 12px;
+  background: #ffffff;
+  cursor: crosshair;
+  display: block;
+  margin: 0 auto 20px auto;
+  touch-action: none;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 10002; /* Canvas sopra tutto nella sezione firma */
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.signature-canvas:hover {
+  border-color: #10b981;
+  background: #fefffe;
+  box-shadow: 
+    inset 0 2px 8px rgba(0, 0, 0, 0.05),
+    0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.signature-canvas:focus {
+  outline: none;
+  border-color: #059669;
+  box-shadow: 
+    inset 0 2px 8px rgba(0, 0, 0, 0.05),
+    0 0 0 4px rgba(5, 150, 105, 0.2);
+}
+
+.btn-clear-signature {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.btn-clear-signature:hover {
+  background: #d97706;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+}
+
+.btn-clear-signature:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* NAVIGATION BUTTONS - STILE GESTIONALE */
+.wizard-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+}
+
+.btn-primary-large,
+.btn-secondary-large,
+.btn-success-large {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-primary-large {
+  background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
+  color: white;
+}
+
+.btn-primary-large:hover {
+  background: linear-gradient(135deg, #ff6b47 0%, #fdb863 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 126, 95, 0.3);
+}
+
+.btn-secondary-large {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary-large:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.btn-success-large {
+  background: #28a745;
+  color: white;
+}
+
+.btn-success-large:hover {
+  background: #218838;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-primary-large:disabled,
+.btn-secondary-large:disabled,
+.btn-success-large:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* CANCEL BUTTON */
+.btn-cancel {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 8px 16px;
+  font-size: 14px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.btn-cancel:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+/* ERROR BANNER */
+.error-banner {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #f5c6cb;
+}
+
+/* Pulsanti firma digitale */
+.signature-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.btn-print-privacy {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+}
+
+.btn-print-privacy:hover {
+  background: linear-gradient(135deg, #2980b9, #1f4e79);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+}
+
+.btn-print-privacy:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(52, 152, 219, 0.3);
+}
+
+/* Pulsanti step finale */
+.final-step-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-print-large {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 15px 30px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+  min-width: 200px;
+}
+
+.btn-print-large:hover {
+  background: linear-gradient(135deg, #2980b9, #1f4e79);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
+}
+
+.btn-print-large:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+}
+
+/* TABLET OPTIMIZATIONS */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .wizard-content {
+    padding: 30px;
+  }
+  
+  .step-title {
+    font-size: 22px;
+  }
+  
+  .form-input-large,
+  .form-textarea-large {
+    font-size: 16px;
+  }
+  
+  .consent-item {
+    font-size: 14px;
+    padding: 15px;
+  }
+}
+
+/* MOBILE RESPONSIVE */
+@media (max-width: 767px) {
+  .wizard-content {
+    padding: 20px;
+  }
+  
+  .step-title {
+    font-size: 20px;
+  }
+  
+  .form-input-large {
+    font-size: 16px;
+    padding: 10px 14px;
+  }
+  
+  .wizard-navigation {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .btn-primary-large,
+  .btn-secondary-large,
+  .btn-success-large {
+    width: 100%;
+  }
+  
+  .signature-canvas {
+    height: 150px;
+  }
+  
+  .btn-cancel {
+    position: static;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+
+/* CUSTOMER VIEW DETAILED INFO STYLES */
+.customer-detailed-info {
+  margin-top: 15px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.info-item .label {
+  font-weight: 600;
+  color: #666;
+  min-width: 80px;
+}
+
+.category-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.category-badge.vip {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.category-badge.gold {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.category-badge.silver {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.category-badge.bronze {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.customer-notes {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+.customer-notes h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.notes-content {
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.customer-consents {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+.customer-consents h4 {
+  margin: 0 0 10px 0;
+  color: #155724;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.consent-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.consent-list li {
+  padding: 4px 0;
+  color: #155724;
+  font-size: 14px;
+}
+
+.consent-list li:before {
+  content: "✓ ";
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+/* LOADING STATES */
+.btn-primary-large.loading,
+.btn-success-large.loading {
+  position: relative;
+  color: transparent;
+}
+
+.btn-primary-large.loading::after,
+.btn-success-large.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  top: 50%;
+  left: 50%;
+  margin-top: -8px;
+  margin-left: -8px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ACCESSIBILITY */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* FOCUS STATES */
+:focus-visible {
+  outline: 2px solid #ff7e5f;
+  outline-offset: 2px;
+}
+
+/* PRINT STYLES */
+@media print {
+  .btn-cancel,
+  .wizard-navigation {
+    display: none;
+  }
+  
+  .wizard-content {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+}

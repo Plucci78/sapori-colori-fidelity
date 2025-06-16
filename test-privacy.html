@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Privacy Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        .test-step {
+            margin: 15px 0;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        .code {
+            background-color: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🛡️ Test Gestione Privacy - Forno Loyalty</h1>
+        
+        <div class="status success">
+            ✅ <strong>Componenti implementati:</strong>
+            <ul>
+                <li>PrivacyManagement.jsx - Gestione completa privacy</li>
+                <li>Integrazione in CustomerView.jsx</li>
+                <li>Generazione PDF con jsPDF</li>
+                <li>Modal per aggiornamento consensi</li>
+            </ul>
+        </div>
+
+        <div class="status info">
+            ℹ️ <strong>Per testare il sistema privacy:</strong>
+        </div>
+
+        <div class="test-step">
+            <strong>1. Seleziona un cliente</strong><br>
+            Usa QR scanner, NFC o ricerca manuale per selezionare un cliente
+        </div>
+
+        <div class="test-step">
+            <strong>2. Trova la sezione "Gestione Privacy"</strong><br>
+            Scorri verso il basso nella pagina del cliente selezionato
+        </div>
+
+        <div class="test-step">
+            <strong>3. Testa la firma privacy</strong><br>
+            Clicca su <span class="code">📝 Firma Privacy</span> per aprire il modal dei consensi
+        </div>
+
+        <div class="test-step">
+            <strong>4. Aggiorna i consensi</strong><br>
+            Seleziona/deseleziona i checkbox per marketing, newsletter, profilazione
+        </div>
+
+        <div class="test-step">
+            <strong>5. Salva e genera PDF</strong><br>
+            Clicca <span class="code">✅ Salva Consensi</span> poi <span class="code">📄 Scarica PDF</span>
+        </div>
+
+        <div class="status warning">
+            ⚠️ <strong>Nota:</strong> I consensi sono attualmente salvati solo in memoria. 
+            Per il salvataggio persistente, è necessario creare la tabella <code>customer_consents</code> 
+            nel database Supabase.
+        </div>
+
+        <h2>🔧 Stato Implementazione</h2>
+        <ul>
+            <li>✅ UI/UX Completa</li>
+            <li>✅ Generazione PDF</li>
+            <li>✅ Gestione consensi locale</li>
+            <li>🔄 Database integration (da completare)</li>
+            <li>🔄 Email service (da implementare)</li>
+        </ul>
+
+        <h2>📱 Link Rapidi</h2>
+        <p>
+            <a href="http://localhost:5174" target="_blank" style="color: #007bff;">
+                🚀 Apri Applicazione Forno Loyalty
+            </a>
+        </p>
+        
+        <p>
+            <strong>Prossimi passi:</strong> Vedere il file 
+            <code>PRIVACY_IMPLEMENTATION_README.md</code> per istruzioni complete.
+        </p>
+    </div>
+
+    <script>
+        console.log('🛡️ Privacy Management Test Page caricata');
+        console.log('Vai su http://localhost:5174 per testare il sistema privacy');
+    </script>
+</body>
+</html>

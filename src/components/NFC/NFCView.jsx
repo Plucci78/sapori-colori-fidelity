@@ -346,26 +346,83 @@ const NFCView = memo(({ showNotification }) => {
         </div>
       </div>
 
-      {/* Status Card Dashboard Style */}
+      {/* Status Card Dashboard Style - REDESIGNED */}
       <div className="dashboard-section">
-        <div className="status-card">
-          <div className="card-header">
-            <h3 className="card-title">
-              <span className="card-icon">{isDemoMode ? '⚙️' : '📱'}</span>
-              Stato Sistema
-            </h3>
-          </div>
-          <div className="card-content">
-            <div className={`status-indicator ${isDemoMode ? 'demo' : 'production'}`}>
-              <div className="status-badge">
-                {isDemoMode ? 'MODALITÀ TEST' : 'NFC PRODUZIONE'}
+        <div className="nfc-status-card">
+          <div className="status-card-header">
+            <div className="status-title-section">
+              <div className="status-icon-wrapper">
+                {isDemoMode ? '🧪' : '🚀'}
               </div>
-              <p className="status-description">
-                {isDemoMode 
-                  ? 'Sistema di test per sviluppo e formazione operatori' 
-                  : 'Lettura tag NFC reali abilitata per uso produzione'
-                }
-              </p>
+              <div className="status-title-content">
+                <h3 className="status-main-title">Stato Sistema NFC</h3>
+                <p className="status-subtitle">Monitoraggio in tempo reale del sistema</p>
+              </div>
+            </div>
+            <div className="status-switch-wrapper">
+              <div className="mode-toggle-container">
+                <label className="modern-toggle">
+                  <input
+                    type="checkbox"
+                    checked={!isDemoMode}
+                    onChange={(e) => setIsDemoMode(!e.target.checked)}
+                    disabled={!('NDEFReader' in window)}
+                  />
+                  <span className="toggle-slider"></span>
+                  <span className="toggle-labels">
+                    <span className="label-test">TEST</span>
+                    <span className="label-prod">PROD</span>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <div className="status-card-body">
+            <div className="status-main-display">
+              <div className={`status-indicator-modern ${isDemoMode ? 'demo-mode' : 'prod-mode'}`}>
+                <div className="status-circle">
+                  <div className="status-pulse"></div>
+                  <div className="status-center">
+                    {isDemoMode ? '🧪' : '📡'}
+                  </div>
+                </div>
+                <div className="status-text-content">
+                  <div className="status-badge-modern">
+                    {isDemoMode ? 'MODALITÀ TEST' : 'PRODUZIONE ATTIVA'}
+                  </div>
+                  <p className="status-description-modern">
+                    {isDemoMode 
+                      ? 'Sistema di simulazione per test e formazione' 
+                      : 'Lettura NFC reale abilitata e funzionante'
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="status-stats-grid">
+              <div className="status-stat-item">
+                <div className="stat-icon">📊</div>
+                <div className="stat-content">
+                  <span className="stat-value">{nfcTags.length}</span>
+                  <span className="stat-label">Tag Associati</span>
+                </div>
+              </div>
+              <div className="status-stat-item">
+                <div className="stat-icon">📝</div>
+                <div className="stat-content">
+                  <span className="stat-value">{nfcLogs.length}</span>
+                  <span className="stat-label">Letture Oggi</span>
+                </div>
+              </div>
+              <div className="status-stat-item">
+                <div className="stat-icon">⚡</div>
+                <div className="stat-content">
+                  <span className="stat-value">{isDemoMode ? 'SIM' : 'REAL'}</span>
+                  <span className="stat-label">Modalità</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
