@@ -35,17 +35,17 @@ const NFCView = memo(({ showNotification }) => {
       console.log('✅ LENOVO TAB M11 RICONOSCIUTO!')
       return 'tablet'
     }
-    
+
     if (hasTouch && screenWidth >= 768 && screenWidth <= 1920) {
       console.log('✅ Rilevato: TABLET')
       return 'tablet'
-    } 
-    
+    }
+
     if (isAndroidTablet) {
       console.log('✅ Rilevato: TABLET (Android)')
       return 'tablet'
     }
-    
+
     if (hasTouch && screenWidth < 768) {
       console.log('✅ Rilevato: MOBILE')
       return 'mobile'
@@ -121,15 +121,15 @@ const NFCView = memo(({ showNotification }) => {
   const handleTagRead = useCallback(async (tag) => {
     console.log('� Tag letto:', tag)
     setLastReadTag(tag)
-    
+
     // Verifica se il tag esiste già
     const existingTagData = nfcTags.find(nfcTag => nfcTag.tag_id === tag.id)
-    
+
     if (existingTagData) {
       setExistingTag(existingTagData)
       setShowConfirmDialog(true)
     }
-    
+
     if (showNotification) {
       showNotification(`Tag letto: ${tag.id?.slice(-8) || 'N/A'}`, 'info')
     }
@@ -164,16 +164,16 @@ const NFCView = memo(({ showNotification }) => {
       }])
 
       showNotification('Tag associato con successo!', 'success')
-      
+
       // Reset form
       setSelectedCustomerId('')
       setTagName('')
       setLastReadTag(null)
-      
+
       // Ricarica dati
       loadNfcTags()
       loadNfcLogs()
-      
+
     } catch (error) {
       console.error('Errore associazione tag:', error)
       showNotification('Errore durante l\'associazione del tag', 'error')
@@ -187,7 +187,7 @@ const NFCView = memo(({ showNotification }) => {
     try {
       const { error } = await supabase
         .from('nfc_tags')
-        .update({ 
+        .update({
           customer_id: selectedCustomerId,
           updated_at: new Date().toISOString()
         })
@@ -200,7 +200,7 @@ const NFCView = memo(({ showNotification }) => {
       setExistingTag(null)
       setSelectedCustomerId('')
       loadNfcTags()
-      
+
     } catch (error) {
       console.error('Errore riassociazione tag:', error)
       showNotification('Errore durante la riassociazione', 'error')
@@ -210,12 +210,12 @@ const NFCView = memo(({ showNotification }) => {
   return (
     <div style={{ padding: '20px' }}>
       <h1>📱 Sistema NFC - uTrust 3700F</h1>
-      
+
       {/* Status Device */}
-      <div style={{ 
-        background: '#f8f9fa', 
-        padding: '15px', 
-        margin: '10px 0', 
+      <div style={{
+        background: '#f8f9fa',
+        padding: '15px',
+        margin: '10px 0',
         borderRadius: '8px',
         border: '1px solid #dee2e6'
       }}>
@@ -223,7 +223,7 @@ const NFCView = memo(({ showNotification }) => {
         <p><strong>Tipo:</strong> {deviceType}</p>
         <p><strong>Demo Mode:</strong> {isDemoMode ? 'Attivo' : 'Disattivo'}</p>
         <p><strong>Ultimo Tag:</strong> {lastReadTag?.id?.slice(-8) || 'Nessuno'}</p>
-        
+
         <button
           onClick={() => setIsDemoMode(!isDemoMode)}
           style={{
@@ -242,15 +242,15 @@ const NFCView = memo(({ showNotification }) => {
 
       {/* Desktop - uTrust 3700F Reader */}
       {deviceType === 'desktop' && (
-        <div style={{ 
-          margin: '20px 0', 
-          padding: '20px', 
-          background: 'white', 
+        <div style={{
+          margin: '20px 0',
+          padding: '20px',
+          background: 'white',
           border: '2px solid #007bff',
-          borderRadius: '8px' 
+          borderRadius: '8px'
         }}>
           <h3>� uTrust 3700F Reader (Serial/HID)</h3>
-          <Trust3700FReaderWebSerial 
+          <Trust3700FReaderWebSerial
             onTagRead={handleTagRead}
             onError={(error) => {
               console.error('❌ Errore lettore:', error)
@@ -270,41 +270,48 @@ const NFCView = memo(({ showNotification }) => {
         </div>
       )}
 
-      {/* Mobile/Tablet - NFC Nativo */}
+      {/* Mobile/Tablet - uTrust 3700F Reader */}
       {(deviceType === 'mobile' || deviceType === 'tablet') && (
-        <div style={{ 
-          margin: '20px 0', 
-          padding: '20px', 
-          background: 'white', 
-          border: '2px solid #28a745',
-          borderRadius: '8px' 
+        <div style={{
+          margin: '20px 0',
+          padding: '20px',
+          background: 'white',
+          border: '2px solid #007bff',
+          borderRadius: '8px'
         }}>
-          <h3>📱 NFC Nativo ({deviceType})</h3>
-          <TabletNFCReader 
+          <h3>🔥 uTrust 3700F Reader ({deviceType})</h3>
+          <Trust3700FReaderWebSerial
             onTagRead={handleTagRead}
             onError={(error) => {
-              console.error('❌ Errore NFC nativo:', error)
+              console.error('❌ Errore lettore:', error)
               if (showNotification) {
-                showNotification(`Errore NFC: ${error.message}`, 'error')
+                showNotification(`Errore lettore: ${error.message}`, 'error')
+              }
+            }}
+            onCustomerFound={(customer) => {
+              console.log('👤 Cliente trovato:', customer)
+              if (showNotification) {
+                showNotification(`Cliente: ${customer.name} - ${customer.points} GEMME`, 'success')
               }
             }}
             showNotification={showNotification}
+            isDemoMode={isDemoMode}
           />
         </div>
       )}
 
       {/* Form Associazione Tag */}
       {lastReadTag && (
-        <div style={{ 
-          margin: '20px 0', 
-          padding: '20px', 
-          background: '#fff3cd', 
+        <div style={{
+          margin: '20px 0',
+          padding: '20px',
+          background: '#fff3cd',
           border: '2px solid #ffc107',
-          borderRadius: '8px' 
+          borderRadius: '8px'
         }}>
           <h3>🏷️ Associa Tag al Cliente</h3>
           <p><strong>Tag ID:</strong> {lastReadTag.id}</p>
-          
+
           <div style={{ marginBottom: '15px' }}>
             <label>Nome Tag:</label>
             <input
@@ -463,15 +470,15 @@ const NFCView = memo(({ showNotification }) => {
       )}
 
       {/* Lista Tag Associati */}
-      <div style={{ 
-        margin: '20px 0', 
-        padding: '20px', 
-        background: 'white', 
+      <div style={{
+        margin: '20px 0',
+        padding: '20px',
+        background: 'white',
         border: '1px solid #dee2e6',
-        borderRadius: '8px' 
+        borderRadius: '8px'
       }}>
         <h3>📋 Tag NFC Associati ({nfcTags.length})</h3>
-        
+
         {nfcTags.length === 0 ? (
           <p>Nessun tag associato</p>
         ) : (
@@ -520,15 +527,15 @@ const NFCView = memo(({ showNotification }) => {
       </div>
 
       {/* Log Attività */}
-      <div style={{ 
-        margin: '20px 0', 
-        padding: '20px', 
-        background: 'white', 
+      <div style={{
+        margin: '20px 0',
+        padding: '20px',
+        background: 'white',
         border: '1px solid #dee2e6',
-        borderRadius: '8px' 
+        borderRadius: '8px'
       }}>
         <h3>📜 Log Attività NFC (Ultimi 50)</h3>
-        
+
         {nfcLogs.length === 0 ? (
           <p>Nessuna attività registrata</p>
         ) : (
@@ -541,7 +548,7 @@ const NFCView = memo(({ showNotification }) => {
                 borderRadius: '4px',
                 fontSize: '14px'
               }}>
-                <strong>{new Date(log.created_at).toLocaleString()}</strong> - 
+                <strong>{new Date(log.created_at).toLocaleString()}</strong> -
                 {log.action_type} - Tag: {log.tag_id?.slice(-8) || 'N/A'}
                 {log.device_info && ` - ${log.device_info}`}
               </div>
