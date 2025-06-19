@@ -189,20 +189,34 @@ class EmailQuotaService {
   // Ottieni il valore reale dal database o da configurazione
   async getRealMonthlyUsage() {
     try {
+      // Verifica prima se la tabella settings esiste
+      const { error: tableError } = await supabase
+        .from('settings')
+        .select('key')
+        .limit(1)
+
+      // Se la tabella non esiste o c'è un errore, usa il fallback immediato
+      if (tableError) {
+        console.log('📧 Settings table not accessible, using fallback email usage (88)')
+        return 88
+      }
+
       // Cerca una configurazione salvata nel database
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('settings')
         .select('value')
         .eq('key', 'emailjs_monthly_usage')
-        .single()
+        .maybeSingle() // Usa maybeSingle invece di single per evitare errori su 0 risultati
 
-      if (data?.value) {
-        return parseInt(data.value)
+      // Se errore o nessun dato, usa fallback
+      if (error || !data?.value) {
+        console.log('📧 Using fallback email usage value (88)')
+        return 88
       }
 
-      // Default: usa il valore che vedi sul portale EmailJS
-      return 88
-    } catch (error) {
+      return parseInt(data.value)
+    } catch {
+      console.log('📧 Email usage query error, using fallback (88)')
       // Fallback al valore hardcoded
       return 88
     }
@@ -211,6 +225,18 @@ class EmailQuotaService {
   // Aggiorna manualmente l'utilizzo reale (per sincronizzare con EmailJS)
   async updateRealMonthlyUsage(newValue) {
     try {
+      // Verifica prima se la tabella settings esiste
+      const { error: tableError } = await supabase
+        .from('settings')
+        .select('key')
+        .limit(1)
+
+      // Se la tabella non esiste, avvisa l'utente e non fare nulla
+      if (tableError) {
+        console.log('📧 Settings table not accessible, cannot update email usage')
+        return false
+      }
+
       const { error } = await supabase
         .from('settings')
         .upsert([{

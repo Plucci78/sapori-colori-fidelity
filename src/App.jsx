@@ -14,6 +14,7 @@ import { usePermissions } from './hooks/usePermissions'
 import { activityService } from './services/activityService'
 import { emailQuotaService } from './services/emailQuotaService'
 import { getLevelsForEmails, checkLevelUpForEmail, generateLevelEmailContent } from './utils/levelEmailUtils'
+import { AuthDebug } from './auth/AuthDebug'
 
 // Test component import
 import LevelsTest from './components/Test/LevelsTest'
@@ -60,21 +61,33 @@ function AppContent() {
   const [allCustomers, setAllCustomers] = useState([])
   const [customers, setCustomers] = useState([])
 
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
+
   useEffect(() => {
+    // Previeni loop - carica solo se non stiamo già caricando
+    if (loadingCustomers) {
+      return;
+    }
+    
     // Carica tutti i clienti solo una volta all'avvio
     const loadAllCustomers = async () => {
-      if (!isAuthenticated) return // ← AGGIUNTO CHECK AUTH
+      if (!isAuthenticated) return
 
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-      if (data) {
-        setAllCustomers(data)
-        setCustomers(data)
+      setLoadingCustomers(true);
+      try {
+        const { data, error } = await supabase
+          .from('customers')
+          .select('*')
+        if (data) {
+          setAllCustomers(data)
+          setCustomers(data)
+        }
+      } finally {
+        setLoadingCustomers(false);
       }
     }
     loadAllCustomers()
-  }, [isAuthenticated]) // ← AGGIUNTA DIPENDENZA AUTH
+  }, [isAuthenticated, loadingCustomers])
 
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   // Stati per gestione modifica cliente
@@ -1877,11 +1890,22 @@ const fixReferralData = async (customerId) => {
           </ProtectedComponent>
         )
       case 'nfc':
-        return (
-          <ProtectedComponent permission="canViewCustomers">
-            <NFCView showNotification={showNotification} />
-          </ProtectedComponent>
-        )
+        try {
+          return (
+            <ProtectedComponent permission="canViewCustomers">
+              <NFCView showNotification={showNotification} />
+            </ProtectedComponent>
+          )
+        } catch (error) {
+          console.error('Errore nel caricamento NFCView:', error);
+          return (
+            <div style={{padding: '20px'}}>
+              <h2>⚠️ Errore nel modulo NFC</h2>
+              <p>Si è verificato un errore nel caricamento del modulo NFC.</p>
+              <p>Errore: {error.message}</p>
+            </div>
+          )
+        }
       case 'settings':
         return (
           <ProtectedComponent permission="canViewSettings">
@@ -2008,6 +2032,7 @@ const fixReferralData = async (customerId) => {
 function App() {
   return (
     <AuthProvider>
+      <AuthDebug />
       <AppContent />
     </AuthProvider>
   )

@@ -267,7 +267,7 @@ export const LoginForm = ({ onSuccess = null, className = "" }) => {
         </form>
 
         {/* Demo Credentials (only in development) */}
-        {process.env.NODE_ENV === 'development' && (
+        {import.meta.env.DEV && (
           <div className="demo-credentials">
             <div className="demo-title">📋 DEMO CREDENTIALS:</div>
             <div className="demo-buttons">
