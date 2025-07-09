@@ -28,6 +28,7 @@ import PrizesView from './components/Prizes/PrizesView'
 import SettingsView from './components/Settings/SettingsView'
 import NFCView from './components/NFC/NFCView'
 import ClientPortal from './components/Clients/ClientPortal'
+import CouponManagement from './components/Coupons/CouponManagement'
 import { generateClientToken, isValidToken } from './utils/tokenUtils'
 
 // ===================================
@@ -723,6 +724,17 @@ const fixReferralData = async (customerId) => {
       permission: 'canSendEmails'
     },
     {
+      id: 'coupons',
+      title: 'Coupon',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+      ),
+      description: 'Gestione coupon e offerte',
+      permission: 'canManageCoupons'
+    },
+    {
       id: 'analytics',
       title: 'Analytics',
       icon: (
@@ -738,7 +750,7 @@ const fixReferralData = async (customerId) => {
       title: 'NFC',
       icon: (
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       ),
       description: 'Gestione tag NFC',
@@ -1132,8 +1144,8 @@ const fixReferralData = async (customerId) => {
     }
   }, [selectedIndividualCustomers.length, allCustomersForEmail])
 
-  // Funzione invio email AGGIORNATA con selezione individuale + CONTROLLO QUOTE
-  const sendEmail = useCallback(async ({ subject, content, template }) => {
+  // Funzione invio email AGGIORNATA con selezione individuale + CONTROLLO QUOTE + segmenti
+  const sendEmail = useCallback(async ({ subject, content, template, segments }) => {
     if (!subject.trim()) {
       showNotification('Inserisci l\'oggetto dell\'email', 'error')
       return
@@ -1141,17 +1153,38 @@ const fixReferralData = async (customerId) => {
 
     try {
       let recipients = []
+      console.log('[DEBUG] Segmenti ricevuti:', segments)
 
-      if (emailRecipients === 'individual' && selectedIndividualCustomers.length > 0) {
+      if (Array.isArray(segments) && segments.length > 0) {
+        const { data: allCustomers } = await supabase
+          .from('customers')
+          .select('*')
+          .not('email', 'is', null)
+        // Mappa segmenti → filtri
+        const segmentFilters = {
+          all: c => !!c.email,
+          vip: c => c.email && c.points >= 100,
+          active: c => c.email && c.points > 0,
+          inactive: c => c.email && c.points === 0,
+          new: c => {
+            const created = new Date(c.created_at)
+            const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
+            return c.email && created > weekAgo
+          },
+          birthday: c => false // Da implementare se serve
+        }
+        recipients = allCustomers.filter(c => segments.some(seg => segmentFilters[seg]?.(c)))
+        console.log('[DEBUG] Destinatari trovati per segmenti:', recipients.map(c => c.email))
+      } else if (emailRecipients === 'individual' && selectedIndividualCustomers.length > 0) {
         recipients = allCustomersForEmail.filter(c =>
           selectedIndividualCustomers.includes(c.id) && c.email
         )
+        console.log('[DEBUG] Destinatari individuali:', recipients.map(c => c.email))
       } else {
         const { data: allCustomers } = await supabase
           .from('customers')
           .select('*')
           .not('email', 'is', null)
-
         switch (emailRecipients) {
           case 'all':
             recipients = allCustomers.filter(c => c.email)
@@ -1166,10 +1199,12 @@ const fixReferralData = async (customerId) => {
             recipients = allCustomers.filter(c => c.email && c.points === 0)
             break
         }
+        console.log('[DEBUG] Destinatari per emailRecipients:', recipients.map(c => c.email))
       }
 
       if (recipients.length === 0) {
         showNotification('Nessun destinatario trovato per i criteri selezionati', 'error')
+        console.error('[DEBUG] Nessun destinatario trovato per i criteri selezionati')
         return
       }
 
@@ -1177,58 +1212,61 @@ const fixReferralData = async (customerId) => {
       const canSend = await emailQuotaService.canSendEmails(recipients.length)
       if (!canSend.allowed) {
         showNotification(canSend.message, 'error')
+        console.error('[DEBUG] Quota email superata:', canSend.message)
         return
       }
 
       // Avviso se vicini al limite
       if (canSend.warning) {
         showNotification(canSend.warning, 'warning')
+        console.warn('[DEBUG] Quota email quasi esaurita:', canSend.warning)
       }
 
       showNotification(`Invio ${recipients.length} email in corso...`, 'info')
+      console.log(`[DEBUG] Invio ${recipients.length} email in corso...`)
 
       let successCount = 0
-      const emailPromises = recipients.map(async (customer) => {
-        try {
-          // Sostituzione variabili nel subject e nel content
-          let personalizedSubject = subject
-            .replace(/{{nome}}/g, customer.name)
-            .replace(/{{gemme}}/g, customer.points)
-            .replace(/{{email}}/g, customer.email)
-            .replace(/{{telefono}}/g, customer.phone || '')
-            .replace(/{{negozio}}/g, 'Sapori & Colori')
-            .replace(/{{data}}/g, new Date().toLocaleDateString('it-IT'))
+for (const customer of recipients) {
+  try {
+    // Sostituzione variabili nel subject e nel content
+    let personalizedSubject = subject
+      .replace(/{{nome}}/g, customer.name)
+      .replace(/{{gemme}}/g, customer.points)
+      .replace(/{{email}}/g, customer.email)
+      .replace(/{{telefono}}/g, customer.phone || '')
+      .replace(/{{negozio}}/g, 'Sapori & Colori')
+      .replace(/{{data}}/g, new Date().toLocaleDateString('it-IT'))
 
-          let personalizedContent = content
-            .replace(/{{nome}}/g, customer.name)
-            .replace(/{{gemme}}/g, customer.points)
-            .replace(/{{email}}/g, customer.email)
-            .replace(/{{telefono}}/g, customer.phone || '')
-            .replace(/{{negozio}}/g, 'Sapori & Colori')
-            .replace(/{{data}}/g, new Date().toLocaleDateString('it-IT'))
+    let personalizedContent = content
+      .replace(/{{nome}}/g, customer.name)
+      .replace(/{{gemme}}/g, customer.points)
+      .replace(/{{email}}/g, customer.email)
+      .replace(/{{telefono}}/g, customer.phone || '')
+      .replace(/{{negozio}}/g, 'Sapori & Colori')
+      .replace(/{{data}}/g, new Date().toLocaleDateString('it-IT'))
 
-          const templateParams = {
-            to_name: customer.name,
-            to_email: customer.email,
-            subject: personalizedSubject,
-            message_html: personalizedContent,
-            reply_to: 'saporiecolori.b@gmail.com'
-          }
+    const templateParams = {
+      to_name: customer.name,
+      to_email: customer.email,
+      subject: personalizedSubject,
+      message_html: personalizedContent,
+      reply_to: 'saporiecolori.b@gmail.com'
+    }
 
-          await emailjs.send(
-            EMAIL_CONFIG.serviceId,
-            EMAIL_CONFIG.templateId,
-            templateParams,
-            EMAIL_CONFIG.publicKey
-          )
+    await emailjs.send(
+      EMAIL_CONFIG.serviceId,
+      EMAIL_CONFIG.templateId,
+      templateParams,
+      EMAIL_CONFIG.publicKey
+    )
 
-          successCount++
-          return true
-        } catch (error) {
-          console.error(`Errore invio email a ${customer.name}:`, error)
-          return false
-        }
-      })
+    successCount++
+    await new Promise(res => setTimeout(res, 500)) // mezzo secondo di pausa tra invii
+  } catch (error) {
+    console.error(`[DEBUG] Errore invio email a ${customer.name} (${customer.email}):`, error)
+    showNotification(`Errore invio email a ${customer.name}: ${error?.text || error?.message || error}`, 'error')
+  }
+}
 
       await Promise.all(emailPromises)
 
@@ -1237,8 +1275,10 @@ const fixReferralData = async (customerId) => {
 
       if (successCount === recipients.length) {
         showNotification(`✅ Tutte le ${successCount} email inviate con successo!`, 'success')
+        console.log(`[DEBUG] Tutte le ${successCount} email inviate con successo!`)
       } else {
         showNotification(`⚠️ ${successCount}/${recipients.length} email inviate correttamente`, 'info')
+        console.warn(`[DEBUG] Solo ${successCount}/${recipients.length} email inviate correttamente`)
       }
 
       setEmailSubject('')
@@ -1246,9 +1286,9 @@ const fixReferralData = async (customerId) => {
       setSelectedIndividualCustomers([])
 
     } catch (error) {
-      console.log('Errore invio email:', error)
+      console.error('[DEBUG] Errore invio email:', error)
       await saveEmailLog(template || 'custom', [], subject, 'failed')
-      showNotification('❌ Errore nell\'invio delle email', 'error')
+      showNotification('❌ Errore nell\'invio delle email: ' + (error?.message || error), 'error')
     }
   }, [
     emailRecipients,
@@ -1704,6 +1744,8 @@ const fixReferralData = async (customerId) => {
       }
     }
     
+
+    
     // Check per mostrare test dei livelli
     if (path === '/test-livelli') {
       setShowLevelsTest(true)
@@ -1862,6 +1904,14 @@ const fixReferralData = async (customerId) => {
               showNotification={showNotification}
               supabase={supabase}
               customers={allCustomers}
+            />
+          </ProtectedComponent>
+        )
+      case 'coupons':
+        return (
+          <ProtectedComponent permission="canManageCoupons">
+            <CouponManagement
+              showNotification={showNotification}
             />
           </ProtectedComponent>
         )
