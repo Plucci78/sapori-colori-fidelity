@@ -1,0 +1,69 @@
+-- ===================================================================
+-- SCRIPT DI PULIZIA DATABASE PER PRODUZIONE - SAPORI & COLORI
+--
+-- ATTENZIONE: ESEGUIRE QUESTO SCRIPT CANCELLERA' PERMANENTEMENTE
+-- I DATI DALLE TABELLE SPECIFICATE.
+--
+-- -> FARE UN BACKUP COMPLETO PRIMA DI PROCEDERE! <-
+-- Vai su Database > Backups > "Back up now" nel tuo dashboard Supabase.
+-- ===================================================================
+
+-- -------------------------------------------------------------------
+-- Analisi basata sul report:
+--
+-- TABELLE DA PULIRE (Transazionali):
+-- - activity_logs, consent_records, customer_consents, customers,
+-- - email_campaigns, email_logs, nfc_logs, nfc_tags,
+-- - points_reset_history, referrals, scheduled_resets,
+-- - transactions, user_sessions, users
+--
+-- TABELLE DA MANTENERE (Configurazione e Operatori):
+-- - customer_levels, email_settings, email_templates, prizes,
+-- - profiles (per gli account operatore), settings, system_settings
+-- -------------------------------------------------------------------
+
+-- PASSO 1: Disabilita temporaneamente la Row Level Security (RLS) per le tabelle interessate.
+-- Questo è necessario perché TRUNCATE richiede privilegi che potrebbero essere bloccati da RLS.
+ALTER TABLE public.customers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.transactions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.nfc_tags DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.nfc_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.customer_consents DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.referrals DISABLE ROW LEVEL SECURITY;
+-- Aggiungi altre tabelle con RLS attiva se necessario
+-- (consent_records, activity_logs, etc. non hanno RLS attiva secondo il report)
+
+
+-- PASSO 2: Svuota tutte le tabelle transazionali.
+-- RESTART IDENTITY resetta i contatori degli ID (il prossimo cliente sarà ID 1).
+-- CASCADE gestisce le relazioni tra le tabelle che vengono svuotate.
+TRUNCATE
+  public.activity_logs,
+  public.consent_records,
+  public.customer_consents,
+  public.customers,
+  public.email_campaigns,
+  public.email_logs,
+  public.nfc_logs,
+  public.nfc_tags,
+  public.points_reset_history,
+  public.referrals,
+  public.scheduled_resets,
+  public.transactions,
+  public.user_sessions,
+  public.users
+RESTART IDENTITY CASCADE;
+
+
+-- PASSO 3: Riabilita la Row Level Security per ripristinare la sicurezza.
+ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.nfc_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.nfc_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.customer_consents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.referrals ENABLE ROW LEVEL SECURITY;
+
+
+-- PASSO 4: Messaggio di conferma.
+SELECT '✅ Pulizia del database completata con successo! Pronto per la produzione.';
+

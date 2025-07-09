@@ -12,16 +12,22 @@
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
     "@supabase/supabase-js": "^2.49.8",
+    "@tinymce/tinymce-react": "^6.2.1",
     "@zxing/library": "^0.21.3",
     "date-fns": "^4.1.0",
+    "express": "^4.19.2",
+    "grapesjs": "^0.22.9",
+    "grapesjs-preset-newsletter": "^1.0.2",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
     "lucide-react": "^0.513.0",
+    "multer": "^2.0.1",
     "qr-scanner": "^1.4.2",
     "qrcode": "^1.5.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "recharts": "^2.15.3"
+    "recharts": "^2.15.3",
+    "tinymce": "^7.9.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",

@@ -45,6 +45,10 @@ function CustomerView({
   const handleNFCCustomerFound = async (customer) => {
     setSelectedCustomer(customer)
     await loadConsentForSelectedCustomer(customer)
+    // Aggiunta la chiamata per caricare i dati referral
+    if (loadReferredFriends) {
+      await loadReferredFriends(customer.id);
+    }
     showNotification(`✅ Cliente trovato: ${customer.name}`, 'success')
   }
 

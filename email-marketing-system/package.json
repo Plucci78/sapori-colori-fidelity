@@ -1,0 +1,33 @@
+{
+  "name": "email-marketing-system",
+  "version": "1.0.0",
+  "description": "A professional email marketing system with customizable templates.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "dependencies": {
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-scripts": "4.0.3",
+    "grapesjs": "^0.16.34",
+    "grapesjs-preset-newsletter": "^0.1.0",
+    "@emailjs/browser": "^3.2.0",
+    "supabase-js": "^1.28.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.32.0",
+    "eslint-plugin-react": "^7.27.1"
+  },
+  "keywords": [
+    "email",
+    "marketing",
+    "templates",
+    "react"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

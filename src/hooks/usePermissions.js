@@ -36,7 +36,8 @@ export const usePermissions = () => {
         canViewSystemSettings: false,
         canEditSystemSettings: false,
         canBackupSystem: false,
-        canMaintenanceMode: false
+        canMaintenanceMode: false,
+        canManageCoupons: false // Added coupon management permission
       }
     }
 
@@ -94,7 +95,8 @@ export const usePermissions = () => {
         canViewSystemSettings: false,
         canEditSystemSettings: false,
         canBackupSystem: false,
-        canMaintenanceMode: false
+        canMaintenanceMode: false,
+        canManageCoupons: true // Added coupon management permission for admin
       },
       
       manager: {
@@ -132,8 +134,9 @@ export const usePermissions = () => {
         canViewSystemSettings: false,
         canEditSystemSettings: false,
         canBackupSystem: false,
-        canMaintenanceMode: false
-      }
+        canMaintenanceMode: false,
+        canManageCoupons: true // Added coupon management permission for manager
+      },
     }
 
     // Get base permissions for role
@@ -190,7 +193,8 @@ export const usePermissions = () => {
       prizes: ['canManagePrizes'],
       settings: ['canViewSettings'],
       users: ['canViewUsers'],
-      logs: ['canViewLogs']
+      logs: ['canViewLogs'],
+      coupons: ['canManageCoupons']
     }
 
     const requiredPermissions = modulePermissions[module] || []
@@ -251,7 +255,8 @@ export const usePermissions = () => {
     canAccessPrizes: canAccessModule('prizes'),
     canAccessSettings: canAccessModule('settings'),
     canAccessUsers: canAccessModule('users'),
-    canAccessLogs: canAccessModule('logs')
+    canAccessLogs: canAccessModule('logs'),
+    canAccessCoupons: canAccessModule('coupons')
   }
 }
 
@@ -279,6 +284,7 @@ function getDefaultPermissions() {
     
     // Prizes
     canManagePrizes: false,
+    canManageCoupons: false,
     
     // Settings & Admin
     canViewSettings: false,
