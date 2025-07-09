@@ -59,10 +59,10 @@ const EmailQuotaWidget = memo(({
   // Ottieni colore basato su status
   const getStatusColor = (status) => {
     switch (status) {
-      case 'critical': return '#fca5a5' // Light Red
-      case 'warning': return '#fcd34d'  // Light Orange
-      case 'normal': return '#a7f3d0'   // Light Green
-      default: return '#d1d5db'         // Light Gray
+      case 'critical': return '#dc2626' // Rosso
+      case 'warning': return '#f59e0b'  // Arancione
+      case 'normal': return '#10b981'   // Verde
+      default: return '#6b7280'         // Grigio
     }
   }
 
@@ -326,7 +326,8 @@ const EmailQuotaWidget = memo(({
                 <div 
                   className="quota-progress-fill"
                   style={{ 
-                    width: `${Math.min(quotaData.daily.percentage, 100)}%`
+                    width: `${Math.min(quotaData.daily.percentage, 100)}%`,
+                    backgroundColor: getStatusColor(quotaData.daily.status)
                   }}
                 />
               </div>

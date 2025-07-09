@@ -191,9 +191,9 @@ class EmailQuotaService {
     try {
       // Cerca una configurazione salvata nel database
       const { data } = await supabase
-        .from('settings')
+        .from('email_settings')
         .select('value')
-        .eq('key', 'emailjs_monthly_usage')
+        .eq('key', 'monthly_usage')
         .single()
 
       if (data?.value) {
@@ -212,9 +212,9 @@ class EmailQuotaService {
   async updateRealMonthlyUsage(newValue) {
     try {
       const { error } = await supabase
-        .from('settings')
+        .from('email_settings')
         .upsert([{
-          key: 'emailjs_monthly_usage',
+          key: 'monthly_usage',
           value: newValue.toString(),
           updated_at: new Date().toISOString()
         }])
@@ -292,49 +292,45 @@ class EmailQuotaService {
 
   // Controlla se è possibile inviare un certo numero di email
   async canSendEmails(emailCount) {
-    try {
-      const usage = await this.getCurrentUsage()
-      
-      const checks = {
-        monthlyOk: usage.monthly.remaining >= emailCount,
-        dailyOk: usage.daily.remaining >= emailCount,
-        canSend: false,
-        warnings: []
-      }
+  try {
+    const usage = await this.getCurrentUsage()
+    
+    const monthlyOk = usage.monthly.remaining >= emailCount
+    const dailyOk = usage.daily.remaining >= emailCount
+    const allowed = monthlyOk && dailyOk
 
-      checks.canSend = checks.monthlyOk && checks.dailyOk
+    let message = ''
+    if (!monthlyOk) {
+      message = `Limite mensile superato: richieste ${emailCount}, disponibili ${usage.monthly.remaining}`
+    } else if (!dailyOk) {
+      message = `Limite giornaliero superato: richieste ${emailCount}, disponibili ${usage.daily.remaining}`
+    }
 
-      // Aggiungi warnings
-      if (!checks.monthlyOk) {
-        checks.warnings.push(`Limite mensile superato: ${emailCount} email richieste, ${usage.monthly.remaining} disponibili`)
-      }
-      
-      if (!checks.dailyOk) {
-        checks.warnings.push(`Limite giornaliero superato: ${emailCount} email richieste, ${usage.daily.remaining} disponibili`)
-      }
-
-      if (checks.canSend) {
-        const newMonthlyPercentage = ((usage.monthly.used + emailCount) / usage.monthly.limit) * 100
-        if (newMonthlyPercentage >= this.quotaConfig.warningThreshold * 100) {
-          checks.warnings.push(`Attenzione: dopo l'invio avrai usato il ${Math.round(newMonthlyPercentage)}% della quota mensile`)
-        }
-      }
-
-      return {
-        ...checks,
-        usage
-      }
-    } catch (error) {
-      console.error('Errore controllo quota email:', error)
-      return {
-        monthlyOk: true,
-        dailyOk: true,
-        canSend: true,
-        warnings: ['Impossibile verificare le quote. Invio consentito.'],
-        usage: this.getDefaultUsage()
+    // Warning se vicino al limite
+    let warning = ''
+    if (allowed) {
+      const newMonthlyPercentage = ((usage.monthly.used + emailCount) / usage.monthly.limit) * 100
+      if (newMonthlyPercentage >= this.quotaConfig.warningThreshold * 100) {
+        warning = `Attenzione: dopo l'invio avrai usato il ${Math.round(newMonthlyPercentage)}% della quota mensile`
       }
     }
+
+    return {
+      allowed,
+      message,
+      warning,
+      usage
+    }
+  } catch (error) {
+    console.error('Errore controllo quota email:', error)
+    return {
+      allowed: true,
+      message: '',
+      warning: 'Impossibile verificare le quote. Invio consentito.',
+      usage: this.getDefaultUsage()
+    }
   }
+}
 
   // ===================================
   // NOTIFICHE E AVVISI
