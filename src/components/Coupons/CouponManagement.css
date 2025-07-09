@@ -3,27 +3,39 @@
    File: src/components/Coupons/CouponManagement.css
    =================================== */
 
+
+
 .coupon-delete-btn {
-  background-color: #fef2f2; /* Light red background */
-  border: 1px solid #ef4444; /* Red border */
-  color: #ef4444; /* Red icon color */
+  background-color: #ef4444;
+  border: none;
+  color: white;
   cursor: pointer;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: auto;
+  height: auto;
+  border-radius: 6px;
+  padding: 8px 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
+  transition: all 0.3s ease;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 10;
+  min-width: 70px;
+  text-align: center;
 }
 
+/* Stato hover: pulsante in rilievo + bidoncino visibile */
 .coupon-delete-btn:hover {
-  background-color: #ef4444;
-  color: #ffffff;
+  background-color: #dc2626;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(239, 68, 68, 0.4);
 }
 
+/* LASCIO L'ICONA COME ERA - NON LA TOCCO */
 .coupon-delete-btn svg {
   stroke: #ef4444;
   fill: none;
@@ -31,4 +43,14 @@
 
 .coupon-delete-btn:hover svg {
   stroke: #ffffff;
+}
+
+/* Nascondo solo il testo in hover, icona rimane com'era */
+.coupon-delete-btn:hover {
+  color: transparent; /* Nasconde il testo "Elimina" */
+}
+
+/* Effetto click leggero */
+.coupon-delete-btn:active {
+  transform: translateY(-1px);
 }

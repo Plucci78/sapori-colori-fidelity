@@ -1,7 +1,5 @@
 import { memo, useState, useEffect, useRef } from 'react'
 import EmailQuotaWidget from './EmailQuotaWidget'
-import React from 'react';
-import './EmailView.css';
 
 const EmailView = memo(({
   emailStats,
@@ -36,21 +34,21 @@ const EmailView = memo(({
       subject: 'Benvenuto in Sapori & Colori, {{nome}}!',
       content: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: #f9f9f9; padding: 40px; text-align: center; border-bottom: 1px solid #e0e0e0;">
+          <div style="background: linear-gradient(135deg, #8B4513 0%, #D4AF37 100%); padding: 40px; text-align: center;">
             <img src="https://saporiecolori.net/logo.png" alt="Logo" style="max-width: 150px;">
-            <h1 style="color: #333333; margin-top: 20px;">Benvenuto {{nome}}!</h1>
+            <h1 style="color: white; margin-top: 20px;">Benvenuto {{nome}}!</h1>
           </div>
           <div style="padding: 40px; background: #ffffff;">
-            <p style="color: #333333;">Caro {{nome}},</p>
-            <p style="color: #333333;">Siamo felici di averti nella famiglia Sapori & Colori!</p>
-            <p style="color: #333333;">Da oggi inizi a guadagnare GEMME con ogni acquisto:</p>
-            <ul style="color: #333333;">
+            <p>Caro {{nome}},</p>
+            <p>Siamo felici di averti nella famiglia Sapori & Colori!</p>
+            <p>Da oggi inizi a guadagnare GEMME con ogni acquisto:</p>
+            <ul>
               <li>1€ = 1 GEMMA</li>
               <li>Premi esclusivi</li>
               <li>Offerte personalizzate</li>
             </ul>
             <div style="text-align: center; margin: 30px 0;">
-              <a href="#" style="background: #D4AF37; color: #333333; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold;">Scopri i Premi</a>
+              <a href="#" style="background: #D4AF37; color: #8B4513; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold;">Scopri i Premi</a>
             </div>
           </div>
         </div>
@@ -65,16 +63,16 @@ const EmailView = memo(({
       subject: 'Congratulazioni {{nome}}! Hai raggiunto {{gemme}} GEMME!',
       content: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: #f9f9f9; padding: 40px; text-align: center;">
-            <h1 style="color: #333333; font-size: 36px;">{{gemme}} GEMME!</h1>
-            <p style="color: #666666; font-size: 18px;">Sei incredibile, {{nome}}!</p>
+          <div style="background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%); padding: 40px; text-align: center;">
+            <h1 style="color: white; font-size: 36px;">{{gemme}} GEMME!</h1>
+            <p style="color: #FEE2E2; font-size: 18px;">Sei incredibile, {{nome}}!</p>
           </div>
           <div style="padding: 40px; background: #ffffff;">
             <h2 style="color: #DC2626; text-align: center;">Traguardo Raggiunto!</h2>
             <p>Con {{gemme}} GEMME hai sbloccato nuovi vantaggi esclusivi!</p>
-            <div style="background: #f0f2f5; padding: 20px; border-radius: 10px; margin: 20px 0; border: 1px solid #e0e0e0;">
+            <div style="background: #FEE2E2; padding: 20px; border-radius: 10px; margin: 20px 0;">
               <h3 style="color: #DC2626;">I tuoi nuovi privilegi:</h3>
-              <ul>
+              <ul style="color: #991B1B;">
                 <li>Sconto 10% su tutti i prodotti</li>
                 <li>Accesso anticipato alle novità</li>
                 <li>Regalo speciale al prossimo acquisto</li>
@@ -93,13 +91,13 @@ const EmailView = memo(({
       subject: '{{nome}}, offerta esclusiva solo per te!',
       content: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: #fef3c7; padding: 20px; text-align: center; border-bottom: 1px solid #fde68a;">
+          <div style="background: #FEF3C7; padding: 20px; text-align: center;">
             <span style="background: #F59E0B; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">OFFERTA LIMITATA</span>
           </div>
           <div style="padding: 40px; background: #ffffff;">
             <h1 style="color: #F59E0B; text-align: center;">Sconto 20% Solo Oggi!</h1>
-            <p style="color: #333333;">Ciao {{nome}},</p>
-            <p style="color: #333333;">Abbiamo riservato per te un'offerta speciale valida solo per oggi!</p>
+            <p>Ciao {{nome}},</p>
+            <p>Abbiamo riservato per te un'offerta speciale valida solo per oggi!</p>
             <div style="border: 2px dashed #F59E0B; padding: 20px; margin: 20px 0; text-align: center;">
               <h2 style="color: #F59E0B; margin: 0;">CODICE: SPECIAL20</h2>
               <p style="color: #666;">Valido fino alle 23:59 di oggi</p>
@@ -226,13 +224,14 @@ const EmailView = memo(({
     
     setIsTesting(true)
     
-    try {
-      // Invia email di test all'admin
-      await sendEmail({
-        subject: `[TEST] ${emailSubject}`,
-        content: emailContent,
-        template: selectedTemplate?.id || 'test'
-      })
+  try {
+  // Invia email di test all'admin
+  await sendEmail({
+    subject: `[TEST] ${emailSubject}`,
+    content: emailContent,
+    template: selectedTemplate?.id || 'test',
+    segments: selectedSegments // <--- AGGIUNGI QUESTA RIGA!
+  })
     } catch (error) {
       console.error('Errore test email:', error)
       showNotification('Errore nell\'invio dell\'email di test', 'error')
@@ -256,34 +255,8 @@ const EmailView = memo(({
     showNotification('Template salvato con successo!', 'success')
   }
 
-  // Forza il tema light per questo componente
-  useEffect(() => {
-    // Trova il container del componente EmailView
-    const emailViewContainer = document.querySelector('.email-view-container');
-    if (emailViewContainer) {
-      // Salva l'eventuale classe dark mode precedente
-      const hadDarkMode = emailViewContainer.classList.contains('dark-mode');
-      
-      // Rimuovi tutte le classi relative al tema
-      emailViewContainer.classList.remove('dark-mode', 'light-mode');
-      
-      // Aggiungi solo light-mode
-      emailViewContainer.classList.add('light-mode');
-      
-      // Cleanup quando il componente viene smontato
-      return () => {
-        if (hadDarkMode) {
-          emailViewContainer.classList.remove('light-mode');
-          emailViewContainer.classList.add('dark-mode');
-        }
-      };
-    }
-  }, []);
-
-  
-
   return (
-    <div className="email-view-container">
+    <div className="email-editor-container">
       {/* Header */}
       <div className="email-editor-header">
         <div className="header-left">
@@ -526,7 +499,8 @@ const EmailView = memo(({
               onClick={() => sendEmail({
                 subject: emailSubject,
                 content: emailContent,
-                template: selectedTemplate?.id || 'custom'
+                segments: selectedSegments,
+                template: selectedTemplate?.id || 'custom',
               })}
               disabled={selectedSegments.length === 0 || !emailSubject || !emailContent}
             >
@@ -543,3 +517,4 @@ const EmailView = memo(({
 EmailView.displayName = 'EmailView'
 
 export default EmailView
+

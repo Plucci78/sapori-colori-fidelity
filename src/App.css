@@ -203,7 +203,27 @@
   }
 }
 
-
+/* === DARK MODE VARIABILI === */
+body.dark {
+  --bg-primary: #18181b;
+  --bg-secondary: #232326;
+  --bg-brand: linear-gradient(135deg, #8B4513 0%, #D4AF37 100%);
+  --text-primary: #f3f4f6;
+  --text-secondary: #a1a1aa;
+  --text-muted: #52525b;
+  --brand-primary: #D4AF37;
+  --brand-secondary: #8B4513;
+  --gray-50: #232326;
+  --gray-100: #18181b;
+  --gray-200: #27272a;
+  --gray-300: #3f3f46;
+  --gray-400: #52525b;
+  --gray-500: #71717a;
+  --gray-600: #a1a1aa;
+  --gray-700: #d4d4d8;
+  --gray-800: #f3f4f6;
+  --gray-900: #fff;
+}
 
 
 /* === RESET & BASE === */
@@ -13369,6 +13389,532 @@ input:checked + .slider:before {
   margin: 20px 0;
   line-height: 1.5;
 }
+/* NFC Reader Animation */
+.reading-animation {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 20px;
+}
+
+.pulse-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 3px solid #10b981;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.reader-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+/* =====================================================
+   INPUT CURRENCY - STILI PERSONALIZZATI GRANDI
+   ===================================================== */
+
+.input-currency {
+  padding: 20px 25px !important;
+  font-size: 22px !important;
+  height: 65px !important;
+  min-width: 220px !important;
+  font-weight: 600 !important;
+  border: 2px solid var(--gray-300) !important;
+  border-radius: 12px !important;
+  text-align: right !important;
+  transition: all 0.3s ease !important;
+  background: white !important;
+  color: #333 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+}
+
+.input-currency:focus {
+  border-color: var(--brand-primary) !important;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1) !important;
+  outline: none !important;
+  transform: translateY(-1px) !important;
+}
+
+.input-currency:hover {
+  border-color: var(--brand-secondary) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+/* ========================================
+   RESET GEMME MODULE - PROFESSIONAL STYLES
+   ======================================== */
+
+/* Container principale */
+.settings-panel {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.settings-panel h3 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Box Statistiche Reset */
+.reset-stats-box {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+}
+
+.reset-stats-box h4 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  opacity: 0.95;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stat-label {
+  font-size: 14px;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Box Reset Programmati */
+.scheduled-resets-box {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+}
+
+.scheduled-resets-box h4 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scheduled-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.scheduled-item {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #dee2e6;
+  transition: all 0.2s ease;
+}
+
+.scheduled-item:hover {
+  border-color: #6366f1;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+}
+
+.scheduled-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scheduled-date {
+  font-weight: 600;
+  color: #212529;
+}
+
+.scheduled-by {
+  font-size: 14px;
+  color: #6c757d;
+}
+
+/* Warning Box Migliorato */
+.warning-box {
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.warning-box::before {
+  content: '⚠️';
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  font-size: 80px;
+  opacity: 0.1;
+}
+
+.warning-box p {
+  color: #856404;
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Reset Options */
+.reset-options {
+  background: #f8f9fa;
+  padding: 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+}
+
+.reset-options h4 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 1.5rem;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.radio-option {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 10px;
+  border: 2px solid #e9ecef;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: block;
+}
+
+.radio-option:hover {
+  border-color: #6366f1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.radio-option input[type="radio"] {
+  margin-right: 12px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.radio-option input[type="radio"]:checked ~ .radio-label {
+  color: #6366f1;
+  font-weight: 600;
+}
+
+.radio-option input[type="radio"]:checked {
+  accent-color: #6366f1;
+}
+
+.radio-label {
+  font-size: 18px;
+  font-weight: 500;
+  color: #212529;
+  margin-left: 8px;
+  transition: all 0.2s ease;
+}
+
+.radio-description {
+  font-size: 14px;
+  color: #6c757d;
+  margin-top: 8px;
+  margin-left: 40px;
+  line-height: 1.5;
+}
+
+/* DateTime Selector */
+.datetime-selector {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  border: 2px dashed #dee2e6;
+}
+
+.date-time-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.date-field, .time-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.date-field label, .time-field label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 14px;
+}
+
+.date-input, .time-input {
+  padding: 12px 16px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.date-input:focus, .time-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.datetime-note {
+  font-size: 14px;
+  color: #6c757d;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Reset Actions */
+.reset-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.reset-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+}
+
+.reset-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.reset-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.reset-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Modal Conferma Migliorato */
+.confirm-modal {
+  max-width: 500px;
+  width: 90%;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.confirm-modal .modal-header {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: white;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.confirm-modal .modal-header h4 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.confirm-modal .modal-body {
+  padding: 2rem;
+}
+
+.confirm-modal .modal-body > p {
+  font-size: 16px;
+  color: #212529;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.warning-details {
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.warning-details p {
+  font-weight: 600;
+  color: #856404;
+  margin-bottom: 0.5rem;
+}
+
+.warning-details ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.warning-details li {
+  padding: 8px 0;
+  color: #664d03;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.confirm-modal .modal-actions {
+  display: flex;
+  gap: 1rem;
+  padding: 0 2rem 2rem;
+  justify-content: center;
+}
+
+.confirm-modal .btn {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 140px;
+}
+
+.confirm-modal .btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.confirm-modal .btn-danger:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.confirm-modal .btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.confirm-modal .btn-secondary:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .settings-panel {
+    padding: 1.5rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .date-time-group {
+    grid-template-columns: 1fr;
+  }
+  
+  .scheduled-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .confirm-modal .modal-actions {
+    flex-direction: column;
+  }
+  
+  .confirm-modal .btn {
+    width: 100%;
+  }
+}
 /* ===================================
    EMAIL EDITOR FISSO - SEMPRE VISIBILE
    =================================== */
@@ -14324,24 +14870,7 @@ body.dark .gjs-cv-canvas {
   border-bottom: 1px dashed #e5e7eb;
 }
 
-.coupon-delete-btn {
-  background: none;
-  border: none;
-  color: #9ca3af;
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
 
-.coupon-delete-btn:hover {
-  background-color: #fee2e2;
-  color: #ef4444;
-}
 
 .coupon-card-content {
   padding: 20px;
@@ -14420,69 +14949,31 @@ body.dark .gjs-cv-canvas {
     opacity: 0.6;
   }
 }
-/* filepath: /Users/pasqualelucci/forno-loyalty/src/App.css */
-/* Stili migliorati per il pulsante elimina */
 .coupon-delete-btn {
-  background: none;
-  border: none;
-  color: #9ca3af;
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
+  background-color: #ef4444 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  transition: all 0.2s ease !important;
+  z-index: 10 !important;
+  min-width: 60px !important;
+  text-align: center !important;
 }
 
 .coupon-delete-btn:hover {
-  background-color: #fee2e2;
-  color: #ef4444;
-  transform: scale(1.1);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: #dc2626 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3) !important;
 }
 
-.coupon-delete-btn:active {
-  transform: scale(0.95);
-}
 
-.coupon-delete-btn::before {
-  content: "";
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle, transparent 60%, rgba(239, 68, 68, 0.1) 70%);
-  transform: scale(0);
-  opacity: 0;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-.coupon-delete-btn:hover::before {
-  transform: scale(2.5);
-  opacity: 1;
-}
-
-/* Effetto al click */
-.coupon-delete-btn:active::after {
-  content: "";
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: rgba(239, 68, 68, 0.2);
-  border-radius: 50%;
-  transform: scale(0);
-  animation: ripple 0.6s linear;
-}
-
-@keyframes ripple {
-  to {
-    transform: scale(2.5);
-    opacity: 0;
-  }
-}
 
 /* Stile quando il coupon è scaduto */
 .coupon-card-admin.expired .coupon-delete-btn {
@@ -14662,4 +15153,193 @@ body.dark .gjs-cv-canvas {
 /* Hover effect per migliorare l'esperienza utente */
 .transaction-item:hover {
   background-color: #fef2f2;
+}
+/* ===== FIX EMAIL EDITOR - COLORI PERLA ELEGANTI ===== */
+
+/* Background principale perla */
+.email-editor-container,
+.email-fixed-container,
+.email-marketing-container {
+  background-color: #f5f5f5 !important; /* Grigio perla chiaro */
+  color: #2d3748 !important;
+}
+
+/* Pannelli principali - bianco con ombre */
+.email-panel-left,
+.email-panel-center,
+.email-panel-right,
+.editor-fixed,
+.subject-fixed,
+.recipients-fixed,
+.bottom-fixed {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+  color: #2d3748 !important;
+}
+
+/* Header e toolbar - grigio perla medio */
+.email-editor-header,
+.email-fixed-header,
+.editor-toolbar,
+.panel-tabs,
+.variables-bar,
+.preview-controls {
+  background-color: #f8f9fa !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #2d3748 !important;
+}
+
+/* Card e elementi interattivi - perla chiaro */
+.template-card,
+.segment-card,
+.template-card-fixed,
+.segment-fixed {
+  background-color: #fafafa !important;
+  border: 1px solid #e5e7eb !important;
+  transition: all 0.2s ease !important;
+}
+
+.template-card:hover,
+.segment-card:hover,
+.template-card-fixed:hover,
+.segment-fixed:hover {
+  background-color: #ffffff !important;
+  border-color: #8B4513 !important;
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.1) !important;
+}
+
+/* Card selezionate */
+.template-card.selected,
+.segment-card.selected,
+.template-card-fixed.selected {
+  background-color: #fff8f0 !important;
+  border-color: #8B4513 !important;
+}
+
+/* Sezioni interne - grigio perla leggero */
+.template-gallery,
+.editor-container,
+.preview-container,
+.recipients-section {
+  background-color: #fafafa !important;
+  padding: 20px !important;
+  border-radius: 8px !important;
+}
+
+/* Editor GrapesJS - sfondo perla */
+.grapesjs-fixed,
+.gjs-cv-canvas {
+  background-color: #fcfcfc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.gjs-pn-panel {
+  background-color: #f8f9fa !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+/* Input e form - bianchi con bordi definiti */
+.email-editor-container input,
+.email-editor-container textarea,
+.email-editor-container select,
+.subject-input-fixed,
+.form-input,
+.form-select {
+  background-color: #ffffff !important;
+  color: #2d3748 !important;
+  border: 2px solid #e2e8f0 !important;
+  padding: 12px 16px !important;
+  border-radius: 6px !important;
+}
+
+.email-editor-container input:focus,
+.email-editor-container textarea:focus,
+.email-editor-container select:focus {
+  border-color: #8B4513 !important;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1) !important;
+  outline: none !important;
+}
+
+/* Bottoni con più contrasto */
+.btn-toolbar,
+.device-btn {
+  background-color: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  color: #4b5563 !important;
+}
+
+.btn-toolbar:hover,
+.device-btn:hover {
+  background-color: #f3f4f6 !important;
+  border-color: #8B4513 !important;
+  color: #8B4513 !important;
+}
+
+/* Tab attivi */
+.panel-tab.active,
+.device-btn.active {
+  background-color: #8B4513 !important;
+  color: #ffffff !important;
+  border-color: #8B4513 !important;
+}
+
+/* Separatori più visibili */
+.card-header,
+.editor-subject,
+.preview-header {
+  border-bottom: 2px solid #e5e7eb !important;
+  padding-bottom: 15px !important;
+  margin-bottom: 20px !important;
+}
+
+/* Migliore distinzione delle sezioni */
+.email-panel-left {
+  background-color: #f8f9fa !important;
+  border-right: 2px solid #e2e8f0 !important;
+}
+
+.email-panel-right {
+  background-color: #f8f9fa !important;
+  border-left: 2px solid #e2e8f0 !important;
+}
+
+/* Scrollbar personalizzata perla */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+/* Rimuovi ombre troppo scure */
+.email-editor-container * {
+  box-shadow: none !important;
+}
+
+/* Aggiungi ombre sottili solo dove servono */
+.email-panel-left,
+.email-panel-center,
+.email-panel-right,
+.template-card-fixed,
+.segment-card {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+}
+
+/* Header con gradiente perla */
+.email-fixed-header,
+.email-editor-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
 }
