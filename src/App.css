@@ -15345,145 +15345,359 @@ body.dark .gjs-cv-canvas {
 }
 
 /* ===================================
-   COUPON MANAGEMENT - ANIMAZIONI SUPER APPARISCENTI
+   COUPON ANIMATIONS - VERSIONE PROFESSIONALE ✨
    =================================== */
 
-/* Animazione ULTRA-APPARISCENTE per card coupon che scadono OGGI */
+/* ADMIN - Card coupon che scadono OGGI */
 .expiring-today-card {
-  animation: criticalAlarm 0.5s infinite !important;
-  border: 4px solid #DC2626 !important;
-  box-shadow: 0 0 30px rgba(220, 38, 38, 0.8) !important;
+  animation: adminCriticalAlarm 0.5s infinite !important;
+  border: 3px solid #DC2626 !important;
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.6) !important;
   position: relative !important;
-}
-
-.expiring-today-card::before {
-  content: "🚨 SCADE OGGI! 🚨" !important;
-  position: absolute !important;
-  top: -15px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  background: #DC2626 !important;
-  color: white !important;
-  padding: 5px 15px !important;
-  border-radius: 20px !important;
-  font-weight: bold !important;
-  font-size: 12px !important;
-  animation: flashText 0.3s infinite !important;
+  background: #FEF2F2 !important;
   z-index: 10 !important;
+  overflow: visible !important;
+  margin-top: 15px !important;
 }
 
-@keyframes criticalAlarm {
-  0%, 100% {
-    transform: scale(1.05) rotate(-1deg) !important;
-    background-color: #FEF2F2 !important;
-    border-color: #DC2626 !important;
-    box-shadow: 0 0 40px rgba(220, 38, 38, 1) !important;
-  }
-  50% {
-    transform: scale(1.08) rotate(1deg) !important;
-    background-color: #FFEBEE !important;
-    border-color: #B91C1C !important;
-    box-shadow: 0 0 50px rgba(185, 28, 28, 1) !important;
-  }
-}
-
-@keyframes flashText {
-  0%, 100% {
-    background: #DC2626 !important;
-    color: white !important;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 1) !important;
-  }
-  50% {
-    background: #EF4444 !important;
-    color: #FEF2F2 !important;
-    text-shadow: 0 0 15px rgba(220, 38, 38, 1) !important;
-  }
-}
-
-/* Animazione per card che scadono entro 7 giorni */
-.expiring-soon-card {
-  animation: warningPulse 1.5s infinite !important;
-  border: 3px solid #F59E0B !important;
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.6) !important;
-}
-
-@keyframes warningPulse {
+@keyframes adminCriticalAlarm {
   0%, 100% {
     transform: scale(1.02) !important;
-    background-color: #FFFBEB !important;
-    border-color: #F59E0B !important;
+    border-color: #DC2626 !important;
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.6) !important;
   }
   50% {
     transform: scale(1.04) !important;
-    background-color: #FEF3C7 !important;
+    border-color: #B91C1C !important;
+    box-shadow: 0 0 25px rgba(185, 28, 28, 0.8) !important;
+  }
+}
+
+/* ADMIN - Card coupon che scadono tra 1-7 giorni */
+.expiring-soon-card {
+  animation: adminWarningPulse 1.5s infinite !important;
+  border: 2px solid #F59E0B !important;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.4) !important;
+  background: #FFFBEB !important;
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+@keyframes adminWarningPulse {
+  0%, 100% {
+    transform: scale(1) !important;
+    border-color: #F59E0B !important;
+  }
+  50% {
+    transform: scale(1.02) !important;
     border-color: #D97706 !important;
   }
 }
 
-/* Testo di scadenza ANCORA PIÙ APPARISCENTE */
-.coupon-expiry.coupon-expiry-today {
-  animation: extremeFlash 0.4s infinite !important;
-  font-size: 1.2em !important;
-  font-weight: 900 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 2px !important;
-  padding: 12px !important;
-  border-radius: 10px !important;
-  text-align: center !important;
-  margin: 10px 0 !important;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 1) !important;
+/* CLIENT PORTAL - Card coupon in scadenza (senza etichetta sopra) */
+.client-portal .coupon-card.expiring-soon {
+  animation: clientCriticalAlarm 1.2s infinite !important;
+  border: 3px solid #DC2626 !important;
+  box-shadow: 0 0 25px rgba(220, 38, 38, 0.7) !important;
+  position: relative !important;
+  background: #FEF2F2 !important;
+  z-index: 10 !important;
+  overflow: visible !important;
 }
 
-.coupon-expiry.coupon-expiry-soon {
-  animation: urgentBlink 1s infinite !important;
+@keyframes clientCriticalAlarm {
+  0%, 100% {
+    transform: scale(1) !important;
+    border-color: #DC2626 !important;
+    box-shadow: 0 0 25px rgba(220, 38, 38, 0.7) !important;
+  }
+  50% {
+    transform: scale(1.02) !important;
+    border-color: #B91C1C !important;
+    box-shadow: 0 0 30px rgba(185, 28, 28, 0.8) !important;
+  }
+}
+
+/* ⚡ LAMPEGGIAMENTO PROFESSIONALE DELLA SCRITTA CON SVEGLIE ⚡ */
+.coupon-expiry-today {
+  animation: professionalFlashToday 0.6s infinite !important;
   font-size: 1.1em !important;
-  font-weight: 800 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 1px !important;
+  font-weight: 700 !important;
+  text-align: center !important;
   padding: 10px !important;
   border-radius: 8px !important;
+  margin: 10px 0 !important;
+  border: 2px solid transparent !important;
+}
+
+.coupon-expiry-soon {
+  animation: professionalFlashSoon 1s infinite !important;
+  font-size: 1em !important;
+  font-weight: 600 !important;
   text-align: center !important;
+  padding: 8px !important;
+  border-radius: 6px !important;
   margin: 8px 0 !important;
+  border: 2px solid transparent !important;
 }
 
-@keyframes extremeFlash {
+/* Animazione professionale per "SCADE OGGI" */
+@keyframes professionalFlashToday {
   0%, 100% {
-    color: #FFFFFF !important;
-    background-color: #DC2626 !important;
-    box-shadow: 0 0 25px rgba(220, 38, 38, 1) !important;
-    transform: scale(1.15) !important;
-  }
-  25% {
     color: #DC2626 !important;
-    background-color: #FFFFFF !important;
-    box-shadow: 0 0 30px rgba(220, 38, 38, 0.8) !important;
-    transform: scale(1.2) !important;
+    background-color: #FEF2F2 !important;
+    border-color: #DC2626 !important;
+    box-shadow: 0 0 15px rgba(220, 38, 38, 0.3) !important;
+    transform: scale(1) !important;
   }
   50% {
-    color: #FFFFFF !important;
-    background-color: #B91C1C !important;
-    box-shadow: 0 0 35px rgba(185, 28, 28, 1) !important;
-    transform: scale(1.25) !important;
-  }
-  75% {
-    color: #B91C1C !important;
-    background-color: #FEE2E2 !important;
-    box-shadow: 0 0 20px rgba(185, 28, 28, 0.6) !important;
-    transform: scale(1.1) !important;
+    color: white !important;
+    background-color: #DC2626 !important;
+    border-color: #B91C1C !important;
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.6) !important;
+    transform: scale(1.03) !important;
   }
 }
 
-@keyframes urgentBlink {
+/* Animazione professionale per "SCADE TRA X GIORNI" - SUPER VISIBILE */
+@keyframes professionalFlashSoon {
   0%, 100% {
-    color: #FFFFFF !important;
-    background-color: #F59E0B !important;
-    box-shadow: 0 0 15px rgba(245, 158, 11, 1) !important;
-    transform: scale(1.1) !important;
+    color: #DC2626 !important;
+    background-color: #FEF2F2 !important;
+    border-color: #DC2626 !important;
+    box-shadow: 0 0 15px rgba(220, 38, 38, 0.4) !important;
+    transform: scale(1) !important;
   }
   50% {
-    color: #F59E0B !important;
-    background-color: #FEF3C7 !important;
-    box-shadow: 0 0 20px rgba(245, 158, 11, 0.8) !important;
-    transform: scale(1.05) !important;
+    color: white !important;
+    background-color: #DC2626 !important;
+    border-color: #B91C1C !important;
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.7) !important;
+    transform: scale(1.03) !important;
   }
+}
+
+/* CLIENT PORTAL - Animazioni per la scritta con sveglie - SUPER AGGRESSIVO */
+.client-portal .coupon-expiry-today {
+  animation: professionalFlashToday 0.8s infinite !important;
+  font-size: 1.2em !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  padding: 12px !important;
+  border-radius: 10px !important;
+  margin: 12px 0 !important;
+  border: 2px solid transparent !important;
+  display: block !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.client-portal .coupon-expiry-soon {
+  animation: professionalFlashSoon 1.2s infinite !important;
+  font-size: 1.1em !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  padding: 10px !important;
+  border-radius: 8px !important;
+  margin: 10px 0 !important;
+  border: 2px solid transparent !important;
+  display: block !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* CLIENT PORTAL - Sezione alert (mantenuta più discreta) */
+.client-portal .client-section.has-expiring-coupons {
+  animation: sectionAlertProfessional 2s infinite !important;
+  position: relative !important;
+  overflow: visible !important;
+  border: 1px solid #F59E0B !important;
+  border-radius: 8px !important;
+}
+
+@keyframes sectionAlertProfessional {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.2) !important;
+    border-color: #F59E0B !important;
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.4) !important;
+    border-color: #D97706 !important;
+  }
+}
+
+/* Layout fixes */
+.expiring-today-card,
+.expiring-soon-card,
+.client-portal .coupon-card.expiring-soon {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+.coupon-management,
+.client-portal .client-section,
+.coupon-cards-container {
+  overflow: visible !important;
+}
+
+/* Z-index management */
+.expiring-today-card {
+  z-index: 100 !important;
+}
+
+.expiring-soon-card {
+  z-index: 90 !important;
+}
+
+.client-portal .coupon-card.expiring-soon {
+  z-index: 110 !important;
+}
+
+.client-portal .client-section.has-expiring-coupons {
+  z-index: 120 !important;
+}
+
+/* Responsive - Mobile */
+@media (max-width: 768px) {
+  .coupon-expiry-today,
+  .coupon-expiry-soon,
+  .client-portal .coupon-expiry-today,
+  .client-portal .coupon-expiry-soon {
+    font-size: 1em !important;
+    padding: 8px !important;
+  }
+  
+  /* Animazioni leggermente più lente su mobile */
+  .client-portal .coupon-expiry-today {
+    animation: professionalFlashToday 1s infinite !important;
+  }
+  
+  .client-portal .coupon-expiry-soon {
+    animation: professionalFlashSoon 1.5s infinite !important;
+  }
+  
+  .client-portal .coupon-card.expiring-soon {
+    animation: clientCriticalAlarmMobile 1.5s infinite !important;
+  }
+  
+  @keyframes clientCriticalAlarmMobile {
+    0%, 100% {
+      transform: scale(1) !important;
+      box-shadow: 0 0 15px rgba(220, 38, 38, 0.5) !important;
+    }
+    50% {
+      transform: scale(1.01) !important;
+      box-shadow: 0 0 20px rgba(185, 28, 28, 0.6) !important;
+    }
+  }
+  
+  .expiring-today-card {
+    animation: adminCriticalAlarmMobile 1s infinite !important;
+  }
+  
+  @keyframes adminCriticalAlarmMobile {
+    0%, 100% {
+      transform: scale(1) !important;
+      box-shadow: 0 0 15px rgba(220, 38, 38, 0.5) !important;
+    }
+    50% {
+      transform: scale(1.01) !important;
+      box-shadow: 0 0 18px rgba(185, 28, 28, 0.6) !important;
+    }
+  }
+}
+
+/* ⚡ FOCUS PRINCIPALE: Scritta con sveglie che attira l'attenzione ⚡ */
+.coupon-expiry-today,
+.coupon-expiry-soon,
+.client-portal .coupon-expiry-today,
+.client-portal .coupon-expiry-soon {
+  transition: all 0.3s ease !important;
+  cursor: default !important;
+  user-select: none !important;
+}
+
+/* Hover effect per desktop */
+@media (hover: hover) {
+  .coupon-expiry-today:hover,
+  .coupon-expiry-soon:hover,
+  .client-portal .coupon-expiry-today:hover,
+  .client-portal .coupon-expiry-soon:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 0 25px rgba(220, 38, 38, 0.8) !important;
+  }
+}/* ===================================
+   KEYFRAMES LAMPEGGIAMENTO SICURO
+   =================================== */
+
+@keyframes professionalFlashSoon {
+  0% { 
+    background: #FEF2F2 !important; 
+    color: #DC2626 !important;
+    border: 2px solid #DC2626 !important;
+    transform: scale(1) !important;
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.3) !important;
+  }
+  50% { 
+    background: #DC2626 !important; 
+    color: white !important;
+    border: 2px solid #B91C1C !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.7) !important;
+  }
+  100% { 
+    background: #FEF2F2 !important; 
+    color: #DC2626 !important;
+    border: 2px solid #DC2626 !important;
+    transform: scale(1) !important;
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.3) !important;
+  }
+}
+
+@keyframes professionalFlashToday {
+  0% { 
+    background: #FEF2F2 !important; 
+    color: #DC2626 !important;
+    border: 2px solid #DC2626 !important;
+    transform: scale(1) !important;
+  }
+  50% { 
+    background: #B91C1C !important; 
+    color: white !important;
+    border: 2px solid #7F1D1D !important;
+    transform: scale(1.08) !important;
+  }
+  100% { 
+    background: #FEF2F2 !important; 
+    color: #DC2626 !important;
+    border: 2px solid #DC2626 !important;
+    transform: scale(1) !important;
+  }
+}
+
+/* FORZA ANIMAZIONI */
+.coupon-expiry-soon {
+  animation: professionalFlashSoon 1s infinite !important;
+  padding: 10px !important;
+  border-radius: 8px !important;
+  margin: 10px 0 !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+}
+
+.coupon-expiry-today {
+  animation: professionalFlashToday 0.8s infinite !important;
+  padding: 12px !important;
+  border-radius: 8px !important;
+  margin: 10px 0 !important;
+  text-align: center !important;
+  font-weight: 700 !important;
+}
+
+.client-portal .coupon-expiry-soon {
+  animation: professionalFlashSoon 1.2s infinite !important;
+}
+
+.client-portal .coupon-expiry-today {
+  animation: professionalFlashToday 1s infinite !important;
 }

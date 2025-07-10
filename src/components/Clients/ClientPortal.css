@@ -1,0 +1,343 @@
+/* ===================================
+   COUPON ANIMATIONS - VERSIONE PULITA
+   =================================== */
+
+/* ADMIN - Card coupon che scadono OGGI */
+.expiring-today-card {
+  animation: adminCriticalAlarm 0.5s infinite !important;
+  border: 3px solid #DC2626 !important;
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.6) !important;
+  position: relative !important;
+  background: #FEF2F2 !important;
+  z-index: 10 !important;
+  overflow: visible !important;
+  margin-top: 15px !important;
+}
+
+@keyframes adminCriticalAlarm {
+  0%, 100% {
+    transform: scale(1.02) !important;
+    border-color: #DC2626 !important;
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.6) !important;
+  }
+  50% {
+    transform: scale(1.04) !important;
+    border-color: #B91C1C !important;
+    box-shadow: 0 0 25px rgba(185, 28, 28, 0.8) !important;
+  }
+}
+
+/* ADMIN - Card coupon che scadono tra 1-7 giorni */
+.expiring-soon-card {
+  animation: adminWarningPulse 1.5s infinite !important;
+  border: 2px solid #F59E0B !important;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.4) !important;
+  background: #FFFBEB !important;
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+@keyframes adminWarningPulse {
+  0%, 100% {
+    transform: scale(1) !important;
+    border-color: #F59E0B !important;
+  }
+  50% {
+    transform: scale(1.02) !important;
+    border-color: #D97706 !important;
+  }
+}
+
+/* CLIENT PORTAL - Coupon in scadenza */
+.client-portal .coupon-card.expiring-soon {
+  animation: clientCriticalAlarm 0.8s infinite !important;
+  border: 3px solid #DC2626 !important;
+  box-shadow: 0 0 25px rgba(220, 38, 38, 0.7) !important;
+  position: relative !important;
+  background: #FEF2F2 !important;
+  z-index: 10 !important;
+  overflow: visible !important;
+  margin-top: 15px !important;
+}
+
+@keyframes clientCriticalAlarm {
+  0%, 100% {
+    transform: scale(1.02) !important;
+    border-color: #DC2626 !important;
+    box-shadow: 0 0 25px rgba(220, 38, 38, 0.7) !important;
+  }
+  50% {
+    transform: scale(1.04) !important;
+    border-color: #B91C1C !important;
+    box-shadow: 0 0 30px rgba(185, 28, 28, 0.8) !important;
+  }
+}
+
+/* Testo di scadenza ADMIN */
+.coupon-expiry.coupon-expiry-today {
+  animation: extremeFlash 0.6s infinite !important;
+  font-size: 1.1em !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  padding: 8px !important;
+  border-radius: 6px !important;
+  text-align: center !important;
+  margin: 8px 0 !important;
+}
+
+.coupon-expiry.coupon-expiry-soon {
+  animation: urgentBlink 1.2s infinite !important;
+  font-size: 1em !important;
+  font-weight: 600 !important;
+  padding: 6px !important;
+  border-radius: 4px !important;
+  text-align: center !important;
+  margin: 6px 0 !important;
+}
+
+@keyframes extremeFlash {
+  0%, 100% {
+    color: white !important;
+    background-color: #DC2626 !important;
+    box-shadow: 0 0 20px rgba(220, 38, 38, 1) !important;
+    transform: scale(1.05) !important;
+  }
+  50% {
+    color: #DC2626 !important;
+    background-color: #FFFF00 !important;
+    box-shadow: 0 0 25px rgba(255, 255, 0, 0.8) !important;
+    transform: scale(1.1) !important;
+  }
+}
+
+@keyframes urgentBlink {
+  0%, 100% {
+    color: white !important;
+    background-color: #F59E0B !important;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 1) !important;
+    transform: scale(1.03) !important;
+  }
+  50% {
+    color: #F59E0B !important;
+    background-color: #FEF3C7 !important;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.6) !important;
+    transform: scale(1.06) !important;
+  }
+}
+
+/* CLIENT PORTAL - Testo di scadenza - VERSIONE FINALE */
+.client-portal .coupon-expiry-today {
+  animation: extremeFlash 0.6s infinite !important;
+  font-size: 1.3em !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  padding: 12px !important;
+  border-radius: 10px !important;
+  text-align: center !important;
+  margin: 12px 0 !important;
+  display: block !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.client-portal .coupon-expiry-soon {
+  animation: urgentBlink 1s infinite !important;
+  font-size: 1.2em !important;
+  font-weight: 700 !important;
+  padding: 10px !important;
+  border-radius: 8px !important;
+  text-align: center !important;
+  margin: 10px 0 !important;
+  display: block !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* CLIENT PORTAL - Alert header sezione */
+.client-portal .client-section.has-expiring-coupons {
+  animation: sectionAlert 2s infinite !important;
+  position: relative !important;
+  overflow: visible !important;
+  padding-top: 25px !important;
+}
+
+.client-portal .client-section.has-expiring-coupons::before {
+  content: "⚠️ COUPON IN SCADENZA" !important;
+  position: absolute !important;
+  top: -15px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: #F59E0B !important;
+  color: white !important;
+  padding: 6px 16px !important;
+  border-radius: 15px !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  text-transform: uppercase !important;
+  z-index: 20 !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4) !important;
+}
+
+@keyframes sectionAlert {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.2) !important;
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.4) !important;
+  }
+}
+
+/* CLIENT PORTAL - Coupon normali (non in scadenza) */
+.client-portal .coupon-card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 20px;
+  background-color: #fff;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+}
+
+.client-portal .coupon-card:hover {
+  box-shadow: 0 5px 15px rgba(0,0,0,0.12);
+}
+
+/* Layout fixes */
+.expiring-today-card,
+.expiring-soon-card,
+.client-portal .coupon-card.expiring-soon {
+  overflow: visible !important;
+  margin-top: 20px !important;
+  position: relative !important;
+}
+
+.coupon-management,
+.client-portal .client-section,
+.coupon-cards-container {
+  overflow: visible !important;
+  padding-top: 25px !important;
+}
+
+/* Z-index management */
+.expiring-today-card {
+  z-index: 100 !important;
+}
+
+.expiring-soon-card {
+  z-index: 90 !important;
+}
+
+.client-portal .coupon-card.expiring-soon {
+  z-index: 110 !important;
+}
+
+.client-portal .client-section.has-expiring-coupons {
+  z-index: 120 !important;
+}
+
+/* Responsive - Mobile */
+@media (max-width: 768px) {
+  .coupon-expiry.coupon-expiry-today,
+  .coupon-expiry.coupon-expiry-soon,
+  .client-portal .coupon-expiry-today,
+  .client-portal .coupon-expiry-soon {
+    font-size: 0.9em !important;
+    padding: 6px !important;
+  }
+  
+  /* Animazioni più leggere su mobile */
+  .client-portal .coupon-card.expiring-soon {
+    animation: clientCriticalAlarmMobile 1s infinite !important;
+  }
+  
+  @keyframes clientCriticalAlarmMobile {
+    0%, 100% {
+      transform: scale(1) !important;
+      box-shadow: 0 0 15px rgba(220, 38, 38, 0.6) !important;
+    }
+    50% {
+      transform: scale(1.02) !important;
+      box-shadow: 0 0 20px rgba(185, 28, 28, 0.7) !important;
+    }
+  }
+  
+  .expiring-today-card {
+    animation: adminCriticalAlarmMobile 1s infinite !important;
+  }
+  
+  @keyframes adminCriticalAlarmMobile {
+    0%, 100% {
+      transform: scale(1) !important;
+      box-shadow: 0 0 15px rgba(220, 38, 38, 0.5) !important;
+    }
+    50% {
+      transform: scale(1.02) !important;
+      box-shadow: 0 0 18px rgba(185, 28, 28, 0.6) !important;
+    }
+  }
+}
+
+/* TEST ANIMAZIONE COUPON - ANIMAZIONE FORZATA */
+.coupon-expiry-today {
+  background: red !important;
+  color: white !important;
+  animation: testBlink 0.5s infinite !important;
+  padding: 10px !important;
+  font-weight: bold !important;
+  -webkit-animation: testBlink 0.5s infinite !important;
+  -moz-animation: testBlink 0.5s infinite !important;
+}
+
+.coupon-expiry-soon {
+  background: orange !important;
+  color: white !important;
+  animation: testBlink 0.8s infinite !important;
+  padding: 10px !important;
+  font-weight: bold !important;
+  -webkit-animation: testBlink 0.8s infinite !important;
+  -moz-animation: testBlink 0.8s infinite !important;
+}
+
+@keyframes testBlink {
+  0% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.2; 
+    transform: scale(1.05);
+  }
+  100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+}
+
+@-webkit-keyframes testBlink {
+  0% { 
+    opacity: 1; 
+    -webkit-transform: scale(1);
+  }
+  50% { 
+    opacity: 0.2; 
+    -webkit-transform: scale(1.05);
+  }
+  100% { 
+    opacity: 1; 
+    -webkit-transform: scale(1);
+  }
+}
+
+@-moz-keyframes testBlink {
+  0% { 
+    opacity: 1; 
+    -moz-transform: scale(1);
+  }
+  50% { 
+    opacity: 0.2; 
+    -moz-transform: scale(1.05);
+  }
+  100% { 
+    opacity: 1; 
+    -moz-transform: scale(1);
+  }
+}

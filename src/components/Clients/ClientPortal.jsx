@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../supabase'
 import { getCustomerLevel, getNextLevelInfo } from '../../utils/levelsUtils'
+import './ClientPortal.css'; // <-- 1. AGGIUNGI QUESTO IMPORT
 import QRCodeGenerator from '../Common/QRCodeGenerator'
 import { copyToClipboard } from '../../utils/clipboardUtils'
 
@@ -309,22 +310,27 @@ const ClientPortal = ({ token }) => {
                 {/* Limitiamo a 2 coupon con slice(0, 2) */}
                 {coupons.slice(0, 2).map(coupon => {
                   // Calcola se è vicino alla scadenza (7 giorni)
-                  const expiryDate = new Date(coupon.expiry_date);
-                  const today = new Date();
-                  const daysToExpiry = Math.floor((expiryDate - today) / (1000 * 60 * 60 * 24));
-                  const isExpiringSoon = daysToExpiry <= 7;
-                  const isExpiringToday = daysToExpiry === 0;
+                  const today = new Date().setHours(0, 0, 0, 0);
+                  const expiryDate = new Date(coupon.expiry_date).setHours(0, 0, 0, 0);
+                  const daysToExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+
+                  // 🧪 TEST: Forza il primo coupon a essere "in scadenza oggi" per vedere l'animazione
+                  const isFirstCoupon = coupons.indexOf(coupon) === 0;
+                  const isExpiringToday = isFirstCoupon ? true : (daysToExpiry === 0);
+                  const isExpiringSoon = isFirstCoupon ? true : (daysToExpiry > 0 && daysToExpiry <= 7);
+                  
+                  // Determina la classe CSS per l'animazione
+                  let couponClass = 'coupon-card';
+                  if (isExpiringToday || isExpiringSoon) {
+                    couponClass += ' expiring-soon'; // Usa sempre expiring-soon per l'animazione della card
+                  }
                   
                   return (
                     <div 
                       key={coupon.id} 
-                      className={`coupon-card ${isExpiringSoon ? 'expiring-soon' : ''}`}
+                      className={couponClass}
                       style={{ 
-                        border: isExpiringSoon ? '3px solid #DC2626' : '1px solid #eee', 
-                        borderRadius: '12px', 
-                        padding: '20px', 
-                        backgroundColor: '#fff', 
-                        boxShadow: isExpiringSoon ? '0 0 20px rgba(220, 38, 38, 0.3)' : '0 3px 10px rgba(0,0,0,0.08)',
+                        // Stili minimi che non interferiscono con l'animazione CSS
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
@@ -360,12 +366,75 @@ const ClientPortal = ({ token }) => {
                           isExpiringSoon ? "coupon-expiry-soon" : ""
                         }
                         style={{ 
-                          textAlign: 'center',
-                          fontSize: isExpiringSoon ? '1em' : '0.9em', 
-                          color: isExpiringSoon ? '#E53E3E' : '#666',
-                          marginTop: 'auto',
-                          padding: isExpiringSoon ? '8px' : '8px',
-                          borderTop: '1px dashed #eee'
+                          // Solo stili per coupon normali (non in scadenza)
+                          ...(!(isExpiringToday || isExpiringSoon) && {
+                            borderTop: '1px dashed #eee',
+                            textAlign: 'center',
+                            fontSize: '0.9em',
+                            color: '#666',
+                            paddingTop: '10px',
+                            marginTop: '15px'
+                          })
+                        }}
+                        ref={(el) => {
+                          // � ANIMAZIONE SUPER VISIBILE
+                          if (el && (isExpiringToday || isExpiringSoon)) {
+                            console.log('🚀 ANIMAZIONE ATTIVATA');
+                            
+                            let state = 0; // 0 = primo colore, 1 = secondo colore
+                            
+                            const animateElement = () => {
+                              if (isExpiringToday) {
+                                // PER "SCADE OGGI" - Rosso/Bianco ultra contrastato
+                                if (state === 0) {
+                                  el.style.backgroundColor = '#DC2626'; // Rosso puro
+                                  el.style.color = '#FFFFFF'; // Bianco puro
+                                  el.style.boxShadow = '0 0 30px #DC2626, 0 0 50px #DC2626';
+                                  el.style.transform = 'scale(1.15)';
+                                  el.style.border = '4px solid #FFFFFF';
+                                } else {
+                                  el.style.backgroundColor = '#FFFFFF'; // Bianco puro
+                                  el.style.color = '#DC2626'; // Rosso puro
+                                  el.style.boxShadow = '0 0 30px #DC2626, 0 0 50px #DC2626';
+                                  el.style.transform = 'scale(1.1)';
+                                  el.style.border = '4px solid #DC2626';
+                                }
+                              } else {
+                                // PER "SCADE TRA X GIORNI" - Arancione/Bianco ultra contrastato
+                                if (state === 0) {
+                                  el.style.backgroundColor = '#F97316'; // Arancione puro
+                                  el.style.color = '#FFFFFF'; // Bianco puro
+                                  el.style.boxShadow = '0 0 25px #F97316, 0 0 40px #F97316';
+                                  el.style.transform = 'scale(1.12)';
+                                  el.style.border = '3px solid #FFFFFF';
+                                } else {
+                                  el.style.backgroundColor = '#FFFFFF'; // Bianco puro
+                                  el.style.color = '#F97316'; // Arancione puro
+                                  el.style.boxShadow = '0 0 25px #F97316, 0 0 40px #F97316';
+                                  el.style.transform = 'scale(1.08)';
+                                  el.style.border = '3px solid #F97316';
+                                }
+                              }
+                              
+                              state = state === 0 ? 1 : 0;
+                            };
+                            
+                            // Velocità più veloce per maggiore impatto
+                            const speed = isExpiringToday ? 500 : 750; // Molto più veloce
+                            
+                            // Applica stili di base SENZA transizione per colori netti
+                            el.style.borderRadius = '12px';
+                            el.style.padding = '18px';
+                            el.style.fontWeight = '900';
+                            el.style.textAlign = 'center';
+                            el.style.fontSize = '1.1em';
+                            el.style.textShadow = '2px 2px 4px rgba(0,0,0,0.8)';
+                            // NO transition = cambi immediati e netti!
+                            
+                            // Avvia animazione
+                            animateElement(); // Prima esecuzione immediata
+                            setInterval(animateElement, speed);
+                          }
                         }}
                       >
                         {isExpiringToday ? 
