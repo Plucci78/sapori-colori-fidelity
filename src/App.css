@@ -15343,65 +15343,147 @@ body.dark .gjs-cv-canvas {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
 }
+
 /* ===================================
-   COUPON EXPIRING ANIMATION - SUPER APPARISCENTE
+   COUPON MANAGEMENT - ANIMAZIONI SUPER APPARISCENTI
    =================================== */
 
-/* Animazione lampeggiante ultra-appariscente */
-@keyframes urgent-blink {
+/* Animazione ULTRA-APPARISCENTE per card coupon che scadono OGGI */
+.expiring-today-card {
+  animation: criticalAlarm 0.5s infinite !important;
+  border: 4px solid #DC2626 !important;
+  box-shadow: 0 0 30px rgba(220, 38, 38, 0.8) !important;
+  position: relative !important;
+}
+
+.expiring-today-card::before {
+  content: "🚨 SCADE OGGI! 🚨" !important;
+  position: absolute !important;
+  top: -15px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: #DC2626 !important;
+  color: white !important;
+  padding: 5px 15px !important;
+  border-radius: 20px !important;
+  font-weight: bold !important;
+  font-size: 12px !important;
+  animation: flashText 0.3s infinite !important;
+  z-index: 10 !important;
+}
+
+@keyframes criticalAlarm {
+  0%, 100% {
+    transform: scale(1.05) rotate(-1deg) !important;
+    background-color: #FEF2F2 !important;
+    border-color: #DC2626 !important;
+    box-shadow: 0 0 40px rgba(220, 38, 38, 1) !important;
+  }
+  50% {
+    transform: scale(1.08) rotate(1deg) !important;
+    background-color: #FFEBEE !important;
+    border-color: #B91C1C !important;
+    box-shadow: 0 0 50px rgba(185, 28, 28, 1) !important;
+  }
+}
+
+@keyframes flashText {
+  0%, 100% {
+    background: #DC2626 !important;
+    color: white !important;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 1) !important;
+  }
+  50% {
+    background: #EF4444 !important;
+    color: #FEF2F2 !important;
+    text-shadow: 0 0 15px rgba(220, 38, 38, 1) !important;
+  }
+}
+
+/* Animazione per card che scadono entro 7 giorni */
+.expiring-soon-card {
+  animation: warningPulse 1.5s infinite !important;
+  border: 3px solid #F59E0B !important;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.6) !important;
+}
+
+@keyframes warningPulse {
+  0%, 100% {
+    transform: scale(1.02) !important;
+    background-color: #FFFBEB !important;
+    border-color: #F59E0B !important;
+  }
+  50% {
+    transform: scale(1.04) !important;
+    background-color: #FEF3C7 !important;
+    border-color: #D97706 !important;
+  }
+}
+
+/* Testo di scadenza ANCORA PIÙ APPARISCENTE */
+.coupon-expiry.coupon-expiry-today {
+  animation: extremeFlash 0.4s infinite !important;
+  font-size: 1.2em !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 2px !important;
+  padding: 12px !important;
+  border-radius: 10px !important;
+  text-align: center !important;
+  margin: 10px 0 !important;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 1) !important;
+}
+
+.coupon-expiry.coupon-expiry-soon {
+  animation: urgentBlink 1s infinite !important;
+  font-size: 1.1em !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  padding: 10px !important;
+  border-radius: 8px !important;
+  text-align: center !important;
+  margin: 8px 0 !important;
+}
+
+@keyframes extremeFlash {
   0%, 100% {
     color: #FFFFFF !important;
     background-color: #DC2626 !important;
-    box-shadow: 0 0 15px rgba(220, 38, 38, 1) !important;
+    box-shadow: 0 0 25px rgba(220, 38, 38, 1) !important;
     transform: scale(1.15) !important;
-    border: 2px solid #EF4444 !important;
   }
-  50% {
+  25% {
     color: #DC2626 !important;
-    background-color: #FEE2E2 !important;
-    box-shadow: 0 0 8px rgba(220, 38, 38, 0.5) !important;
-    transform: scale(1.05) !important;
-    border: 2px solid #DC2626 !important;
-  }
-}
-
-/* Stile per coupon in scadenza oggi */
-.coupon-expiry-today {
-  animation: urgent-blink 0.8s infinite !important;
-  font-weight: 800 !important;
-  padding: 6px 12px !important;
-  border-radius: 8px !important;
-  display: inline-block !important;
-  text-transform: uppercase !important;
-  letter-spacing: 1px !important;
-  font-size: 0.9rem !important;
-}
-
-/* Stile per coupon in scadenza entro 7 giorni */
-.coupon-expiry-soon {
-  animation: urgent-blink 1.2s infinite !important;
-  font-weight: 700 !important;
-  padding: 5px 10px !important;
-  border-radius: 6px !important;
-  display: inline-block !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.5px !important;
-  font-size: 0.85rem !important;
-}
-
-/* Card del coupon con bordo lampeggiante */
-.coupon-card.expiring-soon {
-  animation: cardPulse 2s infinite !important;
-  border: 3px solid #DC2626 !important;
-}
-
-@keyframes cardPulse {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(220, 38, 38, 0.5) !important;
-    border-color: #DC2626 !important;
+    background-color: #FFFFFF !important;
+    box-shadow: 0 0 30px rgba(220, 38, 38, 0.8) !important;
+    transform: scale(1.2) !important;
   }
   50% {
-    box-shadow: 0 0 30px rgba(220, 38, 38, 0.8) !important;
-    border-color: #EF4444 !important;
+    color: #FFFFFF !important;
+    background-color: #B91C1C !important;
+    box-shadow: 0 0 35px rgba(185, 28, 28, 1) !important;
+    transform: scale(1.25) !important;
+  }
+  75% {
+    color: #B91C1C !important;
+    background-color: #FEE2E2 !important;
+    box-shadow: 0 0 20px rgba(185, 28, 28, 0.6) !important;
+    transform: scale(1.1) !important;
+  }
+}
+
+@keyframes urgentBlink {
+  0%, 100% {
+    color: #FFFFFF !important;
+    background-color: #F59E0B !important;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 1) !important;
+    transform: scale(1.1) !important;
+  }
+  50% {
+    color: #F59E0B !important;
+    background-color: #FEF3C7 !important;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.8) !important;
+    transform: scale(1.05) !important;
   }
 }

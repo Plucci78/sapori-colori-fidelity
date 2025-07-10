@@ -17,7 +17,8 @@ const CouponManagement = ({ showNotification }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [couponFilter, setCouponFilter] = useState('all'); // 'all', 'active', 'expired'
-  const [customerSearchFilter, setCustomerSearchFilter] = useState(''); // Ricerca testuale per cliente
+  const [customerSearchFilter, setCustomerSearchFilter] = useState(''); // Ricerca testuale per cliente (per visualizzazione coupon)
+  const [customerAssignFilter, setCustomerAssignFilter] = useState(''); // NUOVA: Ricerca per assegnazione clienti
   const [showDeleteTooltip, setShowDeleteTooltip] = useState(null); // Stato per il tooltip
   const [expandedDescriptions, setExpandedDescriptions] = useState({}); // Stato per le descrizioni espanse
 
@@ -278,32 +279,29 @@ const CouponManagement = ({ showNotification }) => {
                   placeholder="Cerca per nome, email o telefono..."
                   className="form-input mb-2"
                   style={{ color: '#1f2937' }}
-                  onChange={(e) => {
-                    const searchTerm = e.target.value.toLowerCase()
-                    if (searchTerm.length > 0) {
-                      const filtered = allCustomers.filter(c =>
-                        c.name.toLowerCase().includes(searchTerm) ||
-                        c.email?.toLowerCase().includes(searchTerm) ||
-                        c.phone?.includes(searchTerm)
-                      )
-                      // Mostra solo i primi 10 risultati per evitare liste troppo lunghe
-                      setAllCustomers(filtered.slice(0, 10))
-                    } else {
-                      // Ricarica tutti i clienti se la ricerca è vuota
-                      loadAllCustomers()
-                    }
-                  }}
+                  value={customerAssignFilter}
+                  onChange={(e) => setCustomerAssignFilter(e.target.value)}
                 />
                 <div className="customer-selection-list" style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #eee', borderRadius: '5px', padding: '10px' }}>
-                  {allCustomers.map(customer => (
+                  {allCustomers
+                    .filter(customer => {
+                      if (!customerAssignFilter) return true;
+                      const searchTerm = customerAssignFilter.toLowerCase();
+                      return (
+                        customer.name.toLowerCase().includes(searchTerm) ||
+                        (customer.email && customer.email.toLowerCase().includes(searchTerm)) ||
+                        (customer.phone && customer.phone.includes(searchTerm))
+                      );
+                    })
+                    .map(customer => (
                     <div key={customer.id} className="flex items-center mb-2">
                       <input
                         type="checkbox"
                         id={`customer-${customer.id}`}
                         checked={selectedCustomerIds.includes(customer.id)}
                         onChange={() => {
-                          setSelectedCustomerIds(prev =>
-                            prev.includes(customer.id)
+                          setSelectedCustomerIds(prev => 
+                            prev.includes(customer.id) 
                               ? prev.filter(id => id !== customer.id)
                               : [...prev, customer.id]
                           )
@@ -428,6 +426,7 @@ const CouponManagement = ({ showNotification }) => {
                   onClick={() => {
                     setCouponFilter('all');
                     setCustomerSearchFilter('');
+                    // NON resettiamo customerAssignFilter qui perché è per l'assegnazione
                   }}
                   className="btn btn-secondary text-sm"
                   style={{ padding: '6px 12px' }}
@@ -517,7 +516,13 @@ const CouponManagement = ({ showNotification }) => {
                   const statusStyle = statusInfo[status];
                   
                   return (
-                    <div key={coupon.id} className="coupon-card-admin">
+                    <div 
+                      key={coupon.id} 
+                      className={`coupon-card-admin ${
+                        daysToExpiry === 0 ? 'expiring-today-card' : 
+                        isExpiringSoon && !isExpired ? 'expiring-soon-card' : ''
+                      }`}
+                    >
                       <div className="coupon-card-header">
                         <span 
                           className="coupon-status-badge"
@@ -573,12 +578,17 @@ const CouponManagement = ({ showNotification }) => {
                           </div>
                           
                           <div 
-                            className={`coupon-expiry ${isExpiringSoon && !isExpired ? 'expiring-soon' : ''}`}
+                            className={`coupon-expiry ${
+                              daysToExpiry === 0 ? 'coupon-expiry-today' : 
+                              isExpiringSoon && !isExpired ? 'coupon-expiry-soon' : ''
+                            }`}
                           >
                             {isExpired ? (
-                              <span>Scaduto il: {new Date(coupon.expiry_date).toLocaleDateString('it-IT')}</span>
+                              <span>❌ SCADUTO il: {new Date(coupon.expiry_date).toLocaleDateString('it-IT')}</span>
+                            ) : daysToExpiry === 0 ? (
+                              <span>🚨 SCADE OGGI! UTILIZZALO SUBITO! 🚨</span>
                             ) : isExpiringSoon ? (
-                              <span>Scade tra {daysToExpiry} giorni</span>
+                              <span>⚠️ SCADE TRA {daysToExpiry} GIORNI! ⚠️</span>
                             ) : (
                               <span>Scade: {new Date(coupon.expiry_date).toLocaleDateString('it-IT')}</span>
                             )}
@@ -610,7 +620,8 @@ const CouponManagement = ({ showNotification }) => {
                           )}
                         </div>
                       </div>
-                    </div>                    );
+                    </div>
+                  );
                 })}
               </div>
             </>
