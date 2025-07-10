@@ -313,17 +313,18 @@ const ClientPortal = ({ token }) => {
                   const today = new Date();
                   const daysToExpiry = Math.floor((expiryDate - today) / (1000 * 60 * 60 * 24));
                   const isExpiringSoon = daysToExpiry <= 7;
+                  const isExpiringToday = daysToExpiry === 0;
                   
                   return (
                     <div 
                       key={coupon.id} 
-                      className="coupon-card" 
+                      className={`coupon-card ${isExpiringSoon ? 'expiring-soon' : ''}`}
                       style={{ 
-                        border: '1px solid #eee', 
+                        border: isExpiringSoon ? '3px solid #DC2626' : '1px solid #eee', 
                         borderRadius: '12px', 
                         padding: '20px', 
                         backgroundColor: '#fff', 
-                        boxShadow: '0 3px 10px rgba(0,0,0,0.08)',
+                        boxShadow: isExpiringSoon ? '0 0 20px rgba(220, 38, 38, 0.3)' : '0 3px 10px rgba(0,0,0,0.08)',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
@@ -352,21 +353,27 @@ const ClientPortal = ({ token }) => {
                         {coupon.description}
                       </h4>
                       
-                      {/* Data di scadenza lampeggiante se sta per scadere */}
+                      {/* Data di scadenza con animazione SUPER APPARISCENTE */}
                       <p 
-                        className={isExpiringSoon ? "expiring-date" : ""}
+                        className={
+                          isExpiringToday ? "coupon-expiry-today" : 
+                          isExpiringSoon ? "coupon-expiry-soon" : ""
+                        }
                         style={{ 
                           textAlign: 'center',
-                          fontSize: '0.9em', 
+                          fontSize: isExpiringSoon ? '1em' : '0.9em', 
                           color: isExpiringSoon ? '#E53E3E' : '#666',
                           marginTop: 'auto',
-                          padding: '8px',
+                          padding: isExpiringSoon ? '8px' : '8px',
                           borderTop: '1px dashed #eee'
                         }}
                       >
-                        Scade il: {new Date(coupon.expiry_date).toLocaleDateString('it-IT')}
-                        {isExpiringSoon && daysToExpiry > 0 && ` (tra ${daysToExpiry} giorni)`}
-                        {daysToExpiry === 0 && " (OGGI)"}
+                        {isExpiringToday ? 
+                          "⚠️ SCADE OGGI! ⚠️" :
+                          isExpiringSoon && daysToExpiry > 0 ? 
+                            `⏰ SCADE TRA ${daysToExpiry} GIORNI! ⏰` :
+                            `Scade il: ${new Date(coupon.expiry_date).toLocaleDateString('it-IT')}`
+                        }
                       </p>
                     </div>
                   );
