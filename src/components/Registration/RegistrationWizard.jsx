@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { supabase } from '../../supabase'
 import emailjs from '@emailjs/browser'
 import './RegistrationWizard.css'
@@ -81,47 +81,168 @@ const RegistrationWizard = ({ onComplete, onCancel }) => {
     setCurrentStep(prev => Math.max(prev - 1, 1))
   }
 
-  // GESTIONE FIRMA DIGITALE
-  const startDrawing = (e) => {
-    setIsDrawing(true)
-    const canvas = canvasRef.current
+  // GESTIONE FIRMA DIGITALE - VERSIONE CORRETTA AD ALTA PRECISIONE
+  
+  // Funzione per ottenere coordinate precise su tutti i dispositivi
+  const getEventPos = (e, canvas) => {
     const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left || e.touches[0].clientX - rect.left
-    const y = e.clientY - rect.top || e.touches[0].clientY - rect.top
+    
+    let clientX, clientY
+    
+    if (e.touches && e.touches[0]) {
+      // Touch event
+      clientX = e.touches[0].clientX
+      clientY = e.touches[0].clientY
+    } else {
+      // Mouse event
+      clientX = e.clientX
+      clientY = e.clientY
+    }
+    
+    // Coordinate relative al canvas (senza scaling DPR)
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    }
+  }
+
+  // Inizializza canvas per alta qualità
+  const initializeCanvas = () => {
+    const canvas = canvasRef.current
+    if (!canvas) return
     
     const ctx = canvas.getContext('2d')
+    const rect = canvas.getBoundingClientRect()
+    
+    // Supporto per schermi ad alta densità (Retina, etc.)
+    const dpr = window.devicePixelRatio || 1
+    
+    // Imposta dimensioni fisiche del canvas (alta risoluzione)
+    canvas.width = rect.width * dpr
+    canvas.height = rect.height * dpr
+    
+    // Scala il contesto per la densità pixel
+    ctx.scale(dpr, dpr)
+    
+    // Imposta stile CSS per dimensioni visibili (mantiene dimensioni originali)
+    canvas.style.width = rect.width + 'px'
+    canvas.style.height = rect.height + 'px'
+    
+    // Configurazione ottimale per firma digitale
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctx.strokeStyle = '#1a1a1a'
+    ctx.lineWidth = 2.5
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = 'high'
+    
+    // Sfondo bianco per migliore visibilità
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, rect.width, rect.height)
+    
+    console.log('Canvas inizializzato:', {
+      cssWidth: rect.width,
+      cssHeight: rect.height,
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      dpr: dpr
+    })
+  }
+
+  const startDrawing = (e) => {
+    e.preventDefault() // Previene comportamenti di scroll su mobile
+    setIsDrawing(true)
+    
+    const canvas = canvasRef.current
+    if (!canvas) return
+    
+    const pos = getEventPos(e, canvas)
+    const ctx = canvas.getContext('2d')
+    
+    console.log('Inizio disegno a:', pos)
+    
     ctx.beginPath()
-    ctx.moveTo(x, y)
+    ctx.moveTo(pos.x, pos.y)
   }
 
   const draw = (e) => {
     if (!isDrawing) return
+    e.preventDefault()
     
     const canvas = canvasRef.current
-    const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left || e.touches[0].clientX - rect.left
-    const y = e.clientY - rect.top || e.touches[0].clientY - rect.top
+    if (!canvas) return
     
+    const pos = getEventPos(e, canvas)
     const ctx = canvas.getContext('2d')
-    ctx.lineWidth = 3
-    ctx.lineCap = 'round'
-    ctx.strokeStyle = '#333'
-    ctx.lineTo(x, y)
+    
+    ctx.lineTo(pos.x, pos.y)
     ctx.stroke()
     
     setHasSignature(true)
   }
 
-  const stopDrawing = () => {
-    setIsDrawing(false)
+  const stopDrawing = (e) => {
+    if (isDrawing) {
+      e.preventDefault()
+      setIsDrawing(false)
+      
+      const canvas = canvasRef.current
+      if (canvas) {
+        const ctx = canvas.getContext('2d')
+        ctx.closePath()
+      }
+      
+      console.log('Fine disegno')
+    }
   }
 
   const clearSignature = () => {
     const canvas = canvasRef.current
+    if (!canvas) return
+    
     const ctx = canvas.getContext('2d')
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    const rect = canvas.getBoundingClientRect()
+    
+    // Pulisce completamente il canvas
+    ctx.clearRect(0, 0, rect.width, rect.height)
+    
+    // Ridisegna sfondo bianco
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, rect.width, rect.height)
+    
     setHasSignature(false)
+    
+    console.log('Firma cancellata')
   }
+
+  // Effetto per inizializzare il canvas quando il componente viene montato
+  useEffect(() => {
+    if (canvasRef.current && currentStep === 4) {
+      // Timeout multipli per assicurare rendering completo
+      setTimeout(() => {
+        initializeCanvas()
+      }, 50)
+      
+      // Backup in caso di problemi di timing
+      setTimeout(() => {
+        if (canvasRef.current) {
+          initializeCanvas()
+        }
+      }, 300)
+    }
+  }, [currentStep])
+
+  // Effetto per gestire resize della finestra
+  useEffect(() => {
+    const handleResize = () => {
+      if (canvasRef.current && currentStep === 4) {
+        setTimeout(initializeCanvas, 100)
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [currentStep])
 
   // CALCOLI AUTOMATICI
   const calculateAgeGroup = (birthDate) => {
@@ -1155,19 +1276,47 @@ const RegistrationWizard = ({ onComplete, onCancel }) => {
 
             <div className="signature-section">
               <h3>✍️ Firma Digitale (Opzionale)</h3>
-              <p className="signature-description">La firma digitale è opzionale ma consigliata per confermare l'accettazione dei consensi privacy.</p>
-              <canvas
-                ref={canvasRef}
-                width="600"
-                height="200"
-                className="signature-canvas"
-                onMouseDown={startDrawing}
-                onMouseMove={draw}
-                onMouseUp={stopDrawing}
-                onTouchStart={startDrawing}
-                onTouchMove={draw}
-                onTouchEnd={stopDrawing}
-              />
+              <p className="signature-description">
+                La firma digitale è opzionale ma consigliata per confermare l'accettazione dei consensi privacy.
+                <br />
+                <small style={{color: '#666', fontSize: '0.9em'}}>
+                  📱 Su mobile: tocca e trascina per firmare con precisione
+                </small>
+              </p>
+              <div className="signature-container">
+                <canvas
+                  ref={canvasRef}
+                  className="signature-canvas"
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                  onTouchCancel={stopDrawing}
+                  style={{
+                    border: '2px solid #ddd',
+                    borderRadius: '8px',
+                    backgroundColor: '#ffffff',
+                    cursor: 'crosshair',
+                    touchAction: 'none', // Previene scroll durante la firma
+                    width: '100%',
+                    maxWidth: '600px',
+                    height: '200px'
+                  }}
+                />
+                {hasSignature && (
+                  <div className="signature-status" style={{
+                    marginTop: '8px',
+                    color: '#28a745',
+                    fontSize: '0.9em',
+                    fontWeight: '500'
+                  }}>
+                    ✅ Firma acquisita correttamente
+                  </div>
+                )}
+              </div>
               <div className="signature-buttons">
                 <button type="button" onClick={clearSignature} className="btn-clear-signature">
                   🗑️ Cancella Firma
