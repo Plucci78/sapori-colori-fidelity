@@ -1161,7 +1161,7 @@ const RegistrationWizard = ({ onComplete, onCancel }) => {
                   <div style={{ lineHeight: '1.6', fontSize: '14px' }}>
                     <p><strong>🏢 TITOLARE DEL TRATTAMENTO:</strong><br/>
                     Sapori & Colori B SRL <br/>
-                    Via [BAGALADI N 900132 ROMA]<br/>
+                    Via [BAGALADI N 9 - 00132 ROMA]<br/>
                     Tel: [06 39911640] - Email: [SAPORIECOLORI.B@GMAIL.COM]</p>
                     
                     <p><strong>🎯 FINALITÀ DEL TRATTAMENTO:</strong><br/>
