@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import NFCQuickReaderHybrid from '../NFC/NFCQuickReaderHybrid'
+import NFCQuickReader from '../NFC/NFCQuickReader'
 import RegistrationWizard from '../Registration/RegistrationWizard'
 import ClipboardDebug from '../Common/ClipboardDebug'
 import QRCodeReader from '../Common/QRCodeReader'
@@ -36,8 +36,6 @@ function CustomerView({
   referredFriends,
   loadReferredFriends,
   getReferralLevel,
-  getReferralPoints,
-  getReferralLevelInfo,
   isMultiplierActive
 }) {
   const [showGemmeRain, setShowGemmeRain] = useState(false);
@@ -49,8 +47,6 @@ function CustomerView({
   const handleNFCCustomerFound = async (customer) => {
     setSelectedCustomer(customer)
     await loadConsentForSelectedCustomer(customer)
-    // Carica anche i referral per mostrare gli amici invitati
-    await loadReferredFriends(customer.id)
     showNotification(`✅ Cliente trovato: ${customer.name}`, 'success')
   }
 
@@ -79,8 +75,6 @@ function CustomerView({
           console.log('✅ Cliente trovato dal QR:', customer)
           setSelectedCustomer(customer)
           await loadConsentForSelectedCustomer(customer)
-          // Carica anche i referral per mostrare gli amici invitati
-          await loadReferredFriends(customer.id)
           setShowQRScanner(false)
           showNotification(`✅ Cliente trovato via QR: ${customer.name}`, 'success')
         } else {
@@ -328,7 +322,7 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
         </div>
       </div>
 
-      {/* SEZIONE NFC READER - Per cellulari Android */}
+      {/* SEZIONE NFC READER */}
       <div className="card mb-6">
         <div className="card-header">
           <h2 className="card-title flex items-center gap-3">
@@ -336,12 +330,11 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
             Identificazione Cliente con NFC
-            <span className="px-2 py-1 bg-green-500 text-white text-xs rounded-full">ANDROID</span>
           </h2>
-          <p className="card-subtitle">Usa il tuo cellulare Android per leggere tag NFC dei clienti</p>
+          <p className="card-subtitle">Il modo più veloce per identificare clienti di ritorno</p>
         </div>
         <div className="card-body text-center">
-          <NFCQuickReaderHybrid
+          <NFCQuickReader
             onCustomerFound={handleNFCCustomerFound}
             showNotification={showNotification}
           />
@@ -465,12 +458,11 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                           </div>
                         </div>
                       </div>
-                      <button                    onClick={async () => {
-                      setSelectedCustomer(customer)
-                      await loadConsentForSelectedCustomer(customer)
-                      // Carica anche i referral per mostrare gli amici invitati
-                      await loadReferredFriends(customer.id)
-                    }}
+                      <button
+                        onClick={async () => {
+                          setSelectedCustomer(customer)
+                          await loadConsentForSelectedCustomer(customer)
+                        }}
                         className="btn btn-primary"
                       >
                         📋 Seleziona Cliente
@@ -544,8 +536,6 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                       onClick={async () => {
                         setSelectedCustomer(customer)
                         await loadConsentForSelectedCustomer(customer)
-                        // Carica anche i referral per mostrare gli amici invitati
-                        await loadReferredFriends(customer.id)
                       }}
                     >
                       <div className="customer-card-header">
@@ -905,7 +895,7 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                 <div className="text-xs text-secondary mt-1">Clicca per copiare negli appunti</div>
               </div>
 
-              {/* STATISTICHE CON MOLTIPLICATORI LIVELLO */}
+              {/* STATISTICHE */}
               <div className="grid grid-3 gap-4 mb-6">
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
                   <div className="text-2xl mb-1">👥</div>
@@ -914,82 +904,18 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                 </div>
                 <div className="text-center p-4 bg-red-50 rounded-lg">
                   <div className="text-2xl mb-1">💎</div>
-                  <div className="text-2xl font-bold text-gemme-red">{(selectedCustomer.referral_count || 0) * 20}</div>
+                  <div className="text-2xl font-bold text-gemme-red">{(selectedCustomer.referral_count || 0) * 5}</div>
                   <div className="text-sm text-secondary">GEMME Guadagnate</div>
-                  {(() => {
-                    const levelInfo = getReferralLevelInfo(selectedCustomer.referral_count || 0);
-                    return levelInfo.isBonus ? (
-                      <div className="text-xs text-green-600 font-medium mt-1">
-                        ⚡ +{levelInfo.bonusPercent}% bonus livello
-                      </div>
-                    ) : null;
-                  })()}
                 </div>
                 <div className="text-center p-4 bg-yellow-50 rounded-lg">
                   <div className="text-2xl mb-1">🎯</div>
-                  <div className="text-lg font-bold text-brand-primary">{getReferralLevel(selectedCustomer.referral_count || 0)}</div>
+                  <div className="text-2xl font-bold text-yellow-600">{getReferralLevel(selectedCustomer.referral_count || 0)}</div>
                   <div className="text-sm text-secondary">Livello</div>
-                  {(() => {
-                    const nextPoints = getReferralPoints((selectedCustomer.referral_count || 0) + 1);
-                    const currentPoints = getReferralPoints(selectedCustomer.referral_count || 0);
-                    return nextPoints > currentPoints ? (
-                      <div className="text-xs text-blue-600 font-medium mt-1">
-                        Prossimo: +{nextPoints} gemme/referral
-                      </div>
-                    ) : null;
-                  })()}
                 </div>
               </div>
 
-              {/* BONUS LIVELLO DETTAGLI */}
-              {(() => {
-                const levelInfo = getReferralLevelInfo(selectedCustomer.referral_count || 0);
-                const currentPoints = levelInfo.points;
-                const nextLevelCount = selectedCustomer.referral_count >= 20 ? 20 : 
-                                     selectedCustomer.referral_count >= 10 ? 20 :
-                                     selectedCustomer.referral_count >= 5 ? 10 : 5;
-                const nextLevelInfo = getReferralLevelInfo(nextLevelCount);
-                
-                return (
-                  <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="text-2xl">🏆</div>
-                      <div>
-                        <div className="font-bold text-purple-800">Livello {levelInfo.level}</div>
-                        <div className="text-sm text-purple-600">
-                          Guadagni <span className="font-bold">{currentPoints} gemme</span> per ogni nuovo referral
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {levelInfo.isBonus && (
-                      <div className="flex items-center gap-1 text-sm text-green-700 bg-green-100 px-2 py-1 rounded-full inline-block mb-2">
-                        <span>⚡</span>
-                        <span>Bonus +{levelInfo.bonusPercent}% attivo!</span>
-                      </div>
-                    )}
-                    
-                    {selectedCustomer.referral_count < 20 && (
-                      <div className="text-sm text-gray-600">
-                        Al prossimo traguardo ({nextLevelCount} referral) → 
-                        <span className="font-bold text-blue-600"> {nextLevelInfo.points} gemme/referral</span>
-                        {nextLevelInfo.isBonus && (
-                          <span className="text-green-600"> (+{nextLevelInfo.bonusPercent}% bonus)</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
-
               {/* LISTA AMICI INVITATI */}
-              {console.log('🔍 Debug referral:', { 
-                referredFriendsLength: referredFriends?.length || 0, 
-                referredFriends, 
-                selectedCustomerId: selectedCustomer?.id,
-                referralCount: selectedCustomer?.referral_count 
-              })}
-              {referredFriends.length > 0 ? (
+              {referredFriends.length > 0 && (
                 <div className="mb-6">
                   <h4 className="font-semibold mb-3 flex items-center gap-2">
                     <svg className="w-5 h-5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1001,44 +927,24 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                     {referredFriends.map((friend, index) => (
                       <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                         <div className="w-10 h-10 bg-brand-primary text-white rounded-full flex items-center justify-center font-bold">
-                          {friend.referred?.name ? friend.referred.name.charAt(0).toUpperCase() : '?'}
+                          {friend.name ? friend.name.charAt(0).toUpperCase() : '?'}
                         </div>
                         <div className="flex-1">
-                          <div className="font-medium">{friend.referred?.name || 'Nome non disponibile'}</div>
-                          <div className="text-sm text-secondary">
-                            Invitato il {new Date(friend.created_at).toLocaleDateString('it-IT')} • 
-                            Status: {friend.status === 'completed' ? '✅ Completato' : '⏳ In attesa'}
-                          </div>
+                          <div className="font-medium">{friend.name || 'Nome non disponibile'}</div>
+                          <div className="text-sm text-secondary">Invitato il {new Date(friend.created_at).toLocaleDateString('it-IT')}</div>
                         </div>
                         <div className="text-right">
-                          <div className="flex items-center gap-1 text-sm font-medium">
-                            {friend.status === 'completed' ? (
-                              <span className="text-green-600">✅ Attivo</span>
-                            ) : (
-                              <span className="text-orange-600">⏳ In attesa primo acquisto</span>
-                            )}
+                          <div className="flex items-center gap-1 text-sm font-medium text-green-600">
+                            ✅ Attivo
                           </div>
                           <div className="flex items-center gap-1 text-sm text-gemme-red">
-                            <span>+{friend.points_awarded || 0} </span>
+                            <span>{friend.points || 0}</span>
                             <div className="w-4 h-4 bg-red-500 rounded-full"></div>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
-                </div>
-              ) : (
-                <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="font-semibold mb-2 flex items-center gap-2 text-blue-800">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                    </svg>
-                    Inizia a invitare amici!
-                  </h4>
-                  <p className="text-sm text-blue-700">
-                    Condividi il tuo codice referral per guadagnare gemme extra. 
-                    I tuoi amici riceveranno 10 gemme di benvenuto e tu ne guadagnerai {isMultiplierActive ? '40' : '20'} al loro primo acquisto!
-                  </p>
                 </div>
               )}
 

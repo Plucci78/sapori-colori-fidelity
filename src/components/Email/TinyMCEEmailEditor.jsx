@@ -130,9 +130,9 @@ const emailBlocks = {
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="padding: 20px;">
-            <div style="background-color: #e0f2fe; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 0 8px 8px 0;">
-              <h4 style="margin: 0 0 10px 0; color: #2563eb; font-size: 18px;">💡 Lo sapevi che...</h4>
-              <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">
+            <div style="background-color: #f3f1eb; border-left: 4px solid #8B4513; padding: 20px; border-radius: 0 8px 8px 0;">
+              <h4 style="margin: 0 0 10px 0; color: #8B4513; font-size: 18px;">💡 Lo sapevi che...</h4>
+              <p style="margin: 0; color: #8B4513; font-size: 14px; line-height: 1.6;">
                 Inserisci qui informazioni utili o curiosità per i tuoi clienti.
               </p>
             </div>
@@ -243,7 +243,7 @@ const TinyMCEEmailEditor = ({ onContentChange, initialContent = '' }) => {
           { title: 'Badge', inline: 'span', styles: { backgroundColor: '#dc2626', color: 'white', padding: '4px 8px', borderRadius: '4px' } }
         ]},
         { title: 'Blocchi', items: [
-          { title: 'Box Info', block: 'div', wrapper: true, styles: { backgroundColor: '#dbeafe', border: '1px solid #3b82f6', padding: '20px', borderRadius: '8px' } },
+          { title: 'Box Info', block: 'div', wrapper: true, styles: { backgroundColor: '#f3f1eb', border: '1px solid #8B4513', padding: '20px', borderRadius: '8px' } },
           { title: 'Box Success', block: 'div', wrapper: true, styles: { backgroundColor: '#d1fae5', border: '1px solid #10b981', padding: '20px', borderRadius: '8px' } },
           { title: 'Box Warning', block: 'div', wrapper: true, styles: { backgroundColor: '#fef3c7', border: '1px solid #f59e0b', padding: '20px', borderRadius: '8px' } }
         ]}
@@ -296,7 +296,7 @@ const TinyMCEEmailEditor = ({ onContentChange, initialContent = '' }) => {
         editor.ui.registry.addMenuButton('emailBlocks', {
           text: '🎨 Blocchi Email',
           fetch: (callback) => {
-            const items = Object.entries(emailBlocks).map(([key, block]) => ({
+            const items = Object.entries(emailBlocks).map(([, block]) => ({
               type: 'menuitem',
               text: block.title,
               onAction: () => {

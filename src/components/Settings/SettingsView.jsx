@@ -4,7 +4,7 @@ import UserManagement from './UserManagement'
 import ActivityLog from './ActivityLog'
 import { ProtectedComponent } from '../../auth/ProtectedComponent'
 
-const SettingsView = ({ settings, setSettings, saveSettings, EMAIL_CONFIG, showNotification, assignMissingReferralCodes }) => {
+const SettingsView = ({ settings, setSettings, saveSettings, EMAIL_CONFIG, showNotification, assignMissingReferralCodes, customerLevels, loadCustomerLevels }) => {
   const [activeSettingsTab, setActiveSettingsTab] = useState('general')
 
   const settingsTabs = [
@@ -124,6 +124,27 @@ const SettingsView = ({ settings, setSettings, saveSettings, EMAIL_CONFIG, showN
               </div>
             </div>
             <div className="settings-section">
+              <h4>📡 Server NFC</h4>
+              <div className="settings-grid">
+                <div className="setting-field">
+                  <label>URL Server NFC:</label>
+                  <input
+                    type="text"
+                    value={settings.nfc_server_url || ''}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      nfc_server_url: e.target.value
+                    })}
+                    className="setting-input"
+                    placeholder="es. http://192.168.1.6:3001"
+                  />
+                  <p className="setting-description">
+                    Indirizzo del server che gestisce il lettore NFC (es. Raspberry Pi)
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="settings-section">
               <h4>🎁 Sistema Referral</h4>
               <div className="settings-grid">
                 <div className="setting-field">
@@ -186,7 +207,7 @@ const SettingsView = ({ settings, setSettings, saveSettings, EMAIL_CONFIG, showN
       case 'levels':
         return (
           <ProtectedComponent permission="canManageSettings">
-            <LevelsConfig showNotification={showNotification} />
+            <LevelsConfig showNotification={showNotification} customerLevels={customerLevels} loadCustomerLevels={loadCustomerLevels} />
           </ProtectedComponent>
         )
         

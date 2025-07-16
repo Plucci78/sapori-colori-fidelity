@@ -26,10 +26,11 @@ import CustomerView from './components/Customers/CustomerView'
 import EmailView from './components/Email/EmailView'
 import PrizesView from './components/Prizes/PrizesView'
 import SettingsView from './components/Settings/SettingsView'
-import NFCView from './components/NFC/NFCView'
+import NFCViewSimpleVertical from './components/NFC/NFCViewSimpleVertical'
 import ClientPortal from './components/Clients/ClientPortal'
 import CouponManagement from './components/Coupons/CouponManagement'
 import { generateClientToken, isValidToken } from './utils/tokenUtils'
+import nfcService from './services/nfcService'
 
 // ===================================
 // COMPONENTE APP PRINCIPALE (con auth)
@@ -99,6 +100,8 @@ function AppContent() {
   const [newPrizeName, setNewPrizeName] = useState('')
   const [newPrizeDescription, setNewPrizeDescription] = useState('')
   const [newPrizeCost, setNewPrizeCost] = useState('')
+  const [customerLevels, setCustomerLevels] = useState([])
+  const [nfcServiceConnected, setNfcServiceConnected] = useState(false)
 
   // Stati per statistiche reali
   const [todayStats, setTodayStats] = useState({
@@ -195,6 +198,36 @@ const getReferralLevel = (count) => {
   return 'NUOVO';
 };
 
+// 💎 NUOVO: Calcola punti referral con moltiplicatori di livello
+const getReferralPoints = (referralCount) => {
+  const level = getReferralLevel(referralCount);
+  
+  switch (level) {
+    case 'LEGGENDA': return 40;  // +100% (20 * 2)
+    case 'MAESTRO':  return 30;  // +50%  (20 * 1.5)
+    case 'ESPERTO':  return 25;  // +25%  (20 * 1.25)
+    case 'AMICO':    return 20;  // Base
+    default:         return 20;  // Base per NUOVO
+  }
+};
+
+// 🎯 NUOVO: Ottieni info complete livello referral
+const getReferralLevelInfo = (count) => {
+  const level = getReferralLevel(count);
+  const points = getReferralPoints(count);
+  const basePoints = 20;
+  const multiplier = points / basePoints;
+  const bonusPercent = Math.round((multiplier - 1) * 100);
+  
+  return {
+    level,
+    points,
+    multiplier,
+    bonusPercent,
+    isBonus: bonusPercent > 0
+  };
+};
+
 // Completa referral dopo il primo acquisto
 const completeReferral = async (customerId) => {
   try {
@@ -262,11 +295,29 @@ const completeReferral = async (customerId) => {
     
     console.log('✅ Procedendo con il completamento del referral:', referral);
     
-    // Calcola bonus con moltiplicatore se attivo
-    const BASE_REFERRAL_BONUS = 20;
-    const finalBonus = isMultiplierActive ? BASE_REFERRAL_BONUS * 2 : BASE_REFERRAL_BONUS;
+    // 🎯 NUOVO: Calcola bonus con moltiplicatori di livello
+    // Prima conta i referral attuali del referrer per determinare il livello
+    const { data: existingReferrals } = await supabase
+      .from('referrals')
+      .select('id')
+      .eq('referrer_id', referral.referrer_id)
+      .eq('status', 'completed');
+      
+    const currentReferralCount = existingReferrals?.length || 0;
+    const levelInfo = getReferralLevelInfo(currentReferralCount);
+    const baseBonus = levelInfo.points;
     
-    console.log('💰 Bonus calcolato:', finalBonus, 'Moltiplicatore attivo:', isMultiplierActive);
+    // Applica moltiplicatore temporaneo se attivo
+    const finalBonus = isMultiplierActive ? baseBonus * 2 : baseBonus;
+    
+    console.log('💰 Calcolo bonus avanzato:', {
+      currentReferralCount,
+      level: levelInfo.level,
+      baseBonus,
+      bonusPercent: levelInfo.bonusPercent,
+      moltiplicatoreTemporaneo: isMultiplierActive,
+      finalBonus
+    });
     
     // Prima recupera i dati attuali del referrer
     console.log('📝 Recuperando dati attuali del referrer ID:', referral.referrer_id);
@@ -750,10 +801,10 @@ const fixReferralData = async (customerId) => {
       title: 'NFC',
       icon: (
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
       ),
-      description: 'Gestione tag NFC',
+      description: 'Gestione NFC con Android',
       permission: 'canViewCustomers'
     },
     {
@@ -1031,8 +1082,24 @@ const fixReferralData = async (customerId) => {
       loadTodayStats()
       loadTopCustomers()
       loadEmailStats()
+      loadCustomerLevels()
     }
   }, [isAuthenticated, loadEmailStats]) // ← AGGIUNTA DIPENDENZA AUTH
+
+  const loadCustomerLevels = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('customer_levels')
+        .select('*')
+        .order('min_gems');
+
+      if (data) {
+        setCustomerLevels(data);
+      }
+    } catch (error) {
+      console.log('Errore caricamento livelli cliente:', error);
+    }
+  }, []);
 
   const loadSettings = useCallback(async () => {
     try {
@@ -1041,7 +1108,13 @@ const fixReferralData = async (customerId) => {
         .select('*')
         .single()
 
-      if (data) setSettings(data)
+      if (data) {
+        setSettings(data)
+        // TODO: Implementare setServerUrl in nfcService se necessario
+        // if (data.nfc_server_url) {
+        //   nfcService.setServerUrl(data.nfc_server_url)
+        // }
+      }
     } catch (error) {
       console.log('Errore caricamento impostazioni:', error)
     }
@@ -1389,7 +1462,8 @@ for (const customer of recipients) {
         .from('settings')
         .update({
           points_per_euro: settings.points_per_euro,
-          points_for_prize: settings.points_for_prize
+          points_for_prize: settings.points_for_prize,
+          nfc_server_url: settings.nfc_server_url
         })
         .eq('id', settings.id)
 
@@ -1569,13 +1643,27 @@ for (const customer of recipients) {
 
       // === AGGIUNGI QUESTO BLOCCO PER IL REFERRAL ===
       // Controlla se è il primo acquisto del cliente
-      const { count } = await supabase
+      console.log('🔍 Controllo primo acquisto per referral...');
+      const { count, error: countError } = await supabase
         .from('transactions')
         .select('id', { count: 'exact', head: true })
         .eq('customer_id', selectedCustomer.id)
         .eq('type', 'acquistare');
-      if (count === 1) {
-        await completeReferral(selectedCustomer.id);
+        
+      console.log('📊 Risultato conteggio transazioni:', { count, error: countError, customerId: selectedCustomer.id });
+      
+      if (countError) {
+        console.error('❌ Errore nel conteggio transazioni:', countError);
+      } else if (count === 1) {
+        console.log('🎉 È il primo acquisto! Tentativo completamento referral...');
+        try {
+          await completeReferral(selectedCustomer.id);
+          console.log('✅ Completamento referral eseguito');
+        } catch (referralError) {
+          console.error('❌ Errore completamento referral:', referralError);
+        }
+      } else {
+        console.log(`📝 Non è il primo acquisto (${count} transazioni totali)`);
       }
       // === FINE BLOCCO REFERRAL ===
 
@@ -1819,6 +1907,7 @@ for (const customer of recipients) {
           <ProtectedComponent permission="canViewCustomers">
             {/* Lista clienti e funzionalità esistenti */}
             <CustomerView
+              customerLevels={customerLevels}
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               customers={customers}
@@ -1853,6 +1942,8 @@ for (const customer of recipients) {
               referredFriends={referredFriends}
               loadReferredFriends={loadReferredFriends}
               getReferralLevel={getReferralLevel}
+              getReferralPoints={getReferralPoints}
+              getReferralLevelInfo={getReferralLevelInfo}
               showQRModal={showQRModal}
               setShowQRModal={setShowQRModal}
               showShareModal={showShareModal}
@@ -1860,6 +1951,7 @@ for (const customer of recipients) {
               isMultiplierActive={isMultiplierActive}
               completeReferral={completeReferral} // ✅ AGGIUNTA QUESTA PROP
               fixReferralData={fixReferralData} // ✅ AGGIUNTA FUNZIONE CORREZIONE
+              
             />
           </ProtectedComponent>
         )
@@ -1929,13 +2021,15 @@ for (const customer of recipients) {
       case 'nfc':
         return (
           <ProtectedComponent permission="canViewCustomers">
-            <NFCView showNotification={showNotification} />
+            <NFCViewSimpleVertical showNotification={showNotification} />
           </ProtectedComponent>
         )
       case 'settings':
         return (
           <ProtectedComponent permission="canViewSettings">
             <SettingsView
+              customerLevels={customerLevels}
+              loadCustomerLevels={loadCustomerLevels}
               settings={settings}
               setSettings={setSettings}
               saveSettings={saveSettings}

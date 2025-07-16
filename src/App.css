@@ -3,6 +3,420 @@
    Brand Colors + Gemma Rossa
    ==================================== */
 
+/* ====================================
+   NFC VIEW SIMPLE VERTICAL - STYLES
+   ==================================== */
+
+.nfc-simple-container {
+  background: var(--bg-secondary);
+  min-height: 100vh;
+}
+
+.nfc-simple-container .card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--gray-200);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.nfc-simple-container .card:hover {
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04);
+  transform: translateY(-2px);
+}
+
+.nfc-simple-container .card-header {
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+  color: white;
+  padding: 20px 24px;
+  border: none;
+}
+
+.nfc-simple-container .card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nfc-simple-container .card-title svg {
+  width: 24px;
+  height: 24px;
+  opacity: 0.9;
+}
+
+.nfc-simple-container .card-body {
+  padding: 24px;
+}
+
+/* Status indicators */
+.nfc-status-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.nfc-status-indicator.available {
+  background: var(--success);
+  box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.2);
+}
+
+.nfc-status-indicator.unavailable {
+  background: var(--error);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+}
+
+/* Scanning animation */
+.nfc-scanning-container {
+  padding: 48px 24px;
+  text-align: center;
+  background: linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%);
+  border-radius: 16px;
+  border: 2px dashed var(--info);
+  position: relative;
+  overflow: hidden;
+}
+
+.nfc-scanning-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
+  animation: scan-sweep 2s infinite;
+}
+
+@keyframes scan-sweep {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.nfc-scanning-pulse {
+  font-size: 3rem;
+  animation: pulse-scale 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-scale {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Tag association card */
+.nfc-tag-association {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border: 2px solid var(--warning);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.nfc-tag-association .card-header {
+  background: linear-gradient(135deg, var(--warning) 0%, #F59E0B 100%);
+  color: white;
+}
+
+.nfc-tag-code {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--gray-800);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+/* Associated tags grid */
+.nfc-tags-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.nfc-tag-item {
+  background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+  border: 2px solid var(--success);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.nfc-tag-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(5, 150, 105, 0.15);
+}
+
+.nfc-tag-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--success);
+}
+
+.nfc-tag-item .tag-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.nfc-tag-item .tag-name {
+  font-weight: 700;
+  color: var(--gray-800);
+  font-size: 1.1rem;
+}
+
+.nfc-tag-item .tag-details {
+  font-size: 0.9rem;
+  color: var(--gray-600);
+  line-height: 1.5;
+}
+
+.nfc-tag-item .tag-details code {
+  background: rgba(0, 0, 0, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+}
+
+/* Activity logs */
+.nfc-logs-container {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.nfc-logs-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nfc-logs-container::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: 3px;
+}
+
+.nfc-logs-container::-webkit-scrollbar-thumb {
+  background: var(--gray-400);
+  border-radius: 3px;
+}
+
+.nfc-logs-container::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-500);
+}
+
+.nfc-log-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--gray-50);
+  border-radius: 8px;
+  border-left: 4px solid var(--info);
+  transition: all 0.2s ease;
+}
+
+.nfc-log-item:hover {
+  background: var(--gray-100);
+  transform: translateX(4px);
+}
+
+.nfc-log-item .log-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nfc-log-item .log-icon {
+  font-size: 1.5rem;
+  opacity: 0.8;
+}
+
+.nfc-log-item .log-details .log-action {
+  font-weight: 600;
+  color: var(--gray-800);
+  font-size: 0.95rem;
+}
+
+.nfc-log-item .log-details .log-info {
+  font-size: 0.8rem;
+  color: var(--gray-600);
+  margin-top: 2px;
+}
+
+.nfc-log-item .log-time {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  font-weight: 500;
+}
+
+/* Empty states */
+.nfc-empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--gray-500);
+}
+
+.nfc-empty-state svg {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.nfc-empty-state h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--gray-700);
+}
+
+.nfc-empty-state p {
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Buttons specific to NFC */
+.nfc-simple-container .btn {
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 12px 24px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.nfc-simple-container .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.nfc-simple-container .btn-primary {
+  background: linear-gradient(135deg, var(--info) 0%, #2563EB 100%);
+  color: white;
+}
+
+.nfc-simple-container .btn-success {
+  background: linear-gradient(135deg, var(--success) 0%, #047857 100%);
+  color: white;
+}
+
+.nfc-simple-container .btn-danger {
+  background: linear-gradient(135deg, var(--error) 0%, #DC2626 100%);
+  color: white;
+}
+
+.nfc-simple-container .btn-secondary {
+  background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+  color: white;
+}
+
+.nfc-simple-container .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.nfc-simple-container .btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.nfc-simple-container .btn-lg {
+  padding: 16px 32px;
+  font-size: 1.1rem;
+  border-radius: 16px;
+}
+
+.nfc-simple-container .btn-sm {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  border-radius: 8px;
+}
+
+/* Grid system for NFC */
+.nfc-simple-container .grid {
+  display: grid;
+  gap: 16px;
+}
+
+.nfc-simple-container .grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.nfc-simple-container .grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 768px) {
+  .nfc-simple-container .grid-2,
+  .nfc-simple-container .grid-3 {
+    grid-template-columns: 1fr;
+  }
+  
+  .nfc-simple-container .card-body {
+    padding: 16px;
+  }
+  
+  .nfc-simple-container .card-header {
+    padding: 16px 20px;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .nfc-simple-container {
+    padding: 16px;
+  }
+  
+  .nfc-scanning-container {
+    padding: 32px 16px;
+  }
+  
+  .nfc-tag-item {
+    padding: 16px;
+  }
+  
+  .nfc-simple-container .btn-lg {
+    padding: 14px 24px;
+    font-size: 1rem;
+  }
+}
+
+/* Animation utilities */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.nfc-simple-container .animate-fadeInUp {
+  animation: fadeInUp 0.5s ease-out;
+}
+
 /* === CSS VARIABLES === */
 :root {
   /* tutte le variabili qui */
@@ -379,6 +793,23 @@ body {
 
 .nav-item.active::before {
   transform: scaleY(1);
+}
+
+/* Stili per elementi disabilitati */
+.nav-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: transparent;
+}
+
+.nav-item.disabled:hover {
+  background: transparent;
+  transform: none;
+  color: var(--text-secondary);
+}
+
+.nav-item.disabled::before {
+  display: none;
 }
 
 .nav-icon {
@@ -1294,7 +1725,7 @@ body {
 .nfc-status-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
-  border-color: #3b82f6;
+  border-color: var(--brand-primary);
 }
 
 /* Header della card */
@@ -1314,7 +1745,7 @@ body {
 }
 
 .status-icon-wrapper {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: var(--bg-brand);
   color: white;
   width: 50px;
   height: 50px;
@@ -1465,7 +1896,7 @@ body {
   right: -4px;
   bottom: -4px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: var(--bg-brand);
   z-index: -1;
 }
 
@@ -1569,9 +2000,9 @@ body {
 }
 
 .status-stat-item:hover {
-  border-color: #3b82f6;
+  border-color: var(--brand-primary);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 4px 16px rgba(139, 69, 19, 0.15);
 }
 
 .status-stat-item .stat-icon {
@@ -1972,7 +2403,7 @@ body {
 
 .accordion-chevron.expanded {
   transform: rotate(180deg);
-  color: #3b82f6;
+  color: var(--brand-primary);
 }
 
 /* Contenuto accordion (collassabile) */
@@ -2130,9 +2561,9 @@ body {
 }
 
 .accordion-alert.info {
-  background: #dbeafe;
-  border-left-color: #3b82f6;
-  color: #1e40af;
+  background: #f3f1eb;
+  border-left-color: var(--brand-primary);
+  color: var(--brand-primary);
 }
 
 /* Responsive accordion */
@@ -2484,9 +2915,9 @@ body {
 }
 
 .quota-alert.info {
-  background: #dbeafe;
-  border-left-color: #3b82f6;
-  color: #1e40af;
+  background: #f3f1eb;
+  border-left-color: var(--brand-primary);
+  color: var(--brand-primary);
 }
 
 .alert-title {
@@ -9861,7 +10292,7 @@ body {
 }
 
 .generate-link-btn {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: var(--bg-brand);
   color: white;
   border: none;
   padding: 12px 20px;
@@ -9875,7 +10306,7 @@ body {
 
 .generate-link-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
 }
 
 .generated-link {
@@ -10009,7 +10440,7 @@ body {
 }
 
 .edit-level-btn {
-  background: #3b82f6;
+  background: var(--brand-primary);
   color: white;
   border: none;
   padding: 8px 16px;
@@ -10021,7 +10452,7 @@ body {
 }
 
 .edit-level-btn:hover {
-  background: #2563eb;
+  background: var(--brand-accent);
 }
 
 /* EDITOR LIVELLO */
@@ -10132,7 +10563,7 @@ body {
 
 .level-input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--brand-primary);
 }
 
 /* CONFIGURAZIONE COLORI */
@@ -10286,8 +10717,8 @@ body {
 }
 
 .icon-library-item:hover {
-  border-color: #3b82f6;
-  background: #dbeafe;
+  border-color: var(--brand-primary);
+  background: #f3f1eb;
   transform: scale(1.05);
 }
 
@@ -10411,7 +10842,7 @@ body {
 
 .level-select:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--brand-primary);
 }
 
 .selected-level-preview {
@@ -10698,7 +11129,7 @@ body {
 }
 
 .settings-tab.active .tab-title {
-  color: #3b82f6;
+  color: var(--brand-primary);
 }
 
 /* SETTINGS CONTENT */
@@ -10764,7 +11195,7 @@ body {
 
 .setting-input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--brand-primary);
 }
 
 .setting-description {
@@ -12593,15 +13024,15 @@ body {
 }
 
 .customer-notes {
-  background: #f0f8ff;
-  border: 1px solid #b3d9ff;
+  background: #f3f1eb;
+  border: 1px solid #d4af37;
   border-radius: 8px;
   padding: 15px;
 }
 
 .customer-notes h4 {
   margin: 0 0 10px 0;
-  color: #1e40af;
+  color: var(--brand-primary);
   font-size: 16px;
 }
 

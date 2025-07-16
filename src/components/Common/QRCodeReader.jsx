@@ -238,7 +238,7 @@ const QRCodeReader = ({
           style={{
             width: width,
             height: height,
-            border: '2px solid #3b82f6',
+            border: '2px solid #8B4513',
             borderRadius: '8px',
             backgroundColor: '#f3f4f6'
           }}

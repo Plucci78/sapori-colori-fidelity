@@ -2,33 +2,16 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../supabase'
 import { validateSVG, sanitizeSVG, PREDEFINED_ICONS, generateLevelGradient } from '../../utils/levelsUtils'
 
-const LevelsConfig = ({ showNotification }) => {
-  const [levels, setLevels] = useState([])
+const LevelsConfig = ({ showNotification, customerLevels, loadCustomerLevels }) => {
+  const [levels, setLevels] = useState(customerLevels)
   const [editingLevel, setEditingLevel] = useState(null)
   const [showIconLibrary, setShowIconLibrary] = useState(false)
   const [svgInput, setSvgInput] = useState('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    loadLevels()
-  }, [])
-
-  const loadLevels = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('customer_levels')
-        .select('*')
-        .eq('active', true)
-        .order('sort_order')
-
-      if (data) {
-        setLevels(data)
-      }
-    } catch (error) {
-      console.error('Errore caricamento livelli:', error)
-      showNotification('Errore nel caricamento dei livelli', 'error')
-    }
-  }, [showNotification])
+    setLevels(customerLevels)
+  }, [loadCustomerLevels, showNotification])
 
   const handleSaveLevel = useCallback(async (levelData) => {
     setLoading(true)
@@ -46,7 +29,7 @@ const LevelsConfig = ({ showNotification }) => {
         .eq('id', levelData.id)
 
       if (!error) {
-        await loadLevels()
+        await loadCustomerLevels()
         setEditingLevel(null)
         showNotification('Livello aggiornato con successo!', 'success')
       }
@@ -56,7 +39,7 @@ const LevelsConfig = ({ showNotification }) => {
     } finally {
       setLoading(false)
     }
-  }, [loadLevels, showNotification])
+  }, [loadCustomerLevels, showNotification])
 
   const handleIconUpload = useCallback(async (event, levelId) => {
     const file = event.target.files[0]

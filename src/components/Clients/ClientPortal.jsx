@@ -228,7 +228,7 @@ const ClientPortal = ({ token }) => {
                     value={`CUSTOMER:${customer.id}`}
                     size={240}
                     backgroundColor="#ffffff"
-                    foregroundColor={customerLevel.primary_color || "#2563eb"}
+                    foregroundColor={customerLevel.primary_color || "#8B4513"}
                     className="customer-qr-code"
                   />
                 </div>

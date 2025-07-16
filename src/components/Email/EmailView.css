@@ -412,12 +412,12 @@
 }
 
 .email-btn-test {
-  background-color: #3b82f6;
+  background-color: #8B4513;
   color: #ffffff;
 }
 
 .email-btn-test:hover:not(:disabled) {
-  background-color: #2563eb;
+  background-color: #CD853F;
 }
 
 .email-btn-save {
