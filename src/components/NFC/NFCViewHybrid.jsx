@@ -144,15 +144,26 @@ const NFCViewHybrid = ({ showNotification }) => {
 
   const handleTagRead = async (tagId) => {
     try {
-      // Cerca se il tag è già associato
-      const { data: existingTag } = await supabase
+      console.log('🔍 Cercando tag:', tagId)
+      
+      // Cerca se il tag è già associato (senza .single() per evitare errori)
+      const { data: existingTags, error } = await supabase
         .from('nfc_tags')
         .select('*, customer:customers(*)')
         .eq('tag_id', tagId)
         .eq('is_active', true)
-        .single()
 
-      if (existingTag) {
+      if (error) {
+        console.error('Errore ricerca tag:', error)
+        throw error
+      }
+
+      console.log('🏷️ Tag trovati:', existingTags)
+
+      const existingTag = existingTags && existingTags.length > 0 ? existingTags[0] : null
+
+      if (existingTag && existingTag.customer) {
+        console.log('✅ Tag esistente trovato per:', existingTag.customer.name)
         // Tag già associato - mostra modale per riassociazione
         setExistingTagData({
           ...existingTag,
@@ -161,6 +172,7 @@ const NFCViewHybrid = ({ showNotification }) => {
         setShowReassignModal(true)
         showNotification(`⚠️ Attenzione: Tag già associato a ${existingTag.customer.name}`, 'warning')
       } else {
+        console.log('🆕 Tag nuovo o non associato')
         setManualTagId(tagId)
         showNotification(`🏷️ Nuovo tag rilevato: ${tagId}. Seleziona un cliente per associarlo.`, 'info')
       }
