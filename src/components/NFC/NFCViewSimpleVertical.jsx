@@ -11,6 +11,11 @@ const NFCViewSimpleVertical = ({ showNotification }) => {
   const [manualTagId, setManualTagId] = useState('')
   const [associatedTags, setAssociatedTags] = useState([])
   const [nfcLogs, setNfcLogs] = useState([])
+  
+  // Stati per il modale di riassociazione
+  const [showReassignModal, setShowReassignModal] = useState(false)
+  const [existingTagData, setExistingTagData] = useState(null)
+  const [newCustomerId, setNewCustomerId] = useState('')
 
   // Controllo disponibilità NFC
   useEffect(() => {
@@ -148,8 +153,13 @@ const NFCViewSimpleVertical = ({ showNotification }) => {
         .single()
 
       if (existingTag) {
-        showNotification(`✅ Cliente trovato: ${existingTag.customer.name}`, 'success')
-        // Puoi aggiungere qui logica per selezionare automaticamente il cliente
+        // Tag già associato - mostra modale per riassociazione
+        setExistingTagData({
+          ...existingTag,
+          tag_id: tagId
+        })
+        setShowReassignModal(true)
+        showNotification(`⚠️ Attenzione: Tag già associato a ${existingTag.customer.name}`, 'warning')
       } else {
         setManualTagId(tagId)
         showNotification(`🏷️ Nuovo tag rilevato: ${tagId}. Seleziona un cliente per associarlo.`, 'info')
@@ -235,6 +245,56 @@ const NFCViewSimpleVertical = ({ showNotification }) => {
       console.error('Errore disassociazione tag:', error)
       showNotification('❌ Errore nella disassociazione', 'error')
     }
+  }
+
+  const reassignTag = async () => {
+    if (!newCustomerId || !existingTagData) {
+      showNotification('❌ Seleziona un cliente per la riassociazione', 'error')
+      return
+    }
+
+    try {
+      const newCustomer = customers.find(c => c.id === newCustomerId)
+      
+      // Disattiva il tag esistente
+      await supabase
+        .from('nfc_tags')
+        .update({ is_active: false })
+        .eq('id', existingTagData.id)
+
+      // Crea una nuova associazione
+      const { error } = await supabase
+        .from('nfc_tags')
+        .insert({
+          tag_id: existingTagData.tag_id,
+          customer_id: newCustomerId,
+          tag_name: `Tag ${newCustomer?.name || 'Sconosciuto'}`,
+          is_active: true
+        })
+
+      if (error) throw error
+
+      showNotification(`✅ Tag riassociato al cliente ${newCustomer?.name}!`, 'success')
+      
+      // Reset e chiudi modale
+      setShowReassignModal(false)
+      setExistingTagData(null)
+      setNewCustomerId('')
+      
+      // Ricarica dati
+      loadNfcTags()
+      loadNfcLogs()
+      
+    } catch (error) {
+      console.error('Errore riassociazione tag:', error)
+      showNotification('❌ Errore nella riassociazione del tag', 'error')
+    }
+  }
+
+  const cancelReassign = () => {
+    setShowReassignModal(false)
+    setExistingTagData(null)
+    setNewCustomerId('')
   }
 
   return (
@@ -477,6 +537,68 @@ const NFCViewSimpleVertical = ({ showNotification }) => {
             )}
           </div>
         </div>
+
+        {/* MODALE RIASSOCIAZIONE TAG */}
+        {showReassignModal && existingTagData && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+              <div className="mb-4">
+                <h3 className="text-lg font-bold text-orange-600 mb-2">
+                  ⚠️ Tag Già Associato
+                </h3>
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-gray-700">
+                    <strong>Tag ID:</strong> <code className="bg-gray-100 px-2 py-1 rounded">{existingTagData.tag_id}</code>
+                  </p>
+                  <p className="text-sm text-gray-700 mt-1">
+                    <strong>Attualmente associato a:</strong> {existingTagData.customer?.name}
+                  </p>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  Vuoi riassociare questo tag a un nuovo cliente?
+                </p>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Seleziona Nuovo Cliente
+                </label>
+                <select 
+                  value={newCustomerId} 
+                  onChange={(e) => setNewCustomerId(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="">-- Seleziona Cliente --</option>
+                  {customers.map(customer => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={cancelReassign}
+                  className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  ❌ Annulla
+                </button>
+                <button
+                  onClick={reassignTag}
+                  disabled={!newCustomerId}
+                  className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+                    newCustomerId 
+                      ? 'bg-orange-600 text-white hover:bg-orange-700' 
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  🔄 Riassocia
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

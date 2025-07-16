@@ -26,7 +26,7 @@ import CustomerView from './components/Customers/CustomerView'
 import EmailView from './components/Email/EmailView'
 import PrizesView from './components/Prizes/PrizesView'
 import SettingsView from './components/Settings/SettingsView'
-import NFCViewSimpleVertical from './components/NFC/NFCViewSimpleVertical'
+import NFCViewHybrid from './components/NFC/NFCViewHybrid'
 import ClientPortal from './components/Clients/ClientPortal'
 import CouponManagement from './components/Coupons/CouponManagement'
 import { generateClientToken, isValidToken } from './utils/tokenUtils'
@@ -2021,7 +2021,7 @@ for (const customer of recipients) {
       case 'nfc':
         return (
           <ProtectedComponent permission="canViewCustomers">
-            <NFCViewSimpleVertical showNotification={showNotification} />
+            <NFCViewHybrid showNotification={showNotification} />
           </ProtectedComponent>
         )
       case 'settings':

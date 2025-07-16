@@ -1,4 +1,4 @@
-// NFCView ibrido - funziona sia online che con hardware
+// NFCView Hybrid - Layout verticale con Web NFC API
 import { useState, useEffect } from 'react'
 import { supabase } from '../../supabase'
 
@@ -6,32 +6,39 @@ const NFCViewHybrid = ({ showNotification }) => {
   const [customers, setCustomers] = useState([])
   const [nfcAvailable, setNfcAvailable] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
+  const [tagName, setTagName] = useState('')
   const [selectedCustomerId, setSelectedCustomerId] = useState('')
   const [manualTagId, setManualTagId] = useState('')
   const [associatedTags, setAssociatedTags] = useState([])
   const [nfcLogs, setNfcLogs] = useState([])
-  const [activeTab, setActiveTab] = useState('scan')
+  
+  // Stati per il modale di riassociazione
+  const [showReassignModal, setShowReassignModal] = useState(false)
+  const [existingTagData, setExistingTagData] = useState(null)
+  const [newCustomerId, setNewCustomerId] = useState('')
 
-  // Verifica se NFC è disponibile (Android + browser supportato)
+  // Controllo disponibilità NFC
   useEffect(() => {
     const checkNFC = async () => {
       if ('NDEFReader' in window) {
         try {
-          new window.NDEFReader()
+          // Test rapido di permessi
           setNfcAvailable(true)
-          console.log('✅ NFC disponibile su questo dispositivo!')
         } catch (error) {
-          console.log('❌ NFC non disponibile:', error)
+          console.log('NFC non disponibile:', error)
           setNfcAvailable(false)
         }
       } else {
-        console.log('🌐 Browser non supporta Web NFC API')
+        console.log('NDEFReader non supportato')
         setNfcAvailable(false)
       }
     }
-    
+
     checkNFC()
-  }, [])
+    loadCustomers()
+    loadNfcTags()
+    loadNfcLogs()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadCustomers = async () => {
     try {
@@ -39,558 +46,560 @@ const NFCViewHybrid = ({ showNotification }) => {
         .from('customers')
         .select('*')
         .order('name')
-      
+
       if (error) throw error
       setCustomers(data || [])
     } catch (error) {
       console.error('Errore caricamento clienti:', error)
-      showNotification('Errore caricamento clienti', 'error')
+      showNotification('❌ Errore nel caricamento clienti', 'error')
     }
   }
 
-  const loadAssociatedTags = async () => {
+  const loadNfcTags = async () => {
     try {
       const { data, error } = await supabase
         .from('nfc_tags')
-        .select(`
-          *,
-          customer:customers(name, points, phone)
-        `)
+        .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
-      
+
       if (error) throw error
       setAssociatedTags(data || [])
     } catch (error) {
-      console.error('Errore caricamento tag:', error)
-      showNotification('Errore caricamento tag associati', 'error')
+      console.error('Errore caricamento tag NFC:', error)
+      showNotification('❌ Errore nel caricamento tag', 'error')
     }
   }
 
   const loadNfcLogs = async () => {
     try {
-      const { data, error } = await supabase
+      // Carica i log senza join per evitare errori di relazione
+      const { data: logs, error } = await supabase
         .from('nfc_logs')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(50)
+        .limit(20)
       
       if (error) throw error
       
-      // Carica separatamente i dati del cliente per ogni log
-      const logsWithCustomers = await Promise.all(
-        (data || []).map(async (log) => {
-          if (log.customer_id) {
-            const { data: customer } = await supabase
-              .from('customers')
-              .select('name, points')
-              .eq('id', log.customer_id)
-              .single()
-            
-            return { ...log, customer }
-          }
-          return log
-        })
-      )
-      
-      setNfcLogs(logsWithCustomers)
+      // Carica i dati dei clienti separatamente
+      if (logs && logs.length > 0) {
+        const customerIds = [...new Set(logs.map(log => log.customer_id).filter(Boolean))]
+        const { data: customers } = await supabase
+          .from('customers')
+          .select('id, name')
+          .in('id', customerIds)
+        
+        // Associa i nomi dei clienti ai log
+        const logsWithCustomers = logs.map(log => ({
+          ...log,
+          customer_name: customers?.find(c => c.id === log.customer_id)?.name || 'Sconosciuto'
+        }))
+        
+        setNfcLogs(logsWithCustomers)
+      } else {
+        setNfcLogs([])
+      }
     } catch (error) {
-      console.error('Errore caricamento log:', error)
-      showNotification('Errore caricamento log NFC', 'error')
+      console.error('Errore caricamento log NFC:', error)
+      showNotification('❌ Errore nel caricamento log', 'error')
     }
   }
 
-  // Lettura NFC Web API (Android Chrome)
-  const startNFCReading = async () => {
+  const startNFCScan = async () => {
     if (!nfcAvailable) {
-      showNotification('NFC non disponibile su questo dispositivo', 'error')
+      showNotification('❌ NFC non disponibile su questo dispositivo', 'error')
       return
     }
 
     try {
       setIsScanning(true)
+      showNotification('📱 Avvicina un tag NFC al telefono...', 'info')
+      
       const ndef = new window.NDEFReader()
       
-      showNotification('🔍 Avvicina un tag NFC...', 'info')
+      const scanPromise = ndef.scan()
       
       ndef.addEventListener('reading', ({ serialNumber }) => {
-        console.log('🏷️ Tag NFC letto:', serialNumber)
-        handleTagRead(serialNumber)
+        const tagId = serialNumber.toLowerCase()
+        console.log('🏷️ Tag NFC letto:', tagId)
+        
+        handleTagRead(tagId)
         setIsScanning(false)
       })
 
-      ndef.addEventListener('readingerror', () => {
-        showNotification('❌ Errore lettura NFC', 'error')
-        setIsScanning(false)
-      })
-
-      await ndef.scan()
+      await scanPromise
       
     } catch (error) {
-      console.error('Errore NFC:', error)
-      showNotification('Errore durante la scansione NFC', 'error')
+      console.error('Errore scansione NFC:', error)
       setIsScanning(false)
+      
+      if (error.name === 'NotAllowedError') {
+        showNotification('❌ Permesso NFC negato. Abilita NFC nelle impostazioni.', 'error')
+      } else {
+        showNotification(`❌ Errore NFC: ${error.message}`, 'error')
+      }
     }
   }
 
   const handleTagRead = async (tagId) => {
-    console.log('🔍 Tag letto:', tagId)
-    
-    // Normalizza il tag ID
-    const normalizedTagId = tagId.replace(/:/g, '').toLowerCase()
-    
-    // Cerca se il tag è già associato
-    const { data: existingTag } = await supabase
-      .from('nfc_tags')
-      .select(`
-        *,
-        customer:customers(*)
-      `)
-      .eq('tag_id', normalizedTagId)
-      .eq('is_active', true)
-      .single()
+    try {
+      // Cerca se il tag è già associato
+      const { data: existingTag } = await supabase
+        .from('nfc_tags')
+        .select('*, customer:customers(*)')
+        .eq('tag_id', tagId)
+        .eq('is_active', true)
+        .single()
 
-    if (existingTag?.customer) {
-      // Log dell'accesso
-      try {
-        await supabase
-          .from('nfc_logs')
-          .insert([{
-            tag_id: normalizedTagId,
-            customer_id: existingTag.customer.id,
-            action_type: 'customer_access_hybrid',
-            created_at: new Date().toISOString()
-          }])
-        
-        // Ricarica i log
-        loadNfcLogs()
-      } catch (logError) {
-        console.error('Errore creazione log:', logError)
+      if (existingTag) {
+        // Tag già associato - mostra modale per riassociazione
+        setExistingTagData({
+          ...existingTag,
+          tag_id: tagId
+        })
+        setShowReassignModal(true)
+        showNotification(`⚠️ Attenzione: Tag già associato a ${existingTag.customer.name}`, 'warning')
+      } else {
+        setManualTagId(tagId)
+        showNotification(`🏷️ Nuovo tag rilevato: ${tagId}. Seleziona un cliente per associarlo.`, 'info')
       }
+
+      // Registra il log
+      await supabase
+        .from('nfc_logs')
+        .insert({
+          tag_id: tagId,
+          customer_id: existingTag?.customer_id || null,
+          action_type: existingTag ? 'customer_access' : 'tag_read',
+          details: existingTag ? `Accesso cliente: ${existingTag.customer.name}` : 'Tag non associato'
+        })
+
+      // Ricarica i log
+      loadNfcLogs()
       
-      showNotification(`🎯 Cliente trovato: ${existingTag.customer.name}`, 'success')
-    } else {
-      showNotification(`🆕 Tag non associato: ${normalizedTagId}`, 'info')
-      setManualTagId(normalizedTagId)
+    } catch (error) {
+      console.error('Errore gestione tag:', error)
+      showNotification('❌ Errore nella gestione del tag', 'error')
     }
   }
 
   const associateTag = async () => {
     if (!selectedCustomerId || !manualTagId) {
-      showNotification('Seleziona un cliente e inserisci ID tag', 'error')
+      showNotification('❌ Seleziona un cliente e assicurati che ci sia un tag da associare', 'error')
+      return
+    }
+
+    try {
+      const customer = customers.find(c => c.id === selectedCustomerId)
+      const finalTagName = tagName || `Tag ${customer?.name || 'Sconosciuto'}`
+
+      const { error } = await supabase
+        .from('nfc_tags')
+        .insert({
+          tag_id: manualTagId,
+          customer_id: selectedCustomerId,
+          tag_name: finalTagName,
+          is_active: true
+        })
+
+      if (error) throw error
+
+      showNotification(`✅ Tag associato al cliente ${customer?.name}!`, 'success')
+      
+      // Reset dei campi
+      setManualTagId('')
+      setSelectedCustomerId('')
+      setTagName('')
+      
+      // Ricarica dati
+      loadNfcTags()
+      
+    } catch (error) {
+      console.error('Errore associazione tag:', error)
+      if (error.code === '23505') {
+        showNotification('❌ Questo tag è già associato a un cliente', 'error')
+      } else {
+        showNotification('❌ Errore nell\'associazione del tag', 'error')
+      }
+    }
+  }
+
+  const disassociateTag = async (tag) => {
+    if (!confirm(`Sei sicuro di voler disassociare il tag "${tag.tag_name}"?`)) {
       return
     }
 
     try {
       const { error } = await supabase
         .from('nfc_tags')
+        .update({ is_active: false })
+        .eq('id', tag.id)
+
+      if (error) throw error
+
+      showNotification(`🗑️ Tag "${tag.tag_name}" disassociato!`, 'success')
+      loadNfcTags()
+      
+    } catch (error) {
+      console.error('Errore disassociazione tag:', error)
+      showNotification('❌ Errore nella disassociazione', 'error')
+    }
+  }
+
+  const reassignTag = async () => {
+    if (!newCustomerId || !existingTagData) {
+      showNotification('❌ Seleziona un cliente per la riassociazione', 'error')
+      return
+    }
+
+    try {
+      const newCustomer = customers.find(c => c.id === newCustomerId)
+      
+      // Disattiva il tag esistente
+      await supabase
+        .from('nfc_tags')
+        .update({ is_active: false })
+        .eq('id', existingTagData.id)
+
+      // Crea una nuova associazione
+      const { error } = await supabase
+        .from('nfc_tags')
         .insert({
-          tag_id: manualTagId.toLowerCase(),
-          customer_id: selectedCustomerId,
-          created_at: new Date().toISOString()
+          tag_id: existingTagData.tag_id,
+          customer_id: newCustomerId,
+          tag_name: `Tag ${newCustomer?.name || 'Sconosciuto'}`,
+          is_active: true
         })
 
       if (error) throw error
 
-      const customer = customers.find(c => c.id === selectedCustomerId)
-      showNotification(`✅ Tag associato a ${customer?.name}!`, 'success')
-      setManualTagId('')
-      setSelectedCustomerId('')
+      showNotification(`✅ Tag riassociato al cliente ${newCustomer?.name}!`, 'success')
       
-      // Ricarica i dati
-      loadAssociatedTags()
+      // Reset e chiudi modale
+      setShowReassignModal(false)
+      setExistingTagData(null)
+      setNewCustomerId('')
+      
+      // Ricarica dati
+      loadNfcTags()
+      loadNfcLogs()
       
     } catch (error) {
-      console.error('Errore associazione:', error)
-      if (error.code === '23505') {
-        showNotification('Tag già associato a un altro cliente', 'error')
-      } else {
-        showNotification('Errore durante l\'associazione', 'error')
-      }
+      console.error('Errore riassociazione tag:', error)
+      showNotification('❌ Errore nella riassociazione del tag', 'error')
     }
   }
 
-  const disassociateTag = async (tagId) => {
-    try {
-      const { error } = await supabase
-        .from('nfc_tags')
-        .update({ is_active: false })
-        .eq('tag_id', tagId)
-
-      if (error) throw error
-
-      showNotification('✅ Tag disassociato con successo', 'success')
-      loadAssociatedTags()
-      
-    } catch (error) {
-      console.error('Errore disassociazione:', error)
-      showNotification('Errore durante la disassociazione', 'error')
-    }
+  const cancelReassign = () => {
+    setShowReassignModal(false)
+    setExistingTagData(null)
+    setNewCustomerId('')
   }
-
-  useEffect(() => {
-    const loadAllData = async () => {
-      await loadCustomers()
-      await loadAssociatedTags()
-      await loadNfcLogs()
-    }
-    loadAllData()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-      
-      {/* Header */}
-      <div style={{ 
-        background: 'linear-gradient(135deg, #B8860B 0%, #DAA520 50%, #CD853F 100%)',
-        color: 'white',
-        padding: '20px',
-        borderRadius: '16px',
-        marginBottom: '24px',
-        textAlign: 'center'
-      }}>
-        <h1 style={{ margin: '0 0 8px 0', fontSize: '28px' }}>
-          📱 NFC Gestione Ibrida
-        </h1>
-        <p style={{ margin: 0, opacity: 0.9 }}>
-          {nfcAvailable ? '✅ NFC Web API Disponibile' : '🌐 Modalità Web (senza NFC)'}
-        </p>
-      </div>
+    <div className="nfc-simple-container">
+      <div className="max-w-6xl mx-auto p-6 space-y-6">
+        {/* HEADER */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 animate-fadeInUp">🏷️ Gestione NFC</h1>
+          <p className="text-gray-600 mt-2">Sistema di lettura tag NFC per identificazione rapida clienti</p>
+        </div>
 
-      {/* Tab Navigation */}
-      <div style={{
-        display: 'flex',
-        gap: '8px',
-        marginBottom: '24px',
-        borderBottom: '2px solid #e5e7eb'
-      }}>
-        {[
-          { id: 'scan', label: '🔍 Scansione', icon: '📱' },
-          { id: 'tags', label: '🏷️ Tag Associati', icon: '📋' },
-          { id: 'logs', label: '📊 Log Attività', icon: '📈' }
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              background: activeTab === tab.id ? '#B8860B' : 'transparent',
-              color: activeTab === tab.id ? 'white' : '#6b7280',
-              border: 'none',
-              padding: '12px 24px',
-              borderRadius: '8px 8px 0 0',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-          >
-            {tab.icon} {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Status NFC */}
-      {activeTab === 'scan' && (
-        <>
-          <div style={{
-            background: nfcAvailable ? '#dcfce7' : '#fef3c7',
-            border: `2px solid ${nfcAvailable ? '#16a34a' : '#f59e0b'}`,
-            borderRadius: '12px',
-            padding: '16px',
-            marginBottom: '24px'
-          }}>
-            <h3 style={{ margin: '0 0 12px 0', color: nfcAvailable ? '#15803d' : '#92400e' }}>
-              {nfcAvailable ? '📡 NFC Attivo' : '⚠️ NFC Non Disponibile'}
-            </h3>
-            <p style={{ margin: '0', fontSize: '14px', color: nfcAvailable ? '#15803d' : '#92400e' }}>
-              {nfcAvailable 
-                ? 'Puoi leggere tag NFC direttamente dal browser Chrome su Android!'
-                : 'Utilizza la modalità manuale per inserire ID tag o QR code.'
-              }
-            </p>
+        {/* STATO NFC */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Stato Sistema NFC
+            </h2>
           </div>
-
-          {/* Controlli NFC */}
-          {nfcAvailable && (
-            <div style={{
-              background: 'white',
-              border: '2px solid #B8860B',
-              borderRadius: '12px',
-              padding: '20px',
-              marginBottom: '24px'
-            }}>
-              <h3 style={{ margin: '0 0 16px 0', color: '#8B4513' }}>🔍 Lettura NFC</h3>
-              <button
-                onClick={startNFCReading}
-                disabled={isScanning}
-                style={{
-                  background: isScanning ? '#ccc' : 'linear-gradient(135deg, #B8860B, #DAA520)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '16px 32px',
-                  borderRadius: '12px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  cursor: isScanning ? 'not-allowed' : 'pointer',
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-              >
-                {isScanning ? '🔄 Scansione in corso...' : '📱 Avvia Lettura NFC'}
-              </button>
+          <div className="card-body">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`nfc-status-indicator ${nfcAvailable ? 'available' : 'unavailable'}`}></div>
+                <span className="font-medium">
+                  {nfcAvailable ? '✅ NFC Disponibile' : '❌ NFC Non Disponibile'}
+                </span>
+              </div>
+              <div className="text-sm text-gray-600">
+                {nfcAvailable ? 'Cellulare Android compatibile' : 'Usa un dispositivo Android con NFC'}
+              </div>
             </div>
-          )}
-
-          {/* Associazione Manuale */}
-          <div style={{
-            background: 'white',
-            border: '2px solid #CD853F',
-            borderRadius: '12px',
-            padding: '20px',
-            marginBottom: '24px'
-          }}>
-            <h3 style={{ margin: '0 0 16px 0', color: '#8B4513' }}>✏️ Associazione Manuale</h3>
-            
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#8B4513' }}>
-                ID Tag NFC o QR Code:
-              </label>
-              <input
-                type="text"
-                value={manualTagId}
-                onChange={(e) => setManualTagId(e.target.value)}
-                placeholder="es: 04:A1:B2:C3:D4:E5:F6"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '2px solid #ddd',
-                  borderRadius: '8px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#8B4513' }}>
-                Cliente:
-              </label>
-              <select
-                value={selectedCustomerId}
-                onChange={(e) => setSelectedCustomerId(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '2px solid #ddd',
-                  borderRadius: '8px',
-                  fontSize: '14px'
-                }}
-              >
-                <option value="">Seleziona cliente...</option>
-                {customers.map(customer => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.name} - {customer.points || 0} gemme
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              onClick={associateTag}
-              disabled={!selectedCustomerId || !manualTagId}
-              style={{
-                background: (!selectedCustomerId || !manualTagId) ? '#ccc' : 'linear-gradient(135deg, #CD853F, #B8860B)',
-                color: 'white',
-                border: 'none',
-                padding: '14px 28px',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                cursor: (!selectedCustomerId || !manualTagId) ? 'not-allowed' : 'pointer',
-                width: '100%'
-              }}
-            >
-              🔗 Associa Tag
-            </button>
           </div>
+        </div>
 
-          {/* Info Browser */}
-          <div style={{
-            background: '#f3f4f6',
-            border: '1px solid #d1d5db',
-            borderRadius: '8px',
-            padding: '16px',
-            fontSize: '13px',
-            color: '#6b7280'
-          }}>
-            <p style={{ margin: '0 0 8px 0' }}>
-              <strong>💡 Info:</strong> Il NFC Web API funziona solo su:
-            </p>
-            <ul style={{ margin: '0', paddingLeft: '20px' }}>
-              <li>Android con Chrome browser</li>
-              <li>Connessione HTTPS (obbligatoria)</li>
-              <li>Permessi NFC attivati nel browser</li>
-            </ul>
+        {/* SCANSIONE NFC */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              Lettura Tag NFC
+            </h2>
           </div>
-        </>
-      )}
-
-      {/* Tab Tag Associati */}
-      {activeTab === 'tags' && (
-        <div style={{
-          background: 'white',
-          border: '2px solid #CD853F',
-          borderRadius: '12px',
-          padding: '20px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, color: '#8B4513' }}>🏷️ Tag NFC Associati</h3>
-            <button
-              onClick={loadAssociatedTags}
-              style={{
-                background: '#B8860B',
-                color: 'white',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                cursor: 'pointer'
-              }}
-            >
-              🔄 Ricarica
-            </button>
-          </div>
-          
-          {associatedTags.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '40px',
-              color: '#6b7280'
-            }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏷️</div>
-              <p>Nessun tag NFC associato</p>
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gap: '12px' }}>
-              {associatedTags.map(tag => (
-                <div
-                  key={tag.id}
-                  style={{
-                    background: '#f9fafb',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    padding: '16px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}
+          <div className="card-body">
+            {!isScanning ? (
+              <div className="text-center">
+                <button
+                  onClick={startNFCScan}
+                  disabled={!nfcAvailable}
+                  className={`btn btn-lg ${nfcAvailable ? 'btn-primary' : 'btn-secondary'}`}
                 >
-                  <div>
-                    <div style={{ fontWeight: 'bold', color: '#1f2937', marginBottom: '4px' }}>
-                      🏷️ {tag.tag_id}
-                    </div>
-                    <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                      Cliente: <strong>{tag.customer?.name || 'Sconosciuto'}</strong>
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                      Associato: {new Date(tag.created_at).toLocaleDateString('it-IT')}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => disassociateTag(tag.tag_id)}
-                    style={{
-                      background: '#dc2626',
-                      color: 'white',
-                      border: 'none',
-                      padding: '6px 12px',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      cursor: 'pointer'
-                    }}
+                  📱 {nfcAvailable ? 'Avvia Scansione NFC' : 'NFC Non Disponibile'}
+                </button>
+                <p className="text-sm text-gray-600 mt-4">
+                  Tocca il pulsante e avvicina un tag NFC al telefono
+                </p>
+              </div>
+            ) : (
+              <div className="nfc-scanning-container">
+                <div className="nfc-scanning-pulse">📱</div>
+                <h3 className="text-xl font-bold text-blue-700 mt-4">Scansione in corso...</h3>
+                <p className="text-blue-600 mt-2">Avvicina un tag NFC al telefono</p>
+                <button 
+                  onClick={() => setIsScanning(false)}
+                  className="btn btn-secondary btn-sm mt-4"
+                >
+                  ❌ Annulla
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ASSOCIAZIONE TAG */}
+        {manualTagId && (
+          <div className="nfc-tag-association">
+            <div className="card-header">
+              <h2 className="card-title">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                Associa Tag a Cliente
+              </h2>
+            </div>
+            <div className="card-body">
+              <div className="mb-4 p-3 bg-white rounded border">
+                <strong>Tag rilevato:</strong> <span className="nfc-tag-code">{manualTagId}</span>
+              </div>
+              
+              <div className="grid grid-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Seleziona Cliente
+                  </label>
+                  <select 
+                    value={selectedCustomerId} 
+                    onChange={(e) => setSelectedCustomerId(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                   >
-                    🗑️ Disassocia
+                    <option value="">-- Seleziona Cliente --</option>
+                    {customers.map(customer => (
+                      <option key={customer.id} value={customer.id}>
+                        {customer.name} 
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nome Tag (opzionale)
+                  </label>
+                  <input
+                    type="text"
+                    value={tagName}
+                    onChange={(e) => setTagName(e.target.value)}
+                    placeholder="es. Tag NFC Principale"
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-2 gap-4 mt-4">
+                <button
+                  onClick={() => setManualTagId('')}
+                  className="btn btn-secondary"
+                >
+                  ❌ Annulla
+                </button>
+                <div>
+                  <button
+                    onClick={associateTag}
+                    disabled={!selectedCustomerId}
+                    className="btn btn-success w-full"
+                  >
+                    🔗 Associa Tag
                   </button>
                 </div>
-              ))}
+              </div>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Tab Log Attività */}
-      {activeTab === 'logs' && (
-        <div style={{
-          background: 'white',
-          border: '2px solid #CD853F',
-          borderRadius: '12px',
-          padding: '20px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, color: '#8B4513' }}>📊 Log Attività NFC</h3>
-            <button
-              onClick={loadNfcLogs}
-              style={{
-                background: '#B8860B',
-                color: 'white',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                cursor: 'pointer'
-              }}
-            >
-              🔄 Ricarica
-            </button>
           </div>
-          
-          {nfcLogs.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '40px',
-              color: '#6b7280'
-            }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📊</div>
-              <p>Nessuna attività registrata</p>
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gap: '8px' }}>
-              {nfcLogs.map(log => (
-                <div
-                  key={log.id}
-                  style={{
-                    background: '#f9fafb',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '6px',
-                    padding: '12px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}
-                >
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1f2937' }}>
-                      {log.action_type === 'customer_access' || log.action_type === 'customer_access_hybrid' ? '👤' : '🔍'} {log.customer?.name || 'Cliente sconosciuto'}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                      Tag: {log.tag_id} • {log.action_type}
-                    </div>
-                    {log.customer && (
-                      <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                        {log.customer.points} gemme
+        )}
+
+        {/* TAG ASSOCIATI */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 714.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 713.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 713.138-3.138z" />
+              </svg>
+              Tag Associati ({associatedTags.length})
+            </h2>
+          </div>
+          <div className="card-body">
+            {associatedTags.length > 0 ? (
+              <div className="nfc-tags-grid">
+                {associatedTags.map(tag => {
+                  const customer = customers.find(c => c.id === tag.customer_id)
+                  return (
+                    <div key={tag.id} className="nfc-tag-item">
+                      <div className="tag-header">
+                        <div className="tag-name">{tag.tag_name}</div>
+                        <button
+                          onClick={() => disassociateTag(tag)}
+                          className="btn btn-danger btn-sm"
+                        >
+                          🗑️ Rimuovi
+                        </button>
                       </div>
-                    )}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                    {new Date(log.created_at).toLocaleString('it-IT')}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                      <div className="tag-details">
+                        <div>ID: <code>{tag.tag_id}</code></div>
+                        <div>Cliente: {customer?.name || 'Non trovato'}</div>
+                        <div>Creato: {new Date(tag.created_at).toLocaleDateString('it-IT')}</div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="nfc-empty-state">
+                <svg className="mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                <h3>Nessun tag associato</h3>
+                <p>Scansiona un tag NFC per iniziare l'associazione</p>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+
+        {/* LOG ATTIVITÀ */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Registro Attività ({nfcLogs.length})
+            </h2>
+          </div>
+          <div className="card-body">
+            {nfcLogs.length > 0 ? (
+              <div className="nfc-logs-container">
+                {nfcLogs.map(log => (
+                  <div key={log.id} className="nfc-log-item">
+                    <div className="log-content">
+                      <div className="log-icon">
+                        {log.action_type === 'customer_access' ? '👤' :
+                         log.action_type === 'tag_read' ? '📱' :
+                         log.action_type === 'registration' ? '✅' : '📋'}
+                      </div>
+                      <div className="log-details">
+                        <div className="log-action">
+                          {log.action_type === 'customer_access' ? 'Accesso Cliente' :
+                           log.action_type === 'tag_read' ? 'Lettura Tag' :
+                           log.action_type === 'registration' ? 'Registrazione' : log.action_type}
+                        </div>
+                        <div className="log-info">
+                          Tag: {log.tag_id} • {log.customer_name || 'Nessun cliente'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="log-time">
+                      {new Date(log.created_at).toLocaleString('it-IT')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="nfc-empty-state">
+                <svg className="mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <h3>Nessuna attività registrata</h3>
+                <p>I log delle scansioni NFC appariranno qui</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* MODALE RIASSOCIAZIONE TAG */}
+        {showReassignModal && existingTagData && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+              <div className="mb-4">
+                <h3 className="text-lg font-bold text-orange-600 mb-2">
+                  ⚠️ Tag Già Associato
+                </h3>
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-gray-700">
+                    <strong>Tag ID:</strong> <code className="bg-gray-100 px-2 py-1 rounded">{existingTagData.tag_id}</code>
+                  </p>
+                  <p className="text-sm text-gray-700 mt-1">
+                    <strong>Attualmente associato a:</strong> {existingTagData.customer?.name}
+                  </p>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  Vuoi riassociare questo tag a un nuovo cliente?
+                </p>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Seleziona Nuovo Cliente
+                </label>
+                <select 
+                  value={newCustomerId} 
+                  onChange={(e) => setNewCustomerId(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="">-- Seleziona Cliente --</option>
+                  {customers.map(customer => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={cancelReassign}
+                  className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  ❌ Annulla
+                </button>
+                <button
+                  onClick={reassignTag}
+                  disabled={!newCustomerId}
+                  className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+                    newCustomerId 
+                      ? 'bg-orange-600 text-white hover:bg-orange-700' 
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  🔄 Riassocia
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
