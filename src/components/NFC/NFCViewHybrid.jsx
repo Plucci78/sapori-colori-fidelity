@@ -19,60 +19,110 @@ const NFCViewHybrid = ({ showNotification }) => {
 
   // Controllo disponibilità NFC
   useEffect(() => {
-    const checkNFC = async () => {
-      if ('NDEFReader' in window) {
-        try {
-          // Test rapido di permessi
-          setNfcAvailable(true)
-        } catch (error) {
-          console.log('NFC non disponibile:', error)
+    const initializeComponent = async () => {
+      try {
+        console.log('🔄 Inizializzazione componente NFC...')
+        
+        // Controllo NFC
+        if ('NDEFReader' in window) {
+          try {
+            setNfcAvailable(true)
+            console.log('✅ NFC disponibile')
+          } catch (error) {
+            console.log('❌ NFC non disponibile:', error)
+            setNfcAvailable(false)
+          }
+        } else {
+          console.log('❌ NDEFReader non supportato')
           setNfcAvailable(false)
         }
-      } else {
-        console.log('NDEFReader non supportato')
-        setNfcAvailable(false)
+
+        // Carica dati con timeout
+        const loadWithTimeout = (promise, name, timeoutMs = 10000) => {
+          return Promise.race([
+            promise,
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error(`Timeout ${name}`)), timeoutMs)
+            )
+          ])
+        }
+
+        console.log('📝 Caricamento clienti...')
+        await loadWithTimeout(loadCustomers(), 'loadCustomers')
+        
+        console.log('🏷️ Caricamento tag NFC...')
+        await loadWithTimeout(loadNfcTags(), 'loadNfcTags')
+        
+        console.log('📊 Caricamento log NFC...')
+        await loadWithTimeout(loadNfcLogs(), 'loadNfcLogs')
+        
+        console.log('✅ Inizializzazione completata')
+        
+      } catch (error) {
+        console.error('❌ Errore inizializzazione:', error)
+        if (showNotification) {
+          showNotification(`❌ Errore caricamento: ${error.message}`, 'error')
+        }
       }
     }
 
-    checkNFC()
-    loadCustomers()
-    loadNfcTags()
-    loadNfcLogs()
+    initializeComponent()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadCustomers = async () => {
     try {
+      console.log('📝 Caricamento clienti da Supabase...')
       const { data, error } = await supabase
         .from('customers')
         .select('*')
         .order('name')
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Errore query clienti:', error)
+        throw error
+      }
+      
+      console.log(`✅ Caricati ${data?.length || 0} clienti`)
       setCustomers(data || [])
     } catch (error) {
-      console.error('Errore caricamento clienti:', error)
-      showNotification('❌ Errore nel caricamento clienti', 'error')
+      console.error('❌ Errore caricamento clienti:', error)
+      if (showNotification) {
+        showNotification('❌ Errore nel caricamento clienti', 'error')
+      }
+      // Non bloccare l'app, imposta array vuoto
+      setCustomers([])
     }
   }
 
   const loadNfcTags = async () => {
     try {
+      console.log('🏷️ Caricamento tag NFC da Supabase...')
       const { data, error } = await supabase
         .from('nfc_tags')
         .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Errore query tag NFC:', error)
+        throw error
+      }
+      
+      console.log(`✅ Caricati ${data?.length || 0} tag NFC`)
       setAssociatedTags(data || [])
     } catch (error) {
-      console.error('Errore caricamento tag NFC:', error)
-      showNotification('❌ Errore nel caricamento tag', 'error')
+      console.error('❌ Errore caricamento tag NFC:', error)
+      if (showNotification) {
+        showNotification('❌ Errore nel caricamento tag', 'error')
+      }
+      // Non bloccare l'app
+      setAssociatedTags([])
     }
   }
 
   const loadNfcLogs = async () => {
     try {
+      console.log('📊 Caricamento log NFC da Supabase...')
       // Carica i log senza join per evitare errori di relazione
       const { data: logs, error } = await supabase
         .from('nfc_logs')
@@ -80,29 +130,47 @@ const NFCViewHybrid = ({ showNotification }) => {
         .order('created_at', { ascending: false })
         .limit(20)
       
-      if (error) throw error
+      if (error) {
+        console.error('❌ Errore query log NFC:', error)
+        throw error
+      }
       
-      // Carica i dati dei clienti separatamente
+      console.log(`✅ Caricati ${logs?.length || 0} log NFC`)
+      
+      // Carica i dati dei clienti separatamente solo se ci sono log
       if (logs && logs.length > 0) {
         const customerIds = [...new Set(logs.map(log => log.customer_id).filter(Boolean))]
-        const { data: customers } = await supabase
-          .from('customers')
-          .select('id, name')
-          .in('id', customerIds)
-        
-        // Associa i nomi dei clienti ai log
-        const logsWithCustomers = logs.map(log => ({
-          ...log,
-          customer_name: customers?.find(c => c.id === log.customer_id)?.name || 'Sconosciuto'
-        }))
-        
-        setNfcLogs(logsWithCustomers)
+        if (customerIds.length > 0) {
+          const { data: customers, error: customerError } = await supabase
+            .from('customers')
+            .select('id, name')
+            .in('id', customerIds)
+          
+          if (customerError) {
+            console.error('❌ Errore query clienti per log:', customerError)
+            // Continua comunque senza nomi clienti
+          }
+          
+          // Associa i nomi dei clienti ai log
+          const logsWithCustomers = logs.map(log => ({
+            ...log,
+            customer_name: customers?.find(c => c.id === log.customer_id)?.name || 'Sconosciuto'
+          }))
+          
+          setNfcLogs(logsWithCustomers)
+        } else {
+          setNfcLogs(logs)
+        }
       } else {
         setNfcLogs([])
       }
     } catch (error) {
-      console.error('Errore caricamento log NFC:', error)
-      showNotification('❌ Errore nel caricamento log', 'error')
+      console.error('❌ Errore caricamento log NFC:', error)
+      if (showNotification) {
+        showNotification('❌ Errore nel caricamento log', 'error')
+      }
+      // Non bloccare l'app
+      setNfcLogs([])
     }
   }
 
