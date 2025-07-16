@@ -1160,9 +1160,9 @@ const RegistrationWizard = ({ onComplete, onCancel }) => {
                 <div className="privacy-scroll-area" style={{ maxHeight: '300px', overflowY: 'auto', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '2px solid #e9ecef' }}>
                   <div style={{ lineHeight: '1.6', fontSize: '14px' }}>
                     <p><strong>🏢 TITOLARE DEL TRATTAMENTO:</strong><br/>
-                    Sapori & Colori<br/>
-                    Via [INSERIRE INDIRIZZO COMPLETO]<br/>
-                    Tel: [TELEFONO] - Email: [EMAIL NEGOZIO]</p>
+                    Sapori & Colori B SRL <br/>
+                    Via [BAGALADI N 900132 ROMA]<br/>
+                    Tel: [06 39911640] - Email: [SAPORIECOLORI.B@GMAIL.COM]</p>
                     
                     <p><strong>🎯 FINALITÀ DEL TRATTAMENTO:</strong><br/>
                     I suoi dati personali vengono trattati per:
@@ -1203,8 +1203,8 @@ const RegistrationWizard = ({ onComplete, onCancel }) => {
                     
                     <p><strong>📧 COME ESERCITARE I DIRITTI:</strong><br/>
                     Per esercitare i suoi diritti può contattarci:
-                    <br/>• Email: [EMAIL PRIVACY]
-                    <br/>• Telefono: [TELEFONO NEGOZIO]
+                    <br/>• Email: [SAPORIECOLORI.B@GMAIL.COM]
+                    <br/>• Telefono: [06 39911640]
                     <br/>• Di persona presso il punto vendita</p>
                     
                     <p><strong>⚠️ RECLAMI:</strong><br/>
