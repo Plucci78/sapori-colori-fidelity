@@ -50,24 +50,9 @@ export const emailAutomationService = {
         .select('*')
         .order('threshold', { ascending: true });
 
-      // Se non ci sono milestone nel DB, usa quelle default
-      this.milestones = milestonesData?.length > 0 ? milestonesData : [
-        { 
-          threshold: settingsData?.milestone_1 || 50, 
-          message: 'Sei un cliente speciale! Continua così per sbloccare premi esclusivi.',
-          enabled: true 
-        },
-        { 
-          threshold: settingsData?.milestone_2 || 100, 
-          message: 'Incredibile! Sei entrato nel club VIP. Ti aspettano premi fantastici!',
-          enabled: true 
-        },
-        { 
-          threshold: settingsData?.milestone_3 || 150, 
-          message: 'Sei una leggenda! Hai raggiunto un traguardo straordinario.',
-          enabled: true 
-        }
-      ];
+      // DISATTIVATO: Le milestone fisse sono state sostituite dai livelli dinamici del pannello impostazioni
+      // Ora si usano solo i livelli configurabili (Oro, Argento, Platino, etc.)
+      this.milestones = milestonesData?.length > 0 ? milestonesData : [];
 
       this.lastSettingsCheck = now;
     } catch (error) {
