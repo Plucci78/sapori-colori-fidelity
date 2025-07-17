@@ -1,5 +1,7 @@
 import { memo, useState, useEffect, useRef } from 'react'
 import EmailQuotaWidget from './EmailQuotaWidget'
+import { emailAutomationService } from '../../services/emailAutomation'
+import { supabase } from '../../supabase'
 
 const EmailView = memo(({
   emailStats,
@@ -21,6 +23,7 @@ const EmailView = memo(({
   const [isTesting, setIsTesting] = useState(false)
   const [savedTemplates, setSavedTemplates] = useState([])
   const [isEditorReady, setIsEditorReady] = useState(false)
+  const [birthdayCount, setBirthdayCount] = useState(0)
   const editorRef = useRef(null)
 
   // Template professionali predefiniti
@@ -105,6 +108,145 @@ const EmailView = memo(({
           </div>
         </div>
       `
+    },
+    // Template Automatici
+    {
+      id: 'auto-welcome',
+      name: '🤖 Benvenuto Automatico',
+      category: 'automatic',
+      icon: 'user-plus',
+      thumbnail: '/template-auto-welcome.png',
+      subject: 'Benvenuto in Sapori & Colori, {{nome}}! 🎉',
+      content: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f5f5f5; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <table cellpadding="0" cellspacing="0" border="0" width="600" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); padding: 40px 30px; text-align: center;">
+              <img src="https://jexkalekaofsfcusdfjh.supabase.co/storage/v1/object/public/tinymce-images//saporiecolorilogo2.png" alt="Sapori & Colori" style="height: 60px; margin-bottom: 10px;" />
+              <h1 style="margin: 0; color: #ffffff; font-size: 32px;">Benvenuto {{nome}}!</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px 0; color: #4a4a4a; font-size: 16px;">
+                Siamo felici di averti nella famiglia Sapori & Colori!
+              </p>
+              <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 20px; margin: 30px 0;">
+                <h3 style="margin: 0 0 10px 0; color: #dc2626; font-size: 18px;">Come funziona:</h3>
+                <ul style="margin: 0; padding-left: 20px; color: #4a4a4a;">
+                  <li>🛍️ 1€ speso = 1 GEMMA guadagnata</li>
+                  <li>💎 Accumula GEMME per premi esclusivi</li>
+                  <li>🎁 Offerte speciali solo per te</li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+    },
+    {
+      id: 'auto-birthday',
+      name: '🤖 Compleanno Automatico',
+      category: 'automatic',
+      icon: 'gift',
+      thumbnail: '/template-auto-birthday.png',
+      subject: 'Tanti auguri {{nome}}! 🎉',
+      content: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f5f5f5; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <table cellpadding="0" cellspacing="0" border="0" width="600" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); padding: 60px 30px; text-align: center;">
+              <div style="font-size: 80px; margin-bottom: 20px;">🎂</div>
+              <h1 style="margin: 0 0 10px 0; color: #ffffff; font-size: 36px;">Buon Compleanno {{nome}}!</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 30px 0; color: #4a4a4a; font-size: 18px; text-align: center;">
+                In questo giorno speciale, Sapori & Colori vuole festeggiare con te!
+              </p>
+              <div style="background-color: #fef2f2; border: 2px dashed #dc2626; border-radius: 8px; padding: 30px; text-align: center; margin: 30px 0;">
+                <h2 style="margin: 0 0 10px 0; color: #dc2626; font-size: 24px;">🎁 Il Nostro Regalo</h2>
+                <p style="margin: 0 0 20px 0; color: #dc2626; font-size: 36px; font-weight: bold;">30% SCONTO</p>
+                <p style="margin: 0; color: #4a4a4a; font-size: 16px;">Su tutto il tuo ordine di oggi!</p>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+    },
+    {
+      id: 'auto-milestone',
+      name: '🤖 Milestone Automatica',
+      category: 'automatic',
+      icon: 'trophy',
+      thumbnail: '/template-auto-milestone.png',
+      subject: '🎉 Hai raggiunto {{gemme}} GEMME!',
+      content: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #1a1a1a;">
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #1a1a1a; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <table cellpadding="0" cellspacing="0" border="0" width="600" style="background-color: #2a2a2a; border-radius: 8px; border: 1px solid #3a3a3a;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); padding: 60px 30px; text-align: center;">
+              <div style="font-size: 60px; margin-bottom: 20px;">💎</div>
+              <h1 style="margin: 0; color: #ffffff; font-size: 32px;">Fantastico {{nome}}!</h1>
+              <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 20px;">Hai {{gemme}} GEMME!</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 30px 0; color: #e0e0e0; font-size: 16px; text-align: center;">
+                Congratulazioni! Ecco i tuoi nuovi vantaggi:
+              </p>
+              <div style="background-color: #1a1a1a; border-radius: 8px; padding: 30px;">
+                <h3 style="margin: 0 0 15px 0; color: #dc2626; font-size: 18px; text-align: center;">🎁 I tuoi privilegi:</h3>
+                <ul style="color: #e0e0e0; margin: 0; padding-left: 20px; line-height: 1.8;">
+                  <li>🥖 Sconto 10% su tutti i prodotti da forno</li>
+                  <li>☕ Caffè gratis con ogni acquisto superiore a 15€</li>
+                  <li>🍰 Accesso prioritario alle nuove ricette</li>
+                  <li>📞 Possibilità di prenotare prodotti speciali</li>
+                  <li>🎂 Sconto compleanno del 30% per tutto il mese</li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
     }
   ]
 
@@ -120,7 +262,7 @@ const EmailView = memo(({
       return created > weekAgo
     }).length || 0 },
     { id: 'inactive', name: 'Inattivi', icon: 'user-x', count: customers?.filter(c => c.points === 0).length || 0 },
-    { id: 'birthday', name: 'Compleanno questo mese', icon: 'gift', count: 0 },
+    { id: 'birthday', name: 'Compleanno questo mese', icon: 'gift', count: birthdayCount },
   ]
 
   // Variabili disponibili
@@ -132,6 +274,21 @@ const EmailView = memo(({
     { key: 'data', label: 'Data Oggi', icon: 'calendar' },
     { key: 'negozio', label: 'Nome Negozio', icon: 'home' },
   ]
+
+  // Carica conteggio compleanni
+  useEffect(() => {
+    const loadBirthdayCount = async () => {
+      try {
+        const birthdayCustomers = await emailAutomationService.getThisMonthBirthdays()
+        setBirthdayCount(birthdayCustomers.length)
+      } catch (error) {
+        console.error('Errore caricamento compleanni:', error)
+        setBirthdayCount(0)
+      }
+    }
+    
+    loadBirthdayCount()
+  }, [customers])
 
   // Inizializza TinyMCE e Lucide Icons
   useEffect(() => {
@@ -188,10 +345,14 @@ const EmailView = memo(({
   const loadTemplate = (template) => {
     setSelectedTemplate(template)
     setEmailSubject(template.subject)
+    
+    // Per i template automatici, usa il contenuto completo
+    const templateContent = template.content || template.html || ''
+    
     if (window.tinymce && window.tinymce.activeEditor) {
-      window.tinymce.activeEditor.setContent(template.content)
+      window.tinymce.activeEditor.setContent(templateContent)
     }
-    setEmailContent(template.content)
+    setEmailContent(templateContent)
   }
 
   // Toggle selezione segmento
@@ -241,18 +402,44 @@ const EmailView = memo(({
   }
 
   // Salva template
-  const saveTemplate = () => {
-    const newTemplate = {
-      id: Date.now(),
-      name: prompt('Nome del template:'),
-      category: 'custom',
-      icon: 'file-text',
-      subject: emailSubject,
-      content: emailContent,
-      created_at: new Date().toISOString()
+  const saveTemplate = async () => {
+    // Se è un template automatico, aggiorna quello
+    if (selectedTemplate && selectedTemplate.category === 'automatic') {
+      try {
+        // Aggiorna il template automatico nel database
+        const { error } = await supabase
+          .from('automatic_templates')
+          .upsert({
+            id: selectedTemplate.id.replace('auto-', ''),
+            subject: emailSubject,
+            html: emailContent,
+            updated_at: new Date().toISOString()
+          })
+
+        if (error) throw error
+
+        showNotification('✅ Template automatico aggiornato!', 'success')
+        
+        // Il template sarà aggiornato nel database, ricarica la pagina per vedere le modifiche
+        
+      } catch (error) {
+        console.error('Errore aggiornamento template automatico:', error)
+        showNotification('❌ Errore aggiornamento template automatico', 'error')
+      }
+    } else {
+      // Template custom normale
+      const newTemplate = {
+        id: Date.now(),
+        name: prompt('Nome del template:'),
+        category: 'custom',
+        icon: 'file-text',
+        subject: emailSubject,
+        content: emailContent,
+        created_at: new Date().toISOString()
+      }
+      setSavedTemplates(prev => [...prev, newTemplate])
+      showNotification('Template salvato con successo!', 'success')
     }
-    setSavedTemplates(prev => [...prev, newTemplate])
-    showNotification('Template salvato con successo!', 'success')
   }
 
   return (
@@ -328,6 +515,34 @@ const EmailView = memo(({
                   ))}
                 </div>
               </>
+            ) : activePanel === 'saved' ? (
+              <>
+                <h3>Template Salvati</h3>
+                {savedTemplates.length === 0 ? (
+                  <div className="empty-templates">
+                    <p>Nessun template salvato</p>
+                    <small>I template che salvi appariranno qui</small>
+                  </div>
+                ) : (
+                  <div className="template-grid">
+                    {savedTemplates.map(template => (
+                      <div 
+                        key={template.id}
+                        className={`template-card ${selectedTemplate?.id === template.id ? 'selected' : ''}`}
+                        onClick={() => loadTemplate(template)}
+                      >
+                        <div className="template-icon">
+                          <span className={`icon icon-${template.icon || 'file-text'}`}></span>
+                        </div>
+                        <div className="template-info">
+                          <h4>{template.name}</h4>
+                          <span className="template-category">{template.category}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             ) : (
               <>
                 <h3>Template Salvati</h3>
@@ -365,7 +580,7 @@ const EmailView = memo(({
           <div className="editor-toolbar">
             <button className="btn-toolbar" onClick={saveTemplate}>
               <span className="icon-small icon-save"></span>
-              Salva Template
+              {selectedTemplate?.category === 'automatic' ? 'Aggiorna Template 🤖' : 'Salva Template'}
             </button>
             <button className="btn-toolbar" onClick={sendTestEmail} disabled={isTesting}>
               <span className="icon-small icon-send"></span>
@@ -510,6 +725,7 @@ const EmailView = memo(({
           </div>
         </div>
       </div>
+
     </div>
   )
 })

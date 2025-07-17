@@ -26,6 +26,7 @@ export const emailTemplates = [
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); padding: 40px 30px; text-align: center;">
+              <img src="https://jexkalekaofsfcusdfjh.supabase.co/storage/v1/object/public/tinymce-images//saporiecolorilogo2.png" alt="Sapori & Colori" style="height: 60px; margin-bottom: 10px;" />
               <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: bold;">Sapori & Colori</h1>
               <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 16px;">Il tuo panificio di fiducia</p>
             </td>
@@ -54,7 +55,7 @@ export const emailTemplates = [
           <tr>
             <td style="background-color: #1a1a1a; padding: 30px; text-align: center;">
               <p style="margin: 0 0 10px 0; color: #e0e0e0; font-size: 14px;">
-                Via Example 123, Roma • Tel: 06 1234567
+                Via Bagaladi 9, 00132 Roma • Tel: 0639911640 • saporiecolori.net
               </p>
               <p style="margin: 0; color: #a0a0a0; font-size: 12px;">
                 © 2024 Sapori & Colori. Tutti i diritti riservati.
@@ -383,6 +384,11 @@ export const automaticTemplates = {
     html: emailTemplates[0].html // Riusa il template welcome
   },
   
+  birthday: {
+    subject: 'Tanti auguri {{nome}}! 🎉',
+    html: emailTemplates[3].html // Riusa il template birthday (indice 3)
+  },
+  
   milestone: {
     subject: '🎉 Hai raggiunto {{gemme}} GEMME!',
     html: `
@@ -409,10 +415,15 @@ export const automaticTemplates = {
               <p style="margin: 0 0 30px 0; color: #e0e0e0; font-size: 16px; text-align: center;">
                 {{message}}
               </p>
-              <div style="background-color: #1a1a1a; border-radius: 8px; padding: 30px; text-align: center;">
-                <p style="margin: 0; color: #dc2626; font-size: 24px; font-weight: bold;">
-                  Continua così! 🚀
-                </p>
+              <div style="background-color: #1a1a1a; border-radius: 8px; padding: 30px;">
+                <h3 style="margin: 0 0 15px 0; color: #dc2626; font-size: 18px; text-align: center;">🎁 I tuoi privilegi:</h3>
+                <ul style="color: #e0e0e0; margin: 0; padding-left: 20px; line-height: 1.8;">
+                  <li>🥖 Sconto 10% su tutti i prodotti da forno</li>
+                  <li>☕ Caffè gratis con ogni acquisto superiore a 15€</li>
+                  <li>🍰 Accesso prioritario alle nuove ricette</li>
+                  <li>📞 Possibilità di prenotare prodotti speciali</li>
+                  <li>🎂 Sconto compleanno del 30% per tutto il mese</li>
+                </ul>
               </div>
               <div style="text-align: center; margin: 40px 0;">
                 <a href="#" style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: bold;">Scopri i Premi</a>

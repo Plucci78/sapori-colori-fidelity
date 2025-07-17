@@ -140,6 +140,155 @@ export const emailAutomationService = {
     return await this.sendAutomaticEmail('welcome', customer);
   },
 
+  // Email compleanno automatica
+  async sendBirthdayEmail(customer) {
+    if (!customer.email) return;
+    
+    console.log(`🎂 Invio email compleanno a ${customer.name}`);
+    return await this.sendAutomaticEmail('birthday', customer);
+  },
+
+  // Trova clienti con compleanno oggi
+  async getTodayBirthdays() {
+    try {
+      // Approccio semplice: scarica tutti e filtra in JavaScript
+      const { data: allCustomers, error } = await supabase
+        .from('customers')
+        .select('*')
+        .not('email', 'is', null)
+        .not('birth_date', 'is', null);
+      
+      if (error) throw error;
+      
+      const today = new Date();
+      const todayMonth = today.getMonth();
+      const todayDay = today.getDate();
+      
+      const todayBirthdays = allCustomers.filter(customer => {
+        if (!customer.birth_date) return false;
+        const birthDate = new Date(customer.birth_date);
+        return birthDate.getMonth() === todayMonth && 
+               birthDate.getDate() === todayDay;
+      });
+      
+      console.log(`🎂 Trovati ${todayBirthdays.length} compleanni oggi`);
+      return todayBirthdays;
+      
+    } catch (error) {
+      console.error('Errore ricerca compleanni:', error);
+      return [];
+    }
+  },
+
+  // Trova clienti con compleanno questo mese
+  async getThisMonthBirthdays() {
+    try {
+      // Approccio semplice: scarica tutti e filtra in JavaScript
+      const { data: allCustomers, error } = await supabase
+        .from('customers')
+        .select('*')
+        .not('email', 'is', null)
+        .not('birth_date', 'is', null);
+      
+      if (error) throw error;
+      
+      const today = new Date();
+      const thisMonth = today.getMonth();
+      
+      const thisMonthBirthdays = allCustomers.filter(customer => {
+        if (!customer.birth_date) return false;
+        const birthDate = new Date(customer.birth_date);
+        return birthDate.getMonth() === thisMonth;
+      });
+      
+      console.log(`🎂 Trovati ${thisMonthBirthdays.length} compleanni questo mese`);
+      return thisMonthBirthdays;
+      
+    } catch (error) {
+      console.error('Errore ricerca compleanni mese:', error);
+      return [];
+    }
+  },
+
+  // Controlla se email compleanno già inviata oggi
+  async isBirthdayEmailSentToday(customerId) {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data, error } = await supabase
+        .from('email_logs')
+        .select('*')
+        .eq('template_name', 'automatic_birthday')
+        .eq('metadata->customer_id', customerId)
+        .gte('created_at', `${today}T00:00:00`)
+        .lt('created_at', `${today}T23:59:59`);
+
+      return data && data.length > 0;
+    } catch (error) {
+      console.error('Errore controllo email compleanno:', error);
+      return false;
+    }
+  },
+
+  // Processo completo compleanni giornaliero
+  async processDailyBirthdays() {
+    try {
+      console.log('🎂 Inizio controllo compleanni giornaliero...');
+      
+      const birthdayCustomers = await this.getTodayBirthdays();
+      let emailsSent = 0;
+      
+      for (const customer of birthdayCustomers) {
+        // Controlla se email già inviata oggi
+        const alreadySent = await this.isBirthdayEmailSentToday(customer.id);
+        
+        if (!alreadySent) {
+          const success = await this.sendBirthdayEmail(customer);
+          if (success) {
+            emailsSent++;
+            // Salva log specifico per compleanno
+            await this.saveBirthdayLog(customer);
+          }
+          
+          // Pausa di 1 secondo tra email per evitare rate limiting
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } else {
+          console.log(`📧 Email compleanno già inviata oggi per ${customer.name}`);
+        }
+      }
+      
+      console.log(`✅ Processo compleanni completato: ${emailsSent} email inviate`);
+      return { total: birthdayCustomers.length, sent: emailsSent };
+      
+    } catch (error) {
+      console.error('Errore processo compleanni:', error);
+      return { total: 0, sent: 0, error: error.message };
+    }
+  },
+
+  // Salva log specifico per compleanno
+  async saveBirthdayLog(customer) {
+    try {
+      await supabase
+        .from('email_logs')
+        .insert({
+          template_name: 'automatic_birthday',
+          recipient_email: customer.email,
+          recipient_name: customer.name,
+          subject: `Tanti auguri ${customer.name}! 🎉`,
+          status: 'sent',
+          metadata: { 
+            type: 'automatic', 
+            trigger: 'birthday',
+            customer_id: customer.id,
+            birth_date: customer.birth_date
+          }
+        });
+    } catch (error) {
+      console.error('Errore salvataggio log compleanno:', error);
+    }
+  },
+
   // Controlla e invia email per milestone
   async checkAndSendMilestoneEmail(customer, oldPoints, newPoints) {
     if (!customer.email || !this.milestones) return;
@@ -219,7 +368,7 @@ export const emailAutomationService = {
         
       // Puoi aggiungere altri eventi
       case 'birthday':
-        // await this.sendBirthdayEmail(customer);
+        await this.sendBirthdayEmail(customer);
         break;
     }
   },

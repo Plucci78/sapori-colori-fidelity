@@ -31,6 +31,7 @@ import ClientPortal from './components/Clients/ClientPortal'
 import CouponManagement from './components/Coupons/CouponManagement'
 import { generateClientToken, isValidToken } from './utils/tokenUtils'
 import nfcService from './services/nfcService'
+import { birthdayScheduler } from './services/birthdayScheduler'
 
 // ===================================
 // COMPONENTE APP PRINCIPALE (con auth)
@@ -1083,6 +1084,18 @@ const fixReferralData = async (customerId) => {
       loadTopCustomers()
       loadEmailStats()
       loadCustomerLevels()
+      
+      // Inizializza Birthday Scheduler
+      birthdayScheduler.init()
+      
+      // Esponi funzioni di test in console (solo in dev)
+      if (process.env.NODE_ENV === 'development') {
+        window.testBirthday = {
+          forceCheck: () => birthdayScheduler.forceCheck(),
+          getStatus: () => birthdayScheduler.getStatus(),
+          testEmail: (email) => birthdayScheduler.testBirthdayEmail(email)
+        }
+      }
     }
   }, [isAuthenticated, loadEmailStats]) // ← AGGIUNTA DIPENDENZA AUTH
 

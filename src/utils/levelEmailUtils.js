@@ -116,7 +116,7 @@ export const generateLevelEmailContent = (level, customerName, gems) => {
         
         <p style="color: #999; font-size: 14px; text-align: center;">
           Grazie per essere un cliente ${level.name} di Sapori & Colori!<br>
-          Via Example 123, Roma • Tel: 06 1234567
+          Via Bagaladi 9, 00132 Roma • Tel: 0639911640 • saporiecolori.net
         </p>
       </div>
     </div>
