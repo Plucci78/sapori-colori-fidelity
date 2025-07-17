@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import DarkModeToggle from '../DarkModeToggle'
 import { useAuth } from '../../auth/AuthContext'
 import EmailQuotaWidget from '../Email/EmailQuotaWidget'
+import { supabase } from '../../supabase'
 
 const DashboardView = ({
   todayStats = { customers: 0, points: 0, revenue: 0, redeems: 0 },
@@ -16,8 +17,115 @@ const DashboardView = ({
   const [showPremioForm, setShowPremioForm] = useState(false)
   const [nfcResult, setNfcResult] = useState(null)
   const [activePanel, setActivePanel] = useState(null)
+  const [recentActivities, setRecentActivities] = useState([])
+  const [loadingActivities, setLoadingActivities] = useState(true)
 
   const { signOut, profile } = useAuth()
+
+  // Carica attività recenti dal database
+  const loadRecentActivities = async () => {
+    try {
+      setLoadingActivities(true)
+      const { data: activities, error } = await supabase
+        .from('activity_logs')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(8)
+
+      if (error) {
+        console.error('Errore caricamento attività:', error)
+        setRecentActivities([])
+      } else {
+        setRecentActivities(activities || [])
+      }
+    } catch (error) {
+      console.error('Errore generale attività:', error)
+      setRecentActivities([])
+    } finally {
+      setLoadingActivities(false)
+    }
+  }
+
+  // Carica attività all'avvio
+  useEffect(() => {
+    loadRecentActivities()
+  }, [])
+
+  // Funzione per formattare il display delle attività
+  const formatActivity = (activity) => {
+    const timeAgo = getTimeAgo(activity.timestamp)
+    
+    switch (activity.action) {
+      case 'CUSTOMER_REGISTERED': {
+        const customerName = activity.details ? JSON.parse(activity.details).customer_name : 'Cliente'
+        return {
+          title: 'Nuovo cliente registrato',
+          description: `${customerName} - Registrato ${timeAgo}`,
+          badge: 'Completato',
+          badgeClass: 'badge-success',
+          icon: 'bg-success'
+        }
+      }
+      
+      case 'TRANSACTION_CREATED': {
+        const details = activity.details ? JSON.parse(activity.details) : {}
+        return {
+          title: 'Vendita registrata',
+          description: `€${details.amount || 0} • +${details.points_earned || 0} GEMME • ${timeAgo}`,
+          badge: 'Vendita',
+          badgeClass: 'badge-warning',
+          icon: 'bg-warning'
+        }
+      }
+      
+      case 'PRIZE_REDEEMED': {
+        const prizeDetails = activity.details ? JSON.parse(activity.details) : {}
+        return {
+          title: 'Premio riscattato',
+          description: `${prizeDetails.prize_name || 'Premio'} • ${prizeDetails.customer_name || 'Cliente'} • ${timeAgo}`,
+          badge: 'Premio',
+          badgeClass: 'badge-gemme',
+          icon: 'gemme-icon'
+        }
+      }
+      
+      case 'EMAIL_CAMPAIGN_SENT':
+      case 'LEVEL_MILESTONE_EMAIL_SENT': {
+        const emailDetails = activity.details ? JSON.parse(activity.details) : {}
+        return {
+          title: 'Email automatica inviata',
+          description: `${emailDetails.email_type === 'level_milestone' ? 'Email milestone' : 'Email campagna'} • ${timeAgo}`,
+          badge: 'Email',
+          badgeClass: 'badge-primary',
+          icon: 'bg-blue-500'
+        }
+      }
+      
+      default:
+        return {
+          title: activity.action.replace(/_/g, ' ').toLowerCase(),
+          description: `${activity.user_name || 'Sistema'} • ${timeAgo}`,
+          badge: 'Info',
+          badgeClass: 'badge-secondary',
+          icon: 'bg-gray-500'
+        }
+    }
+  }
+
+  // Funzione per calcolare tempo fa
+  const getTimeAgo = (timestamp) => {
+    const now = new Date()
+    const activityTime = new Date(timestamp)
+    const diffMs = now - activityTime
+    const diffMins = Math.floor(diffMs / (1000 * 60))
+    const diffHours = Math.floor(diffMins / 60)
+    const diffDays = Math.floor(diffHours / 24)
+
+    if (diffMins < 1) return 'ora'
+    if (diffMins < 60) return `${diffMins} minuti fa`
+    if (diffHours < 24) return `${diffHours} ore fa`
+    return `${diffDays} giorni fa`
+  }
 
   // Funzione per aprire la modale generica (puoi tenerla per altri messaggi)
   const openModal = (text) => {
@@ -385,54 +493,49 @@ const DashboardView = ({
           <p className="card-subtitle">Ultime operazioni registrate nel sistema</p>
         </div>
         <div className="card-body">
-          <div className="space-y-4">
-            <div className="flex items-center gap-4 p-4 bg-secondary rounded-lg border border-gray-200">
-              <div className="w-3 h-3 bg-success rounded-full flex-shrink-0"></div>
-              <div className="flex-1">
-                <div className="font-semibold text-brand">Nuovo cliente registrato</div>
-                <div className="text-sm text-secondary">Mario Rossi - Registrato 2 minuti fa</div>
-              </div>
-              <span className="badge badge-success">Completato</span>
+          {loadingActivities ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary mx-auto"></div>
+              <p className="text-sm text-secondary mt-2">Caricamento attività...</p>
             </div>
-            
-            <div className="flex items-center gap-4 p-4 bg-secondary rounded-lg border border-gray-200">
-              <div className="w-3 h-3 bg-warning rounded-full flex-shrink-0"></div>
-              <div className="flex-1">
-                <div className="font-semibold text-brand">Vendita registrata</div>
-                <div className="text-sm text-secondary">€15.50 • +15 GEMME • 5 minuti fa</div>
-              </div>
-              <span className="badge badge-warning">Vendita</span>
+          ) : recentActivities.length > 0 ? (
+            <div className="space-y-4">
+              {recentActivities.map((activity, index) => {
+                const formattedActivity = formatActivity(activity)
+                return (
+                  <div key={index} className="flex items-center gap-4 p-4 bg-secondary rounded-lg border border-gray-200">
+                    <div className={`w-3 h-3 ${formattedActivity.icon === 'gemme-icon' ? 'gemme-icon' : formattedActivity.icon + ' rounded-full'} flex-shrink-0`}></div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-brand">{formattedActivity.title}</div>
+                      <div className="text-sm text-secondary">{formattedActivity.description}</div>
+                    </div>
+                    <span className={`badge ${formattedActivity.badgeClass}`}>{formattedActivity.badge}</span>
+                  </div>
+                )
+              })}
             </div>
-            
-            <div className="flex items-center gap-4 p-4 bg-secondary rounded-lg border border-gray-200">
-              <div className="gemme-icon w-3 h-3 flex-shrink-0"></div>
-              <div className="flex-1">
-                <div className="font-semibold text-brand">Premio riscattato</div>
-                <div className="text-sm text-secondary">Croissant gratuito • Lucia Bianchi • 10 minuti fa</div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
               </div>
-              <span className="badge badge-gemme">Premio</span>
+              <h3 className="text-lg font-semibold text-brand mb-2">Nessuna attività recente</h3>
+              <p className="text-sm text-secondary">Le attività del sistema appariranno qui quando inizierai ad usare il sistema di fidelizzazione</p>
             </div>
-
-            <div className="flex items-center gap-4 p-4 bg-secondary rounded-lg border border-gray-200">
-              <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
-              <div className="flex-1">
-                <div className="font-semibold text-brand">Email automatica inviata</div>
-                <div className="text-sm text-secondary">Email benvenuto • Marco Verdi • 15 minuti fa</div>
-              </div>
-              <span className="badge badge-primary">Email</span>
-            </div>
-          </div>
+          )}
           
-          {/* Mostra più attività */}
+          {/* Pulsante aggiorna attività */}
           <div className="text-center mt-6">
             <button
               className="btn btn-secondary"
-              onClick={() => openModal("Vedi tutte le attività: funzionalità in arrivo!")}
+              onClick={loadRecentActivities}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              Vedi Tutte le Attività
+              Aggiorna Attività
             </button>
           </div>
         </div>

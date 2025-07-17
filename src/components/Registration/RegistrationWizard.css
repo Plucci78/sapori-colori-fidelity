@@ -267,10 +267,14 @@
 }
 
 /* SEZIONE FIRMA DIGITALE - DESIGN PROFESSIONALE E SICURO */
+/* ========================================
+   SIGNATURE SECTION - VERSIONE PROFESSIONALE ALTA PRECISIONE
+   ======================================== */
+
 .signature-section {
   margin-bottom: 30px;
   position: relative;
-  z-index: 10001; /* Sopra il wizard ma non troppo alto */
+  z-index: 10001;
   background: #f8fffe;
   padding: 25px;
   border-radius: 12px;
@@ -300,36 +304,91 @@
   border-left: 4px solid #4ade80;
 }
 
-.signature-canvas {
-  width: 100%;
-  height: 200px;
-  border: 3px solid #d1fae5;
-  border-radius: 12px;
-  background: #ffffff;
-  cursor: crosshair;
-  display: block;
-  margin: 0 auto 20px auto;
-  touch-action: none;
-  transition: all 0.3s ease;
+/* Container per canvas responsivo */
+.signature-container {
   position: relative;
-  z-index: 10002; /* Canvas sopra tutto nella sezione firma */
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
+/* Canvas ad alta precisione */
+.signature-canvas {
+  display: block;
+  width: 100%;
+  height: 200px;
+  border: none;
+  background: #ffffff;
+  cursor: crosshair;
+  touch-action: none; /* Critico per precisione mobile */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  position: relative;
+  z-index: 10002;
+  transition: all 0.2s ease;
+}
+
+/* Effetti hover e focus migliorati */
 .signature-canvas:hover {
-  border-color: #10b981;
-  background: #fefffe;
-  box-shadow: 
-    inset 0 2px 8px rgba(0, 0, 0, 0.05),
-    0 0 0 3px rgba(16, 185, 129, 0.1);
+  box-shadow: inset 0 0 0 2px rgba(16, 185, 129, 0.3);
 }
 
 .signature-canvas:focus {
   outline: none;
-  border-color: #059669;
-  box-shadow: 
-    inset 0 2px 8px rgba(0, 0, 0, 0.05),
-    0 0 0 4px rgba(5, 150, 105, 0.2);
+  box-shadow: inset 0 0 0 3px rgba(16, 185, 129, 0.5);
+}
+
+/* Indicatore stato firma */
+.signature-status {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.3);
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.9em;
+  font-weight: 500;
+  color: #28a745;
+}
+
+/* Responsive per tablet */
+@media (max-width: 768px) {
+  .signature-container {
+    max-width: 100%;
+    margin: 0;
+  }
+  
+  .signature-canvas {
+    height: 180px;
+    border-radius: 8px;
+  }
+  
+  .signature-section {
+    padding: 20px 15px;
+  }
+}
+
+/* Responsive per mobile */
+@media (max-width: 480px) {
+  .signature-canvas {
+    height: 160px;
+    cursor: none; /* Su mobile non serve il cursore */
+  }
+  
+  .signature-section {
+    padding: 15px 10px;
+  }
+  
+  .signature-description {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
 }
 
 .btn-clear-signature {

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import NFCQuickReaderHybrid from '../NFC/NFCQuickReaderHybrid'
+import { useState, useEffect } from 'react'
+import NFCQuickReaderHybrid from '../NFC/NFCQuickReaderHybrid' // Ripristino Hybrid per Mac
 import RegistrationWizard from '../Registration/RegistrationWizard'
 import ClipboardDebug from '../Common/ClipboardDebug'
 import QRCodeReader from '../Common/QRCodeReader'
@@ -7,6 +7,7 @@ import { supabase } from '../../supabase'
 import { copyToClipboard, copyReferralCode } from '../../utils/clipboardUtils'
 import { playAddGemmeSound } from '../../utils/soundUtils'
 import PrivacyManagement from '../Privacy/PrivacyManagement'
+import styles from './CustomerView.module.css' // CSS Module isolato
 
 function CustomerView({
   customerLevels,
@@ -42,15 +43,16 @@ function CustomerView({
 }) {
   const [showGemmeRain, setShowGemmeRain] = useState(false);
   const [showRegistrationWizard, setShowRegistrationWizard] = useState(false)
-  const [customerConsents, setCustomerConsents] = useState({})
   const [showQRScanner, setShowQRScanner] = useState(false)
+  const [customerPrizeHistory, setCustomerPrizeHistory] = useState([])
+  const [loadingPrizeHistory, setLoadingPrizeHistory] = useState(false)
 
   // Funzione per gestire cliente trovato via NFC
   const handleNFCCustomerFound = async (customer) => {
     setSelectedCustomer(customer)
-    await loadConsentForSelectedCustomer(customer)
     // Carica anche i referral per mostrare gli amici invitati
     await loadReferredFriends(customer.id)
+    await loadCustomerPrizeHistory(customer.id)
     showNotification(`✅ Cliente trovato: ${customer.name}`, 'success')
   }
 
@@ -78,9 +80,9 @@ function CustomerView({
         if (customer) {
           console.log('✅ Cliente trovato dal QR:', customer)
           setSelectedCustomer(customer)
-          await loadConsentForSelectedCustomer(customer)
           // Carica anche i referral per mostrare gli amici invitati
           await loadReferredFriends(customer.id)
+          await loadCustomerPrizeHistory(customer.id)
           setShowQRScanner(false)
           showNotification(`✅ Cliente trovato via QR: ${customer.name}`, 'success')
         } else {
@@ -213,81 +215,56 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
     }
   };
 
-  // Funzione per caricare i consensi privacy dal database
-  const loadCustomerConsents = async (customerId) => {
+  // Funzione per caricare lo storico premi del cliente
+  const loadCustomerPrizeHistory = async (customerId) => {
+    if (!customerId) {
+      setCustomerPrizeHistory([])
+      return
+    }
+
     try {
-      console.log('Caricamento consensi per cliente:', customerId)
-      
-      // Carica consensi dal database Supabase
-      const { data, error } = await supabase
-        .from('customer_consents')
+      setLoadingPrizeHistory(true)
+      const { data: prizeActivities, error } = await supabase
+        .from('activity_logs')
         .select('*')
-        .eq('customer_id', customerId)
-        .single()
+        .eq('action', 'PRIZE_REDEEMED')
+        .order('timestamp', { ascending: false })
 
-      // Gestione errori migliorata - rileva tabella mancante in più modi
       if (error) {
-        console.log('Dettagli errore caricamento:', error)
-        
-        const isTableNotFound = 
-          error.code === '42P01' || 
-          error.message?.includes('does not exist') ||
-          error.message?.includes('customer_consents') ||
-          (error.details === null && error.hint === null && !error.code)
-        
-        if (isTableNotFound) {
-          console.warn('⚠️ Tabella customer_consents non ancora creata. Usando valori default.')
-        } else if (error.code !== 'PGRST116') { // PGRST116 = record non trovato
-          console.error('Errore caricamento consensi:', error)
-        }
-        
-        return {
-          fidelity: true,
-          marketing: false,
-          newsletter: false,
-          profiling: false
-        }
+        console.error('Errore caricamento storico premi:', error)
+        setCustomerPrizeHistory([])
+        return
       }
 
-      // Se non ci sono consensi nel DB, restituisci default
-      if (!data) {
-        return {
-          fidelity: true,
-          marketing: false,
-          newsletter: false,
-          profiling: false
+      // Filtra solo i premi di questo cliente
+      const customerPrizes = prizeActivities?.filter(activity => {
+        if (!activity.details) return false
+        try {
+          const details = JSON.parse(activity.details)
+          return details.customer_id === customerId
+        } catch {
+          return false
         }
-      }
+      }) || []
 
-      // Restituisci consensi dal database
-      console.log('✅ Consensi caricati dal database:', data)
-      return {
-        fidelity: data.fidelity || true,
-        marketing: data.marketing || false,
-        newsletter: data.newsletter || false,
-        profiling: data.profiling || false
-      }
+      console.log('🎁 Premi trovati per cliente:', customerPrizes)
+      setCustomerPrizeHistory(customerPrizes)
     } catch (error) {
-      console.error('Errore caricamento consensi nel catch:', error)
-      return {
-        fidelity: true,
-        marketing: false,
-        newsletter: false,
-        profiling: false
-      }
+      console.error('Errore generale storico premi:', error)
+      setCustomerPrizeHistory([])
+    } finally {
+      setLoadingPrizeHistory(false)
     }
   }
 
-  // Carica i consensi quando viene selezionato un cliente
-  const loadConsentForSelectedCustomer = async (customer) => {
-    if (customer && customer.id) {
-      const consents = await loadCustomerConsents(customer.id)
-      setCustomerConsents(prev => ({
-        ...prev,
-        [customer.id]: consents
-      }))
+  // Carica storico quando cambia il cliente selezionato
+  useEffect(() => {
+    if (selectedCustomer?.id) {
+      loadCustomerPrizeHistory(selectedCustomer.id)
+    } else {
+      setCustomerPrizeHistory([])
     }
-  }
+  }, [selectedCustomer?.id])
 
   return (
     <div className="p-6">
@@ -328,7 +305,7 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
         </div>
       </div>
 
-      {/* SEZIONE NFC READER - Per cellulari Android */}
+      {/* SEZIONE NFC READER - PER CELLULARI ANDROID */}
       <div className="card mb-6">
         <div className="card-header">
           <h2 className="card-title flex items-center gap-3">
@@ -467,9 +444,9 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                       </div>
                       <button                    onClick={async () => {
                       setSelectedCustomer(customer)
-                      await loadConsentForSelectedCustomer(customer)
                       // Carica anche i referral per mostrare gli amici invitati
                       await loadReferredFriends(customer.id)
+                      await loadCustomerPrizeHistory(customer.id)
                     }}
                         className="btn btn-primary"
                       >
@@ -543,9 +520,9 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                       className="customer-card-search" 
                       onClick={async () => {
                         setSelectedCustomer(customer)
-                        await loadConsentForSelectedCustomer(customer)
                         // Carica anche i referral per mostrare gli amici invitati
                         await loadReferredFriends(customer.id)
+                        await loadCustomerPrizeHistory(customer.id)
                       }}
                     >
                       <div className="customer-card-header">
@@ -682,6 +659,111 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
             </div>
           </div>
 
+          {/* STORICO PREMI RISCATTATI */}
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title flex items-center gap-3">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                </svg>
+                Storico Premi Riscattati
+              </h2>
+              <p className="card-subtitle">Cronologia dei premi ottenuti dal cliente</p>
+            </div>
+            <div className="card-body">
+              {loadingPrizeHistory ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+                  <p className="text-sm text-secondary mt-2">Caricamento storico...</p>
+                </div>
+              ) : customerPrizeHistory.length > 0 ? (
+                <div className={styles.prizeHistoryContainer}>
+                  <div className={styles.prizeHistoryScroll}>
+                    <div className="space-y-4">
+                      {customerPrizeHistory.map((prizeLog, index) => {
+                    const details = JSON.parse(prizeLog.details || '{}')
+                    const prizeDate = new Date(prizeLog.timestamp)
+                    const timeAgo = Math.floor((new Date() - prizeDate) / (1000 * 60 * 60 * 24))
+                    
+                    return (
+                      <div key={index} className="flex items-center gap-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
+                        <div className="flex-shrink-0">
+                          <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                            </svg>
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-orange-800 mb-1">
+                            {details.prize_name || details.name || `Premio riscattato (${Math.abs(details.points_earned || 0)} gemme)`}
+                          </div>
+                          <div className="text-sm text-orange-600 mb-2">
+                            Riscattato il {prizeDate.toLocaleDateString('it-IT')} alle {prizeDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                            {timeAgo === 0 ? ' (oggi)' : timeAgo === 1 ? ' (ieri)' : ` (${timeAgo} giorni fa)`}
+                          </div>
+                          {(details.prize_description || details.description) && (
+                            <div className="text-xs text-gray-600 italic">
+                              {details.prize_description || details.description}
+                            </div>
+                          )}
+                          {/* Mostra info se è un premio senza dettagli completi */}
+                          {!details.prize_name && !details.name && (
+                            <div className="text-xs text-gray-500 italic">
+                              Premio riscattato prima dell'aggiornamento sistema
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center gap-1 text-sm font-bold text-red-600">
+                            <div className="gemme-icon w-4 h-4"></div>
+                            <span>{Math.abs(details.points_earned || details.points_cost || 0)}</span>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Gemme spese
+                          </div>
+                        </div>
+                      </div>
+                    )                    })}
+                    </div>
+                  </div>
+                  {/* Gradiente fade-out per indicare scroll */}
+                  {customerPrizeHistory.length > 3 && (
+                    <div className={styles.prizeHistoryFade}></div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-600 mb-2">Nessun premio riscattato</h3>
+                  <p className="text-sm text-gray-500">
+                    Questo cliente non ha ancora riscattato alcun premio. I premi futuri appariranno qui.
+                  </p>
+                </div>
+              )}
+
+              {/* Pulsante ricarica storico */}
+              {customerPrizeHistory.length > 0 && (
+                <div className="text-center mt-6">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => loadCustomerPrizeHistory(selectedCustomer?.id)}
+                    disabled={loadingPrizeHistory}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Aggiorna Storico
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* AZIONI CLIENTE SELEZIONATO */}
           <div className="card">
             <div className="card-header">
@@ -753,8 +835,6 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
           {/* GESTIONE PRIVACY */}
           <PrivacyManagement 
             customer={selectedCustomer}
-            customerConsents={customerConsents}
-            setCustomerConsents={setCustomerConsents}
             showNotification={showNotification}
           />
 

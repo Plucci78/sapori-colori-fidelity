@@ -26,7 +26,7 @@ import CustomerView from './components/Customers/CustomerView'
 import EmailView from './components/Email/EmailView'
 import PrizesView from './components/Prizes/PrizesView'
 import SettingsView from './components/Settings/SettingsView'
-import NFCViewHybrid from './components/NFC/NFCViewHybrid'
+import NFCViewHybrid from './components/NFC/NFCViewHybrid' // Ripristino Hybrid per Mac
 import ClientPortal from './components/Clients/ClientPortal'
 import CouponManagement from './components/Coupons/CouponManagement'
 import { generateClientToken, isValidToken } from './utils/tokenUtils'
@@ -1704,7 +1704,10 @@ for (const customer of recipients) {
       await activityService.logTransaction('PRIZE_REDEEMED', transaction.id, {
         ...transaction,
         prize_name: prize.name,
-        customer_name: selectedCustomer.name
+        prize_description: prize.description,
+        points_cost: prize.points_cost,
+        customer_name: selectedCustomer.name,
+        customer_id: selectedCustomer.id
       })
 
       setSelectedCustomer({ ...selectedCustomer, points: newPoints })

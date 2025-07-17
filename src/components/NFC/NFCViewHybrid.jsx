@@ -19,78 +19,36 @@ const NFCViewHybrid = ({ showNotification }) => {
 
   // Controllo disponibilità NFC
   useEffect(() => {
-    const initializeComponent = async () => {
-      try {
-        console.log('🔄 Inizializzazione componente NFC...')
-        
-        // Controllo NFC
-        if ('NDEFReader' in window) {
-          try {
-            setNfcAvailable(true)
-            console.log('✅ NFC disponibile')
-          } catch (error) {
-            console.log('❌ NFC non disponibile:', error)
-            setNfcAvailable(false)
-          }
-        } else {
-          console.log('❌ NDEFReader non supportato')
+    const checkNFC = async () => {
+      if ('NDEFReader' in window) {
+        try {
+          setNfcAvailable(true)
+        } catch (error) {
           setNfcAvailable(false)
         }
-
-        // Carica dati con timeout
-        const loadWithTimeout = (promise, name, timeoutMs = 10000) => {
-          return Promise.race([
-            promise,
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error(`Timeout ${name}`)), timeoutMs)
-            )
-          ])
-        }
-
-        console.log('📝 Caricamento clienti...')
-        await loadWithTimeout(loadCustomers(), 'loadCustomers')
-        
-        console.log('🏷️ Caricamento tag NFC...')
-        await loadWithTimeout(loadNfcTags(), 'loadNfcTags')
-        
-        console.log('📊 Caricamento log NFC...')
-        await loadWithTimeout(loadNfcLogs(), 'loadNfcLogs')
-        
-        console.log('✅ Inizializzazione completata')
-        
-      } catch (error) {
-        console.error('❌ Errore inizializzazione:', error)
-        if (showNotification) {
-          showNotification(`❌ Errore caricamento: ${error.message}`, 'error')
-        }
+      } else {
+        setNfcAvailable(false)
       }
     }
 
-    initializeComponent()
+    checkNFC()
+    loadCustomers()
+    loadNfcTags()
+    loadNfcLogs()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadCustomers = async () => {
     try {
-      console.log('📝 Caricamento clienti da Supabase...')
       const { data, error } = await supabase
         .from('customers')
         .select('*')
         .order('name')
 
-      if (error) {
-        console.error('❌ Errore query clienti:', error)
-        throw error
-      }
-      
-      console.log(`✅ Caricati ${data?.length || 0} clienti`)
+      if (error) throw error
       setCustomers(data || [])
     } catch (error) {
-      console.error('❌ Errore caricamento clienti:', error)
-      if (showNotification) {
-        showNotification('❌ Errore nel caricamento clienti', 'error')
-      }
-      // Non bloccare l'app, imposta array vuoto
-      setCustomers([])
+      console.error('Errore caricamento clienti:', error)
+      showNotification('❌ Errore nel caricamento clienti', 'error')
     }
   }
 

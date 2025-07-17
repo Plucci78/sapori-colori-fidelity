@@ -1,0 +1,46 @@
+/* CSS Module per CustomerView - Scrolling isolato */
+
+.prizeHistoryContainer {
+  position: relative;
+}
+
+.prizeHistoryScroll {
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 8px;
+  
+  /* Scrollbar per Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #f97316 #f3f4f6;
+}
+
+/* Scrollbar personalizzata per Webkit (Chrome, Safari, Edge) */
+.prizeHistoryScroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.prizeHistoryScroll::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+.prizeHistoryScroll::-webkit-scrollbar-thumb {
+  background: #f97316;
+  border-radius: 4px;
+  border: 1px solid #f3f4f6;
+}
+
+.prizeHistoryScroll::-webkit-scrollbar-thumb:hover {
+  background: #ea580c;
+}
+
+/* Gradiente fade-out */
+.prizeHistoryFade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2rem;
+  background: linear-gradient(to top, white, transparent);
+  pointer-events: none;
+}

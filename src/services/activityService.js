@@ -118,7 +118,9 @@ export const activityService = {
         amount: transactionData?.amount,
         customer_id: transactionData?.customer_id,
         points_earned: transactionData?.points_earned,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        // Include tutti i dati aggiuntivi passati (per premi, referral, etc.)
+        ...(transactionData || {})
       }
     })
   },
