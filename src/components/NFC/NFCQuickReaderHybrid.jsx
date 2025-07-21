@@ -1,28 +1,58 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../supabase'
+import { useNFC } from '../../hooks/useNFC'
 
 const NFCQuickReaderHybrid = ({ onCustomerFound, showNotification }) => {
   const [isScanning, setIsScanning] = useState(false)
-  const [nfcSupported, setNfcSupported] = useState(false)
   const [manualTagId, setManualTagId] = useState('')
   const [showManualInput, setShowManualInput] = useState(false)
   const mounted = useRef(true)
 
+  // Usa il nostro hook NFC che gestisce sia Web NFC che Bridge Raspberry
+  const {
+    isNFCAvailable,
+    isScanning: nfcHookScanning,
+    lastScannedData,
+    error: nfcError,
+    nfcMethod,
+    readNFC,
+    detectNFCCapability
+  } = useNFC()
+
   useEffect(() => {
     mounted.current = true
-    
-    // Verifica supporto Web NFC API
-    if ('NDEFReader' in window) {
-      setNfcSupported(true)
-      console.log('✅ Web NFC API supportata')
-    } else {
-      console.log('⚠️ Web NFC API non supportata - modalità manuale disponibile')
-    }
-
     return () => {
       mounted.current = false
     }
   }, [])
+
+  // Mostra lo stato NFC attuale
+  useEffect(() => {
+    if (nfcMethod) {
+      if (nfcMethod === 'web-nfc') {
+        console.log('✅ Web NFC API supportata')
+      } else if (nfcMethod === 'raspberry-bridge') {
+        console.log('✅ Bridge Raspberry Pi disponibile')
+      }
+    } else if (isNFCAvailable === false) {
+      console.log('⚠️ NFC non disponibile - modalità manuale disponibile')
+    }
+  }, [nfcMethod, isNFCAvailable])
+
+  // Gestisce i dati scansionati dall'hook
+  useEffect(() => {
+    if (lastScannedData && mounted.current) {
+      handleNFCData(lastScannedData)
+    }
+  }, [lastScannedData])
+
+  // Gestisce errori dall'hook
+  useEffect(() => {
+    if (nfcError && mounted.current) {
+      setIsScanning(false)
+      showNotification(`❌ Errore NFC: ${nfcError}`, 'error')
+    }
+  }, [nfcError])
 
   const findCustomerByTag = async (tagId) => {
     try {
@@ -74,57 +104,46 @@ const NFCQuickReaderHybrid = ({ onCustomerFound, showNotification }) => {
     }
   }
 
+  // Gestisce i dati NFC ricevuti dall'hook
+  const handleNFCData = async (nfcData) => {
+    let tagId = null
+    
+    // Estrai l'ID del tag a seconda del metodo
+    if (nfcData.method === 'raspberry-bridge') {
+      tagId = nfcData.uid || nfcData.data
+    } else if (nfcData.method === 'web-nfc') {
+      tagId = nfcData.data
+    }
+    
+    if (tagId) {
+      console.log('📱 Tag NFC letto:', tagId)
+      const customer = await findCustomerByTag(tagId)
+      if (customer && mounted.current) {
+        onCustomerFound(customer)
+      }
+    }
+    
+    setIsScanning(false)
+  }
+
   const startNFCScan = async () => {
-    if (!nfcSupported) {
+    if (!isNFCAvailable) {
       setShowManualInput(true)
       return
     }
 
     try {
       setIsScanning(true)
-      showNotification('Appoggia la tessera NFC...', 'info')
+      showNotification(`Appoggia la tessera ${nfcMethod === 'raspberry-bridge' ? 'sul lettore' : 'NFC'}...`, 'info')
 
-      // eslint-disable-next-line no-undef
-      const ndef = new NDEFReader()
-      await ndef.scan()
-
-      const abortController = new AbortController()
-      
-      // Timeout di 10 secondi
-      const timeoutId = setTimeout(() => {
-        abortController.abort()
-        if (mounted.current) {
-          setIsScanning(false)
-          showNotification('⏱️ Scansione scaduta', 'info')
-        }
-      }, 10000)
-
-      ndef.addEventListener('reading', async ({ serialNumber }) => {
-        clearTimeout(timeoutId)
-        if (!mounted.current) return
-
-        const tagId = serialNumber || 'unknown'
-        console.log('📱 Tag NFC letto:', tagId)
-
-        const customer = await findCustomerByTag(tagId)
-        if (customer && mounted.current) {
-          onCustomerFound(customer)
-        }
-        
-        if (mounted.current) {
-          setIsScanning(false)
-        }
-      }, { signal: abortController.signal })
+      // Usa il nostro hook per leggere NFC (gestisce automaticamente Web NFC o Bridge)
+      await readNFC()
 
     } catch (error) {
       console.error('Errore scansione NFC:', error)
       if (mounted.current) {
         setIsScanning(false)
-        if (error.name === 'NotAllowedError') {
-          showNotification('❌ Permesso NFC negato', 'error')
-        } else {
-          showNotification('❌ Errore scansione NFC', 'error')
-        }
+        showNotification('❌ Errore scansione NFC', 'error')
       }
     }
   }
@@ -160,10 +179,10 @@ const NFCQuickReaderHybrid = ({ onCustomerFound, showNotification }) => {
             <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
-            {nfcSupported ? 'Leggi Tessera NFC' : 'Inserisci Tessera'}
+            {isNFCAvailable ? `Leggi Tessera ${nfcMethod === 'raspberry-bridge' ? '(Bridge Raspberry)' : '(NFC Mobile)'}` : 'Inserisci Tessera'}
           </button>
           
-          {nfcSupported && (
+          {isNFCAvailable && (
             <button 
               onClick={() => setShowManualInput(true)}
               className="btn btn-outline btn-sm"
@@ -225,10 +244,14 @@ const NFCQuickReaderHybrid = ({ onCustomerFound, showNotification }) => {
 
       {/* Indicatore di supporto NFC */}
       <div className="text-sm opacity-70">
-        {nfcSupported ? (
+        {nfcMethod === 'raspberry-bridge' ? (
+          <span className="text-success">🍓 Bridge Raspberry Pi Connesso</span>
+        ) : nfcMethod === 'web-nfc' ? (
           <span className="text-success">📱 NFC Mobile Supportato</span>
+        ) : isNFCAvailable === false ? (
+          <span className="text-warning">💻 Solo Inserimento Manuale</span>
         ) : (
-          <span className="text-warning">💻 Modalità Web (solo inserimento manuale)</span>
+          <span className="text-info">🔍 Rilevamento NFC...</span>
         )}
       </div>
     </div>
