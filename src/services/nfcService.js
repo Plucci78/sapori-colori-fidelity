@@ -6,7 +6,7 @@ class NFCService {
     this.socket = null
     this.isConnected = false
     this.connectionMethod = null // 'websocket' | 'bridge' | null
-    this.bridgeUrl = 'http://localhost:3001'
+    this.bridgeUrl = 'http://192.168.1.6:3001'
     this.listeners = new Map() // Per event emitter pattern
   }
 
