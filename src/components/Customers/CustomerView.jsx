@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react'
 import NFCQuickReaderHybrid from '../NFC/NFCQuickReaderHybrid' // Ripristino Hybrid per Mac
 import RegistrationWizard from '../Registration/RegistrationWizard'
-import ClipboardDebug from '../Common/ClipboardDebug'
 import QRCodeReader from '../Common/QRCodeReader'
+import EditCustomerModal from './EditCustomerModal'
+import DeactivateCustomerModal from './DeactivateCustomerModal'
+import StaffMessageModal from '../Chat/StaffMessageModal'
 import { supabase } from '../../supabase'
 import { copyToClipboard, copyReferralCode } from '../../utils/clipboardUtils'
 import { playAddGemmeSound } from '../../utils/soundUtils'
 import PrivacyManagement from '../Privacy/PrivacyManagement'
 import styles from './CustomerView.module.css' // CSS Module isolato
+import './CustomerButtonsOverride.css' // Override specifico per pulsanti neri
 
 function CustomerView({
   customerLevels,
@@ -39,13 +42,82 @@ function CustomerView({
   getReferralLevel,
   getReferralPoints,
   getReferralLevelInfo,
-  isMultiplierActive
+  isMultiplierActive,
+  user
 }) {
   const [showGemmeRain, setShowGemmeRain] = useState(false);
   const [showRegistrationWizard, setShowRegistrationWizard] = useState(false)
   const [showQRScanner, setShowQRScanner] = useState(false)
   const [customerPrizeHistory, setCustomerPrizeHistory] = useState([])
   const [loadingPrizeHistory, setLoadingPrizeHistory] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false)
+  const [showStaffMessages, setShowStaffMessages] = useState(false)
+  const [pendingMessages, setPendingMessages] = useState([])
+
+  // Controlla messaggi staff quando si seleziona un cliente
+  useEffect(() => {
+    if (selectedCustomer?.id && user?.id) {
+      // Reset solo il modale messaggi staff per questo controllo
+      setShowStaffMessages(false)
+      checkStaffMessages()
+    } else {
+      // Se non c'è cliente selezionato, assicurati che il modale sia chiuso
+      setShowStaffMessages(false)
+    }
+  }, [selectedCustomer?.id, user?.id])
+
+
+  // Funzione per controllare messaggi staff per il cliente selezionato
+  const checkStaffMessages = async () => {
+    try {
+      console.log('🔍 checkStaffMessages: Controllo messaggi per cliente', selectedCustomer.name, 'ID:', selectedCustomer.id)
+      console.log('🔍 checkStaffMessages: User ID:', user.id)
+      
+      // Prima controlliamo TUTTI i messaggi per questo cliente
+      const { data: allMessages, error: allError } = await supabase
+        .from('staff_messages_with_users')
+        .select('*')
+        .eq('customer_id', selectedCustomer.id)
+        .order('created_at', { ascending: false })
+
+      if (allError) throw allError
+      console.log('🔍 TUTTI i messaggi per questo cliente:', allMessages)
+
+      // Poi applichiamo i filtri
+      const { data, error } = await supabase
+        .from('staff_messages_with_users')
+        .select('*')
+        .eq('customer_id', selectedCustomer.id)
+        .eq('status', 'pending')
+        .or(`to_user_id.is.null,to_user_id.eq.${user.id}`)
+        // .neq('from_user_id', user.id) // Commentato per test - mostra anche i miei messaggi
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      
+      const messages = data || []
+      console.log('📧 checkStaffMessages: Messaggi filtrati trovati:', messages.length, messages)
+      console.log('📧 showStaffMessages stato attuale:', showStaffMessages)
+      setPendingMessages(messages)
+      
+      // Se ci sono messaggi non letti, mostra automaticamente il modale
+      if (messages.length > 0) {
+        console.log('🎯 checkStaffMessages: APRENDO modale per', messages.length, 'messaggi')
+        setShowStaffMessages(true)
+        showNotification(
+          `${messages.length} ${messages.length === 1 ? 'messaggio' : 'messaggi'} staff per ${selectedCustomer.name}`,
+          'info'
+        )
+      } else {
+        console.log('📭 checkStaffMessages: Nessun messaggio pending trovato - NON aprire modale')
+        setShowStaffMessages(false) // Assicurati che il modale non si apra
+      }
+      console.log('📧 showStaffMessages stato finale:', showStaffMessages)
+    } catch (error) {
+      console.error('❌ Errore controllo messaggi staff:', error)
+    }
+  }
 
   // Funzione per gestire cliente trovato via NFC
   const handleNFCCustomerFound = async (customer) => {
@@ -54,6 +126,61 @@ function CustomerView({
     await loadReferredFriends(customer.id)
     await loadCustomerPrizeHistory(customer.id)
     showNotification(`✅ Cliente trovato: ${customer.name}`, 'success')
+  }
+
+  // Funzione per salvare modifiche cliente
+  const handleSaveCustomer = async (customerId, formData) => {
+    try {
+      const { error } = await supabase
+        .from('customers')
+        .update({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          birth_date: formData.birth_date,
+          notes: formData.notes
+        })
+        .eq('id', customerId)
+
+      if (error) {
+        console.error('Errore aggiornamento cliente:', error)
+        throw error
+      }
+
+      // Ricarica i clienti per aggiornare la UI
+      await loadCustomers()
+
+      // Aggiorna selectedCustomer se è quello modificato
+      if (selectedCustomer && selectedCustomer.id === customerId) {
+        setSelectedCustomer(prev => ({
+          ...prev,
+          ...formData
+        }))
+      }
+
+    } catch (error) {
+      console.error('Errore salvataggio cliente:', error)
+      throw error
+    }
+  }
+
+  // Funzione per deselezionare cliente
+  const handleDeactivateCustomer = async (customerId) => {
+    try {
+      await deactivateCustomer(customerId)
+      
+      // Se è il cliente selezionato, deselezionalo
+      if (selectedCustomer && selectedCustomer.id === customerId) {
+        setSelectedCustomer(null)
+      }
+      
+      // Ricarica i clienti per aggiornare la UI
+      await loadCustomers()
+      
+    } catch (error) {
+      console.error('Errore deselezione cliente:', error)
+      throw error
+    }
   }
 
   // Funzione per gestire QR scan
@@ -125,6 +252,12 @@ function CustomerView({
   // Handle transaction con suoni e animazioni
   const handleAddTransaction = async () => {
     if (selectedCustomer && transactionAmount) {
+      // Blocca se il cliente è deselezionato
+      if (selectedCustomer.is_active === false) {
+        showNotification('❌ Impossibile registrare transazioni per cliente deselezionato', 'error');
+        return;
+      }
+      
       const amount = parseFloat(transactionAmount)
       
       console.log(`💎 Inizio registrazione vendita per ${selectedCustomer.name}`)
@@ -188,6 +321,12 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
 
   // Funzioni portale cliente
   const handleGenerateClientPortal = async () => {
+    // Blocca se il cliente è deselezionato
+    if (selectedCustomer.is_active === false) {
+      showNotification('❌ Impossibile generare portale per cliente deselezionato', 'error');
+      return;
+    }
+    
     try {
       const token = await generateClientTokenForCustomer(selectedCustomer.id);
       if (token) {
@@ -202,6 +341,12 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
   };
 
   const handleRegenerateClientPortal = async () => {
+    // Blocca se il cliente è deselezionato
+    if (selectedCustomer.is_active === false) {
+      showNotification('❌ Impossibile rigenerare portale per cliente deselezionato', 'error');
+      return;
+    }
+    
     try {
       const token = await regenerateClientToken(selectedCustomer.id);
       if (token) {
@@ -267,7 +412,7 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
   }, [selectedCustomer?.id])
 
   return (
-    <div className="p-6">
+    <div className="customer-view p-6">
       {/* WIZARD REGISTRAZIONE - OVERLAY COMPLETO */}
       {showRegistrationWizard && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
@@ -295,7 +440,7 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
           </div>
           <button
             onClick={() => setShowRegistrationWizard(true)}
-            className="btn btn-primary flex items-center gap-2"
+            className="btn btn-brand-primary flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -340,7 +485,7 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
           <div className="qr-scanner-controls mb-4">
             <button
               onClick={() => setShowQRScanner(!showQRScanner)}
-              className={`btn ${showQRScanner ? 'btn-danger' : 'btn-primary'} mb-3`}
+              className={`btn ${showQRScanner ? 'btn-error' : 'btn-info'} mb-3`}
             >
               {showQRScanner ? '❌ Chiudi Scanner' : '📷 Apri Scanner QR'}
             </button>
@@ -417,7 +562,7 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                   searchCustomersForManual(manualCustomerName)
                 }}
                 disabled={!manualCustomerName}
-                className="btn btn-primary"
+                className="btn btn-brand-primary"
               >
                 🔍 Cerca
               </button>
@@ -448,7 +593,34 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                       await loadReferredFriends(customer.id)
                       await loadCustomerPrizeHistory(customer.id)
                     }}
-                        className="btn btn-primary"
+                        className="btn btn-brand-primary"
+                        style={{
+                          padding: '12px 20px',
+                          border: '1px solid #000000',
+                          borderRadius: '8px',
+                          fontWeight: '700',
+                          fontSize: '0.9rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.1)',
+                          backgroundColor: '#000000',
+                          color: '#ffffff'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.transform = 'translateY(-2px)';
+                          e.target.style.boxShadow = '0 10px 15px -3px rgb(0 0 0 / 0.3)';
+                          e.target.style.backgroundColor = '#333333';
+                          e.target.style.borderColor = '#333333';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.transform = 'translateY(0)';
+                          e.target.style.boxShadow = '0 1px 2px 0 rgb(0 0 0 / 0.1)';
+                          e.target.style.backgroundColor = '#000000';
+                          e.target.style.borderColor = '#000000';
+                        }}
                       >
                         📋 Seleziona Cliente
                       </button>
@@ -488,12 +660,12 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                     </div>
                     
                     {manualPoints && !isNaN(parseInt(manualPoints)) && (
-                      <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                      <div className="mt-3 p-3 bg-amber-50 rounded-lg">
                         <div className="flex items-center gap-2 text-sm">
-                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <span className="text-blue-800">
+                          <span className="text-amber-800">
                             <strong>Anteprima:</strong> {customer.name} avrà{' '}
                             <strong className="text-gemme-red">
                               {Math.max(0, customer.points + parseInt(manualPoints))} GEMME
@@ -517,7 +689,7 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                   {filteredCustomers.map(customer => (
                     <div 
                       key={customer.id} 
-                      className="customer-card-search" 
+                      className={`customer-card ${customer.is_active === false ? 'customer-deactivated' : ''}`} 
                       onClick={async () => {
                         setSelectedCustomer(customer)
                         // Carica anche i referral per mostrare gli amici invitati
@@ -526,24 +698,34 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                       }}
                     >
                       <div className="customer-card-header">
-                        <div className="customer-avatar">
-                          {customer.name.charAt(0).toUpperCase()}
+                        <h3 className="customer-name">
+                          {customer.name}
+                          {customer.is_active === false && (
+                            <span className="ml-2 px-2 py-1 bg-red-600 text-white text-xs font-bold rounded-full">
+                              DISATTIVATO
+                            </span>
+                          )}
+                        </h3>
+                        <div className="customer-gemme-badge">
+                          <div className="gemme-icon w-4 h-4"></div>
+                          <span>{customer.points}</span>
                         </div>
-                        <div className="customer-info">
-                          <h3 className="font-bold text-brand">{customer.name}</h3>
-                          <p className="text-sm text-secondary">{customer.phone} • {customer.email}</p>
+                      </div>
+                      <div className="customer-card-body">
+                        <div className="customer-info-row">
+                          <strong>Telefono:</strong> {customer.phone || 'N/A'}
                         </div>
-                        <div className="customer-points">
-                          <div className="flex items-center gap-1 mb-1">
-                            <div className="gemme-icon"></div>
-                            <span className="font-bold text-red-600">{customer.points}</span>
-                          </div>
-                          <div
-                            className="customer-category"
+                        <div className="customer-info-row">
+                          <strong>Email:</strong> {customer.email || 'N/A'}
+                        </div>
+                        <div className="customer-info-row">
+                          <strong>Livello:</strong> 
+                          <span
+                            className="ml-2 px-2 py-1 rounded text-white text-xs font-bold"
                             style={{ backgroundColor: getCustomerLevel(customer.points).color }}
                           >
                             {getCustomerLevel(customer.points).emoji} {getCustomerLevel(customer.points).name}
-                          </div>
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -566,14 +748,6 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                 </svg>
                 Cliente Selezionato
               </h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setSelectedCustomer(null)}
-                  className="btn btn-sm btn-danger"
-                >
-                  ❌ Deseleziona
-                </button>
-              </div>
             </div>
             <div className="card-body">
               {/* INDICATORE STATO CLIENTE */}
@@ -777,55 +951,78 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
               <p className="card-subtitle">Gestisci link portale cliente e altre azioni</p>
             </div>
             <div className="card-body">
-              <div className="grid grid-2 gap-4 mb-4">
-                <button
-                  onClick={handleGenerateClientPortal}
-                  className="btn btn-primary flex items-center gap-2 justify-center"
-                  disabled={selectedCustomer.is_active === false}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                  </svg>
-                  🔗 Genera Link Portale Cliente
-                </button>
-                <button
-                  onClick={handleRegenerateClientPortal}
-                  className="btn btn-secondary flex items-center gap-2 justify-center"
-                  disabled={selectedCustomer.is_active === false}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  🔄 Rigenera Link Portale
-                </button>
+              {/* SEZIONE MODIFICA DATI */}
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-700 mb-3">📝 Gestione Dati Cliente</h4>
+                <div className="grid grid-2 gap-4">
+                  <button
+                    onClick={() => setShowEditModal(true)}
+                    className="btn btn-brand-primary flex items-center gap-2 justify-center"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    ✏️ Modifica Dati Cliente
+                  </button>
+                </div>
               </div>
 
-              {/* CONTROLLI ATTIVAZIONE/DISATTIVAZIONE CLIENTE */}
-              <div className="grid grid-1 gap-3 mb-4">
-                {selectedCustomer.is_active !== false ? (
+              {/* SEZIONE PORTALE CLIENTE */}
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-700 mb-3">🔗 Portale Cliente</h4>
+                <div className="grid grid-2 gap-4">
                   <button
-                    onClick={() => deactivateCustomer(selectedCustomer)}
-                    className="btn btn-danger flex items-center gap-2 justify-center"
+                    onClick={handleGenerateClientPortal}
+                    className="btn btn-info flex items-center gap-2 justify-center"
+                    disabled={selectedCustomer.is_active === false}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                     </svg>
-                    🚫 Disattiva Cliente
+                    🔗 Genera Link Portale
                   </button>
-                ) : (
                   <button
-                    onClick={() => reactivateCustomer(selectedCustomer)}
-                    className="btn btn-success flex items-center gap-2 justify-center"
+                    onClick={handleRegenerateClientPortal}
+                    className="btn btn-warning flex items-center gap-2 justify-center"
+                    disabled={selectedCustomer.is_active === false}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    ✅ Riattiva Cliente
+                    🔄 Rigenera Link
                   </button>
-                )}
+                </div>
               </div>
-              <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-800">
+
+              {/* SEZIONE DESELEZIONE CLIENTE */}
+              <div className="mb-4">
+                <h4 className="font-semibold text-gray-700 mb-3">⚠️ Gestione Stato Cliente</h4>
+                <div className="grid grid-1 gap-3">
+                  {selectedCustomer.is_active !== false ? (
+                    <button
+                      onClick={() => setShowDeactivateModal(true)}
+                      className="btn btn-error flex items-center gap-2 justify-center"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
+                      </svg>
+                      🔒 Deseleziona Cliente
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => reactivateCustomer(selectedCustomer)}
+                      className="btn btn-success flex items-center gap-2 justify-center"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      ✅ Riattiva Cliente
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="mt-3 p-3 bg-amber-50 rounded-lg">
+                <p className="text-sm text-amber-800">
                   <strong>💡 Info:</strong> Il link del portale cliente permette al cliente di vedere i suoi punti, transazioni e premi disponibili. Il link viene automaticamente copiato negli appunti.
                 </p>
               </div>
@@ -987,7 +1184,7 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
 
               {/* STATISTICHE CON MOLTIPLICATORI LIVELLO */}
               <div className="grid grid-3 gap-4 mb-6">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="text-center p-4 bg-amber-50 rounded-lg">
                   <div className="text-2xl mb-1">👥</div>
                   <div className="text-2xl font-bold text-brand-primary">{selectedCustomer.referral_count || 0}</div>
                   <div className="text-sm text-secondary">Amici Invitati</div>
@@ -1013,7 +1210,7 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                     const nextPoints = getReferralPoints((selectedCustomer.referral_count || 0) + 1);
                     const currentPoints = getReferralPoints(selectedCustomer.referral_count || 0);
                     return nextPoints > currentPoints ? (
-                      <div className="text-xs text-blue-600 font-medium mt-1">
+                      <div className="text-xs text-amber-600 font-medium mt-1">
                         Prossimo: +{nextPoints} gemme/referral
                       </div>
                     ) : null;
@@ -1052,7 +1249,7 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                     {selectedCustomer.referral_count < 20 && (
                       <div className="text-sm text-gray-600">
                         Al prossimo traguardo ({nextLevelCount} referral) → 
-                        <span className="font-bold text-blue-600"> {nextLevelInfo.points} gemme/referral</span>
+                        <span className="font-bold text-amber-600"> {nextLevelInfo.points} gemme/referral</span>
                         {nextLevelInfo.isBonus && (
                           <span className="text-green-600"> (+{nextLevelInfo.bonusPercent}% bonus)</span>
                         )}
@@ -1108,14 +1305,14 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                   </div>
                 </div>
               ) : (
-                <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="font-semibold mb-2 flex items-center gap-2 text-blue-800">
+                <div className="mb-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <h4 className="font-semibold mb-2 flex items-center gap-2 text-amber-800">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                     </svg>
                     Inizia a invitare amici!
                   </h4>
-                  <p className="text-sm text-blue-700">
+                  <p className="text-sm text-amber-700">
                     Condividi il tuo codice referral per guadagnare gemme extra. 
                     I tuoi amici riceveranno 10 gemme di benvenuto e tu ne guadagnerai {isMultiplierActive ? '40' : '20'} al loro primo acquisto!
                   </p>
@@ -1135,7 +1332,7 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                 </button>
                 <button
                   onClick={openShareModal}
-                  className="btn btn-secondary flex items-center gap-2 justify-center"
+                  className="btn btn-brand-secondary flex items-center gap-2 justify-center"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
@@ -1166,7 +1363,34 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
         </div>
       )}
 
-      <ClipboardDebug showNotification={showNotification} />
+
+      {/* Modal per modifica dati cliente */}
+      <EditCustomerModal
+        customer={selectedCustomer}
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleSaveCustomer}
+        showNotification={showNotification}
+      />
+
+      {/* Modal per deselezione cliente */}
+      <DeactivateCustomerModal
+        customer={selectedCustomer}
+        isOpen={showDeactivateModal}
+        onClose={() => setShowDeactivateModal(false)}
+        onConfirm={handleDeactivateCustomer}
+        showNotification={showNotification}
+      />
+
+      {/* Modal per messaggi staff */}
+      {showStaffMessages && (
+        <StaffMessageModal
+          customer={selectedCustomer}
+          user={user}
+          onClose={() => setShowStaffMessages(false)}
+          showNotification={showNotification}
+        />
+      )}
     </div>
   )
 }

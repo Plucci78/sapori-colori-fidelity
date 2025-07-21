@@ -1,0 +1,38 @@
+{
+  "name": "sapori-colori-nfc-bridge",
+  "version": "1.0.0",
+  "description": "Bridge server NFC per Raspberry Pi - Sistema Fidelizzazione Sapori & Colori",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "install-service": "node scripts/install-service.js",
+    "uninstall-service": "node scripts/uninstall-service.js"
+  },
+  "keywords": [
+    "nfc",
+    "raspberry-pi", 
+    "bridge",
+    "sapori-colori",
+    "fidelity"
+  ],
+  "author": "Lucci Pasquale (alias Lino Lucci)",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm",
+    "arm64"
+  ]
+}

@@ -1,0 +1,259 @@
+/* Deactivate Customer Modal Styles */
+.deactivate-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.deactivate-modal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+  animation: dangerModalSlideIn 0.4s ease-out;
+  border: 3px solid #EF4444;
+}
+
+@keyframes dangerModalSlideIn {
+  from {
+    transform: scale(0.8) translateY(-30px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.deactivate-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #FEE2E2;
+  background: linear-gradient(135deg, #FEF2F2 0%, #FECACA 100%);
+}
+
+.deactivate-header h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #DC2626;
+  font-weight: 700;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #DC2626;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.deactivate-content {
+  padding: 24px;
+  text-align: center;
+}
+
+.warning-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.deactivate-content h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #DC2626;
+  font-weight: 600;
+}
+
+.customer-info {
+  background: #F9FAFB;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #E5E7EB;
+}
+
+.customer-info strong {
+  font-size: 18px;
+  color: #1F2937;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.customer-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: #6B7280;
+}
+
+.consequences {
+  text-align: left;
+  background: #FEF2F2;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #FECACA;
+}
+
+.consequences h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: #DC2626;
+  font-weight: 600;
+}
+
+.consequences ul {
+  margin: 0;
+  padding-left: 20px;
+  list-style: none;
+}
+
+.consequences li {
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #991B1B;
+  font-weight: 500;
+}
+
+.note {
+  background: #F0F9FF;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 20px;
+  border: 1px solid #BAE6FD;
+  font-size: 14px;
+  color: #0C4A6E;
+}
+
+.confirm-section {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.confirm-section label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #DC2626;
+  font-weight: 600;
+}
+
+.confirm-section input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #FCA5A5;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  background: #FEF2F2;
+  color: #DC2626;
+  transition: all 0.2s;
+}
+
+.confirm-section input:focus {
+  outline: none;
+  border-color: #DC2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.confirm-section input.valid {
+  border-color: #10B981;
+  background: #F0FDF4;
+  color: #065F46;
+}
+
+.deactivate-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 20px 24px;
+  border-top: 1px solid #E5E7EB;
+  background: #F9FAFB;
+}
+
+.btn-cancel,
+.btn-deactivate {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 140px;
+}
+
+.btn-cancel {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background: #E5E7EB;
+}
+
+.btn-deactivate {
+  background: #DC2626;
+  color: white;
+}
+
+.btn-deactivate:hover:not(:disabled) {
+  background: #B91C1C;
+  transform: translateY(-1px);
+}
+
+.btn-deactivate:disabled {
+  background: #9CA3AF;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .deactivate-modal {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .deactivate-actions {
+    flex-direction: column;
+  }
+  
+  .btn-cancel,
+  .btn-deactivate {
+    width: 100%;
+  }
+}

@@ -15,6 +15,10 @@ import { emailQuotaService } from './services/emailQuotaService'
 import { playGemmeSound } from './utils/soundUtils'
 import { getLevelsForEmails, checkLevelUpForEmail, generateLevelEmailContent } from './utils/levelEmailUtils'
 
+// Notification System imports
+import NotificationSystem from './components/Notifications/NotificationSystem'
+import { useNotifications } from './hooks/useNotifications'
+
 // Test component import
 import LevelsTest from './components/Test/LevelsTest'
 
@@ -24,11 +28,13 @@ import NotificationContainer from './components/Common/NotificationContainer'
 import DashboardView from './components/Dashboard/DashboardView'
 import CustomerView from './components/Customers/CustomerView'
 import EmailView from './components/Email/EmailView'
+import ChatView from './components/Chat/ChatView'
 import PrizesView from './components/Prizes/PrizesView'
 import SettingsView from './components/Settings/SettingsView'
 import NFCViewHybrid from './components/NFC/NFCViewHybrid' // Ripristino Hybrid per Mac
 import ClientPortal from './components/Clients/ClientPortal'
 import CouponManagement from './components/Coupons/CouponManagement'
+import GiftCardManagement from './components/GiftCards/GiftCardManagement'
 import { generateClientToken, isValidToken } from './utils/tokenUtils'
 import nfcService from './services/nfcService'
 import { birthdayScheduler } from './services/birthdayScheduler'
@@ -40,7 +46,7 @@ function AppContent() {
   // ===================================
   // AUTH HOOKS (AGGIUNTI)
   // ===================================
-  const { isAuthenticated, loading: authLoading, profile, signOut } = useAuth()
+  const { isAuthenticated, loading: authLoading, profile, signOut, user } = useAuth()
   const { permissions, userRole, userName } = usePermissions()
 
   // Funzione per controllare se il multiplier è attivo (weekend per ora)
@@ -112,6 +118,19 @@ function AppContent() {
     revenue: 0
   })
   const [topCustomers, setTopCustomers] = useState([])
+
+  // NOTIFICATION SYSTEM
+  const {
+    notifications: systemNotifications,
+    addNotification,
+    notifyVIPEntry,
+    notifyLevelUp,
+    notifyBirthday,
+    removeNotification,
+    settings: notificationSettings,
+    updateSettings: updateNotificationSettings,
+    getNotificationStats
+  } = useNotifications()
 
   // Stati per Email Marketing
   const [emailTemplate, setEmailTemplate] = useState('welcome')
@@ -615,77 +634,59 @@ const fixReferralData = async (customerId) => {
   // ========== FUNZIONI MODIFICA E DISATTIVAZIONE CLIENTI ==========
 
   // FUNZIONE 1: Disattiva Cliente
-  const deactivateCustomer = async (customer) => {
-    const reason = prompt(`Motivo disattivazione per ${customer.name}:`);
-    if (!reason) {
-      showNotification('⚠️ Inserisci un motivo per la disattivazione', 'warning');
-      return;
-    }
-    if (confirm(`Confermi di voler disattivare ${customer.name}?`)) {
-      try {
-        const { error } = await supabase
-          .from('customers')
-          .update({
-            is_active: false,
-            deactivated_at: new Date().toISOString(),
-            deactivation_reason: reason
-          })
-          .eq('id', customer.id);
+  const deactivateCustomer = async (customerId) => {
+    try {
+      const { error } = await supabase
+        .from('customers')
+        .update({
+          is_active: false
+        })
+        .eq('id', customerId);
 
-        if (error) throw error;
+      if (error) throw error;
 
-        // Aggiorna anche il selectedCustomer se è lo stesso cliente
-        if (selectedCustomer && selectedCustomer.id === customer.id) {
-          setSelectedCustomer({
-            ...selectedCustomer,
-            is_active: false,
-            deactivated_at: new Date().toISOString(),
-            deactivation_reason: reason
-          });
-        }
-
-        showNotification(`✅ Cliente ${customer.name} disattivato`, 'success');
-        await loadCustomers(); // <--- ora funziona
-
-      } catch (error) {
-        console.error('Errore:', error);
-        showNotification('❌ Errore durante la disattivazione', 'error');
+      // Aggiorna anche il selectedCustomer se è lo stesso cliente
+      if (selectedCustomer && selectedCustomer.id === customerId) {
+        setSelectedCustomer({
+          ...selectedCustomer,
+          is_active: false
+        });
       }
+
+      await loadCustomers();
+
+    } catch (error) {
+      console.error('Errore deselezione cliente:', error);
+      throw error;
     }
   };
 
   // FUNZIONE 2: Riattiva Cliente
   const reactivateCustomer = async (customer) => {
-    if (confirm(`Vuoi riattivare ${customer.name}?`)) {
-      try {
-        const { error } = await supabase
-          .from('customers')
-          .update({
-            is_active: true,
-            deactivated_at: null,
-            deactivation_reason: null
-          })
-          .eq('id', customer.id);
+    try {
+      const { error } = await supabase
+        .from('customers')
+        .update({
+          is_active: true
+        })
+        .eq('id', customer.id);
 
-        if (error) throw error;
+      if (error) throw error;
 
-        // Aggiorna anche il selectedCustomer se è lo stesso cliente
-        if (selectedCustomer && selectedCustomer.id === customer.id) {
-          setSelectedCustomer({
-            ...selectedCustomer,
-            is_active: true,
-            deactivated_at: null,
-            deactivation_reason: null
-          });
-        }
-
-        showNotification(`✅ Cliente ${customer.name} riattivato`, 'success');
-        await loadCustomers(); // <--- ora funziona
-
-      } catch (error) {
-        console.error('Errore:', error);
-        showNotification('❌ Errore durante la riattivazione', 'error');
+      // Aggiorna anche il selectedCustomer se è lo stesso cliente
+      if (selectedCustomer && selectedCustomer.id === customer.id) {
+        setSelectedCustomer({
+          ...selectedCustomer,
+          is_active: true
+        });
       }
+
+      showNotification(`✅ Cliente ${customer.name} riattivato`, 'success');
+      await loadCustomers();
+
+    } catch (error) {
+      console.error('Errore riattivazione cliente:', error);
+      showNotification('❌ Errore durante la riattivazione', 'error');
     }
   };
 
@@ -776,6 +777,17 @@ const fixReferralData = async (customerId) => {
       permission: 'canSendEmails'
     },
     {
+      id: 'chat',
+      title: 'Chat',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      ),
+      description: 'Comunicazioni staff',
+      permission: 'canViewCustomers'
+    },
+    {
       id: 'coupons',
       title: 'Coupon',
       icon: (
@@ -784,6 +796,17 @@ const fixReferralData = async (customerId) => {
         </svg>
       ),
       description: 'Gestione coupon e offerte',
+      permission: 'canManageCoupons'
+    },
+    {
+      id: 'giftcards',
+      title: 'Gift Card',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+        </svg>
+      ),
+      description: 'Gestione gift card digitali',
       permission: 'canManageCoupons'
     },
     {
@@ -1651,7 +1674,112 @@ for (const customer of recipients) {
 
       // Controlla milestone email automatiche DINAMICHE
       if (pointsEarned > 0) {
+        console.log(`📧 Controllo email livello per ${selectedCustomer.name}: ${selectedCustomer.points} → ${newPoints} GEMME`)
         await sendPointsMilestoneEmail(selectedCustomer, selectedCustomer.points, newPoints)
+      }
+
+      // 🔔 NOTIFICHE AUTOMATICHE INTELLIGENTI
+      if (pointsEarned > 0) {
+        const updatedCustomer = { ...selectedCustomer, points: newPoints }
+        
+        // Variabili di controllo per evitare notifiche duplicate
+        let isNewVIP = false
+        let hasLevelUp = false
+        let isBirthday = false
+        
+        // Controlla se è diventato VIP (100+ GEMME)
+        if (selectedCustomer.points < 100 && newPoints >= 100) {
+          isNewVIP = true
+        }
+        
+        // Controlla nuovi livelli
+        let oldLevel = null
+        let newLevel = null
+        if (customerLevels.length > 0) {
+          console.log(`🔍 Debug livelli: ${selectedCustomer.points} → ${newPoints} GEMME`)
+          console.log(`🔍 Livelli disponibili:`, customerLevels.map(l => `${l.name} (${l.min_gems}-${l.max_gems || '∞'})`))
+          
+          oldLevel = customerLevels.find(l => 
+            selectedCustomer.points >= l.min_gems && 
+            (l.max_gems === null || selectedCustomer.points <= l.max_gems)
+          )
+          newLevel = customerLevels.find(l => 
+            newPoints >= l.min_gems && 
+            (l.max_gems === null || newPoints <= l.max_gems)
+          )
+          
+          console.log(`🔍 Livello precedente:`, oldLevel?.name || 'Nessuno')
+          console.log(`🔍 Livello attuale:`, newLevel?.name || 'Nessuno')
+          
+          if (newLevel && (!oldLevel || oldLevel.id !== newLevel.id)) {
+            hasLevelUp = true
+            console.log(`🎉 Level up rilevato: ${oldLevel?.name || 'Nessuno'} → ${newLevel.name}`)
+          }
+        }
+        
+        // Milestone disabilitate - solo VIP, livelli e compleanni
+        
+        // Controlla se è il compleanno del cliente
+        if (selectedCustomer.birth_date) {
+          const today = new Date()
+          const birthday = new Date(selectedCustomer.birth_date)
+          if (today.getMonth() === birthday.getMonth() && today.getDate() === birthday.getDate()) {
+            isBirthday = true
+          }
+        }
+        
+        // LOGICA INTELLIGENTE: Una sola notifica combinata
+        if (isNewVIP && hasLevelUp && isBirthday) {
+          // Notifica VIP + Livello + Compleanno combinata (priorità massima)
+          addNotification({
+            type: 'birthday',
+            title: '🎉 SUPER FESTA! VIP + LIVELLO + COMPLEANNO! 🎉',
+            message: `${updatedCustomer.name} è diventato VIP, ha raggiunto il livello ${newLevel.name} ed è il suo compleanno!`,
+            customer: updatedCustomer,
+            level: newLevel,
+            priority: 'high'
+          })
+        } else if (isNewVIP && hasLevelUp) {
+          // Notifica VIP + Livello combinata (priorità massima)
+          addNotification({
+            type: 'vip',
+            title: '🌟 CLIENTE VIP + NUOVO LIVELLO! 🌟',
+            message: `${updatedCustomer.name} è diventato VIP e ha raggiunto il livello ${newLevel.name}!`,
+            customer: updatedCustomer,
+            level: newLevel,
+            priority: 'high'
+          })
+        } else if (hasLevelUp && isBirthday) {
+          // Notifica Livello + Compleanno combinata
+          addNotification({
+            type: 'birthday',
+            title: '🎂 NUOVO LIVELLO NEL GIORNO DEL COMPLEANNO! 🎂',
+            message: `${updatedCustomer.name} ha raggiunto il livello ${newLevel.name} nel giorno del suo compleanno!`,
+            customer: updatedCustomer,
+            level: newLevel,
+            priority: 'high'
+          })
+        } else if (isNewVIP && isBirthday) {
+          // Notifica VIP + Compleanno combinata
+          addNotification({
+            type: 'birthday',
+            title: '🎉 CLIENTE VIP NEL GIORNO DEL COMPLEANNO! 🎉',
+            message: `${updatedCustomer.name} è diventato VIP proprio nel giorno del suo compleanno!`,
+            customer: updatedCustomer,
+            level: newLevel,
+            priority: 'high'
+          })
+        } else if (hasLevelUp) {
+          // Solo cambio livello
+          notifyLevelUp(updatedCustomer, newLevel, oldLevel)
+        } else if (isNewVIP) {
+          // Solo nuovo VIP
+          notifyVIPEntry(updatedCustomer, newLevel)
+        } else if (isBirthday) {
+          // Solo compleanno
+          notifyBirthday(updatedCustomer)
+        }
+        // Milestone completamente rimosse
       }
 
       // === AGGIUNGI QUESTO BLOCCO PER IL REFERRAL ===
@@ -1688,7 +1816,7 @@ for (const customer of recipients) {
       console.log('Errore transazione:', error)
       showNotification('Errore nella registrazione della transazione', 'error')
     }
-  }, [selectedCustomer, transactionAmount, settings.points_per_euro, sendPointsMilestoneEmail, loadTodayStats, showNotification, completeReferral])
+  }, [selectedCustomer, transactionAmount, settings.points_per_euro, sendPointsMilestoneEmail, loadTodayStats, showNotification, completeReferral, customerLevels, notifyVIPEntry, notifyLevelUp, notifyBirthday, addNotification])
 
   const redeemPrize = useCallback(async (prize) => {
     if (!selectedCustomer || selectedCustomer.points < prize.points_cost) return
@@ -1967,7 +2095,7 @@ for (const customer of recipients) {
               isMultiplierActive={isMultiplierActive}
               completeReferral={completeReferral} // ✅ AGGIUNTA QUESTA PROP
               fixReferralData={fixReferralData} // ✅ AGGIUNTA FUNZIONE CORREZIONE
-              
+              user={user}
             />
           </ProtectedComponent>
         )
@@ -2015,10 +2143,27 @@ for (const customer of recipients) {
             />
           </ProtectedComponent>
         )
+      case 'chat':
+        return (
+          <ProtectedComponent permission="canViewCustomers">
+            <ChatView
+              showNotification={showNotification}
+              user={user}
+            />
+          </ProtectedComponent>
+        )
       case 'coupons':
         return (
           <ProtectedComponent permission="canManageCoupons">
             <CouponManagement
+              showNotification={showNotification}
+            />
+          </ProtectedComponent>
+        )
+      case 'giftcards':
+        return (
+          <ProtectedComponent permission="canManageCoupons">
+            <GiftCardManagement
               showNotification={showNotification}
             />
           </ProtectedComponent>
@@ -2069,6 +2214,14 @@ for (const customer of recipients) {
   // ===================================
   return (
     <div className="app-container">
+      {/* Sistema Notifiche Automatiche */}
+      <NotificationSystem
+        notifications={systemNotifications}
+        onDismiss={removeNotification}
+        soundEnabled={notificationSettings.soundEnabled}
+        volume={notificationSettings.volume}
+      />
+      
       <NotificationContainer
         notifications={notifications}
         setNotifications={setNotifications}

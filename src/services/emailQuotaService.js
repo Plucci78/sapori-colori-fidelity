@@ -10,7 +10,7 @@ class EmailQuotaService {
     this.quotaConfig = {
       monthlyLimit: 200, // Limite mensile EmailJS gratuito
       dailyLimit: 20,    // Limite giornaliero stimato
-      resetDay: 1,       // Giorno reset mensile
+      resetDay: 30,      // Reset il 30 luglio (modificato)
       warningThreshold: 0.8, // Avviso a 80%
       criticalThreshold: 0.95 // Critico a 95%
     }
@@ -186,40 +186,183 @@ class EmailQuotaService {
   // CONFIGURAZIONE MANUALE UTILIZZO REALE
   // ===================================
 
-  // Ottieni il valore reale dal database o da configurazione
+  // Ottieni il valore reale aggiornato manualmente
   async getRealMonthlyUsage() {
     try {
-      // Cerca una configurazione salvata nel database
+      console.log('🔍 getRealMonthlyUsage: Recupero valore manuale dal database...')
+      
+      // Prima cerca il valore aggiornato manualmente nel database
       const { data } = await supabase
         .from('email_settings')
         .select('value')
         .eq('key', 'monthly_usage')
         .single()
 
-      if (data?.value) {
+      if (data?.value && parseInt(data.value) >= 0) {
+        console.log('📦 getRealMonthlyUsage: Found manual value in database:', data.value)
         return parseInt(data.value)
       }
 
-      // Default: usa il valore che vedi sul portale EmailJS
-      return 88
+      // Se non esiste, crea con valore di default 125
+      console.log('💾 getRealMonthlyUsage: Creating default value in database: 125')
+      await this.updateRealMonthlyUsage(125)
+      return 125
     } catch (error) {
-      // Fallback al valore hardcoded
-      return 88
+      console.warn('❌ getRealMonthlyUsage: Error, using fallback:', error)
+      return 125 // Fallback al valore di default
+    }
+  }
+
+  // Nuova funzione: Chiama l'API EmailJS per ottenere l'utilizzo reale
+  async fetchEmailJSMonthlyUsage() {
+    try {
+      console.log('🚀 fetchEmailJSMonthlyUsage: Starting API call...')
+      
+      const EMAILJS_CONFIG = {
+        publicKey: 'P0A99o_tLGsOuzhDs',
+        privateKey: 'CkzkOZP4Etb1AMyZAD-he'
+      }
+
+      // Ottieni l'inizio del mese corrente
+      const now = new Date()
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+      console.log('📅 fetchEmailJSMonthlyUsage: Current month range:', { 
+        startOfMonth: startOfMonth.toISOString(), 
+        now: now.toISOString(),
+        currentMonth: now.getMonth() + 1,
+        currentYear: now.getFullYear()
+      })
+      
+      let allRecords = []
+      let page = 1
+      let hasMorePages = true
+      
+      // Scarica tutti i record del mese corrente (gestisce paginazione)
+      while (hasMorePages) {
+        const url = `https://api.emailjs.com/api/v1.1/history?user_id=${EMAILJS_CONFIG.publicKey}&accessToken=${EMAILJS_CONFIG.privateKey}&page=${page}&count=100`
+        
+        console.log(`📧 Fetching EmailJS history page ${page}...`)
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (!response.ok) {
+          console.error('❌ fetchEmailJSMonthlyUsage: API Error:', response.status, response.statusText)
+          throw new Error(`EmailJS API error: ${response.status} ${response.statusText}`)
+        }
+
+        const data = await response.json()
+        console.log(`📦 fetchEmailJSMonthlyUsage: Page ${page} response:`, data)
+        
+        // EmailJS restituisce { is_last_page: boolean, rows: [...] }
+        let records = []
+        if (data && data.rows && Array.isArray(data.rows)) {
+          records = data.rows
+          hasMorePages = !data.is_last_page
+        } else if (Array.isArray(data)) {
+          // Fallback per formato array diretto
+          records = data
+          hasMorePages = data.length === 100
+        } else {
+          console.error('❌ fetchEmailJSMonthlyUsage: Unexpected API format:', data)
+          throw new Error(`EmailJS API returned unexpected data format: ${typeof data}`)
+        }
+        
+        console.log(`📦 fetchEmailJSMonthlyUsage: Page ${page} returned ${records.length} records`)
+        
+        // Debug: mostra alcuni record per capire la struttura
+        if (page === 1 && records.length > 0) {
+          // Mostra i primi 5 record RAW per capire la struttura
+          for (let i = 0; i < Math.min(5, records.length); i++) {
+            const record = records[i]
+            console.log(`🔍 Record #${i + 1} RAW:`, record)
+            
+            // Prova diversi campi per il timestamp
+            console.log(`📅 Possible timestamp fields:`, {
+              timestamp: record.timestamp,
+              created_at: record.created_at,
+              sent_at: record.sent_at,
+              date: record.date,
+              time: record.time
+            })
+          }
+        }
+
+        // Filtra i record del mese corrente - USA created_at non timestamp!
+        const monthlyRecords = records.filter(record => {
+          const recordDate = new Date(record.created_at)  // Corretto!
+          return recordDate >= startOfMonth && recordDate <= now
+        })
+
+        console.log(`📅 Page ${page}: ${records.length} total, ${monthlyRecords.length} in current month`)
+        allRecords = [...allRecords, ...monthlyRecords]
+        
+        // Se abbiamo meno di 100 record, non ci sono più pagine
+        hasMorePages = data.length === 100
+        page++
+        
+        // Rate limit: 1 richiesta al secondo
+        if (hasMorePages) {
+          await new Promise(resolve => setTimeout(resolve, 1100))
+        }
+      }
+
+      // Conta solo le email inviate con successo
+      console.log(`📊 Total monthly records found: ${allRecords.length}`)
+      
+      // Debug: mostra tutti i possibili risultati
+      const resultStats = {}
+      allRecords.forEach(record => {
+        const result = record.result || 'undefined'
+        resultStats[result] = (resultStats[result] || 0) + 1
+      })
+      console.log('📈 Result statistics:', resultStats)
+      
+      const successfulEmails = allRecords.filter(record => 
+        record.result === 1 || record.result === '1' || record.result === 'success' || record.result === 'sent' || record.result === 'OK'
+      ).length
+
+      console.log(`✅ EmailJS Real Usage: ${successfulEmails} successful emails sent this month`)
+      console.log(`📋 Out of ${allRecords.length} total records`)
+      
+      return successfulEmails
+
+    } catch (error) {
+      console.error('❌ Errore nel recupero dati EmailJS:', error)
+      return null // Restituisce null per usare il fallback
     }
   }
 
   // Aggiorna manualmente l'utilizzo reale (per sincronizzare con EmailJS)
   async updateRealMonthlyUsage(newValue) {
     try {
-      const { error } = await supabase
+      // Prima prova ad aggiornare
+      const { error: updateError } = await supabase
         .from('email_settings')
-        .upsert([{
-          key: 'monthly_usage',
+        .update({
           value: newValue.toString(),
           updated_at: new Date().toISOString()
-        }])
+        })
+        .eq('key', 'monthly_usage')
 
-      if (error) throw error
+      // Se non esiste, crealo
+      if (updateError && updateError.code === 'PGRST116') {
+        const { error: insertError } = await supabase
+          .from('email_settings')
+          .insert([{
+            key: 'monthly_usage',
+            value: newValue.toString(),
+            updated_at: new Date().toISOString()
+          }])
+        
+        if (insertError) throw insertError
+      } else if (updateError) {
+        throw updateError
+      }
       
       console.log(`✅ Utilizzo EmailJS aggiornato: ${newValue}/200`)
       return true

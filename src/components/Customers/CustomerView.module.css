@@ -1,5 +1,24 @@
 /* CSS Module per CustomerView - Scrolling isolato */
 
+/* Stili per clienti deselezionati */
+.customer-deactivated {
+  opacity: 0.6;
+  background-color: #f5f5f5 !important;
+  border: 1px solid #e5e5e5 !important;
+  cursor: not-allowed !important;
+  filter: grayscale(50%);
+}
+
+.customer-deactivated:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.customer-avatar.deactivated {
+  background-color: #9ca3af !important;
+  color: #ffffff !important;
+}
+
 .prizeHistoryContainer {
   position: relative;
 }

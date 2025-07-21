@@ -3,6 +3,7 @@ import LevelsConfig from './LevelsConfig'
 import UserManagement from './UserManagement'
 import ActivityLog from './ActivityLog'
 import { ProtectedComponent } from '../../auth/ProtectedComponent'
+import { emailQuotaService } from '../../services/emailQuotaService'
 
 const SettingsView = ({ settings, setSettings, saveSettings, EMAIL_CONFIG, showNotification, assignMissingReferralCodes, customerLevels, loadCustomerLevels }) => {
   const [activeSettingsTab, setActiveSettingsTab] = useState('general')
@@ -235,6 +236,55 @@ const SettingsView = ({ settings, setSettings, saveSettings, EMAIL_CONFIG, showN
                 <p className="email-config-note">
                   ⚠️ Per modificare la configurazione email, aggiorna i valori nel codice sorgente
                 </p>
+              </div>
+              <div className="settings-section">
+                <h4>📊 Gestione Quote EmailJS</h4>
+                <div className="quota-management">
+                  <div className="quota-manual-update">
+                    <h5>🔧 Aggiornamento Manuale Quote</h5>
+                    <p>Aggiorna il valore reale delle email utilizzate dal dashboard EmailJS</p>
+                    <div className="quota-input-group">
+                      <label htmlFor="currentUsage">Email utilizzate questo mese:</label>
+                      <input
+                        type="number"
+                        id="currentUsage"
+                        min="0"
+                        max="200"
+                        placeholder="es. 125"
+                        className="quota-input"
+                      />
+                      <button 
+                        className="update-quota-btn"
+                        onClick={async () => {
+                          const input = document.getElementById('currentUsage')
+                          const value = parseInt(input.value)
+                          if (value >= 0 && value <= 200) {
+                            try {
+                              await emailQuotaService.updateRealMonthlyUsage(value)
+                              showNotification(`Quote aggiornate: ${value}/200. Ricarica la pagina per vedere i cambiamenti.`, 'success')
+                              input.value = ''
+                            } catch (error) {
+                              showNotification('Errore nell\'aggiornamento delle quote', 'error')
+                            }
+                          } else {
+                            showNotification('Inserisci un valore tra 0 e 200', 'error')
+                          }
+                        }}
+                      >
+                        💾 Aggiorna Quote
+                      </button>
+                    </div>
+                    <div className="quota-instructions">
+                      <h6>📋 Istruzioni:</h6>
+                      <ol>
+                        <li>Vai su <a href="https://dashboard.emailjs.com" target="_blank" rel="noopener noreferrer">dashboard.emailjs.com</a></li>
+                        <li>Controlla la sezione "Usage" o "Quota"</li>
+                        <li>Copia il numero di "Requests received: XXX/200"</li>
+                        <li>Inserisci il valore qui sopra e clicca "Aggiorna Quote"</li>
+                      </ol>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="settings-section">
                 <h4>📬 Email Automatiche</h4>

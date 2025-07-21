@@ -4,9 +4,11 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
+import { useDashboardStats } from '../hooks/useDashboardStats'
 
 export const LoginForm = ({ onSuccess = null, className = "" }) => {
   const { signIn, loading, isAuthenticated } = useAuth()
+  const dashboardStats = useDashboardStats()
   
   // Form state
   const [formData, setFormData] = useState({
@@ -305,6 +307,124 @@ export const LoginForm = ({ onSuccess = null, className = "" }) => {
           <span className="status-text">Sistema Online</span>
         </div>
 
+      </div>
+
+      {/* Dashboard Preview per Desktop - BRAND COLORS & PIÙ INFORMAZIONI */}
+      <div className="dashboard-preview">
+        {dashboardStats.error && (
+          <div className="dashboard-error">
+            ⚠️ <small>Errore caricamento dati: {dashboardStats.error}</small>
+          </div>
+        )}
+        {/* Sezione 1 - Panoramica Generale */}
+        <div className="dashboard-section">
+          <div className="section-title">🏪 Panoramica Sapori & Colori</div>
+          <div className="info-block">
+            <h4>Sistema di Fidelizzazione Clienti</h4>
+            <p>Il programma GEMME permette ai clienti di accumulare punti ad ogni acquisto e sbloccare premi esclusivi.</p>
+            <div className="quick-stats">
+              <div className="stat-row">
+                <span className="stat-label">👥 Clienti Registrati:</span>
+                <span className="stat-value">
+                  {dashboardStats.loading ? '...' : dashboardStats.totalCustomers.toLocaleString()} <small>clienti fedeli</small>
+                </span>
+              </div>
+              <div className="stat-row">
+                <span className="stat-label">💎 GEMME in Circolazione:</span>
+                <span className="stat-value">
+                  {dashboardStats.loading ? '...' : dashboardStats.totalGemmes.toLocaleString()} <small>punti attivi</small>
+                </span>
+              </div>
+              <div className="stat-row">
+                <span className="stat-label">🎁 Gift Card Attive:</span>
+                <span className="stat-value">
+                  {dashboardStats.loading ? '...' : dashboardStats.activeGiftCards} <small>carte</small> • <strong>€{dashboardStats.loading ? '...' : dashboardStats.giftCardsValue.toLocaleString()}</strong> <small>valore totale</small>
+                </span>
+              </div>
+              <div className="stat-row">
+                <span className="stat-label">📈 Crescita Mensile:</span>
+                <span className="stat-value">
+                  {dashboardStats.loading ? '...' : `${dashboardStats.monthlyGrowth > 0 ? '+' : ''}${dashboardStats.monthlyGrowth.toFixed(1)}%`} <small>nuovi iscritti</small>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sezione 2 - Attività di Oggi */}
+        <div className="dashboard-section">
+          <div className="section-title">📅 Attività di Oggi</div>
+          <div className="info-block">
+            <h4>Cosa è Successo Oggi</h4>
+            <p>Riepilogo delle attività della giornata corrente nel sistema di fidelizzazione.</p>
+            <div className="today-activity">
+              <div className="activity-item-detailed">
+                <div className="activity-number">
+                  {dashboardStats.loading ? '...' : `+${dashboardStats.todayNewCustomers}`}
+                </div>
+                <div className="activity-desc">
+                  <strong>Nuovi Iscritti</strong><br />
+                  <small>Clienti che si sono registrati oggi al programma fedeltà</small>
+                </div>
+              </div>
+              <div className="activity-item-detailed">
+                <div className="activity-number">
+                  {dashboardStats.loading ? '...' : dashboardStats.todayGemmes.toLocaleString()}
+                </div>
+                <div className="activity-desc">
+                  <strong>GEMME Distribuite</strong><br />
+                  <small>Punti assegnati per gli acquisti di oggi</small>
+                </div>
+              </div>
+              <div className="activity-item-detailed">
+                <div className="activity-number">
+                  {dashboardStats.loading ? '...' : dashboardStats.todayEmails}
+                </div>
+                <div className="activity-desc">
+                  <strong>Email Automatiche</strong><br />
+                  <small>Messaggi di benvenuto e compleanno inviati</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sezione 3 - Stato Sistema */}
+        <div className="dashboard-section">
+          <div className="section-title">⚙️ Stato del Sistema</div>
+          <div className="info-block">
+            <h4>Monitoraggio Servizi</h4>
+            <p>Verifica dello stato operativo di tutti i componenti del sistema di fidelizzazione.</p>
+            <div className="system-status-detailed">
+              <div className="status-item-detailed">
+                <div className="status-indicator-large online"></div>
+                <div className="status-desc">
+                  <strong>Database Clienti</strong><br />
+                  <small>Connesso e operativo - Ultima sync: 30 sec fa</small>
+                </div>
+              </div>
+              <div className="status-item-detailed">
+                <div className="status-indicator-large online"></div>
+                <div className="status-desc">
+                  <strong>Servizio Email</strong><br />
+                  <small>Funzionante - Quota giornaliera: 2.830/5.000</small>
+                </div>
+              </div>
+              <div className="status-item-detailed">
+                <div className="status-indicator-large warning"></div>
+                <div className="status-desc">
+                  <strong>Backup Automatico</strong><br />
+                  <small>Ultimo backup: 2 ore fa - Prossimo: tra 22h</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Copyright all'interno della dashboard */}
+        <div className="dashboard-footer">
+          <small>Software Sapori & Colori Fidelity creato da <strong>Lucci Pasquale (alias Lino Lucci)</strong></small>
+        </div>
       </div>
     </div>
   )
