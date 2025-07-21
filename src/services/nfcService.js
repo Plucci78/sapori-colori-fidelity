@@ -40,20 +40,32 @@ class NFCService {
 
   // Rileva il metodo di connessione disponibile
   async detectConnectionMethod() {
-    // 1. Prova bridge HTTP (nuovo sistema Raspberry)
-    try {
-      const response = await fetch(`${this.bridgeUrl}/nfc/status`, { 
-        timeout: 2000 
-      })
-      if (response.ok) {
-        const status = await response.json()
-        if (status.available) {
-          console.log('🟢 NFC: Bridge HTTP disponibile')
-          return 'bridge'
+    // 1. Prova bridge HTTP (solo se accesso locale)
+    const isLocalAccess = window.location.hostname === 'localhost' || 
+                         window.location.hostname === 'saporiecolori.local' ||
+                         window.location.hostname.endsWith('.local') ||
+                         window.location.hostname.startsWith('192.168.') ||
+                         window.location.hostname.startsWith('10.') ||
+                         window.location.hostname.startsWith('172.') ||
+                         window.location.protocol === 'http:'
+    
+    if (isLocalAccess) {
+      try {
+        const response = await fetch(`${this.bridgeUrl}/nfc/status`, { 
+          timeout: 2000 
+        })
+        if (response.ok) {
+          const status = await response.json()
+          if (status.available) {
+            console.log('🟢 NFC: Bridge HTTP locale disponibile')
+            return 'bridge'
+          }
         }
+      } catch (error) {
+        console.log('🟡 NFC: Bridge HTTP locale non disponibile')
       }
-    } catch (error) {
-      console.log('🟡 NFC: Bridge HTTP non disponibile')
+    } else {
+      console.log('🟡 NFC: Accesso remoto - bridge HTTP disabilitato per sicurezza')
     }
 
     // 2. Prova WebSocket (sistema esistente)

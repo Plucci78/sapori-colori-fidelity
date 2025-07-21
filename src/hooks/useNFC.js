@@ -22,24 +22,40 @@ export const useNFC = () => {
         return
       }
 
-      // 2. Prova bridge Raspberry (192.168.1.6:3001)
-      try {
-        const response = await fetch('http://192.168.1.6:3001/nfc/status', { 
-          timeout: 2000,
-          headers: { 'Content-Type': 'application/json' }
-        })
-        
-        if (response.ok) {
-          const status = await response.json()
-          if (status.available) {
-            setNfcMethod('raspberry-bridge')
-            setIsNFCAvailable(true)
-            console.log('🟢 NFC: Bridge Raspberry disponibile')
-            return
+      // 2. Prova bridge Raspberry - tenta sempre se nella stessa rete
+      console.log('🔍 NFC: Tentativo rilevazione bridge Raspberry...')
+      
+      // Lista IP da testare (Raspberry IP prima, poi fallback)
+      const bridgeUrls = [
+        'http://192.168.1.6:3001',
+        'http://saporiecolori.local:3001',
+        'http://localhost:3001',
+        'http://192.168.1.100:3001',
+        'http://192.168.0.100:3001'
+      ]
+
+      for (const bridgeUrl of bridgeUrls) {
+        try {
+          console.log(`🔍 NFC: Tentativo connessione a ${bridgeUrl}...`)
+          const response = await fetch(`${bridgeUrl}/nfc/status`, { 
+            timeout: 1000,
+            headers: { 'Content-Type': 'application/json' }
+          })
+          
+          if (response.ok) {
+            const status = await response.json()
+            if (status.available) {
+              setNfcMethod('raspberry-bridge')
+              setIsNFCAvailable(true)
+              console.log(`🟢 NFC: Bridge Raspberry trovato su ${bridgeUrl}`)
+              // Salva l'URL funzionante per uso futuro
+              window.nfcBridgeUrl = bridgeUrl
+              return
+            }
           }
+        } catch (bridgeError) {
+          console.log(`🟡 NFC: ${bridgeUrl} non disponibile`)
         }
-      } catch (bridgeError) {
-        console.log('🟡 NFC: Bridge Raspberry non disponibile')
       }
 
       // 3. Nessun metodo NFC disponibile
@@ -135,7 +151,8 @@ export const useNFC = () => {
 
   // Bridge Raspberry
   const readRaspberryBridge = async () => {
-    const response = await fetch('http://192.168.1.6:3001/nfc/read', {
+    const bridgeUrl = window.nfcBridgeUrl || 'http://localhost:3001'
+    const response = await fetch(`${bridgeUrl}/nfc/read`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ timeout: 10000 })
@@ -178,7 +195,8 @@ export const useNFC = () => {
         })
         return true
       } else if (nfcMethod === 'raspberry-bridge') {
-        const response = await fetch('http://192.168.1.6:3001/nfc/write', {
+        const bridgeUrl = window.nfcBridgeUrl || 'http://localhost:3001'
+        const response = await fetch(`${bridgeUrl}/nfc/write`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ data, format })
