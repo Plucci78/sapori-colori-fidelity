@@ -22,9 +22,9 @@ export const useNFC = () => {
         return
       }
 
-      // 2. Prova bridge Raspberry (localhost:3001)
+      // 2. Prova bridge Raspberry (192.168.1.6:3001)
       try {
-        const response = await fetch('http://localhost:3001/nfc/status', { 
+        const response = await fetch('http://192.168.1.6:3001/nfc/status', { 
           timeout: 2000,
           headers: { 'Content-Type': 'application/json' }
         })
@@ -135,7 +135,7 @@ export const useNFC = () => {
 
   // Bridge Raspberry
   const readRaspberryBridge = async () => {
-    const response = await fetch('http://localhost:3001/nfc/read', {
+    const response = await fetch('http://192.168.1.6:3001/nfc/read', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ timeout: 10000 })
@@ -178,7 +178,7 @@ export const useNFC = () => {
         })
         return true
       } else if (nfcMethod === 'raspberry-bridge') {
-        const response = await fetch('http://localhost:3001/nfc/write', {
+        const response = await fetch('http://192.168.1.6:3001/nfc/write', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ data, format })
