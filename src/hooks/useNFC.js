@@ -25,10 +25,10 @@ export const useNFC = () => {
       // 2. Prova bridge Raspberry - tenta sempre se nella stessa rete
       console.log('🔍 NFC: Tentativo rilevazione bridge Raspberry...')
       
-      // Lista URL da testare (Cloudflare tunnel prima, poi fallback locali)
+      // Lista URL da testare (API proxy Vercel prima, poi fallback)
       const bridgeUrls = [
-        'https://nfc.saporiecolori.net',
-        'http://192.168.1.6:3001',
+        '/api/nfc', // API Proxy Vercel (stesso dominio, zero CORS)
+        'http://192.168.1.6:3001', // Fallback locale
         'http://saporiecolori.local:3001',
         'http://localhost:3001'
       ]
@@ -36,7 +36,13 @@ export const useNFC = () => {
       for (const bridgeUrl of bridgeUrls) {
         try {
           console.log(`🔍 NFC: Tentativo connessione a ${bridgeUrl}...`)
-          const response = await fetch(`${bridgeUrl}/nfc/status`, { 
+          
+          // Se è API proxy Vercel, usa endpoint status specifico
+          const statusUrl = bridgeUrl.startsWith('/api/nfc') 
+            ? '/api/nfc/status' 
+            : `${bridgeUrl}/nfc/status`
+          
+          const response = await fetch(statusUrl, { 
             timeout: 1000,
             headers: { 'Content-Type': 'application/json' }
           })
@@ -193,8 +199,14 @@ export const useNFC = () => {
 
   // Bridge Raspberry
   const readRaspberryBridge = async () => {
-    const bridgeUrl = window.nfcBridgeUrl || 'http://localhost:3001'
-    const response = await fetch(`${bridgeUrl}/nfc/read`, {
+    const bridgeUrl = window.nfcBridgeUrl || '/api/nfc'
+    
+    // Se è API proxy Vercel, usa endpoint read specifico
+    const readUrl = bridgeUrl.startsWith('/api/nfc') 
+      ? '/api/nfc/read' 
+      : `${bridgeUrl}/nfc/read`
+    
+    const response = await fetch(readUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ timeout: 5000 })
