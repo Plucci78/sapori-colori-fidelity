@@ -316,7 +316,7 @@ class NFCService {
       const response = await fetch(`${this.bridgeUrl}/nfc/read`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ timeout: 10000 })
+        body: JSON.stringify({ timeout: 5000 })
       })
 
       if (!response.ok) {

@@ -1,0 +1,147 @@
+/* Modal overlay per componenti NFC */
+.nfc-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.nfc-modal-content {
+  background-color: white;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  margin: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.nfc-modal-header {
+  margin-bottom: 16px;
+}
+
+.nfc-modal-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #8B4513;
+  margin-bottom: 8px;
+}
+
+.nfc-modal-info {
+  background-color: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.nfc-modal-info p {
+  font-size: 14px;
+  color: #374151;
+  margin: 0;
+}
+
+.nfc-modal-info p:not(:last-child) {
+  margin-bottom: 4px;
+}
+
+.nfc-modal-info code {
+  background-color: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.nfc-modal-description {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.nfc-modal-form {
+  margin-bottom: 16px;
+}
+
+.nfc-modal-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.nfc-modal-select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.nfc-modal-select:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #8B4513;
+  border-color: #8B4513;
+}
+
+.nfc-modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.nfc-modal-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nfc-modal-btn-cancel {
+  background-color: #6b7280;
+  color: white;
+}
+
+.nfc-modal-btn-cancel:hover {
+  background-color: #4b5563;
+}
+
+.nfc-modal-btn-primary {
+  background: linear-gradient(135deg, #8B4513 0%, #D4AF37 100%);
+  color: white;
+}
+
+.nfc-modal-btn-primary:hover {
+  background: linear-gradient(135deg, #6B3410 0%, #B8941F 100%);
+}
+
+.nfc-modal-btn-primary:disabled {
+  background-color: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.nfc-modal-btn-primary:disabled:hover {
+  background-color: #d1d5db;
+}

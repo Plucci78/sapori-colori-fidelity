@@ -1,10 +1,12 @@
-// NFCView Hybrid - Layout verticale con Web NFC API
+// NFCView Hybrid - Layout verticale con Bridge Raspberry Pi
 import { useState, useEffect } from 'react'
 import { supabase } from '../../supabase'
+import { useNFC } from '../../hooks/useNFC'
+import '../../styles/nfc-modal.css'
+import '../../styles/nfc-view.css'
 
 const NFCViewHybrid = ({ showNotification }) => {
   const [customers, setCustomers] = useState([])
-  const [nfcAvailable, setNfcAvailable] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
   const [tagName, setTagName] = useState('')
   const [selectedCustomerId, setSelectedCustomerId] = useState('')
@@ -17,25 +19,38 @@ const NFCViewHybrid = ({ showNotification }) => {
   const [existingTagData, setExistingTagData] = useState(null)
   const [newCustomerId, setNewCustomerId] = useState('')
 
-  // Controllo disponibilità NFC
-  useEffect(() => {
-    const checkNFC = async () => {
-      if ('NDEFReader' in window) {
-        try {
-          setNfcAvailable(true)
-        } catch (error) {
-          setNfcAvailable(false)
-        }
-      } else {
-        setNfcAvailable(false)
-      }
-    }
+  // Usa il nostro hook NFC che gestisce sia Web NFC che Bridge Raspberry
+  const {
+    isNFCAvailable,
+    isScanning: nfcHookScanning,
+    lastScannedData,
+    error: nfcError,
+    nfcMethod,
+    readNFC,
+    detectNFCCapability
+  } = useNFC()
 
-    checkNFC()
+  // Inizializzazione
+  useEffect(() => {
     loadCustomers()
     loadNfcTags()
     loadNfcLogs()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Gestisce i dati scansionati dall'hook
+  useEffect(() => {
+    if (lastScannedData) {
+      handleNFCData(lastScannedData)
+    }
+  }, [lastScannedData])
+
+  // Gestisce errori dall'hook
+  useEffect(() => {
+    if (nfcError) {
+      setIsScanning(false)
+      showNotification(`❌ Errore NFC: ${nfcError}`, 'error')
+    }
+  }, [nfcError])
 
   const loadCustomers = async () => {
     try {
@@ -132,39 +147,42 @@ const NFCViewHybrid = ({ showNotification }) => {
     }
   }
 
+  // Gestisce i dati NFC ricevuti dall'hook
+  const handleNFCData = async (nfcData) => {
+    let tagId = null
+    
+    // Estrai l'ID del tag a seconda del metodo
+    if (nfcData.method === 'raspberry-bridge') {
+      tagId = nfcData.uid || nfcData.data
+    } else if (nfcData.method === 'web-nfc') {
+      tagId = nfcData.data
+    }
+    
+    if (tagId) {
+      console.log('📱 Tag NFC letto:', tagId)
+      await handleTagRead(tagId.toLowerCase())
+    }
+    
+    setIsScanning(false)
+  }
+
   const startNFCScan = async () => {
-    if (!nfcAvailable) {
+    if (!isNFCAvailable) {
       showNotification('❌ NFC non disponibile su questo dispositivo', 'error')
       return
     }
 
     try {
       setIsScanning(true)
-      showNotification('📱 Avvicina un tag NFC al telefono...', 'info')
+      showNotification(`Appoggia la tessera ${nfcMethod === 'raspberry-bridge' ? 'sul lettore' : 'NFC sul telefono'}...`, 'info')
       
-      const ndef = new window.NDEFReader()
-      
-      const scanPromise = ndef.scan()
-      
-      ndef.addEventListener('reading', ({ serialNumber }) => {
-        const tagId = serialNumber.toLowerCase()
-        console.log('🏷️ Tag NFC letto:', tagId)
-        
-        handleTagRead(tagId)
-        setIsScanning(false)
-      })
-
-      await scanPromise
+      // Usa il nostro hook per leggere NFC (gestisce automaticamente Web NFC o Bridge)
+      await readNFC()
       
     } catch (error) {
       console.error('Errore scansione NFC:', error)
       setIsScanning(false)
-      
-      if (error.name === 'NotAllowedError') {
-        showNotification('❌ Permesso NFC negato. Abilita NFC nelle impostazioni.', 'error')
-      } else {
-        showNotification(`❌ Errore NFC: ${error.message}`, 'error')
-      }
+      showNotification(`❌ Errore NFC: ${error.message}`, 'error')
     }
   }
 
@@ -172,10 +190,10 @@ const NFCViewHybrid = ({ showNotification }) => {
     try {
       console.log('🔍 Cercando tag:', tagId)
       
-      // Cerca se il tag è già associato (senza .single() per evitare errori)
+      // Prima cerca i tag senza join per evitare errori 404
       const { data: existingTags, error } = await supabase
         .from('nfc_tags')
-        .select('*, customer:customers(*)')
+        .select('*')
         .eq('tag_id', tagId)
         .eq('is_active', true)
 
@@ -188,30 +206,55 @@ const NFCViewHybrid = ({ showNotification }) => {
 
       const existingTag = existingTags && existingTags.length > 0 ? existingTags[0] : null
 
-      if (existingTag && existingTag.customer) {
-        console.log('✅ Tag esistente trovato per:', existingTag.customer.name)
+      if (existingTag) {
+        // Se il tag esiste, cerca i dati del cliente separatamente
+        const { data: customerData, error: customerError } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('id', existingTag.customer_id)
+          .single()
+
+        if (customerError) {
+          console.error('Errore caricamento cliente:', customerError)
+          // Continua comunque con i dati del tag
+        }
+
+        const customerName = customerData?.name || 'Cliente sconosciuto'
+        console.log('✅ Tag esistente trovato per:', customerName)
+        
         // Tag già associato - mostra modale per riassociazione
         setExistingTagData({
           ...existingTag,
-          tag_id: tagId
+          tag_id: tagId,
+          customer: customerData || { name: customerName }
         })
         setShowReassignModal(true)
-        showNotification(`⚠️ Attenzione: Tag già associato a ${existingTag.customer.name}`, 'warning')
+        showNotification(`⚠️ Attenzione: Tag già associato a ${customerName}`, 'warning')
+        
+        // Registra il log per tag esistente
+        await supabase
+          .from('nfc_logs')
+          .insert({
+            tag_id: tagId,
+            customer_id: existingTag.customer_id,
+            action_type: 'customer_access',
+            details: `Accesso cliente: ${customerName}`
+          })
       } else {
         console.log('🆕 Tag nuovo o non associato')
         setManualTagId(tagId)
         showNotification(`🏷️ Nuovo tag rilevato: ${tagId}. Seleziona un cliente per associarlo.`, 'info')
+        
+        // Registra il log per tag nuovo
+        await supabase
+          .from('nfc_logs')
+          .insert({
+            tag_id: tagId,
+            customer_id: null,
+            action_type: 'tag_read',
+            details: 'Tag non associato'
+          })
       }
-
-      // Registra il log
-      await supabase
-        .from('nfc_logs')
-        .insert({
-          tag_id: tagId,
-          customer_id: existingTag?.customer_id || null,
-          action_type: existingTag ? 'customer_access' : 'tag_read',
-          details: existingTag ? `Accesso cliente: ${existingTag.customer.name}` : 'Tag non associato'
-        })
 
       // Ricarica i log
       loadNfcLogs()
@@ -337,11 +380,11 @@ const NFCViewHybrid = ({ showNotification }) => {
 
   return (
     <div className="nfc-simple-container">
-      <div className="max-w-6xl mx-auto p-6 space-y-6">
+      <div className="nfc-page-wrapper">
         {/* HEADER */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 animate-fadeInUp">🏷️ Gestione NFC</h1>
-          <p className="text-gray-600 mt-2">Sistema di lettura tag NFC per identificazione rapida clienti</p>
+        <div className="nfc-header">
+          <h1 className="nfc-title">🏷️ Gestione NFC</h1>
+          <p className="nfc-subtitle">Sistema di lettura tag NFC per identificazione rapida clienti</p>
         </div>
 
         {/* STATO NFC */}
@@ -357,13 +400,17 @@ const NFCViewHybrid = ({ showNotification }) => {
           <div className="card-body">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={`nfc-status-indicator ${nfcAvailable ? 'available' : 'unavailable'}`}></div>
+                <div className={`nfc-status-indicator ${isNFCAvailable ? 'available' : 'unavailable'}`}></div>
                 <span className="font-medium">
-                  {nfcAvailable ? '✅ NFC Disponibile' : '❌ NFC Non Disponibile'}
+                  {nfcMethod === 'raspberry-bridge' ? '🍓 Bridge Raspberry Pi Connesso' : 
+                   nfcMethod === 'web-nfc' ? '✅ NFC Mobile Disponibile' : 
+                   isNFCAvailable === false ? '❌ NFC Non Disponibile' : '🔍 Rilevamento NFC...'}
                 </span>
               </div>
               <div className="text-sm text-gray-600">
-                {nfcAvailable ? 'Cellulare Android compatibile' : 'Usa un dispositivo Android con NFC'}
+                {nfcMethod === 'raspberry-bridge' ? 'Lettore ACR122U collegato al Raspberry' : 
+                 nfcMethod === 'web-nfc' ? 'Cellulare Android compatibile' : 
+                 'Sistema NFC non disponibile'}
               </div>
             </div>
           </div>
@@ -384,13 +431,17 @@ const NFCViewHybrid = ({ showNotification }) => {
               <div className="text-center">
                 <button
                   onClick={startNFCScan}
-                  disabled={!nfcAvailable}
-                  className={`btn btn-lg ${nfcAvailable ? 'btn-primary' : 'btn-secondary'}`}
+                  disabled={!isNFCAvailable}
+                  className={`btn btn-lg ${isNFCAvailable ? 'btn-primary' : 'btn-secondary'}`}
                 >
-                  📱 {nfcAvailable ? 'Avvia Scansione NFC' : 'NFC Non Disponibile'}
+                  {nfcMethod === 'raspberry-bridge' ? '🍓 Scansiona con Bridge Raspberry' : 
+                   nfcMethod === 'web-nfc' ? '📱 Avvia Scansione NFC Mobile' : 
+                   '❌ NFC Non Disponibile'}
                 </button>
                 <p className="text-sm text-gray-600 mt-4">
-                  Tocca il pulsante e avvicina un tag NFC al telefono
+                  {nfcMethod === 'raspberry-bridge' ? 
+                    'Tocca il pulsante e appoggia il tag sul lettore' : 
+                    'Tocca il pulsante e avvicina un tag NFC al telefono'}
                 </p>
               </div>
             ) : (
@@ -421,19 +472,16 @@ const NFCViewHybrid = ({ showNotification }) => {
               </h2>
             </div>
             <div className="card-body">
-              <div className="mb-4 p-3 bg-white rounded border">
+              <div className="nfc-tag-detected">
                 <strong>Tag rilevato:</strong> <span className="nfc-tag-code">{manualTagId}</span>
               </div>
               
-              <div className="grid grid-2 gap-4">
+              <div className="association-form-grid">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Seleziona Cliente
-                  </label>
+                  <label>Seleziona Cliente</label>
                   <select 
                     value={selectedCustomerId} 
                     onChange={(e) => setSelectedCustomerId(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                   >
                     <option value="">-- Seleziona Cliente --</option>
                     {customers.map(customer => (
@@ -445,35 +493,30 @@ const NFCViewHybrid = ({ showNotification }) => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nome Tag (opzionale)
-                  </label>
+                  <label>Nome Tag (opzionale)</label>
                   <input
                     type="text"
                     value={tagName}
                     onChange={(e) => setTagName(e.target.value)}
                     placeholder="es. Tag NFC Principale"
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
               </div>
               
-              <div className="grid grid-2 gap-4 mt-4">
+              <div className="nfc-association-buttons">
                 <button
                   onClick={() => setManualTagId('')}
-                  className="btn btn-secondary"
+                  className="btn-cancel-association"
                 >
                   ❌ Annulla
                 </button>
-                <div>
-                  <button
-                    onClick={associateTag}
-                    disabled={!selectedCustomerId}
-                    className="btn btn-success w-full"
-                  >
-                    🔗 Associa Tag
-                  </button>
-                </div>
+                <button
+                  onClick={associateTag}
+                  disabled={!selectedCustomerId}
+                  className="btn-associate"
+                >
+                  <span>🔗 Associa Tag</span>
+                </button>
               </div>
             </div>
           </div>
@@ -496,19 +539,36 @@ const NFCViewHybrid = ({ showNotification }) => {
                   const customer = customers.find(c => c.id === tag.customer_id)
                   return (
                     <div key={tag.id} className="nfc-tag-item">
+                      <div className="tag-inner-border"></div>
+                      
                       <div className="tag-header">
                         <div className="tag-name">{tag.tag_name}</div>
-                        <button
-                          onClick={() => disassociateTag(tag)}
-                          className="btn btn-danger btn-sm"
-                        >
-                          🗑️ Rimuovi
-                        </button>
+                        <div className="tag-actions">
+                          <button
+                            onClick={() => disassociateTag(tag)}
+                            className="btn-tag-remove"
+                          >
+                            🗑️ Rimuovi
+                          </button>
+                        </div>
                       </div>
-                      <div className="tag-details">
-                        <div>ID: <code>{tag.tag_id}</code></div>
-                        <div>Cliente: {customer?.name || 'Non trovato'}</div>
-                        <div>Creato: {new Date(tag.created_at).toLocaleDateString('it-IT')}</div>
+
+                      <div className="tag-main-content">
+                        <div className="tag-id-section">
+                          <div className="tag-id-label">Codice Tag NFC</div>
+                          <div className="tag-id-value">{tag.tag_id}</div>
+                        </div>
+
+                        <div className="tag-details">
+                          <div className="tag-detail-item">
+                            <div className="tag-detail-label">Cliente</div>
+                            <div className="tag-detail-value">{customer?.name || 'Non trovato'}</div>
+                          </div>
+                          <div className="tag-detail-item">
+                            <div className="tag-detail-label">Data Creazione</div>
+                            <div className="tag-detail-value">{new Date(tag.created_at).toLocaleDateString('it-IT')}</div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )
@@ -540,7 +600,7 @@ const NFCViewHybrid = ({ showNotification }) => {
             {nfcLogs.length > 0 ? (
               <div className="nfc-logs-container">
                 {nfcLogs.map(log => (
-                  <div key={log.id} className="nfc-log-item">
+                  <div key={log.id} className="nfc-log-item" data-type={log.action_type}>
                     <div className="log-content">
                       <div className="log-icon">
                         {log.action_type === 'customer_access' ? '👤' :
@@ -578,33 +638,33 @@ const NFCViewHybrid = ({ showNotification }) => {
 
         {/* MODALE RIASSOCIAZIONE TAG */}
         {showReassignModal && existingTagData && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-              <div className="mb-4">
-                <h3 className="text-lg font-bold text-orange-600 mb-2">
+          <div className="nfc-modal-overlay">
+            <div className="nfc-modal-content">
+              <div className="nfc-modal-header">
+                <h3 className="nfc-modal-title">
                   ⚠️ Tag Già Associato
                 </h3>
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
-                  <p className="text-sm text-gray-700">
-                    <strong>Tag ID:</strong> <code className="bg-gray-100 px-2 py-1 rounded">{existingTagData.tag_id}</code>
+                <div className="nfc-modal-info">
+                  <p>
+                    <strong>Tag ID:</strong> <code>{existingTagData.tag_id}</code>
                   </p>
-                  <p className="text-sm text-gray-700 mt-1">
+                  <p>
                     <strong>Attualmente associato a:</strong> {existingTagData.customer?.name}
                   </p>
                 </div>
-                <p className="text-gray-600 text-sm">
+                <p className="nfc-modal-description">
                   Vuoi riassociare questo tag a un nuovo cliente?
                 </p>
               </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="nfc-modal-form">
+                <label className="nfc-modal-label">
                   Seleziona Nuovo Cliente
                 </label>
                 <select 
                   value={newCustomerId} 
                   onChange={(e) => setNewCustomerId(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="nfc-modal-select"
                 >
                   <option value="">-- Seleziona Cliente --</option>
                   {customers.map(customer => (
@@ -615,21 +675,17 @@ const NFCViewHybrid = ({ showNotification }) => {
                 </select>
               </div>
 
-              <div className="flex gap-3">
+              <div className="nfc-modal-actions">
                 <button
                   onClick={cancelReassign}
-                  className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  className="nfc-modal-btn nfc-modal-btn-cancel"
                 >
                   ❌ Annulla
                 </button>
                 <button
                   onClick={reassignTag}
                   disabled={!newCustomerId}
-                  className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
-                    newCustomerId 
-                      ? 'bg-orange-600 text-white hover:bg-orange-700' 
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }`}
+                  className="nfc-modal-btn nfc-modal-btn-primary"
                 >
                   🔄 Riassocia
                 </button>

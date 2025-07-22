@@ -23,6 +23,7 @@ echo ""
 WEBAPP_URL="https://sapori-colori-fidelity.vercel.app"
 NFC_BRIDGE_PORT=3001
 AUTOSTART_USER="sapori"
+HOSTNAME="saporiecolori"
 
 # ===================================
 # 1. AGGIORNAMENTO SISTEMA
@@ -34,6 +35,14 @@ sudo apt update && sudo apt upgrade -y
 echo "🧹 Pulizia pacchetti non necessari..."
 sudo apt autoremove -y
 sudo apt autoclean
+
+# ===================================
+# 1.5. CONFIGURAZIONE HOSTNAME
+# ===================================
+
+echo "🏷️ Configurazione hostname: $HOSTNAME..."
+sudo hostnamectl set-hostname $HOSTNAME
+echo "127.0.1.1    $HOSTNAME.local $HOSTNAME" | sudo tee -a /etc/hosts
 
 # ===================================
 # 2. INSTALLAZIONE SOFTWARE BASE
@@ -60,9 +69,26 @@ sudo apt install -y \
   pcscd \
   pcsc-tools
 
+# Configurazione pcscd per migliore sensibilità
+sudo tee /etc/reader.conf.d/libccid_Info.plist > /dev/null << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>ifdDriverOptions</key>
+	<string>0x0004</string>
+	<key>ifdLogLevel</key>
+	<string>0x0003</string>
+</dict>
+</plist>
+EOF
+
 # Avvia servizio pcscd
 sudo systemctl enable pcscd
 sudo systemctl start pcscd
+
+# Installa dipendenze Python per PC/SC
+sudo apt install -y python3-pyscard
 
 # ===================================  
 # 3. CONFIGURAZIONE NFC
@@ -75,7 +101,7 @@ sudo mkdir -p /etc/nfc
 sudo tee /etc/nfc/libnfc.conf > /dev/null << EOF
 # Configurazione libnfc per Raspberry Pi
 allow_autoscan = true
-allow_intrusive_scan = false
+allow_intrusive_scan = true
 log_level = 1
 
 # Dispositivi supportati
@@ -84,6 +110,9 @@ device.connstring = "pn532_uart:/dev/ttyUSB0"
 
 device.name = "ACR122U"  
 device.connstring = "acr122_usb"
+
+# Configurazione specifica ACR122U per sensibilità migliorata
+device.optional = true
 EOF
 
 # Permessi per device NFC

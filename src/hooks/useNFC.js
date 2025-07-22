@@ -25,13 +25,12 @@ export const useNFC = () => {
       // 2. Prova bridge Raspberry - tenta sempre se nella stessa rete
       console.log('🔍 NFC: Tentativo rilevazione bridge Raspberry...')
       
-      // Lista IP da testare (Raspberry IP prima, poi fallback)
+      // Lista URL da testare (Cloudflare tunnel prima, poi fallback locali)
       const bridgeUrls = [
+        'https://nfc.saporiecolori.net',
         'http://192.168.1.6:3001',
         'http://saporiecolori.local:3001',
-        'http://localhost:3001',
-        'http://192.168.1.100:3001',
-        'http://192.168.0.100:3001'
+        'http://localhost:3001'
       ]
 
       for (const bridgeUrl of bridgeUrls) {
@@ -70,6 +69,41 @@ export const useNFC = () => {
     }
   }, [])
 
+  // Suono di feedback per lettura riuscita
+  const playSuccessSound = useCallback(() => {
+    try {
+      // Opzione 1: Usa file audio personalizzato
+      const audio = new Audio('/sounds/scannerqr.mp3') // Suono scanner perfetto per NFC
+      audio.volume = 0.7
+      audio.play()
+      
+      console.log('🔊 Suono di conferma lettura NFC')
+    } catch (error) {
+      console.log('File audio non trovato, uso beep generato:', error)
+      
+      // Fallback: beep generato se il file non esiste
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+        const oscillator = audioContext.createOscillator()
+        const gainNode = audioContext.createGain()
+        
+        oscillator.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+        
+        oscillator.frequency.value = 800
+        oscillator.type = 'sine'
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
+        
+        oscillator.start(audioContext.currentTime)
+        oscillator.stop(audioContext.currentTime + 0.3)
+      } catch (fallbackError) {
+        console.log('Impossibile riprodurre suono:', fallbackError)
+      }
+    }
+  }, [])
+
   // Leggi tag NFC
   const readNFC = useCallback(async () => {
     if (!isNFCAvailable) {
@@ -81,13 +115,21 @@ export const useNFC = () => {
     setError(null)
 
     try {
+      let result = null
       if (nfcMethod === 'web-nfc') {
-        return await readWebNFC()
+        result = await readWebNFC()
       } else if (nfcMethod === 'raspberry-bridge') {
-        return await readRaspberryBridge()
+        result = await readRaspberryBridge()
       } else {
         throw new Error('Metodo NFC non configurato')
       }
+      
+      // Riproduci suono di successo se la lettura è riuscita
+      if (result && result.data) {
+        playSuccessSound()
+      }
+      
+      return result
     } catch (error) {
       console.error('Errore lettura NFC:', error)
       setError(error.message)
@@ -95,7 +137,7 @@ export const useNFC = () => {
     } finally {
       setIsScanning(false)
     }
-  }, [isNFCAvailable, nfcMethod])
+  }, [isNFCAvailable, nfcMethod, playSuccessSound])
 
   // Web NFC API (browser nativi)
   const readWebNFC = async () => {
@@ -155,7 +197,7 @@ export const useNFC = () => {
     const response = await fetch(`${bridgeUrl}/nfc/read`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ timeout: 10000 })
+      body: JSON.stringify({ timeout: 5000 })
     })
 
     if (!response.ok) {

@@ -58,7 +58,7 @@ let nfcStatus = {
 const detectNFCReader = async () => {
   return new Promise((resolve) => {
     // Controlla se nfc-list è disponibile (libnfc)
-    const nfcList = spawn('nfc-list', ['-t', '1'])
+    const nfcList = spawn('nfc-list', ['-t', '0.5'])
     
     let output = ''
     let hasError = false
@@ -157,7 +157,7 @@ const checkPCSC = async () => {
 /**
  * Leggi tag NFC
  */
-const readNFCTag = async (timeout = 10000) => {
+const readNFCTag = async (timeout = 5000) => {
   if (!nfcStatus.available) {
     throw new Error('Lettore NFC non disponibile')
   }
@@ -167,10 +167,12 @@ const readNFCTag = async (timeout = 10000) => {
     let timeoutHandle
     
     if (nfcStatus.readerType === 'libnfc') {
-      nfcProcess = spawn('nfc-poll', ['-t', Math.floor(timeout / 1000).toString()])
+      // Usa polling più aggressivo per migliore sensibilità
+      nfcProcess = spawn('nfc-poll', ['-t', Math.floor(timeout / 1000).toString(), '-k'])
     } else if (nfcStatus.readerType === 'pcsc') {
-      // Usa uno script Python per PC/SC se disponibile
-      nfcProcess = spawn('python3', [path.join(__dirname, 'scripts/read_nfc.py')])
+      // Forza uso di libnfc per maggiore stabilità
+      console.log('🔧 Uso libnfc per maggiore sensibilità')
+      nfcProcess = spawn('nfc-poll', ['-t', Math.floor(timeout / 1000).toString(), '-k'])
     } else {
       reject(new Error('Tipo lettore NFC non supportato'))
       return
@@ -348,6 +350,20 @@ app.get('/health', (req, res) => {
 // Rilevamento iniziale
 detectNFCReader().then((status) => {
   console.log('🔍 Rilevamento NFC completato:', status)
+  
+  // Inizializza configurazione alta sensibilità se disponibile
+  if (status.available && status.readerType === 'pcsc') {
+    console.log('🔧 Inizializzazione alta sensibilità...')
+    const initScript = spawn('python3', [path.join(__dirname, 'scripts/init_nfc_sensitivity.py')])
+    
+    initScript.on('close', (code) => {
+      if (code === 0) {
+        console.log('✅ Lettore NFC configurato con alta sensibilità')
+      } else {
+        console.log('⚠️  Configurazione sensibilità fallita, uso standard')
+      }
+    })
+  }
   
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 NFC Bridge Server avviato su porta ${PORT}`)
