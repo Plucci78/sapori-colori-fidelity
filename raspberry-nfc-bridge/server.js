@@ -21,13 +21,18 @@ const path = require('path')
 const app = express()
 const PORT = process.env.NFC_BRIDGE_PORT || 3001
 
-// Middleware CORS permissivo per tunnel Cloudflare
-app.use(cors({
-  origin: true, // Temporaneamente permissivo
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}))
+// Middleware CORS - Home Assistant style
+app.use(cors())
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With')
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200)
+  } else {
+    next()
+  }
+})
 app.use(express.json())
 
 // Log delle operazioni
