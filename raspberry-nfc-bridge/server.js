@@ -21,8 +21,13 @@ const path = require('path')
 const app = express()
 const PORT = process.env.NFC_BRIDGE_PORT || 3001
 
-// Middleware
-app.use(cors())
+// Middleware CORS permissivo per tunnel Cloudflare
+app.use(cors({
+  origin: true, // Temporaneamente permissivo
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}))
 app.use(express.json())
 
 // Log delle operazioni
