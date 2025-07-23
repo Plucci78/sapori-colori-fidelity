@@ -13,17 +13,11 @@ const DarkModeToggle = () => {
 
   return (
     <button
-      className="btn btn-secondary"
-      style={{
-        position: "fixed",
-        top: 24,
-        right: 24,
-        zIndex: 1000,
-        border: "2px solid var(--brand-primary)",
-      }}
+      className="dark-mode-toggle"
       onClick={() => setDark((d) => !d)}
+      title={dark ? "Attiva modalità chiara" : "Attiva modalità scura"}
     >
-      {dark ? "☀️ Modalità Chiara" : "🌙 Modalità Scura"}
+      {dark ? "☀️" : "🌙"}
     </button>
   );
 };

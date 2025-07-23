@@ -17029,3 +17029,46 @@ button.btn-brand-secondary:hover {
   background: var(--gray-100, #f3f4f6) !important;
   border-color: var(--brand-primary, #8B4513) !important;
 }
+
+/* === DARK MODE TOGGLE - MOBILE OPTIMIZED === */
+.dark-mode-toggle {
+  position: fixed;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 1000;
+  background: var(--brand-primary);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.3s ease;
+}
+
+.dark-mode-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Mobile: Compatto per evitare conflitti con hamburger */
+@media (max-width: 768px) {
+  .dark-mode-toggle {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+    top: 16px;
+    right: 16px;
+  }
+  
+  /* Assicura che hamburger e dark mode non si sovrappongano */
+  .hamburger-btn {
+    top: 16px;
+    left: 16px;
+  }
+}
