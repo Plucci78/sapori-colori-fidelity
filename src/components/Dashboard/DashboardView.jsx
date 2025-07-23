@@ -20,7 +20,7 @@ const DashboardView = ({
   const [recentActivities, setRecentActivities] = useState([])
   const [loadingActivities, setLoadingActivities] = useState(true)
 
-  const { signOut, profile } = useAuth()
+  const { profile } = useAuth()
 
   // Carica attività recenti dal database
   const loadRecentActivities = async () => {
@@ -222,12 +222,9 @@ const DashboardView = ({
 
       {/* LOGOUT + NOME UTENTE */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 24 }}>
-        <span style={{ marginRight: 16, fontWeight: 600 }}>
-          {profile?.full_name}
+        <span style={{ fontWeight: 600 }}>
+          Benvenuto, {profile?.full_name}! 👋
         </span>
-        <button className="logout-btn" onClick={signOut}>
-          Logout
-        </button>
       </div>
 
       {/* MODALI FORM */}
