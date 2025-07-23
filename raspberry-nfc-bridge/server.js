@@ -354,6 +354,231 @@ app.get('/health', (req, res) => {
 })
 
 // ===================================
+// PRINT APIs - STAMPANTE IT-DITRON
+// ===================================
+
+/**
+ * Genera comando ESC/POS per stampante termica
+ */
+const generateESCPOS = (content, type = 'receipt') => {
+  const ESC = '\x1B'
+  const commands = []
+  
+  // Reset stampante
+  commands.push(ESC + '@')
+  
+  if (type === 'gift-card') {
+    // Gift Card - formato più ampio
+    commands.push(ESC + 'a' + '\x01') // Centro
+    commands.push(ESC + '!' + '\x18') // Font grande
+    commands.push('🎁 GIFT CARD 🎁\n')
+    commands.push(ESC + '!' + '\x00') // Font normale
+    commands.push('='.repeat(32) + '\n')
+    commands.push(`Codice: ${content.code}\n`)
+    commands.push(`Valore: €${content.value}\n`)
+    commands.push(`Destinatario: ${content.recipient_name}\n`)
+    if (content.purchaser_name) {
+      commands.push(`Da: ${content.purchaser_name}\n`)
+    }
+    commands.push(`Data: ${new Date().toLocaleDateString('it-IT')}\n`)
+    if (content.expires_at) {
+      commands.push(`Scade: ${new Date(content.expires_at).toLocaleDateString('it-IT')}\n`)
+    }
+    commands.push('='.repeat(32) + '\n')
+    commands.push('\n🍝 SAPORI & COLORI\n')
+    commands.push('Via della Gastronomia, 123\n')
+    commands.push('Tel: +39 123 456 7890\n')
+    commands.push('www.saporicolori.it\n\n')
+  } else {
+    // Ricevuta semplice
+    commands.push(ESC + 'a' + '\x01') // Centro
+    commands.push('🍝 SAPORI & COLORI\n')
+    commands.push(ESC + 'a' + '\x00') // Sinistra
+    commands.push('-'.repeat(32) + '\n')
+    commands.push('RICEVUTA GIFT CARD\n')
+    commands.push('-'.repeat(32) + '\n')
+    commands.push(`Codice: ${content.code}\n`)
+    commands.push(`Valore: €${content.value}\n`)
+    commands.push(`Data: ${new Date().toLocaleDateString('it-IT')}\n`)
+    commands.push('-'.repeat(32) + '\n')
+    commands.push('Ricevuta di cortesia\n')
+    commands.push('Non valida fiscalmente\n\n')
+  }
+  
+  // Taglio carta (se supportato)
+  commands.push(ESC + 'd' + '\x03') // 3 righe vuote
+  commands.push('\x1D' + 'V' + 'A' + '\x00') // Taglio completo
+  
+  return commands.join('')
+}
+
+/**
+ * Stampa su stampante IT-ditron via CUPS
+ */
+const printToThermal = async (escposContent, jobName = 'print-job') => {
+  return new Promise((resolve, reject) => {
+    // Usa lp command per stampare via CUPS
+    const printProcess = spawn('lp', [
+      '-d', 'IT-ditron', // Nome stampante (da configurare in CUPS)
+      '-t', jobName,
+      '-o', 'raw'
+    ])
+    
+    let output = ''
+    let errorOutput = ''
+    
+    printProcess.stdin.write(escposContent)
+    printProcess.stdin.end()
+    
+    printProcess.stdout.on('data', (data) => {
+      output += data.toString()
+    })
+    
+    printProcess.stderr.on('data', (data) => {
+      errorOutput += data.toString()
+    })
+    
+    printProcess.on('close', (code) => {
+      if (code === 0) {
+        resolve({ success: true, output, jobId: output.trim() })
+      } else {
+        reject(new Error(`Errore stampa: ${errorOutput || 'Codice uscita: ' + code}`))
+      }
+    })
+    
+    printProcess.on('error', (error) => {
+      reject(error)
+    })
+  })
+}
+
+/**
+ * POST /print/gift-card - Stampa gift card completa
+ */
+app.post('/print/gift-card', async (req, res) => {
+  try {
+    const { giftCard } = req.body
+    
+    if (!giftCard || !giftCard.code) {
+      return res.status(400).json({
+        success: false,
+        error: 'Dati gift card mancanti',
+        timestamp: new Date().toISOString()
+      })
+    }
+    
+    logOperation('PRINT_GIFT_CARD_START', giftCard)
+    
+    // Genera comandi ESC/POS
+    const escposContent = generateESCPOS(giftCard, 'gift-card')
+    
+    // Stampa
+    const result = await printToThermal(escposContent, `gift-card-${giftCard.code}`)
+    
+    logOperation('PRINT_GIFT_CARD_SUCCESS', { code: giftCard.code, jobId: result.jobId })
+    
+    res.json({
+      success: true,
+      message: 'Gift card stampata con successo',
+      jobId: result.jobId,
+      timestamp: new Date().toISOString()
+    })
+    
+  } catch (error) {
+    logOperation('PRINT_GIFT_CARD_ERROR', null, error)
+    
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    })
+  }
+})
+
+/**
+ * POST /print/receipt - Stampa ricevuta semplice
+ */
+app.post('/print/receipt', async (req, res) => {
+  try {
+    const { giftCard } = req.body
+    
+    if (!giftCard || !giftCard.code) {
+      return res.status(400).json({
+        success: false,
+        error: 'Dati ricevuta mancanti',
+        timestamp: new Date().toISOString()
+      })
+    }
+    
+    logOperation('PRINT_RECEIPT_START', giftCard)
+    
+    // Genera comandi ESC/POS
+    const escposContent = generateESCPOS(giftCard, 'receipt')
+    
+    // Stampa
+    const result = await printToThermal(escposContent, `receipt-${giftCard.code}`)
+    
+    logOperation('PRINT_RECEIPT_SUCCESS', { code: giftCard.code, jobId: result.jobId })
+    
+    res.json({
+      success: true,
+      message: 'Ricevuta stampata con successo',
+      jobId: result.jobId,
+      timestamp: new Date().toISOString()
+    })
+    
+  } catch (error) {
+    logOperation('PRINT_RECEIPT_ERROR', null, error)
+    
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    })
+  }
+})
+
+/**
+ * GET /print/status - Stato stampante
+ */
+app.get('/print/status', async (req, res) => {
+  try {
+    // Controlla stato stampante CUPS
+    const cupsProcess = spawn('lpstat', ['-p', 'IT-ditron'])
+    
+    let output = ''
+    let hasError = false
+    
+    cupsProcess.stdout.on('data', (data) => {
+      output += data.toString()
+    })
+    
+    cupsProcess.stderr.on('data', (data) => {
+      hasError = true
+    })
+    
+    cupsProcess.on('close', (code) => {
+      const available = code === 0 && !hasError && output.includes('is idle')
+      
+      res.json({
+        available,
+        status: available ? 'ready' : 'offline',
+        details: output.trim(),
+        timestamp: new Date().toISOString()
+      })
+    })
+    
+  } catch (error) {
+    res.status(500).json({
+      available: false,
+      status: 'error',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    })
+  }
+})
+
+// ===================================
 // AVVIO SERVER
 // ===================================
 

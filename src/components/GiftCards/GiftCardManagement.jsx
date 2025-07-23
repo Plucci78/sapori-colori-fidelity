@@ -1238,187 +1238,23 @@ const GiftCardManagement = ({ showNotification }) => {
                     showNotification?.('Errore nella registrazione della ricevuta', 'error')
                   }
                   
-                  // Stampa ricevuta scontrino di cortesia
-                  const printWindow = window.open('', '_blank', 'width=400,height=600')
-                  printWindow.document.write(`
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                      <title>Ricevuta Gift Card - ${previewCard.code}</title>
-                      <style>
-                        body { 
-                          margin: 0; 
-                          padding: 15px; 
-                          font-family: 'Courier New', monospace; 
-                          font-size: 12px; 
-                          line-height: 1.3; 
-                          color: #333; 
-                          background: white;
-                          max-width: 80mm;
-                        }
-                        .receipt-container { 
-                          border: 1px dashed #333; 
-                          padding: 10px; 
-                          margin: 0 auto;
-                          background: white;
-                        }
-                        .header { 
-                          text-align: center; 
-                          border-bottom: 1px solid #333; 
-                          padding-bottom: 8px; 
-                          margin-bottom: 10px; 
-                        }
-                        .business-name { 
-                          font-weight: bold; 
-                          font-size: 14px; 
-                          margin-bottom: 2px; 
-                          letter-spacing: 1px;
-                        }
-                        .business-subtitle { 
-                          font-size: 10px; 
-                          margin-bottom: 4px; 
-                        }
-                        .receipt-title { 
-                          font-weight: bold; 
-                          font-size: 13px; 
-                          margin-top: 8px;
-                          text-decoration: underline;
-                        }
-                        .section { 
-                          margin: 8px 0; 
-                          border-bottom: 1px dotted #666; 
-                          padding-bottom: 6px; 
-                        }
-                        .row { 
-                          display: flex; 
-                          justify-content: space-between; 
-                          margin: 2px 0; 
-                        }
-                        .label { 
-                          font-weight: bold; 
-                        }
-                        .value { 
-                          text-align: right; 
-                        }
-                        .total-row { 
-                          font-weight: bold; 
-                          font-size: 13px; 
-                          border-top: 1px solid #333; 
-                          padding-top: 4px; 
-                          margin-top: 6px;
-                        }
-                        .gift-code { 
-                          text-align: center; 
-                          font-weight: bold; 
-                          font-size: 14px; 
-                          letter-spacing: 2px; 
-                          margin: 8px 0;
-                          border: 1px solid #333;
-                          padding: 6px;
-                          background: #f0f0f0;
-                        }
-                        .footer { 
-                          text-align: center; 
-                          font-size: 10px; 
-                          margin-top: 10px; 
-                          padding-top: 8px;
-                          border-top: 1px solid #333;
-                        }
-                        .instructions { 
-                          font-size: 10px; 
-                          margin: 8px 0; 
-                          text-align: justify;
-                        }
-                        .thank-you { 
-                          text-align: center; 
-                          font-weight: bold; 
-                          margin: 8px 0; 
-                        }
-                        @media print { 
-                          body { print-color-adjust: exact; }
-                          .receipt-container { border: 1px dashed #000; }
-                        }
-                      </style>
-                    </head>
-                    <body>
-                      <div class="receipt-container">
-                        <div class="header">
-                          <div class="business-name">SAPORI & COLORI</div>
-                          <div class="business-subtitle">Ristorante & Gastronomia</div>
-                          <div class="receipt-title">RICEVUTA GIFT CARD</div>
-                        </div>
-
-                        <div class="section">
-                          <div class="row">
-                            <span class="label">Data Acquisto:</span>
-                            <span class="value">${formatDate(previewCard.purchase_date)}</span>
-                          </div>
-                          <div class="row">
-                            <span class="label">Cliente:</span>
-                            <span class="value">${previewCard.purchaser?.name || 'N/A'}</span>
-                          </div>
-                        </div>
-
-                        <div class="section">
-                          <div class="row">
-                            <span class="label">Articolo:</span>
-                            <span class="value">Gift Card Digitale</span>
-                          </div>
-                          <div class="row">
-                            <span class="label">Destinatario:</span>
-                            <span class="value">${previewCard.recipient_name}</span>
-                          </div>
-                        </div>
-
-                        <div class="section">
-                          <div class="row total-row">
-                            <span class="label">VALORE GIFT CARD:</span>
-                            <span class="value">${formatCurrency(previewCard.amount)}</span>
-                          </div>
-                          ${previewCard.balance < previewCard.amount ? `
-                          <div class="row">
-                            <span class="label">Saldo Utilizzato:</span>
-                            <span class="value">-${formatCurrency(previewCard.amount - previewCard.balance)}</span>
-                          </div>
-                          <div class="row total-row">
-                            <span class="label">SALDO ATTUALE:</span>
-                            <span class="value">${formatCurrency(previewCard.balance)}</span>
-                          </div>
-                          ` : ''}
-                        </div>
-
-                        <div class="gift-code">
-                          CODICE: ${previewCard.code}
-                        </div>
-
-                        <div class="instructions">
-                          <strong>ISTRUZIONI:</strong><br>
-                          1. Conserva questo codice per utilizzare la gift card<br>
-                          2. Presenta al momento del pagamento<br>
-                          3. Utilizzabile in più visite fino ad esaurimento<br>
-                          ${previewCard.expires_at ? `4. Valida fino al ${formatDate(previewCard.expires_at)}` : '4. Nessuna scadenza'}
-                        </div>
-
-                        <div class="thank-you">
-                          ★ GRAZIE PER LA FIDUCIA ★
-                        </div>
-
-                        <div class="footer">
-                          Via della Gastronomia, 123 - Città<br>
-                          Tel: +39 123 456 7890<br>
-                          www.saporicolori.it<br><br>
-                          <small>Ricevuta di cortesia - Non valida fiscalmente</small>
-                        </div>
-                      </div>
-                    </body>
-                    </html>
-                  `)
-                  printWindow.document.close()
-                  printWindow.focus()
-                  setTimeout(() => {
-                    printWindow.print()
-                    printWindow.close()
-                  }, 250)
+                  // API call per stampa ricevuta
+                  try {
+                    const response = await fetch('/api/print/receipt', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ giftCard: previewCard })
+                    })
+                    
+                    if (response.ok) {
+                      showNotification?.('Ricevuta inviata alla stampante', 'success')
+                    } else {
+                      throw new Error('Errore nella stampa')
+                    }
+                  } catch (error) {
+                    console.error('Errore stampa ricevuta:', error)
+                    showNotification?.('Errore nell\'invio della ricevuta alla stampante', 'error')
+                  }
                 }}
               >
                 🧾 Stampa Ricevuta
@@ -1432,130 +1268,23 @@ const GiftCardManagement = ({ showNotification }) => {
                     showNotification?.('Errore nella registrazione della stampa', 'error')
                   }
                   
-                  // Apri una nuova finestra per la stampa
-                  const printWindow = window.open('', '_blank', 'width=800,height=600')
-                  printWindow.document.write(`
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                      <title>Gift Card - ${previewCard.code}</title>
-                      <style>
-                        body { margin: 0; padding: 20px; font-family: Georgia, serif; background: white; }
-                        .print-container { display: flex; gap: 40px; justify-content: center; align-items: flex-start; }
-                        .gift-card { width: 400px; height: 250px; position: relative; background: linear-gradient(135deg, #D4AF37 0%, #B8860B 50%, #8B7D3A 100%); border-radius: 16px; overflow: hidden; color: white; margin-bottom: 20px; border: 2px solid rgba(255, 255, 255, 0.2); }
-                        .card-border { position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; background: rgba(255, 255, 255, 0.05); }
-                        .card-header { text-align: center; margin-bottom: 16px; }
-                        .business-name { font-size: 1.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 3px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); margin-bottom: 4px; }
-                        .gift-card-title { font-size: 1rem; font-weight: 300; letter-spacing: 2px; opacity: 0.9; }
-                        .card-main { flex: 1; position: relative; display: flex; flex-direction: column; justify-content: space-between; }
-                        .card-value-section { text-align: center; margin: 16px 0; z-index: 2; position: relative; }
-                        .value-label { font-size: 0.7rem; letter-spacing: 1px; opacity: 0.8; margin-bottom: 4px; }
-                        .value-amount { font-size: 2.5rem; font-weight: bold; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); letter-spacing: 1px; }
-                        .card-recipient-section { text-align: center; margin: 12px 0; z-index: 2; position: relative; }
-                        .recipient-to { font-size: 0.6rem; letter-spacing: 1px; opacity: 0.8; margin-bottom: 4px; }
-                        .recipient-name { font-size: 1.2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-                        .personal-message { font-size: 0.8rem; font-style: italic; opacity: 0.9; max-width: 280px; margin: 0 auto; line-height: 1.3; }
-                        .card-code-section { text-align: center; margin: 12px 0; z-index: 2; position: relative; }
-                        .code-label { font-size: 0.6rem; letter-spacing: 1px; opacity: 0.8; margin-bottom: 4px; }
-                        .gift-code { font-family: 'Courier New', monospace; font-size: 1rem; font-weight: bold; letter-spacing: 2px; background: rgba(255, 255, 255, 0.2); padding: 8px 12px; border-radius: 6px; display: inline-block; }
-                        .card-footer-info { display: flex; justify-content: space-between; align-items: flex-end; font-size: 0.6rem; z-index: 2; position: relative; }
-                        .footer-left { flex: 1; }
-                        .valid-info, .purchase-info { opacity: 0.8; line-height: 1.3; }
-                        .back-card { background: linear-gradient(135deg, #2c1810 0%, #5d4037 50%, #2c1810 100%); }
-                        .back-content { flex: 1; font-size: 0.7rem; line-height: 1.4; }
-                        .back-content h3 { font-size: 0.8rem; text-align: center; margin-bottom: 12px; letter-spacing: 1px; border-bottom: 1px solid rgba(255, 255, 255, 0.3); padding-bottom: 8px; }
-                        .back-content h4 { font-size: 0.7rem; margin: 12px 0 8px 0; letter-spacing: 0.5px; }
-                        .instructions { margin-bottom: 16px; }
-                        .instruction-item { display: flex; align-items: flex-start; margin-bottom: 8px; gap: 8px; }
-                        .step-number { background: rgba(255, 255, 255, 0.2); width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold; flex-shrink: 0; }
-                        .step-text { flex: 1; font-size: 0.65rem; }
-                        .terms ul { margin: 0; padding-left: 16px; font-size: 0.6rem; }
-                        .terms li { margin-bottom: 4px; line-height: 1.3; }
-                        .contact-info { border-top: 1px solid rgba(255, 255, 255, 0.3); padding-top: 8px; margin-top: 12px; }
-                        .contact-item { font-size: 0.6rem; margin-bottom: 2px; opacity: 0.9; }
-                        @media print { body { print-color-adjust: exact; } }
-                      </style>
-                    </head>
-                    <body>
-                      <div class="print-container">
-                        <div class="gift-card">
-                          <div class="card-border">
-                            <div class="card-header">
-                              <div class="business-name">SAPORI & COLORI</div>
-                              <div class="gift-card-title">GIFT CARD</div>
-                            </div>
-                            <div class="card-main">
-                              <div class="card-value-section">
-                                <div class="value-label">VALORE</div>
-                                <div class="value-amount">${formatCurrency(previewCard.amount)}</div>
-                              </div>
-                              <div class="card-recipient-section">
-                                <div class="recipient-to">PER:</div>
-                                <div class="recipient-name">${previewCard.recipient_name}</div>
-                                ${previewCard.message ? `<div class="personal-message">"${previewCard.message}"</div>` : ''}
-                              </div>
-                              <div class="card-code-section">
-                                <div class="code-label">CODICE GIFT CARD</div>
-                                <div class="gift-code">${previewCard.code}</div>
-                              </div>
-                              <div class="card-footer-info">
-                                <div class="footer-left">
-                                  <div class="valid-info">${previewCard.expires_at ? `Valida fino al ${formatDate(previewCard.expires_at)}` : 'Valida senza scadenza'}</div>
-                                  <div class="purchase-info">Acquistata il ${formatDate(previewCard.purchase_date)}</div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="gift-card back-card">
-                          <div class="card-border">
-                            <div class="card-header">
-                              <div class="business-name">🍝 SAPORI & COLORI</div>
-                            </div>
-                            <div class="back-content">
-                              <h3>COME UTILIZZARE LA TUA GIFT CARD</h3>
-                              <div class="instructions">
-                                <div class="instruction-item">
-                                  <span class="step-number">1</span>
-                                  <span class="step-text">Presenta questa gift card al momento del pagamento</span>
-                                </div>
-                                <div class="instruction-item">
-                                  <span class="step-number">2</span>
-                                  <span class="step-text">Comunica il codice: <strong>${previewCard.code}</strong></span>
-                                </div>
-                                <div class="instruction-item">
-                                  <span class="step-number">3</span>
-                                  <span class="step-text">L'importo verrà scalato automaticamente dal tuo ordine</span>
-                                </div>
-                              </div>
-                              <div class="terms">
-                                <h4>TERMINI E CONDIZIONI</h4>
-                                <ul>
-                                  <li>Gift card non rimborsabile in denaro</li>
-                                  <li>Utilizzabile per tutti i prodotti del menu</li>
-                                  <li>Può essere utilizzata in più visite</li>
-                                  <li>In caso di smarrimento non sarà possibile il recupero</li>
-                                  ${previewCard.expires_at ? `<li>Scade il ${formatDate(previewCard.expires_at)}</li>` : ''}
-                                </ul>
-                              </div>
-                              <div class="contact-info">
-                                <div class="contact-item">📍 Via della Gastronomia, 123 - Città</div>
-                                <div class="contact-item">📞 +39 123 456 7890</div>
-                                <div class="contact-item">🌐 www.saporicolori.it</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </body>
-                    </html>
-                  `)
-                  printWindow.document.close()
-                  printWindow.focus()
-                  setTimeout(() => {
-                    printWindow.print()
-                    printWindow.close()
-                  }, 250)
+                  // API call per stampa gift card
+                  try {
+                    const response = await fetch('/api/print/gift-card', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ giftCard: previewCard })
+                    })
+                    
+                    if (response.ok) {
+                      showNotification?.('Gift card inviata alla stampante', 'success')
+                    } else {
+                      throw new Error('Errore nella stampa')
+                    }
+                  } catch (error) {
+                    console.error('Errore stampa gift card:', error)
+                    showNotification?.('Errore nell\'invio della gift card alla stampante', 'error')
+                  }
                 }}
               >
                 🖨️ Stampa Gift Card
