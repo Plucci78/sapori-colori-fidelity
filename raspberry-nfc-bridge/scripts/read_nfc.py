@@ -45,73 +45,57 @@ class NFCReader:
         """
         try:
             # Configurazione per polling più frequente
-            cardrequest = CardRequest(
-                timeout=timeout_sec,
-                readers=[self.reader]
-            )
+            cardrequest = CardRequest(readers=[self.reader])
             
             print("In attesa di tag NFC...", file=sys.stderr)
-            
-            # Stabilisci una connessione iniziale per configurare LED
-            try:
-                initial_service = cardrequest.waitforcard(timeout=0.1)
-                initial_service.connection.connect()
-                self.configure_leds(initial_service.connection)
-                initial_service.connection.disconnect()
-            except:
-                pass  # Continua anche se la configurazione iniziale fallisce
             
             # Polling a intervalli più brevi per migliorare sensibilità
             end_time = time.time() + timeout_sec
             while time.time() < end_time:
                 try:
-                    # Timeout breve per polling più frequente
-                    cardservice = cardrequest.waitforcard(timeout=0.5)
-                    cardservice.connection.connect()
+                    # Prova a connettersi con timeout breve
+                    import signal
                     
-                    # Configura LED verde quando tag rilevato + beep
-                    led_green_beep = [0xFF, 0x00, 0x40, 0x0F, 0x04, 0x02, 0x02, 0x02, 0x02]
-                    cardservice.connection.transmit(led_green_beep)
+                    def timeout_handler(signum, frame):
+                        raise CardRequestTimeoutException()
                     
-                    # Beep di conferma
-                    beep_cmd = [0xFF, 0x00, 0x52, 0x00, 0x00, 0x02, 0x02, 0x03]
-                    cardservice.connection.transmit(beep_cmd)
+                    signal.signal(signal.SIGALRM, timeout_handler)
+                    signal.alarm(1)  # 1 secondo di timeout
                     
-                    # Leggi UID del tag
-                    # GET DATA command per UID
-                    get_uid_cmd = [0xFF, 0xCA, 0x00, 0x00, 0x00]
-                    response, sw1, sw2 = cardservice.connection.transmit(get_uid_cmd)
+                    try:
+                        cardservice = cardrequest.waitforcard()
+                        signal.alarm(0)  # Cancella timeout
+                        cardservice.connection.connect()
+                        
+                        # Leggi UID del tag
+                        get_uid_cmd = [0xFF, 0xCA, 0x00, 0x00, 0x00]
+                        response, sw1, sw2 = cardservice.connection.transmit(get_uid_cmd)
+                        
+                        if sw1 == 0x90 and sw2 == 0x00:
+                            uid_hex = toHexString(response).replace(' ', '')
+                            
+                            result = {
+                                "success": True,
+                                "uid": uid_hex,
+                                "data": uid_hex,
+                                "type": "LIBNFC_UID",
+                                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                                "reader": str(self.reader)
+                            }
+                            
+                            cardservice.connection.disconnect()
+                            return result
+                        else:
+                            cardservice.connection.disconnect()
+                            raise Exception(f"Errore lettura UID: {sw1:02X} {sw2:02X}")
                     
-                    if sw1 == 0x90 and sw2 == 0x00:
-                        uid_hex = toHexString(response).replace(' ', '')
+                    except:
+                        signal.alarm(0)  # Assicurati di cancellare il timeout
+                        raise
                         
-                        # Mantieni LED verde per 1 secondo
-                        time.sleep(1)
-                        
-                        # Ritorna al LED rosso in attesa
-                        led_red_standby = [0xFF, 0x00, 0x40, 0x0F, 0x04, 0x01, 0x01, 0x01, 0x01]
-                        cardservice.connection.transmit(led_red_standby)
-                        
-                        result = {
-                            "success": True,
-                            "uid": uid_hex,
-                            "data": uid_hex,
-                            "type": "LIBNFC_UID",
-                            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
-                            "reader": str(self.reader)
-                        }
-                        
-                        cardservice.connection.disconnect()
-                        return result
-                    else:
-                        raise Exception(f"Errore lettura UID: {sw1:02X} {sw2:02X}")
-                        
-                except CardRequestTimeoutException:
+                except (CardRequestTimeoutException, Exception):
                     # Continua il polling
-                    continue
-                except NoCardException:
-                    # Continua il polling
-                    time.sleep(0.1)
+                    time.sleep(0.2)
                     continue
                     
             # Timeout raggiunto

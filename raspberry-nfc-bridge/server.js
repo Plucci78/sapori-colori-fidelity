@@ -67,39 +67,8 @@ let nfcStatus = {
  */
 const detectNFCReader = async () => {
   return new Promise((resolve) => {
-    // Controlla se nfc-list è disponibile (libnfc)
-    const nfcList = spawn('nfc-list', ['-t', '0.5'])
-    
-    let output = ''
-    let hasError = false
-    
-    nfcList.stdout.on('data', (data) => {
-      output += data.toString()
-    })
-    
-    nfcList.stderr.on('data', (data) => {
-      hasError = true
-      console.error('nfc-list stderr:', data.toString())
-    })
-    
-    nfcList.on('close', (code) => {
-      if (code === 0 && !hasError && output.includes('NFC device')) {
-        nfcStatus = {
-          available: true,
-          readerType: 'libnfc',
-          lastCheck: new Date().toISOString(),
-          error: null
-        }
-        resolve(nfcStatus)
-      } else {
-        // Prova con nfc-pcsc (alternativo)
-        checkPCSC().then(resolve)
-      }
-    })
-    
-    nfcList.on('error', () => {
-      checkPCSC().then(resolve)
-    })
+    // Per ACR122U usa direttamente PC/SC
+    checkPCSC().then(resolve)
   })
 }
 
@@ -111,31 +80,34 @@ const checkPCSC = async () => {
     const pcscScan = spawn('pcsc_scan', ['-n'])
     
     let hasReader = false
+    let output = ''
     
     pcscScan.stdout.on('data', (data) => {
-      const output = data.toString()
-      if (output.includes('Reader') || output.includes('Card')) {
+      output += data.toString()
+      if (output.includes('ACS ACR122U') || output.includes('Reader')) {
         hasReader = true
-      }
-    })
-    
-    pcscScan.on('close', () => {
-      if (hasReader) {
+        // Lettore trovato, termina subito
+        pcscScan.kill()
         nfcStatus = {
           available: true,
           readerType: 'pcsc',
           lastCheck: new Date().toISOString(),
           error: null
         }
-      } else {
+        resolve(nfcStatus)
+      }
+    })
+    
+    pcscScan.on('close', () => {
+      if (!hasReader) {
         nfcStatus = {
           available: false,
           readerType: null,
           lastCheck: new Date().toISOString(),
           error: 'Nessun lettore NFC rilevato'
         }
+        resolve(nfcStatus)
       }
-      resolve(nfcStatus)
     })
     
     pcscScan.on('error', (error) => {
@@ -148,24 +120,24 @@ const checkPCSC = async () => {
       resolve(nfcStatus)
     })
     
-    // Timeout dopo 3 secondi
+    // Timeout dopo 2 secondi
     setTimeout(() => {
-      pcscScan.kill()
-      if (!nfcStatus.lastCheck) {
+      if (!hasReader) {
+        pcscScan.kill()
         nfcStatus = {
           available: false,
           readerType: null,
           lastCheck: new Date().toISOString(),
           error: 'Timeout rilevamento lettore'
         }
+        resolve(nfcStatus)
       }
-      resolve(nfcStatus)
-    }, 3000)
+    }, 2000)
   })
 }
 
 /**
- * Leggi tag NFC
+ * Leggi tag NFC usando script Python per migliore gestione real-time
  */
 const readNFCTag = async (timeout = 5000) => {
   if (!nfcStatus.available) {
@@ -173,21 +145,10 @@ const readNFCTag = async (timeout = 5000) => {
   }
 
   return new Promise((resolve, reject) => {
-    let nfcProcess
-    let timeoutHandle
+    // Usa script Python semplice e affidabile
+    const scriptPath = path.join(__dirname, 'scripts/read_nfc_simple.py')
+    const nfcProcess = spawn('python3', [scriptPath, timeout.toString()])
     
-    if (nfcStatus.readerType === 'libnfc') {
-      // Usa polling più aggressivo per migliore sensibilità
-      nfcProcess = spawn('nfc-poll', ['-t', Math.floor(timeout / 1000).toString(), '-k'])
-    } else if (nfcStatus.readerType === 'pcsc') {
-      // Forza uso di libnfc per maggiore stabilità
-      console.log('🔧 Uso libnfc per maggiore sensibilità')
-      nfcProcess = spawn('nfc-poll', ['-t', Math.floor(timeout / 1000).toString(), '-k'])
-    } else {
-      reject(new Error('Tipo lettore NFC non supportato'))
-      return
-    }
-
     let output = ''
     let errorOutput = ''
 
@@ -200,31 +161,25 @@ const readNFCTag = async (timeout = 5000) => {
     })
 
     nfcProcess.on('close', (code) => {
-      clearTimeout(timeoutHandle)
-      
-      if (code === 0 && output) {
+      if (code === 0 && output.trim()) {
         try {
-          // Parsing output basato sul tipo di lettore
-          const result = parseNFCOutput(output, nfcStatus.readerType)
-          resolve(result)
+          const result = JSON.parse(output.trim())
+          if (result.success) {
+            resolve(result)
+          } else {
+            reject(new Error(result.error || 'Errore sconosciuto'))
+          }
         } catch (parseError) {
-          reject(new Error(`Errore parsing: ${parseError.message}`))
+          reject(new Error(`Errore parsing JSON: ${parseError.message}`))
         }
       } else {
-        reject(new Error(`Errore lettura NFC: ${errorOutput || 'Codice uscita: ' + code}`))
+        reject(new Error(`Errore script Python: ${errorOutput || 'Codice uscita: ' + code}`))
       }
     })
 
     nfcProcess.on('error', (error) => {
-      clearTimeout(timeoutHandle)
-      reject(error)
+      reject(new Error(`Errore avvio script: ${error.message}`))
     })
-
-    // Timeout
-    timeoutHandle = setTimeout(() => {
-      nfcProcess.kill()
-      reject(new Error('Timeout lettura NFC'))
-    }, timeout)
   })
 }
 
@@ -264,17 +219,23 @@ const parseNFCOutput = (output, readerType) => {
     }
 
   } else if (readerType === 'pcsc') {
-    // Parse output PC/SC (implementare in base al tuo script Python)
-    try {
-      const jsonOutput = JSON.parse(output)
-      result.data = jsonOutput.data || jsonOutput.uid
-      result.uid = jsonOutput.uid
-      result.type = jsonOutput.type || 'Unknown'
-    } catch {
-      // Se non è JSON, tratta come UID raw
-      result.data = output.trim()
-      result.uid = output.trim()
-      result.type = 'Raw'
+    // Parse output pcsc_scan
+    const lines = output.split('\n')
+    
+    for (const line of lines) {
+      if (line.includes('ATR:')) {
+        const match = line.match(/ATR:\s*(.+)/)
+        if (match) {
+          result.uid = match[1].trim().replace(/\s/g, '')
+          result.data = result.uid
+          result.type = 'PC/SC'
+          break
+        }
+      }
+    }
+
+    if (!result.uid) {
+      throw new Error('ATR non trovato nell\'output PC/SC')
     }
   }
 
