@@ -1,0 +1,13 @@
+{
+  "giftCard": {
+    "code": "GC-2025-TEST",
+    "amount": 50.00,
+    "balance": 50.00,
+    "recipient_name": "Mario Rossi",
+    "purchaser": {
+      "name": "Luca Bianchi"
+    },
+    "message": "Auguri per il compleanno!",
+    "expires_at": "2025-12-31T23:59:59Z"
+  }
+}
