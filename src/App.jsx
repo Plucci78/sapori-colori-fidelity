@@ -35,6 +35,7 @@ import NFCViewHybrid from './components/NFC/NFCViewHybrid' // Ripristino Hybrid 
 import ClientPortal from './components/Clients/ClientPortal'
 import CouponManagement from './components/Coupons/CouponManagement'
 import GiftCardManagement from './components/GiftCards/GiftCardManagement'
+import WalletCashRegister from './components/Wallet/WalletCashRegister'
 import { generateClientToken, isValidToken } from './utils/tokenUtils'
 import nfcService from './services/nfcService'
 import { birthdayScheduler } from './services/birthdayScheduler'
@@ -807,6 +808,17 @@ const fixReferralData = async (customerId) => {
         </svg>
       ),
       description: 'Gestione gift card digitali',
+      permission: 'canManageCoupons'
+    },
+    {
+      id: 'wallet',
+      title: 'Wallet',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+      description: 'Registro cassa digitale per wallet clienti',
       permission: 'canManageCoupons'
     },
     {
@@ -2164,6 +2176,14 @@ for (const customer of recipients) {
         return (
           <ProtectedComponent permission="canManageCoupons">
             <GiftCardManagement
+              showNotification={showNotification}
+            />
+          </ProtectedComponent>
+        )
+      case 'wallet':
+        return (
+          <ProtectedComponent permission="canManageCoupons">
+            <WalletCashRegister
               showNotification={showNotification}
             />
           </ProtectedComponent>

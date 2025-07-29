@@ -25,12 +25,10 @@ export const useNFC = () => {
       // 2. Prova bridge Raspberry - tenta sempre se nella stessa rete
       console.log('🔍 NFC: Tentativo rilevazione bridge Raspberry...')
       
-      // Lista URL da testare (API proxy Vercel prima, poi fallback)
+      // Lista URL da testare (prima API proxy, poi fallback locale)
       const bridgeUrls = [
         '/api/nfc', // API Proxy Vercel (stesso dominio, zero CORS)
-        'http://192.168.1.6:3001', // Fallback locale
-        'http://saporiecolori.local:3001',
-        'http://localhost:3001'
+        'http://nfc.saporiecolori.net' // Tunnel diretto (funziona)
       ]
 
       for (const bridgeUrl of bridgeUrls) {
@@ -197,8 +195,9 @@ export const useNFC = () => {
     })
   }
 
-  // Bridge Raspberry
-  const readRaspberryBridge = async () => {
+  // Bridge Raspberry con retry automatico
+  const readRaspberryBridge = async (retryCount = 0) => {
+    const maxRetries = 2
     const bridgeUrl = window.nfcBridgeUrl || '/api/nfc'
     
     // Se è API proxy Vercel, usa endpoint read specifico
@@ -206,32 +205,55 @@ export const useNFC = () => {
       ? '/api/nfc/read' 
       : `${bridgeUrl}/nfc/read`
     
-    const response = await fetch(readUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ timeout: 5000 })
-    })
+    try {
+      const response = await fetch(readUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timeout: 5000 })
+      })
 
-    if (!response.ok) {
-      throw new Error(`Errore bridge NFC: ${response.status}`)
+      if (!response.ok) {
+        // Se errore 400/500 e abbiamo retry disponibili, riprova
+        if ((response.status === 400 || response.status === 500) && retryCount < maxRetries) {
+          console.log(`🔄 Errore ${response.status}, retry ${retryCount + 1}/${maxRetries}...`)
+          await new Promise(resolve => setTimeout(resolve, 2000)) // Attendi 2s
+          return await readRaspberryBridge(retryCount + 1)
+        }
+        throw new Error(`Errore bridge NFC: ${response.status}${retryCount > 0 ? ` (dopo ${retryCount} retry)` : ''}`)
+      }
+
+      const result = await response.json()
+      
+      if (!result.success) {
+        // Se il bridge ha problemi interni e abbiamo retry, riprova
+        if (retryCount < maxRetries && result.error && result.error.includes('timeout')) {
+          console.log(`🔄 Timeout NFC, retry ${retryCount + 1}/${maxRetries}...`)
+          await new Promise(resolve => setTimeout(resolve, 2000))
+          return await readRaspberryBridge(retryCount + 1)
+        }
+        throw new Error(result.error || 'Errore lettura NFC')
+      }
+
+      const nfcData = {
+        method: 'raspberry-bridge',
+        data: result.data,
+        uid: result.uid,
+        type: result.type,
+        timestamp: result.timestamp
+      }
+
+      setLastScannedData(nfcData)
+      return nfcData
+      
+    } catch (error) {
+      // Se è un errore di rete e abbiamo retry, riprova
+      if (retryCount < maxRetries && (error.name === 'TypeError' || error.message.includes('fetch'))) {
+        console.log(`🔄 Errore rete, retry ${retryCount + 1}/${maxRetries}...`)
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        return await readRaspberryBridge(retryCount + 1)
+      }
+      throw error
     }
-
-    const result = await response.json()
-    
-    if (!result.success) {
-      throw new Error(result.error || 'Errore lettura NFC')
-    }
-
-    const nfcData = {
-      method: 'raspberry-bridge',
-      data: result.data,
-      uid: result.uid,
-      type: result.type,
-      timestamp: result.timestamp
-    }
-
-    setLastScannedData(nfcData)
-    return nfcData
   }
 
   // Scrivi su tag NFC

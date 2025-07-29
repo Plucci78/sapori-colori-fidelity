@@ -1,0 +1,1136 @@
+.wallet-cash-register {
+  padding: 20px;
+  background: linear-gradient(135deg, var(--brand-primary, #8B4513) 0%, var(--brand-secondary, #D4AF37) 100%);
+  min-height: 100vh;
+  color: white;
+}
+
+.register-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.register-header h2 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.register-header p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.register-main {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 30px;
+  justify-content: center;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.register-left {
+  flex: 1;
+  min-width: 400px;
+  max-width: 500px;
+}
+
+.register-right {
+  flex: 1.5;
+  min-width: 500px;
+  max-width: 800px;
+}
+
+/* Display Digitale */
+.digital-display {
+  background: #1a1a1a;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  border: 3px solid #333;
+}
+
+.display-screen {
+  background: #000;
+  padding: 40px;
+  border-radius: 10px;
+  border: 2px solid #444;
+  text-align: center;
+  min-width: 350px;
+}
+
+.amount-display {
+  font-family: 'Courier New', monospace;
+  font-size: 4rem;
+  font-weight: bold;
+  color: #00ff00;
+  text-shadow: 0 0 20px #00ff00;
+  margin-bottom: 20px;
+  letter-spacing: 0.1em;
+}
+
+.customer-display {
+  color: #00aaff;
+  font-size: 1.4rem;
+  margin-top: 20px;
+  text-shadow: 0 0 10px #00aaff;
+}
+
+.balance-info {
+  font-size: 1rem;
+  margin-top: 10px;
+  color: #ffaa00;
+  text-shadow: 0 0 8px #ffaa00;
+}
+
+.operation-preview {
+  font-size: 0.9rem;
+  margin-top: 8px;
+  color: #00ff88;
+  text-shadow: 0 0 6px #00ff88;
+}
+
+/* Controlli Registro */
+.register-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+/* Tastierino Numerico Integrato nel Display */
+/* Pulsanti Rapidi */
+.quick-amounts {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.quick-btn {
+  padding: 12px 18px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(145deg, var(--brand-secondary, #D4AF37), #e6c547);
+  color: var(--brand-primary, #8B4513);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(212,175,55,0.3);
+  text-shadow: 0 0 8px rgba(255,255,255,0.3);
+}
+
+.quick-btn:hover {
+  background: linear-gradient(145deg, #e6c547, #f0d157);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(212,175,55,0.4);
+}
+
+.quick-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(212,175,55,0.3);
+}
+
+.integrated-keypad {
+  margin-top: 20px;
+  padding: 20px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 12px;
+  border: 1px solid #333;
+}
+
+.integrated-keypad .keypad-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.integrated-keypad .keypad-row:last-child {
+  margin-bottom: 0;
+}
+
+.integrated-keypad button {
+  width: 60px;
+  height: 60px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(145deg, #333, #222);
+  color: #00ff00;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.4), -1px -1px 4px rgba(255,255,255,0.05);
+  text-shadow: 0 0 8px #00ff00;
+}
+
+.integrated-keypad button:hover {
+  background: linear-gradient(145deg, #444, #333);
+  transform: translateY(-1px);
+  box-shadow: 4px 4px 12px rgba(0,0,0,0.5), -2px -2px 6px rgba(255,255,255,0.08);
+  color: #00ff88;
+  text-shadow: 0 0 12px #00ff88;
+}
+
+.integrated-keypad button:active {
+  transform: translateY(1px);
+  box-shadow: 1px 1px 4px rgba(0,0,0,0.4);
+}
+
+/* Tastierino Numerico Esterno (mantenuto per compatibilità) */
+.keypad {
+  display: grid;
+  grid-template-rows: repeat(4, 1fr);
+  gap: 15px;
+  background: #2a2a2a;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.keypad-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+.keypad button {
+  width: 80px;
+  height: 80px;
+  font-size: 2rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #4a4a4a, #2a2a2a);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 5px 5px 10px rgba(0,0,0,0.3), -2px -2px 8px rgba(255,255,255,0.1);
+}
+
+.keypad button:hover {
+  background: linear-gradient(145deg, #5a5a5a, #3a3a3a);
+  transform: translateY(-2px);
+  box-shadow: 7px 7px 15px rgba(0,0,0,0.4), -3px -3px 10px rgba(255,255,255,0.15);
+}
+
+.keypad button:active {
+  transform: translateY(1px);
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+}
+
+/* Pulsanti speciali tastierino integrato */
+.integrated-keypad .clear-btn {
+  background: linear-gradient(145deg, #ff4444, #cc3333) !important;
+  color: #fff !important;
+  text-shadow: 0 0 8px #ff4444 !important;
+}
+
+.integrated-keypad .clear-btn:hover {
+  background: linear-gradient(145deg, #ff5555, #dd4444) !important;
+  color: #fff !important;
+  text-shadow: 0 0 12px #ff5555 !important;
+}
+
+.integrated-keypad .backspace-btn {
+  background: linear-gradient(145deg, #ffaa00, #dd8800) !important;
+  color: #fff !important;
+  text-shadow: 0 0 8px #ffaa00 !important;
+}
+
+.integrated-keypad .backspace-btn:hover {
+  background: linear-gradient(145deg, #ffbb11, #ee9900) !important;
+  color: #fff !important;
+  text-shadow: 0 0 12px #ffbb11 !important;
+}
+
+/* Pulsanti speciali tastierino esterno */
+.clear-btn {
+  background: linear-gradient(145deg, #ff6b6b, #ee5a52) !important;
+}
+
+.clear-btn:hover {
+  background: linear-gradient(145deg, #ff7b7b, #ff5a52) !important;
+}
+
+.backspace-btn {
+  background: linear-gradient(145deg, #ffa726, #ff9800) !important;
+}
+
+.backspace-btn:hover {
+  background: linear-gradient(145deg, #ffb726, #ffa800) !important;
+}
+
+/* Pulsanti Azione */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  min-width: 250px;
+}
+
+.nfc-toggle {
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #6c757d, #5a6268);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.nfc-toggle.active {
+  background: linear-gradient(145deg, #28a745, #20c997);
+  animation: pulse 2s infinite;
+}
+
+.nfc-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+.confirm-btn {
+  padding: 20px 30px;
+  font-size: 1.4rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #007bff, #0056b3);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(0,123,255,0.3);
+}
+
+.confirm-btn:hover:not(:disabled) {
+  background: linear-gradient(145deg, #0087ff, #0066c3);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 25px rgba(0,123,255,0.4);
+}
+
+.confirm-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Sezione NFC */
+.nfc-reader-section {
+  background: rgba(255,255,255,0.1);
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 30px;
+  backdrop-filter: blur(10px);
+}
+
+/* Tabella Transazioni */
+.transactions-table {
+  background: rgba(255,255,255,0.95);
+  color: #333;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+/* Header tabella transazioni */
+.transactions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.transactions-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #2c3e50;
+}
+
+.export-btn {
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(145deg, #17a2b8, #138496);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(23,162,184,0.3);
+}
+
+.export-btn:hover {
+  background: linear-gradient(145deg, #1ac0dc, #148a9c);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(23,162,184,0.4);
+}
+
+/* Pulsante Ristampa */
+.reprint-btn {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(40,167,69,0.3);
+}
+
+.reprint-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40,167,69,0.4);
+  background: linear-gradient(135deg, #218838, #1ea887);
+}
+
+.reprint-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Stili per i badge */
+.payment-method {
+  font-size: 0.85rem;
+  color: #495057;
+  font-weight: 500;
+}
+
+/* Contenitore tabella ricevute con scroll */
+.receipts-table-container {
+  max-height: 500px;
+  overflow-y: auto;
+  border: 2px solid #17a2b8;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(23,162,184,0.2);
+}
+
+.table-container {
+  overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+}
+
+.transactions-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.transactions-table th,
+.transactions-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.transactions-table th {
+  background: #f8f9fa;
+  font-weight: bold;
+  color: #495057;
+  position: sticky;
+  top: 0;
+}
+
+.transactions-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.type {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.type.credit {
+  background: #d4edda;
+  color: #155724;
+}
+
+.type.debit {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.amount.credit {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.amount.debit {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+/* Animazioni */
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+
+/* Controlli Operazione */
+.operation-controls {
+  background: rgba(255,255,255,0.1);
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(10px);
+  min-width: 300px;
+}
+
+.operation-type, .payment-method {
+  margin-bottom: 15px;
+}
+
+.operation-controls label:first-child {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.radio-group {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,0.15);
+  padding: 12px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  backdrop-filter: blur(5px);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.radio-group label:hover {
+  background: rgba(255,255,255,0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.radio-group label.active {
+  background: linear-gradient(145deg, #007bff, #0056b3);
+  border-color: #fff;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(0,123,255,0.5);
+}
+
+.radio-group input[type="radio"] {
+  display: none;
+}
+
+/* Pulsante Stampa */
+.print-btn {
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #28a745, #20c997);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(40,167,69,0.3);
+}
+
+.print-btn:hover:not(:disabled) {
+  background: linear-gradient(145deg, #32b149, #25d4a3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(40,167,69,0.4);
+}
+
+.print-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.print-btn:disabled::before {
+  content: '';
+}
+
+/* Stato ricevuta disponibile */
+.print-btn:not(:disabled) {
+  animation: pulse-receipt 2s infinite;
+}
+
+@keyframes pulse-receipt {
+  0% { box-shadow: 0 5px 15px rgba(40,167,69,0.3); }
+  50% { box-shadow: 0 8px 25px rgba(40,167,69,0.6); }
+  100% { box-shadow: 0 5px 15px rgba(40,167,69,0.3); }
+}
+
+/* Pulsante Stampa Saldo */
+.balance-receipt-btn {
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #17a2b8, #138496);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(23,162,184,0.3);
+}
+
+.balance-receipt-btn:hover:not(:disabled) {
+  background: linear-gradient(145deg, #1ac0dc, #148a9c);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(23,162,184,0.4);
+}
+
+.balance-receipt-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Animazione quando cliente è selezionato */
+.balance-receipt-btn:not(:disabled) {
+  animation: pulse-balance 3s infinite;
+}
+
+@keyframes pulse-balance {
+  0% { box-shadow: 0 5px 15px rgba(23,162,184,0.3); }
+  50% { box-shadow: 0 8px 25px rgba(23,162,184,0.6); }
+  100% { box-shadow: 0 5px 15px rgba(23,162,184,0.3); }
+}
+
+/* Display Credito Cliente */
+.customer-balance-display {
+  margin-top: 20px;
+  padding: 20px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  color: #333;
+  text-align: center;
+  border: 2px solid var(--brand-secondary, #D4AF37);
+  min-width: 250px;
+}
+
+.balance-header {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--brand-primary, #8B4513);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.balance-customer-name {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 10px;
+}
+
+.balance-amount {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--brand-secondary, #D4AF37);
+  margin-bottom: 10px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  font-family: 'Courier New', monospace;
+}
+
+.balance-status {
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 8px 15px;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.balance-status.available {
+  background: rgba(40,167,69,0.1);
+  color: #28a745;
+  border: 1px solid #28a745;
+}
+
+.balance-status.empty {
+  background: rgba(255,193,7,0.1);
+  color: #ffc107;
+  border: 1px solid #ffc107;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .register-main {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .register-left,
+  .register-right {
+    min-width: 280px;
+    max-width: 100%;
+  }
+  
+  .display-screen {
+    min-width: 280px;
+  }
+  
+  .amount-display {
+    font-size: 2.5rem;
+  }
+  
+  .keypad button {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+
+  .operation-controls {
+    min-width: 280px;
+  }
+
+  .radio-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .radio-group label {
+    justify-content: center;
+  }
+  
+  .customer-balance-display {
+    min-width: 200px;
+    margin-top: 15px;
+    padding: 15px;
+  }
+  
+  .balance-amount {
+    font-size: 2rem;
+  }
+  
+  .customers-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .customers-search {
+    max-width: 100%;
+  }
+  
+  .customers-table-container {
+    /* Rimosso max-height per non avere scroll */
+  }
+  
+  .customer-details {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .customers-summary {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+}
+
+/* Modal Esportazione */
+.export-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.export-modal {
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 2px solid #e9ecef;
+  background: linear-gradient(135deg, var(--brand-primary, #8B4513) 0%, var(--brand-secondary, #D4AF37) 100%);
+  color: white;
+  border-radius: 15px 15px 0 0;
+}
+
+.modal-header h4 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.close-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+.filter-group {
+  margin-bottom: 20px;
+}
+
+.filter-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #495057;
+  font-size: 1rem;
+}
+
+.filter-group input,
+.filter-group select {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+  background: white;
+}
+
+.filter-group input:focus,
+.filter-group select:focus {
+  outline: none;
+  border-color: var(--brand-primary, #8B4513);
+  box-shadow: 0 0 0 3px rgba(139,69,19,0.1);
+}
+
+.modal-footer {
+  padding: 20px;
+  border-top: 2px solid #e9ecef;
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  background: #f8f9fa;
+  border-radius: 0 0 15px 15px;
+}
+
+.export-confirm-btn {
+  padding: 12px 25px;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(145deg, #28a745, #20c997);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+}
+
+.export-confirm-btn:hover:not(:disabled) {
+  background: linear-gradient(145deg, #32b149, #25d4a3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(40,167,69,0.4);
+}
+
+.export-confirm-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cancel-btn {
+  padding: 12px 25px;
+  font-size: 1rem;
+  font-weight: bold;
+  border: 2px solid #6c757d;
+  border-radius: 8px;
+  background: white;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+  background: #6c757d;
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Tabella Clienti con Credito */
+.customers-section {
+  background: rgba(255,255,255,0.95);
+  color: #333;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  height: fit-content;
+}
+
+.customers-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.customers-header h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.customers-search {
+  flex: 1;
+  max-width: 300px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 15px;
+  border: 2px solid #dee2e6;
+  border-radius: 25px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+  color: #333;
+}
+
+.search-input::placeholder {
+  color: #6c757d;
+  opacity: 1;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--brand-primary, #8B4513);
+  box-shadow: 0 0 0 3px rgba(139,69,19,0.1);
+}
+
+.customers-table-container {
+  overflow-x: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.customers-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.customers-table th,
+.customers-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+.customers-table th {
+  background: #f8f9fa;
+  font-weight: bold;
+  color: #495057;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.customers-table tbody tr {
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.customers-table tbody tr:hover {
+  background: #f0f8ff;
+}
+
+.customers-table tbody tr.selected {
+  background: #e3f2fd;
+  border-left: 4px solid var(--brand-primary, #8B4513);
+}
+
+.customer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.customer-name {
+  font-weight: bold;
+  color: #2c3e50;
+  font-size: 1rem;
+}
+
+.customer-details {
+  display: flex;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: #6c757d;
+  flex-wrap: wrap;
+}
+
+.customer-details span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.credit-amount {
+  text-align: center;
+  font-weight: bold;
+}
+
+.credit-value {
+  font-size: 1.1rem;
+  color: var(--brand-secondary, #D4AF37);
+  font-family: 'Courier New', monospace;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.select-customer-btn {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.select-customer-btn:not(.selected) {
+  background: linear-gradient(145deg, #007bff, #0056b3);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0,123,255,0.3);
+}
+
+.select-customer-btn:not(.selected):hover {
+  background: linear-gradient(145deg, #0087ff, #0066c3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,123,255,0.4);
+}
+
+.select-customer-btn.selected {
+  background: linear-gradient(145deg, #28a745, #20c997);
+  color: white;
+  cursor: not-allowed;
+  box-shadow: 0 2px 8px rgba(40,167,69,0.3);
+}
+
+.no-customers {
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+  padding: 20px;
+}
+
+.customers-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+.refresh-btn {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #6c757d, #5a6268);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(108,117,125,0.3);
+}
+
+.refresh-btn:hover {
+  background: linear-gradient(145deg, #7c878d, #6a7278);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(108,117,125,0.4);
+}
+
+.quick-print-btn {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 15px;
+  background: linear-gradient(145deg, #17a2b8, #138496);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(23,162,184,0.3);
+}
+
+.quick-print-btn:hover:not(:disabled) {
+  background: linear-gradient(145deg, #1ac0dc, #148a9c);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(23,162,184,0.4);
+}
+
+.quick-print-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}

@@ -541,140 +541,153 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
           </div>
 
           {/* GESTIONE MANUALE GEMME */}
-          <div className="p-4 bg-amber-50 rounded-lg border border-amber-200 mb-6">
-            <h3 className="font-semibold mb-3 flex items-center gap-2 text-amber-800">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
-              </svg>
+          <div className="p-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200 mb-6 shadow-lg">
+            <h3 className="font-bold text-xl mb-6 flex items-center gap-3 text-amber-800">
+              <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                </svg>
+              </div>
               Gestione Manuale GEMME
             </h3>
-            <div className="flex gap-3 mb-4">
-              <input
-                type="text"
-                placeholder="Nome cliente per ricerca rapida..."
-                value={manualCustomerName}
-                onChange={(e) => setManualCustomerName(e.target.value)}
-                className="flex-1 px-4 py-2 border border-amber-300 rounded-lg focus:border-amber-500 focus:outline-none"
-              />
+            
+            {/* BARRA DI RICERCA GRANDE */}
+            <div className="flex gap-4 mb-6">
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  placeholder="Cerca cliente per nome, telefono o email..."
+                  value={manualCustomerName}
+                  onChange={(e) => setManualCustomerName(e.target.value)}
+                  className="w-full px-6 py-4 text-lg font-medium border-2 border-amber-300 rounded-xl focus:border-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-200 transition-all duration-300 bg-white shadow-md placeholder-gray-400"
+                />
+                <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                  <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
               <button
-                onClick={() => {
-                  console.log('🔍 Pulsante ricerca cliccato:', { manualCustomerName })
-                  searchCustomersForManual(manualCustomerName)
-                }}
+                onClick={() => searchCustomersForManual(manualCustomerName)}
                 disabled={!manualCustomerName}
-                className="btn btn-brand-primary"
+                className="px-8 py-4 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 text-white font-bold rounded-xl transition-all duration-300 shadow-md hover:shadow-lg disabled:cursor-not-allowed"
               >
                 🔍 Cerca
               </button>
             </div>
 
+            {/* CLIENTI TROVATI */}
             {foundCustomers.length > 0 && (
-              <div className="space-y-3">
-                <h4 className="font-semibold text-amber-800">Clienti trovati per modifica GEMME:</h4>
+              <div style={{marginTop: '20px'}}>
                 {foundCustomers.map(customer => (
-                  <div key={customer.id} className="p-4 bg-white border border-amber-200 rounded-lg">
-                    <div className="flex justify-between items-center mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-amber-500 text-white rounded-full flex items-center justify-center font-bold">
-                          {customer.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <h5 className="font-bold text-brand-primary">{customer.name}</h5>
-                          <p className="text-sm text-secondary">{customer.phone} • {customer.email}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                            <span className="font-bold text-gemme-red">{customer.points} GEMME</span>
-                          </div>
-                        </div>
-                      </div>
-                      <button                    onClick={async () => {
-                      setSelectedCustomer(customer)
-                      // Carica anche i referral per mostrare gli amici invitati
-                      await loadReferredFriends(customer.id)
-                      await loadCustomerPrizeHistory(customer.id)
-                    }}
-                        className="btn btn-brand-primary"
-                        style={{
-                          padding: '12px 20px',
-                          border: '1px solid #000000',
-                          borderRadius: '8px',
-                          fontWeight: '700',
-                          fontSize: '0.9rem',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
+                  <div key={customer.id} style={{
+                    backgroundColor: 'white', 
+                    borderRadius: '12px', 
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)', 
+                    border: '2px solid #f59e0b',
+                    overflow: 'hidden',
+                    marginBottom: '20px'
+                  }}>
+                    {/* TAB CLIENTE CARINO */}
+                    <div style={{
+                      background: 'linear-gradient(135deg, #b8860b, #daa520, #cd853f, #b8860b)',
+                      padding: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}>
+                      <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
+                        <div style={{
+                          width: '48px',
+                          height: '48px',
+                          backgroundColor: 'rgba(255,255,255,0.2)',
+                          borderRadius: '50%',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '8px',
-                          boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.1)',
-                          backgroundColor: '#000000',
-                          color: '#ffffff'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.transform = 'translateY(-2px)';
-                          e.target.style.boxShadow = '0 10px 15px -3px rgb(0 0 0 / 0.3)';
-                          e.target.style.backgroundColor = '#333333';
-                          e.target.style.borderColor = '#333333';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.transform = 'translateY(0)';
-                          e.target.style.boxShadow = '0 1px 2px 0 rgb(0 0 0 / 0.1)';
-                          e.target.style.backgroundColor = '#000000';
-                          e.target.style.borderColor = '#000000';
-                        }}
-                      >
-                        📋 Seleziona Cliente
-                      </button>
-                    </div>
-
-                    <div className="flex gap-3 items-center">
-                      <div className="flex-1">
-                        <label className="block text-sm font-medium text-amber-800 mb-1">
-                          Modifica GEMME (usa + o - per aggiungere/rimuovere):
-                        </label>
-                        <input
-                          type="number"
-                          placeholder="es: +10, -5, 20"
-                          value={manualPoints}
-                          onChange={(e) => setManualPoints(e.target.value)}
-                          className="w-full px-4 py-2 border border-amber-300 rounded-lg focus:border-amber-500 focus:outline-none"
-                        />
-                      </div>
-                      <button
-                        onClick={() => {
-                          console.log('🔘 Pulsante modifica GEMME cliccato:', { 
-                            customerName: customer?.name, 
-                            customerId: customer?.id,
-                            currentPoints: customer?.points,
-                            manualPoints, 
-                            parsedPoints: parseInt(manualPoints),
-                            isValid: !(!manualPoints || manualPoints.trim() === '' || isNaN(parseInt(manualPoints)) || parseInt(manualPoints) === 0)
-                          })
-                          modifyPoints(customer, manualPoints)
-                          // Il reset del campo viene fatto automaticamente da modifyPoints
-                        }}
-                        disabled={!manualPoints || manualPoints.trim() === '' || isNaN(parseInt(manualPoints)) || parseInt(manualPoints) === 0}
-                        className={`btn ${!manualPoints || manualPoints.trim() === '' || isNaN(parseInt(manualPoints)) || parseInt(manualPoints) === 0 ? 'btn-secondary' : 'btn-success'} px-6`}
-                      >
-                        ✅ Applica Modifica
-                      </button>
-                    </div>
-                    
-                    {manualPoints && !isNaN(parseInt(manualPoints)) && (
-                      <div className="mt-3 p-3 bg-amber-50 rounded-lg">
-                        <div className="flex items-center gap-2 text-sm">
-                          <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="text-amber-800">
-                            <strong>Anteprima:</strong> {customer.name} avrà{' '}
-                            <strong className="text-gemme-red">
-                              {Math.max(0, customer.points + parseInt(manualPoints))} GEMME
-                            </strong>
-                            {' '}({parseInt(manualPoints) > 0 ? '+' : ''}{parseInt(manualPoints)} GEMME)
+                          justifyContent: 'center'
+                        }}>
+                          <span style={{color: 'white', fontWeight: 'bold', fontSize: '18px'}}>
+                            {customer.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
+                        <div>
+                          <h4 style={{color: 'white', fontWeight: 'bold', fontSize: '18px', margin: '0 0 4px 0'}}>
+                            {customer.name}
+                          </h4>
+                          <p style={{color: 'rgba(255,255,255,0.8)', fontSize: '14px', margin: '0'}}>
+                            {customer.phone} • {customer.email}
+                          </p>
+                        </div>
                       </div>
-                    )}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        backgroundColor: 'rgba(255,255,255,0.2)',
+                        borderRadius: '20px',
+                        padding: '8px 16px'
+                      }}>
+                        <div className="gemme-icon w-5 h-5"></div>
+                        <span style={{color: 'white', fontWeight: 'bold', fontSize: '18px'}}>
+                          {customer.points} GEMME
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* CONTROLLI GEMME */}
+                    <div className="p-6">
+                      {/* INPUT CENTRALE GRANDE */}
+                      <div className="mb-6">
+                        <input
+                          type="number"
+                          placeholder="Inserisci quantità gemme..."
+                          value={manualPoints}
+                          onChange={(e) => setManualPoints(e.target.value)}
+                          className="w-full px-6 py-6 text-center text-3xl font-bold border-2 border-amber-300 rounded-xl focus:border-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-200 transition-all duration-300 bg-gray-50"
+                        />
+                      </div>
+
+                      {/* ANTEPRIMA IN TEMPO REALE */}
+                      {manualPoints && !isNaN(parseInt(manualPoints)) && parseInt(manualPoints) !== 0 && (
+                        <div className="text-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 mb-6">
+                          <div className="text-lg">
+                            <span className="text-gray-700">Gemme attuali: </span>
+                            <span className="text-xl font-bold text-gray-800">{customer.points}</span>
+                          </div>
+                          <div className="text-2xl mt-2">
+                            <span className="text-gray-700">Con +{parseInt(manualPoints)}: </span>
+                            <span className="text-green-600 font-bold">
+                              {customer.points + parseInt(manualPoints)}
+                            </span>
+                          </div>
+                          <div className="text-2xl mt-2">
+                            <span className="text-gray-700">Con -{parseInt(manualPoints)}: </span>
+                            <span className="text-red-600 font-bold">
+                              {Math.max(0, customer.points - parseInt(manualPoints))}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* PULSANTI AGGIUNGI/RIMUOVI */}
+                      <div className="flex gap-4">
+                        <button
+                          onClick={() => modifyPoints(customer, `-${manualPoints}`)}
+                          disabled={!manualPoints || manualPoints.trim() === '' || isNaN(parseInt(manualPoints)) || parseInt(manualPoints) === 0}
+                          className="flex-1 py-4 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white font-bold rounded-xl transition-all duration-300 shadow-md hover:shadow-lg disabled:cursor-not-allowed text-xl"
+                        >
+                          − TOGLI GEMME
+                        </button>
+                        
+                        <button
+                          onClick={() => modifyPoints(customer, manualPoints)}
+                          disabled={!manualPoints || manualPoints.trim() === '' || isNaN(parseInt(manualPoints)) || parseInt(manualPoints) === 0}
+                          className="flex-1 py-4 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white font-bold rounded-xl transition-all duration-300 shadow-md hover:shadow-lg disabled:cursor-not-allowed text-xl"
+                        >
+                          + AGGIUNGI GEMME
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

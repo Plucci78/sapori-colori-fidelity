@@ -1,5 +1,5 @@
 /**
- * API Proxy per stampa ricevuta su IT-ditron
+ * API Proxy per stampa ricevute di vendita su IT-ditron
  * Risolve problemi CORS di Cloudflare Tunnel
  */
 export default async function handler(req, res) {
@@ -8,19 +8,33 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { giftCard } = req.body || {}
+    const receiptData = req.body
     
-    if (!giftCard || !giftCard.code) {
-      return res.status(400).json({
-        success: false,
-        error: 'Dati ricevuta mancanti'
-      })
+    // Supporta sia gift card che ricevute generiche
+    if (receiptData.giftCard) {
+      // Formato gift card
+      const { giftCard } = receiptData
+      if (!giftCard || !giftCard.code) {
+        return res.status(400).json({
+          success: false,
+          error: 'Dati gift card mancanti'
+        })
+      }
+    } else {
+      // Formato ricevuta generica
+      if (!receiptData.total) {
+        return res.status(400).json({
+          success: false,
+          error: 'Totale ricevuta obbligatorio'
+        })
+      }
     }
     
     // URL del tunnel NFC - HTTP funziona server-to-server
     const printUrl = 'http://nfc.saporiecolori.net/print/receipt'
     
-    console.log('🧦 Print Proxy: Stampa ricevuta', giftCard.code, 'via', printUrl)
+    const logId = receiptData.giftCard?.code || receiptData.orderId || 'N/A'
+    console.log('🧾 Print Proxy: Stampa ricevuta', logId, 'via', printUrl)
     
     const response = await fetch(printUrl, {
       method: 'POST',
@@ -28,7 +42,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         'User-Agent': 'Vercel-Print-Proxy/1.0'
       },
-      body: JSON.stringify({ giftCard }),
+      body: JSON.stringify(receiptData),
       timeout: 15000 // 15 secondi per stampa
     })
 

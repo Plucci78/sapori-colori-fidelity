@@ -1,6 +1,10 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { supabase } from '../../supabase'
 import emailjs from '@emailjs/browser'
+import QRCode from 'qrcode'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
+import QRCodeReader from '../Common/QRCodeReader'
 import './GiftCardManagement.css'
 
 const GiftCardManagement = ({ showNotification }) => {
@@ -17,6 +21,7 @@ const GiftCardManagement = ({ showNotification }) => {
   const [redeemAmount, setRedeemAmount] = useState('')
   const [redeemLoading, setRedeemLoading] = useState(false)
   const [foundCard, setFoundCard] = useState(null)
+  const [showQRScanner, setShowQRScanner] = useState(false)
   
   // Configurazione EmailJS
   const EMAIL_CONFIG = {
@@ -40,6 +45,31 @@ const GiftCardManagement = ({ showNotification }) => {
     loadCustomers()
     loadReceipts()
   }, [])
+
+  // Genera QR code quando si apre il modal
+  useEffect(() => {
+    if (showPreviewModal && previewCard) {
+      const timer = setTimeout(() => {
+        console.log('🔲 Generating QR Code for:', previewCard.code)
+        
+        // Debug completo del DOM
+        const container = document.querySelector('.qr-code-container')
+        const canvas = document.getElementById(`qr-code-${previewCard.code}`)
+        
+        console.log('🔍 QR Container found:', !!container)
+        console.log('🔍 Canvas element found:', !!canvas)
+        
+        if (container) {
+          console.log('📐 Container style:', window.getComputedStyle(container).display)
+          console.log('📐 Container visibility:', window.getComputedStyle(container).visibility)
+        }
+        
+        generateQRCode(previewCard)
+        
+      }, 500) // Aumentato a 500ms
+      return () => clearTimeout(timer)
+    }
+  }, [showPreviewModal, previewCard])
 
   const loadGiftCards = async () => {
     try {
@@ -154,7 +184,7 @@ const GiftCardManagement = ({ showNotification }) => {
     }
   }
 
-  // Funzione per inviare email gift card
+  // Funzione per inviare email gift card semplificata
   const sendGiftCardEmail = async (giftCardData, purchaserData) => {
     if (!giftCardData.recipient_email) {
       return { success: true, message: 'Nessuna email destinatario fornita' }
@@ -232,6 +262,11 @@ const GiftCardManagement = ({ showNotification }) => {
             <p style="text-align: center; color: #D4AF37; font-weight: bold;">
                 Ti aspettiamo per un'esperienza gastronomica indimenticabile! 🍝✨
             </p>
+            
+            <div style="text-align: center; margin: 20px 0; padding: 15px; background: #f0f8ff; border-radius: 8px; border: 2px dashed #D4AF37;">
+                <p style="color: #D4AF37; font-weight: bold; margin: 0;">💡 Come utilizzare la Gift Card</p>
+                <p style="color: #666; font-size: 12px; margin: 5px 0 0 0;">Presenta questo codice: <strong>${giftCardData.code}</strong> al momento del pagamento</p>
+            </div>
         </div>
         
         <div class="footer">
@@ -331,8 +366,10 @@ const GiftCardManagement = ({ showNotification }) => {
   }
 
   // Verifica gift card per codice
-  const checkGiftCard = async () => {
-    if (!redeemCode.trim()) {
+  const checkGiftCard = async (code = null) => {
+    const cardCode = code || redeemCode.trim()
+    
+    if (!cardCode) {
       showNotification?.('Inserisci il codice della gift card', 'error')
       return
     }
@@ -349,7 +386,7 @@ const GiftCardManagement = ({ showNotification }) => {
             email
           )
         `)
-        .eq('code', redeemCode.trim().toUpperCase())
+        .eq('code', cardCode.toUpperCase())
         .single()
 
       if (error || !data) {
@@ -373,6 +410,10 @@ const GiftCardManagement = ({ showNotification }) => {
       }
 
       setFoundCard(data)
+      // Se il codice viene da QR scanner, aggiorna anche l'input
+      if (code) {
+        setRedeemCode(code)
+      }
       showNotification?.(`Gift card trovata! Saldo disponibile: ${formatCurrency(data.balance)}`, 'success')
     } catch (error) {
       console.error('Errore verifica gift card:', error)
@@ -380,6 +421,249 @@ const GiftCardManagement = ({ showNotification }) => {
       setFoundCard(null)
     } finally {
       setRedeemLoading(false)
+    }
+  }
+
+  // Gestione scansione QR
+  const handleQRScan = (scannedData) => {
+    console.log('🔍 QR Scanned:', scannedData)
+    
+    try {
+      // Prova a parsare come JSON per QR generati dall'app
+      const qrData = JSON.parse(scannedData)
+      if (qrData.type === 'gift_card' && qrData.code) {
+        checkGiftCard(qrData.code)
+        setShowQRScanner(false)
+        return
+      }
+      if (qrData.type === 'receipt' && qrData.orderId) {
+        // QR code ricevuta scansionato
+        showNotification?.(`Ricevuta verificata: ${qrData.orderId} - Totale: E ${qrData.total} - Data: ${new Date(qrData.date).toLocaleDateString('it-IT')}`, 'success')
+        setShowQRScanner(false)
+        return
+      }
+    } catch (e) {
+      // Non è JSON, prova formato semplice (solo codice)
+      if (scannedData && scannedData.match(/^GC[A-Z0-9]+$/)) {
+        checkGiftCard(scannedData)
+        setShowQRScanner(false)
+        return
+      }
+      // Prova formato ricevuta (GC-CODICE)
+      if (scannedData && scannedData.match(/^GC-.+$/)) {
+        showNotification?.(`Ricevuta verificata: ${scannedData}`, 'success')
+        setShowQRScanner(false)
+        return
+      }
+    }
+    
+    // Prova formato semplice "GIFTCARD:CODE:BALANCE"
+    if (scannedData.startsWith('GIFTCARD:')) {
+      const parts = scannedData.split(':')
+      if (parts.length >= 2) {
+        checkGiftCard(parts[1])
+        setShowQRScanner(false)
+        return
+      }
+    }
+    
+    // Prova come codice diretto
+    if (scannedData.length >= 6 && scannedData.length <= 20) {
+      checkGiftCard(scannedData)
+      setShowQRScanner(false)
+      return
+    }
+    
+    showNotification?.('QR code non riconosciuto', 'error')
+  }
+
+  // Genera QR Code per gift card
+  const generateQRCode = async (giftCard) => {
+    try {
+      // Dati semplificati per QR più piccolo e leggibile
+      const qrData = `GIFTCARD:${giftCard.code}:${giftCard.balance}`
+      console.log('🔲 QR Data:', qrData)
+      
+      const canvas = document.getElementById(`qr-code-${giftCard.code}`)
+      console.log('🔲 Canvas found:', !!canvas)
+      
+      if (canvas) {
+        await QRCode.toCanvas(canvas, qrData, {
+          width: 80,
+          margin: 1,
+          color: {
+            dark: '#000000', // Nero puro per massimo contrasto
+            light: '#FFFFFF'
+          },
+          errorCorrectionLevel: 'M'
+        })
+        console.log('✅ QR Code generated successfully')
+        
+        // Debug finale - rendiamo il canvas super visibile
+        canvas.style.border = '5px solid red'
+        canvas.style.backgroundColor = 'yellow'
+        canvas.style.display = 'block'
+        console.log('🎨 Canvas made super visible')
+      } else {
+        console.error('❌ Canvas not found for QR code')
+      }
+    } catch (error) {
+      console.error('❌ Errore generazione QR Code:', error)
+    }
+  }
+
+  // Export gift card to PDF con layout verticale
+  const exportGiftCardToPDF = async (giftCard, forEmail = false) => {
+    try {
+      // Genera il QR code prima dell'export
+      await generateQRCode(giftCard)
+      
+      // Aspetta un momento per il rendering del QR
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      const frontElement = document.getElementById('gift-card-front')
+      const backElement = document.getElementById('gift-card-back')
+      const qrCanvas = document.getElementById(`qr-code-${giftCard.code}`)
+      
+      if (!frontElement || !backElement) {
+        throw new Error('Elementi gift card non trovati')
+      }
+      
+      // Scale per ridurre dimensioni se necessario
+      const scale = forEmail ? 1 : 2
+      const quality = forEmail ? 0.7 : 0.9
+      
+      // Cattura fronte e retro
+      const frontCanvas = await html2canvas(frontElement, {
+        scale: scale,
+        useCORS: true,
+        backgroundColor: '#FFFFFF',
+        width: 400,
+        height: 250
+      })
+      
+      const backCanvas = await html2canvas(backElement, {
+        scale: scale,
+        useCORS: true,
+        backgroundColor: '#FFFFFF',
+        width: 400,
+        height: 250
+      })
+      
+      // Crea PDF in formato A4 portrait per il nuovo layout
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      })
+      
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const margin = 10
+      const contentWidth = pageWidth - (margin * 2)
+      
+      let currentY = margin
+      
+      // Aggiungi intestazione
+      pdf.setFontSize(20)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('🎁 GIFT CARD - SAPORI & COLORI', pageWidth / 2, currentY, { align: 'center' })
+      currentY += 15
+      
+      // Sezione fronte e retro (affiancate)
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('FRONTE', margin + 30, currentY)
+      pdf.text('RETRO', margin + contentWidth/2 + 30, currentY)
+      currentY += 8
+      
+      // Calcola dimensioni per le carte affiancate
+      const cardWidth = (contentWidth - 10) / 2 // 10mm di spazio tra le carte
+      const cardHeight = (cardWidth * 250) / 400 // Mantiene proporzioni
+      
+      // Aggiungi fronte (sinistra)
+      const frontImgData = frontCanvas.toDataURL('image/jpeg', quality)
+      pdf.addImage(frontImgData, 'JPEG', margin, currentY, cardWidth, cardHeight)
+      
+      // Aggiungi retro (destra)
+      const backImgData = backCanvas.toDataURL('image/jpeg', quality)
+      pdf.addImage(backImgData, 'JPEG', margin + cardWidth + 10, currentY, cardWidth, cardHeight)
+      
+      currentY += cardHeight + 15
+      
+      // Sezione messaggio personalizzato
+      if (giftCard.message) {
+        pdf.setFontSize(14)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('💌 MESSAGGIO PERSONALIZZATO', pageWidth / 2, currentY, { align: 'center' })
+        currentY += 10
+        
+        // Box per il messaggio
+        pdf.setDrawColor(212, 175, 55) // Colore oro
+        pdf.setLineWidth(1)
+        pdf.rect(margin, currentY, contentWidth, 25)
+        
+        // Sfondo leggero per il messaggio
+        pdf.setFillColor(249, 246, 238) // Beige molto chiaro
+        pdf.rect(margin, currentY, contentWidth, 25, 'F')
+        
+        // Testo del messaggio
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'italic')
+        pdf.setTextColor(139, 69, 19) // Marrone
+        
+        // Divide il messaggio in righe se troppo lungo
+        const messageLines = pdf.splitTextToSize(`"${giftCard.message}"`, contentWidth - 10)
+        pdf.text(messageLines, margin + 5, currentY + 8)
+        
+        currentY += 35
+      } else {
+        currentY += 10
+      }
+      
+      // Sezione QR Code
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(0, 0, 0) // Nero
+      pdf.text('📱 QR CODE PER SCANSIONE', pageWidth / 2, currentY, { align: 'center' })
+      currentY += 10
+      
+      if (qrCanvas) {
+        // Crea un QR code più grande per il PDF
+        const qrSize = 40 // 40mm
+        const qrX = (pageWidth - qrSize) / 2
+        
+        // Box per il QR code
+        pdf.setDrawColor(212, 175, 55)
+        pdf.setFillColor(255, 255, 255)
+        pdf.rect(qrX - 5, currentY - 5, qrSize + 10, qrSize + 15, 'FD')
+        
+        // QR Code
+        const qrImgData = qrCanvas.toDataURL('image/png', 1)
+        pdf.addImage(qrImgData, 'PNG', qrX, currentY, qrSize, qrSize)
+        
+        currentY += qrSize + 8
+        
+        // Istruzioni per il QR
+        pdf.setFontSize(10)
+        pdf.setFont('helvetica', 'normal')
+        pdf.text('Scansiona questo codice al momento del pagamento', pageWidth / 2, currentY, { align: 'center' })
+        currentY += 5
+        
+        pdf.setFontSize(8)
+        pdf.setTextColor(100, 100, 100)
+        pdf.text(`Codice: ${giftCard.code} | Saldo: ${formatCurrency(giftCard.balance)}`, pageWidth / 2, currentY, { align: 'center' })
+      }
+      
+      // Footer
+      currentY += 15
+      pdf.setFontSize(8)
+      pdf.setTextColor(100, 100, 100)
+      pdf.text('📍 Via della Gastronomia, 123 - Città | 📞 +39 123 456 7890 | 🌐 www.saporicolori.it', pageWidth / 2, currentY, { align: 'center' })
+      
+      return pdf
+    } catch (error) {
+      console.error('Errore export PDF:', error)
+      throw error
     }
   }
 
@@ -580,10 +864,17 @@ const GiftCardManagement = ({ showNotification }) => {
               />
               <button
                 className="btn btn-brand-primary"
-                onClick={checkGiftCard}
+                onClick={() => checkGiftCard()}
                 disabled={redeemLoading || !redeemCode.trim()}
               >
                 {redeemLoading ? '⏳' : '🔍'} Verifica
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowQRScanner(true)}
+                disabled={redeemLoading}
+              >
+                📱 Scansiona QR
               </button>
             </div>
           </div>
@@ -1019,6 +1310,8 @@ const GiftCardManagement = ({ showNotification }) => {
           <div className="preview-modal" onClick={(e) => e.stopPropagation()}>
             <div className="preview-header">
               <h2>🎁 Anteprima Gift Card</h2>
+              
+              
               <button 
                 className="btn btn-secondary"
                 onClick={() => setShowPreviewModal(false)}
@@ -1026,6 +1319,7 @@ const GiftCardManagement = ({ showNotification }) => {
                 ✕
               </button>
             </div>
+            
 
             <div className="gift-card-preview">
               {/* FRONTE GIFT CARD */}
@@ -1034,6 +1328,7 @@ const GiftCardManagement = ({ showNotification }) => {
                   <div className="card-header">
                     <div className="business-name">SAPORI & COLORI</div>
                     <div className="gift-card-title">GIFT CARD</div>
+                    
                   </div>
                   
                   <div className="card-main">
@@ -1155,6 +1450,7 @@ const GiftCardManagement = ({ showNotification }) => {
                     <div className="card-code-section">
                       <div className="code-label">CODICE GIFT CARD</div>
                       <div className="gift-code">{previewCard.code}</div>
+                      
                     </div>
                     
                     <div className="card-footer-info">
@@ -1167,8 +1463,32 @@ const GiftCardManagement = ({ showNotification }) => {
                         </div>
                       </div>
                       <div className="footer-right">
-                        <div className="qr-placeholder">
-                          <div className="qr-box">QR</div>
+                        <div className="qr-code-container" style={{ 
+                          background: 'rgba(255, 255, 255, 0.95)', 
+                          padding: '8px',
+                          borderRadius: '8px',
+                          border: '2px solid rgba(212, 175, 55, 0.8)',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                        }}>
+                          <canvas 
+                            id={`qr-code-${previewCard.code}`}
+                            width="80" 
+                            height="80"
+                            style={{
+                              borderRadius: '4px',
+                              background: 'white',
+                              display: 'block'
+                            }}
+                          />
+                          <div style={{ 
+                            color: '#8B4513', 
+                            fontSize: '8px', 
+                            textAlign: 'center',
+                            marginTop: '2px',
+                            fontWeight: 'bold'
+                          }}>
+                            SCANSIONA
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1229,6 +1549,60 @@ const GiftCardManagement = ({ showNotification }) => {
               >
                 Chiudi
               </button>
+              
+              <button 
+                className="btn btn-info"
+                onClick={async () => {
+                  try {
+                    // PDF alta qualità per download
+                    const pdf = await exportGiftCardToPDF(previewCard, false)
+                    const blob = pdf.output('blob')
+                    
+                    // Download PDF
+                    const url = URL.createObjectURL(blob)
+                    const link = document.createElement('a')
+                    link.href = url
+                    link.download = `GiftCard_${previewCard.code}.pdf`
+                    link.click()
+                    URL.revokeObjectURL(url)
+                    
+                    showNotification?.('📄 PDF Gift Card scaricato', 'success')
+                  } catch (error) {
+                    console.error('Errore export PDF:', error)
+                    showNotification?.('Errore nell\'export del PDF', 'error')
+                  }
+                }}
+              >
+                📄 Download PDF
+              </button>
+              
+              <button 
+                className="btn btn-warning"
+                onClick={async () => {
+                  if (!previewCard.recipient_email) {
+                    showNotification?.('Nessuna email destinatario configurata', 'error')
+                    return
+                  }
+                  
+                  try {
+                    const purchaser = customers.find(c => c.id === previewCard.purchaser_customer_id)
+                    
+                    // Invia email semplificata senza PDF allegato
+                    const result = await sendGiftCardEmail(previewCard, purchaser)
+                    if (result.success) {
+                      showNotification?.('📧 Email gift card inviata con successo!', 'success')
+                    } else {
+                      showNotification?.(result.message, 'error')
+                    }
+                  } catch (error) {
+                    console.error('Errore invio email:', error)
+                    showNotification?.('Errore nell\'invio dell\'email', 'error')
+                  }
+                }}
+              >
+                📧 Invia Email
+              </button>
+              
               <button 
                 className="btn btn-success"
                 onClick={async () => {
@@ -1259,6 +1633,7 @@ const GiftCardManagement = ({ showNotification }) => {
               >
                 🧾 Stampa Ricevuta
               </button>
+              
               <button 
                 className="btn btn-brand-primary"
                 onClick={async () => {
@@ -1288,6 +1663,51 @@ const GiftCardManagement = ({ showNotification }) => {
                 }}
               >
                 🖨️ Stampa Gift Card
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Scanner QR */}
+      {showQRScanner && (
+        <div className="modal-overlay" onClick={() => setShowQRScanner(false)}>
+          <div className="modal qr-scanner-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📱 Scanner QR Gift Card</h2>
+              <button 
+                className="close-button"
+                onClick={() => setShowQRScanner(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-content">
+              <div className="scanner-instructions">
+                <p>Posiziona il QR code della gift card al centro della camera</p>
+                <div className="scanner-tips">
+                  <span>💡 Mantieni il QR ben illuminato e stabile</span>
+                </div>
+              </div>
+              
+              <div className="qr-scanner-container">
+                <QRCodeReader
+                  onScan={handleQRScan}
+                  onError={(error) => {
+                    console.error('QR Scanner Error:', error)
+                    showNotification?.('Errore scanner: ' + error.message, 'error')
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button 
+                className="btn btn-secondary"
+                onClick={() => setShowQRScanner(false)}
+              >
+                Annulla
               </button>
             </div>
           </div>

@@ -1,0 +1,9 @@
+{
+  "giftCard": {
+    "code": "TEST999", 
+    "value": "50.00",
+    "recipient": "Giuseppe Verdi",
+    "purchaser": "Maria Rossi", 
+    "notes": "Auguri per il tuo nuovo lavoro! Buona fortuna!"
+  }
+}

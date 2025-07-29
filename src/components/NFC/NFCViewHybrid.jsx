@@ -432,11 +432,16 @@ const NFCViewHybrid = ({ showNotification }) => {
                 <button
                   onClick={startNFCScan}
                   disabled={!isNFCAvailable}
-                  className={`btn btn-lg ${isNFCAvailable ? 'btn-primary' : 'btn-secondary'}`}
+                  className="btn-scan-nfc"
                 >
-                  {nfcMethod === 'raspberry-bridge' ? '🍓 Scansiona con Bridge Raspberry' : 
-                   nfcMethod === 'web-nfc' ? '📱 Avvia Scansione NFC Mobile' : 
-                   '❌ NFC Non Disponibile'}
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  <span>
+                    {nfcMethod === 'raspberry-bridge' ? 'Scansiona con Bridge Raspberry' : 
+                     nfcMethod === 'web-nfc' ? 'Avvia Scansione NFC Mobile' : 
+                     'NFC Non Disponibile'}
+                  </span>
                 </button>
                 <p className="text-sm text-gray-600 mt-4">
                   {nfcMethod === 'raspberry-bridge' ? 

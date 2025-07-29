@@ -7,6 +7,7 @@ class SoundManager {
       removeGemme: new Audio('/sounds/lose.wav'),      // Suono per rimuovere GEMME (negativo)
       removeGemmeAlt: new Audio('/sounds/remove.wav'), // Suono alternativo per rimozione
       qrScan: new Audio('/sounds/scannerqr.mp3'),     // Suono dedicato per scansione QR code (MP3)
+      cashRegister: new Audio('/sounds/cash-register-purchase.wav'), // Suono cash register per ricariche
     }
     
     // Precarica i suoni e gestisce errori
@@ -67,6 +68,22 @@ class SoundManager {
       })
     } catch (error) {
       console.warn('❌ Errore suono scansione QR:', error)
+    }
+  }
+
+  /**
+   * Riproduce il suono cash register per ricariche manuali
+   * @param {number} amount - Importo ricarica
+   */
+  playCashRegister(amount = 0) {
+    try {
+      const audio = this.sounds.cashRegister.cloneNode()
+      audio.volume = Math.min(0.9, 0.6 + (Math.abs(amount) * 0.02)) // Volume proporzionale all'importo
+      audio.play().catch(error => {
+        console.warn('❌ Errore riproduzione suono cash register:', error)
+      })
+    } catch (error) {
+      console.warn('❌ Errore suono cash register:', error)
     }
   }
 
@@ -147,7 +164,8 @@ class SoundManager {
       addGemme: '🟢 Aggiunta GEMME (positivo)',
       removeGemme: '🔴 Rimozione GEMME (principale)', 
       removeGemmeAlt: '⚠️ Rimozione GEMME (alternativo)',
-      qrScan: '📱 Scansione QR Code'
+      qrScan: '📱 Scansione QR Code',
+      cashRegister: '💰 Cash Register (ricariche)'
     }
     return descriptions[key] || key
   }

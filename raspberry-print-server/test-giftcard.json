@@ -1,0 +1,9 @@
+{
+  "giftCard": {
+    "code": "GC2025DEMO", 
+    "value": "100.00",
+    "recipient": "Mario Rossi",
+    "purchaser": "Anna Bianchi", 
+    "notes": "Buon compleanno! Spero che tu possa gustare un ottimo pranzo da Sapori e Colori"
+  }
+}
