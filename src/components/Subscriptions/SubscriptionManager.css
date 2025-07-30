@@ -1,0 +1,1859 @@
+/* ===================================
+   SUBSCRIPTION MANAGER - STILE ANALYTICS ADVANCED
+   Coerente con il design dell'app
+   =================================== */
+
+.subscription-manager {
+  padding: 24px;
+  background: #f3f4f6;
+  min-height: 100vh;
+  animation: analytics-fadeIn 0.5s ease-out;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+@keyframes analytics-fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header Sezione - Layout Orizzontale */
+.subscription-header {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.customer-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.customer-selector label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.customer-selector-hybrid {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.customer-select {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: #ffffff;
+  color: #111827;
+  min-width: 200px;
+  flex: 1;
+  height: 42px;
+  box-sizing: border-box;
+}
+
+.nfc-selector {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 42px;
+}
+
+/* Layout verticale per NFC Quick Reader negli abbonamenti */
+.nfc-selector .text-center {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+
+.nfc-selector .space-y-3 {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+/* Forza layout verticale per tutti i div interni */
+.nfc-selector > div,
+.nfc-selector > div > div {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+/* Stili per il form di inserimento manuale */
+.nfc-selector form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.nfc-selector form input {
+  width: 180px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.nfc-selector form button {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+}
+
+/* Forza pulsanti NFC ad essere verticali e centrati */
+.nfc-selector button,
+.nfc-selector .btn {
+  width: 100% !important;
+  max-width: 200px !important;
+  margin: 4px auto !important;
+  display: block !important;
+}
+
+/* Layout pulsanti nel contenitore NFC */
+.nfc-selector .space-y-4,
+.nfc-selector .space-y-3 > div {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+/* Sezione NFC Usa Abbonamento */
+.header-actions {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.nfc-use-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.nfc-use-section label {
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+}
+
+/* Layout verticale per NFC Quick Reader nella sezione uso abbonamenti */
+.nfc-use-section .text-center {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+
+.nfc-use-section .space-y-3 {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+/* Forza layout verticale per tutti i div interni uso abbonamenti */
+.nfc-use-section > div,
+.nfc-use-section > div > div {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+/* Forza pulsanti NFC ad essere verticali e centrati - uso abbonamenti */
+.nfc-use-section button,
+.nfc-use-section .btn {
+  width: 100% !important;
+  max-width: 200px !important;
+  margin: 4px auto !important;
+  display: block !important;
+}
+
+/* Layout pulsanti nel contenitore NFC uso abbonamenti */
+.nfc-use-section .space-y-4,
+.nfc-use-section .space-y-3 > div {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.nfc-use-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.nfc-use-section label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+/* Modal NFC Uso Abbonamento */
+.nfc-use-modal {
+  max-width: 600px;
+  width: 90%;
+}
+
+.subscription-selection {
+  margin-top: 20px;
+}
+
+.subscription-selection h4 {
+  margin-bottom: 15px;
+  color: #1f2937;
+}
+
+.subscription-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.subscription-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.subscription-option:hover {
+  border-color: #8B4513;
+  background: #fef9f3;
+}
+
+.subscription-option input[type="radio"]:checked + .subscription-details {
+  color: #8B4513;
+}
+
+.subscription-option input[type="radio"]:checked ~ {
+  border-color: #8B4513;
+  background: #fef9f3;
+}
+
+.subscription-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.subscription-details strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.subscription-details span {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.subscription-details .usage-info {
+  font-size: 13px;
+  color: #059669;
+  font-weight: 500;
+}
+
+.nfc-confirmation-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 2px solid #e5e7eb;
+}
+
+.customer-info h4 {
+  color: #1f2937;
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+}
+
+.customer-info p {
+  color: #6b7280;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.subscription-info {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #d1d5db;
+}
+
+.subscription-info h4 {
+  color: #1f2937;
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+}
+
+.subscription-info p {
+  color: #6b7280;
+  margin: 0 0 12px 0;
+  font-size: 0.9rem;
+}
+
+.usage-remaining {
+  background: #10b981;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.confirmation-question {
+  text-align: center;
+  padding: 16px;
+  background: #fef3c7;
+  border-radius: 8px;
+  border: 1px solid #f59e0b;
+}
+
+.confirmation-question p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.customer-select:focus {
+  outline: none;
+  border-color: #8B4513;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.2);
+}
+
+.create-plan-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+  color: white;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.create-plan-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+.header-content .header-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.header-subtitle {
+  color: #4b5563;
+  font-size: 1rem;
+  margin: 0;
+  font-weight: 500;
+}
+
+.header-stats {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+  color: #111827;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* Section Title - Stile Analytics */
+.section-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Piani Grid - Layout Orizzontale */
+.subscription-plans {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+.plans-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.plan-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  flex: 1;
+  min-width: 280px;
+}
+
+.plan-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  border-color: #8B4513;
+}
+
+.plan-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #8B4513, #D4AF37);
+}
+
+.plan-card.popular::before {
+  background: linear-gradient(90deg, #ef4444, #f59e0b);
+}
+
+.plan-card.premium::before {
+  background: linear-gradient(90deg, #fbbf24, #d97706);
+}
+
+/* Badges - Stile Analytics */
+.popular-badge, .premium-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  z-index: 2;
+}
+
+.popular-badge {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #ef4444;
+}
+
+.premium-badge {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fbbf24;
+}
+
+/* Plan Header - Stile Analytics */
+.plan-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.plan-icon {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #8B4513, #D4AF37);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 20px rgba(139, 69, 19, 0.3);
+  color: white;
+  flex-shrink: 0;
+}
+
+.plan-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.plan-description {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+/* Plan Body - Stile Analytics */
+.plan-body {
+  margin-top: 8px;
+}
+
+.plan-price {
+  margin-bottom: 16px;
+}
+
+.price-amount {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1.1;
+}
+
+.price-period {
+  font-size: 0.9rem;
+  color: #4b5563;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+/* Features - Stile Analytics */
+.plan-features {
+  margin-bottom: 20px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 0.875rem;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.feature-icon {
+  width: 16px;
+  font-size: 0.9rem;
+}
+
+/* Subscribe Button - Stile Analytics */
+.subscribe-btn {
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+  color: white;
+}
+
+.subscribe-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+/* Abbonamenti Clienti - Stile Analytics */
+.active-subscriptions {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+.subscriptions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.subscription-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  background: linear-gradient(to right, #f9fafb, #ffffff);
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  min-height: 80px;
+}
+
+.subscription-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  border-color: #D4AF37;
+}
+
+.subscription-card.active {
+  border-left: 4px solid #22c55e;
+}
+
+.subscription-card.expiring {
+  border-left: 4px solid #f59e0b;
+}
+
+.subscription-card.expired {
+  border-left: 4px solid #ef4444;
+  opacity: 0.7;
+}
+
+.subscription-header {
+  flex: 0 0 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.customer-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #111827;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.plan-name {
+  color: #4b5563;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.subscription-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.subscription-progress {
+  flex: 1;
+  max-width: 300px;
+  margin: 0 20px;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.8s ease;
+}
+
+.subscription-footer {
+  flex: 0 0 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  text-align: right;
+}
+
+.days-remaining {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #059669;
+  line-height: 1.2;
+}
+
+.days-remaining.expiring {
+  color: #d97706;
+}
+
+.renewal-date {
+  font-size: 0.7rem;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.subscription-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+  color: white;
+  border-color: transparent;
+}
+
+.action-btn.secondary {
+  background: #ffffff;
+  color: #111827;
+  border-color: #d1d5db;
+}
+
+.action-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Loading State */
+.subscription-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+  font-size: 1.2rem;
+  color: #4b5563;
+  font-weight: 600;
+}
+
+/* Responsive - Layout Orizzontale */
+@media (max-width: 1024px) {
+  .plans-grid {
+    flex-direction: column;
+  }
+  
+  .plan-card {
+    min-width: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .subscription-manager {
+    padding: 16px;
+  }
+  
+  .subscription-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .header-stats {
+    justify-content: center;
+    gap: 24px;
+  }
+  
+  .subscription-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    min-height: auto;
+  }
+  
+  .subscription-header {
+    flex: 1;
+    text-align: left;
+  }
+  
+  .subscription-progress {
+    flex: 1;
+    max-width: none;
+    margin: 0;
+  }
+  
+  .subscription-footer {
+    flex: 1;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+  }
+  
+  .subscription-actions {
+    gap: 8px;
+  }
+  
+  .action-btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #111827;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.form-input, .form-select {
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: #ffffff;
+  color: #111827;
+  transition: all 0.2s ease;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: #8B4513;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.2);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 24px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 0 0 16px 16px;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+  color: white;
+  border-color: transparent;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.btn-secondary:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.subscribe-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ===================================
+   CARD VISUAL CON BOLLINI - VISTA OPERATORI
+   =================================== */
+
+.subscription-cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.subscription-visual-card {
+  background: #ffffff;
+  border: 3px solid #d1d5db;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-height: 180px;
+  max-height: 230px;
+}
+
+.subscription-visual-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(139, 69, 19, 0.2);
+  border-color: #8B4513;
+}
+
+/* Header Card */
+.card-header {
+  padding: 20px 16px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  flex: 0 0 220px;
+  border-radius: 16px 0 0 16px;
+}
+
+.card-icon {
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.card-customer-info {
+  flex: 1;
+}
+
+.card-customer-name {
+  margin: 0 0 6px 0;
+  font-size: 1.6rem;
+  font-weight: 900;
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.9),
+    0 0 8px rgba(0, 0, 0, 0.5);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #ffffff;
+  line-height: 1.1;
+}
+
+.card-plan-name {
+  font-size: 1.3rem;
+  font-weight: 800;
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.8),
+    0 0 6px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.7px;
+  color: #ffffff;
+  opacity: 1;
+  text-transform: capitalize;
+  line-height: 1.3;
+}
+
+.card-status {
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+}
+
+/* Container Bollini */
+.bollini-container {
+  padding: 16px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.bollini-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bollini-title {
+  font-weight: 900;
+  font-size: 1.3rem;
+  color: #1e293b;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.5px;
+}
+
+.bollini-remaining {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #065f46;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  padding: 8px 16px;
+  border-radius: 25px;
+  border: 3px solid #059669;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* File Bollini Orizzontali */
+.bollini-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px;
+  justify-content: flex-start;
+  align-items: center;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+/* Scrollbar verticale per bollini */
+.bollini-grid::-webkit-scrollbar {
+  width: 4px;
+}
+
+.bollini-grid::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 2px;
+}
+
+.bollini-grid::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #8B4513, #D4AF37);
+  border-radius: 2px;
+}
+
+.bollini-grid::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #A0522D, #B8860B);
+}
+
+/* Header ricerca abbonamenti */
+.subscriptions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.search-container {
+  flex: 0 0 300px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: #ffffff;
+  color: #111827;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #8B4513;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.2);
+  transform: translateY(-1px);
+}
+
+.search-input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.no-results {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  background: #f9fafb;
+  border: 2px dashed #d1d5db;
+  border-radius: 16px;
+  margin: 20px 0;
+}
+
+.no-results p {
+  color: #6b7280;
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Bollino Singolo */
+.bollino {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.7rem;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.bollino-used {
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  box-shadow: 
+    0 4px 12px rgba(139, 69, 19, 0.4),
+    0 0 15px rgba(139, 69, 19, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  font-weight: 900;
+  font-size: 1rem;
+  position: relative;
+}
+
+/* Effetto luce accesa tipo LED */
+.bollino-used::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, 
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.1) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  animation: led-glow-steady 2s ease-in-out infinite alternate;
+}
+
+@keyframes led-glow-steady {
+  from { 
+    box-shadow: 0 0 10px rgba(139, 69, 19, 0.8);
+    opacity: 0.8;
+  }
+  to { 
+    box-shadow: 0 0 20px rgba(139, 69, 19, 1);
+    opacity: 1;
+  }
+}
+
+.bollino-available {
+  color: #1f2937;
+  border: 2px solid #d1d5db;
+  box-shadow: 
+    0 2px 6px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+  font-weight: 800;
+  font-size: 0.9rem;
+  position: relative;
+}
+
+/* Bollini spenti - effetto opaco */
+.bollino-available::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, 
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.05) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.bollino-available:hover {
+  border-color: #8B4513;
+  color: #8B4513;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+  background: linear-gradient(135deg, #ffffff, #f3f4f6);
+}
+
+@keyframes bollino-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* Effetto accensione LED quando bollino si accende */
+.bollino-lighting-up {
+  animation: led-light-up 1.5s ease-out;
+}
+
+@keyframes led-light-up {
+  0% { 
+    transform: scale(1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+  }
+  20% { 
+    transform: scale(1.2);
+    box-shadow: 0 0 25px rgba(139, 69, 19, 0.8);
+    background: linear-gradient(135deg, #8B4513, #D4AF37);
+  }
+  40% { 
+    transform: scale(1.1);
+    box-shadow: 
+      0 4px 12px rgba(139, 69, 19, 0.4),
+      0 0 30px rgba(139, 69, 19, 1);
+  }
+  60% { 
+    transform: scale(1.05);
+    box-shadow: 
+      0 4px 12px rgba(139, 69, 19, 0.4),
+      0 0 20px rgba(139, 69, 19, 0.8);
+  }
+  100% { 
+    transform: scale(1);
+    box-shadow: 
+      0 4px 12px rgba(139, 69, 19, 0.4),
+      0 0 15px rgba(139, 69, 19, 0.6);
+  }
+}
+
+/* Footer Card */
+.card-footer {
+  padding: 16px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 0 0 180px;
+  justify-content: center;
+  border-radius: 0 16px 16px 0;
+}
+
+.card-time-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+}
+
+.card-days-remaining {
+  font-weight: 900;
+  color: #065f46;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.card-days-remaining.expiring {
+  color: #dc2626;
+  font-weight: 900;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.card-expiry {
+  color: #1e293b;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.card-use-btn {
+  width: 100%;
+  padding: 14px 18px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.card-use-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(139, 69, 19, 0.5);
+}
+
+.card-use-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #9ca3af !important;
+  transform: none !important;
+}
+
+/* Sezione Abbonamenti Scaduti */
+.expired-subscriptions-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 2px solid #e5e7eb;
+}
+
+.section-subtitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 16px;
+}
+
+.expired-subscriptions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.expired-subscription-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.expired-subscription-card:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.expired-subscription-card.expired {
+  border-left: 4px solid #ef4444;
+}
+
+.expired-subscription-card.expiring {
+  border-left: 4px solid #f59e0b;
+}
+
+.expired-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.expired-customer {
+  font-weight: 700;
+  color: #111827;
+}
+
+.expired-plan {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.expired-status {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.expired-status.expired {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.expired-status.expiring {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.renew-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  background: linear-gradient(135deg, #059669, #047857);
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.renew-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(5, 150, 105, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .subscription-visual-card {
+    flex-direction: column;
+    min-height: auto;
+  }
+  
+  .card-header {
+    flex: none;
+    border-radius: 16px 16px 0 0;
+    padding: 16px;
+  }
+  
+  .bollini-container {
+    padding: 16px;
+  }
+  
+  .bollini-grid {
+    max-height: 100px;
+    gap: 2px;
+    padding: 6px;
+  }
+  
+  .search-container {
+    flex: 1 1 100%;
+  }
+  
+  .card-footer {
+    flex: none;
+    border-radius: 0 0 16px 16px;
+    padding: 16px;
+  }
+  
+  .bollino {
+    width: 28px;
+    height: 28px;
+    font-size: 0.65rem;
+  }
+  
+  .card-time-info {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+/* ===================================
+   MODAL CONFERMA ATTIVAZIONE ABBONAMENTO
+   =================================== */
+
+.activation-modal {
+  max-width: 700px;
+  width: 95%;
+}
+
+.activation-summary {
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.summary-header {
+  background: linear-gradient(135deg, #8B4513, #D4AF37);
+  color: white;
+  padding: 16px 20px;
+  text-align: center;
+}
+
+.summary-header h4 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.summary-details {
+  padding: 20px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+.detail-value {
+  font-weight: 700;
+  color: #111827;
+  font-size: 1rem;
+}
+
+.detail-value.customer-name {
+  color: #8B4513;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.detail-value.plan-name {
+  color: #D4AF37;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.total-row {
+  border-top: 2px solid #e2e8f0;
+  margin-top: 12px;
+  padding: 16px 0 0 0;
+}
+
+.total-price {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #059669;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Sezione Pagamento */
+.payment-section {
+  margin-bottom: 24px;
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.payment-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.payment-options {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 12px 20px;
+  border: 2px solid #d1d5db;
+  border-radius: 12px;
+  background: #f9fafb;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 140px;
+}
+
+.payment-option:hover {
+  border-color: #8B4513;
+  background: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.2);
+}
+
+.payment-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #8B4513;
+}
+
+.payment-option input[type="radio"]:checked + .payment-label {
+  color: #8B4513;
+  font-weight: 800;
+}
+
+.payment-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  transition: all 0.2s ease;
+}
+
+.payment-option input[type="radio"]:checked {
+  transform: scale(1.1);
+}
+
+.payment-option:has(input[type="radio"]:checked) {
+  border-color: #8B4513;
+  background: linear-gradient(135deg, #fef7ed, #fff7ed);
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+}
+
+/* Sezione Ricevuta */
+.receipt-section {
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.receipt-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.receipt-option {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.receipt-option input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: #8B4513;
+  margin-right: 12px;
+}
+
+.receipt-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.receipt-option input[type="checkbox"]:checked + .receipt-label {
+  color: #8B4513;
+}
+
+.receipt-note {
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-left: 32px;
+  font-style: italic;
+}
+
+/* Bottone Conferma Attivazione */
+.activation-confirm-btn {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  font-size: 1.1rem !important;
+  padding: 14px 28px !important;
+  font-weight: 900 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 8px 20px rgba(5, 150, 105, 0.4);
+}
+
+.activation-confirm-btn:hover:not(:disabled) {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 12px 25px rgba(5, 150, 105, 0.5) !important;
+}
+
+/* Responsive Modal Attivazione */
+@media (max-width: 768px) {
+  .activation-modal {
+    max-width: 95%;
+    margin: 10px;
+  }
+  
+  .payment-options {
+    flex-direction: column;
+  }
+  
+  .payment-option {
+    min-width: auto;
+  }
+  
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .total-price {
+    font-size: 1.5rem;
+  }
+}

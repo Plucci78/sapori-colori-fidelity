@@ -897,6 +897,19 @@ app.post('/print/receipt', async (req, res) => {
       res.json(result)
       return
     }
+
+    // Controlla se è una ricevuta abbonamento
+    if (receiptData.receiptType === 'subscription') {
+      logOperation('SUBSCRIPTION_RECEIPT_REQUEST', { 
+        customer: receiptData.customer,
+        plan: receiptData.subscriptionDetails?.planName,
+        total: receiptData.total
+      })
+      
+      const result = await printSubscriptionReceipt(receiptData)
+      res.json(result)
+      return
+    }
     
     // Supporta sia gift card che ricevute generiche
     if (receiptData.giftCard) {

@@ -25,7 +25,8 @@ import LevelsTest from './components/Test/LevelsTest'
 // Import dei componenti (ESISTENTI)
 import AdvancedAnalytics from './components/Analytics/AdvancedAnalytics'
 import NotificationContainer from './components/Common/NotificationContainer'
-import DashboardView from './components/Dashboard/DashboardView'
+import DashboardEnterprisePro from './components/Dashboard/DashboardEnterprisePro'
+import SubscriptionManager from './components/Subscriptions/SubscriptionManager'
 import CustomerView from './components/Customers/CustomerView'
 import EmailView from './components/Email/EmailView'
 import ChatView from './components/Chat/ChatView'
@@ -764,6 +765,17 @@ const fixReferralData = async (customerId) => {
         </svg>
       ),
       description: 'Catalogo premi',
+      permission: 'canManagePrizes'
+    },
+    {
+      id: 'subscriptions',
+      title: 'Abbonamenti',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+        </svg>
+      ),
+      description: 'Piani ricorrenti premium',
       permission: 'canManagePrizes'
     },
     {
@@ -2052,12 +2064,7 @@ for (const customer of recipients) {
   const renderContent = () => {
     switch (activeView) {
       case 'dashboard':
-        return <DashboardView
-          todayStats={todayStats}
-          topCustomers={topCustomers}
-          emailStats={emailStats}
-          showNotification={showNotification}
-        />
+        return <DashboardEnterprisePro />
       case 'customer':
         return (
           <ProtectedComponent permission="canViewCustomers">
@@ -2124,6 +2131,14 @@ for (const customer of recipients) {
               addPrize={addPrize}
               prizes={prizes}
               deletePrize={deletePrize}
+              showNotification={showNotification}
+            />
+          </ProtectedComponent>
+        )
+      case 'subscriptions':
+        return (
+          <ProtectedComponent permission="canManagePrizes">
+            <SubscriptionManager
               showNotification={showNotification}
             />
           </ProtectedComponent>
@@ -2221,11 +2236,7 @@ for (const customer of recipients) {
           </ProtectedComponent>
         )
       default:
-        return <DashboardView
-          todayStats={todayStats}
-          topCustomers={topCustomers}
-          emailStats={emailStats}
-        />
+        return <DashboardEnterprisePro />
     }
   }
 

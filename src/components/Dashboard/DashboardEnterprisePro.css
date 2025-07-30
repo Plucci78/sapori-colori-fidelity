@@ -1,0 +1,724 @@
+/* ===================================
+   DASHBOARD ENTERPRISE PRO - STILE ANALYTICS ADVANCED
+   Design Professionale e Maturo
+   =================================== */
+
+.dashboard-enterprise-pro {
+  padding: 24px;
+  background: #f3f4f6;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  animation: analytics-fadeIn 0.5s ease-out;
+}
+
+@keyframes analytics-fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Layout professionale */
+.dashboard-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-bottom: 32px;
+  align-items: stretch;
+}
+
+/* KPI Cards - Stile Analytics Advanced */
+.metric-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  text-align: left;
+  flex: 1;
+  min-width: 280px;
+}
+
+.metric-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  border-color: #8B4513;
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #8B4513, #D4AF37);
+}
+
+/* Headers professionali */
+.metric-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metric-header svg {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #8B4513, #D4AF37);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  padding: 12px;
+  box-shadow: 0 8px 20px rgba(139, 69, 19, 0.3);
+  flex-shrink: 0;
+}
+
+.metric-header h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-secondary, #4b5563);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+/* Valori professionali */
+.metric-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--text-primary, #111827);
+  line-height: 1.1;
+  margin: var(--space-2, 8px) 0;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.metric-trend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--success, #059669);
+}
+
+.metric-detail {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #4b5563);
+  margin-top: var(--space-1, 4px);
+  font-weight: 500;
+}
+
+/* Sistema Status - Stile Professionale */
+.status-card {
+  text-align: left;
+}
+
+.system-indicators {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
+  margin-top: var(--space-4, 16px);
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  padding: var(--space-3, 12px);
+  background: var(--gray-50, #f9fafb);
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--gray-200, #e5e7eb);
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.status-item:hover {
+  background: white;
+  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgb(0 0 0 / 0.05));
+}
+
+.status-item svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Widget Cards Professionali */
+.widget-card {
+  background: var(--bg-primary, #ffffff);
+  border: 1px solid var(--gray-200, #e5e7eb);
+  border-radius: var(--radius-lg, 12px);
+  padding: var(--space-6, 24px);
+  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 0.1));
+  transition: all 0.3s ease;
+}
+
+.widget-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl, 0 20px 25px -5px rgb(0 0 0 / 0.1));
+}
+
+.widget-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  margin-bottom: var(--space-5, 20px);
+  padding-bottom: var(--space-3, 12px);
+  border-bottom: 1px solid var(--gray-200, #e5e7eb);
+}
+
+.widget-header svg {
+  color: var(--brand-primary, #8B4513);
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.widget-header h3 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-primary, #111827);
+  margin: 0;
+}
+
+/* Demografia - Stile Analytics */
+.demographics-card {
+  width: 100%; /* Full width but horizontal layout */
+}
+
+.gender-visualization {
+  margin: 16px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.gender-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px;
+  background: linear-gradient(to right, #f9fafb, #ffffff);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+  flex: 1;
+  min-width: 300px;
+}
+
+.gender-row:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 0.1));
+  border-color: var(--brand-secondary, #D4AF37);
+}
+
+.gender-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 200px;
+}
+
+.gender-icon-svg {
+  width: 20px;
+  height: 20px;
+  transition: all 0.3s ease;
+  opacity: 0.9;
+}
+
+.gender-icon-svg:hover {
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+.gender-icon-svg.male {
+  color: var(--blue-500, #3b82f6);
+}
+
+.gender-icon-svg.female {
+  color: var(--pink-500, #ec4899);
+}
+
+.gender-bar {
+  flex: 1;
+  height: 12px;
+  background-color: var(--gray-200, #e5e7eb);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.gender-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 1s ease-out;
+}
+
+.male-fill {
+  background: linear-gradient(to right, var(--blue-500, #3b82f6), var(--blue-600, #2563eb));
+}
+
+.female-fill {
+  background: linear-gradient(to right, var(--pink-500, #ec4899), var(--pink-600, #db2777));
+}
+
+.gender-stat {
+  min-width: 180px;
+  font-weight: 700;
+  font-size: 1rem;
+  text-align: right;
+}
+
+.male-stat {
+  color: var(--blue-600, #2563eb);
+}
+
+.female-stat {
+  color: var(--pink-600, #db2777);
+}
+
+.spending-summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3, 12px);
+  margin-top: var(--space-6, 24px);
+  padding: var(--space-4, 16px);
+  background: var(--bg-brand, linear-gradient(135deg, #8B4513, #D4AF37));
+  color: white;
+  border-radius: var(--radius-lg, 12px);
+  font-weight: 700;
+  font-size: 1.1rem;
+  box-shadow: 0 8px 20px rgba(139, 69, 19, 0.3);
+}
+
+/* Heat-Map Oraria - Stile Analytics */
+.hourly-card {
+  width: 100%; /* Full width but horizontal layout */
+}
+
+.hourly-heatmap {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.hour-block {
+  text-align: center;
+  padding: 16px 8px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  background: white;
+  border: 1px solid #e5e7eb;
+  flex: 1;
+  min-width: 80px;
+  max-width: 120px;
+}
+
+.hour-block:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgb(0 0 0 / 0.1));
+}
+
+.hour-block.low {
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border-color: #10b981;
+}
+
+.hour-block.medium {
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border-color: #f59e0b;
+}
+
+.hour-block.high {
+  background: linear-gradient(135deg, #fef2f2, #fecaca);
+  border-color: #ef4444;
+  animation: pulse-professional 2s infinite;
+}
+
+@keyframes pulse-professional {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.hour-time {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+  margin-bottom: var(--space-2, 8px);
+}
+
+.hour-bars {
+  display: flex;
+  justify-content: center;
+  align-items: end;
+  height: 50px;
+  margin: var(--space-2, 8px) 0;
+}
+
+.hour-bar {
+  width: 6px;
+  height: 12px;
+  background: var(--gray-400, #9ca3af);
+  margin: 0 1px;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.hour-block.medium .hour-bar {
+  background: var(--yellow-500, #eab308);
+  height: 25px;
+}
+
+.hour-block.high .hour-bar {
+  background: var(--red-500, #ef4444);
+  height: 38px;
+}
+
+.hour-count {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary, #111827);
+  margin-top: var(--space-1, 4px);
+}
+
+.peak-indicator {
+  display: block;
+  font-size: 0.6rem;
+  color: var(--red-600, #dc2626);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+.next-peak {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2, 8px);
+  margin: var(--space-6, 24px) 0;
+  padding: var(--space-4, 16px);
+  background: #fef2f2;
+  border: 1px solid #ef4444;
+  border-radius: var(--radius-lg, 12px);
+  font-weight: 700;
+  color: #dc2626;
+}
+
+/* Clienti Inattivi - Stile Customer List */
+.inactive-card {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.inactive-customer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 16px);
+  padding: var(--space-4, 16px);
+  margin-bottom: var(--space-3, 12px);
+  background: linear-gradient(to right, var(--gray-50, #f9fafb), var(--bg-primary, #ffffff));
+  border: 1px solid var(--gray-200, #e5e7eb);
+  border-radius: var(--radius-lg, 12px);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.inactive-customer:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 0.1));
+  border-color: var(--brand-secondary, #D4AF37);
+}
+
+.inactive-customer.high {
+  border-left: 4px solid var(--red-500, #ef4444);
+}
+
+.inactive-customer.medium {
+  border-left: 4px solid var(--yellow-500, #eab308);
+}
+
+.inactive-customer.low {
+  border-left: 4px solid var(--gray-400, #9ca3af);
+}
+
+.customer-name {
+  flex: 1;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-primary, #111827);
+}
+
+.customer-days {
+  color: var(--red-600, #dc2626);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.customer-value {
+  color: var(--green-600, #16a34a);
+  font-weight: 700;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 1rem;
+}
+
+/* Buttons professionali */
+.action-buttons {
+  display: flex;
+  gap: var(--space-3, 12px);
+  margin-top: var(--space-6, 24px);
+}
+
+.btn-primary, .btn-secondary {
+  flex: 1;
+  padding: var(--space-3, 12px) var(--space-5, 20px);
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2, 8px);
+  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgb(0 0 0 / 0.05));
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary {
+  background: var(--bg-brand, linear-gradient(135deg, #8B4513 0%, #A0522D 100%));
+  color: white;
+  border: 1px solid transparent;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 0.1));
+}
+
+.btn-secondary {
+  background: var(--bg-primary, #ffffff);
+  color: var(--text-primary, #111827);
+  border: 1px solid var(--gray-300, #d1d5db);
+}
+
+.btn-secondary:hover {
+  background: var(--gray-100, #f3f4f6);
+  border-color: var(--brand-primary, #8B4513);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 0.1));
+}
+
+/* Alert Cards */
+.alerts-card {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4, 16px);
+  padding: var(--space-4, 16px);
+  margin-bottom: var(--space-3, 12px);
+  background: white;
+  border: 1px solid var(--gray-200, #e5e7eb);
+  border-radius: var(--radius-lg, 12px);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.alert-item.critical {
+  background: #fef2f2;
+  border-left: 4px solid var(--red-500, #ef4444);
+}
+
+.alert-item.opportunity {
+  background: #eff6ff;
+  border-left: 4px solid var(--blue-500, #3b82f6);
+}
+
+.alert-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgb(0 0 0 / 0.1));
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-title {
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+  margin-bottom: var(--space-1, 4px);
+  font-size: 1rem;
+}
+
+.alert-description {
+  color: var(--text-secondary, #4b5563);
+  margin-bottom: var(--space-2, 8px);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.alert-action {
+  color: var(--green-600, #16a34a);
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Loading State */
+.dashboard-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.2rem;
+  color: var(--text-secondary, #4b5563);
+  background: var(--gray-100, #f3f4f6);
+  font-weight: 600;
+}
+
+/* Trend Giornaliero */
+.daily-trend-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 12px;
+  margin: 16px 0;
+}
+
+.daily-trend-item {
+  text-align: center;
+  flex: 1;
+  min-width: 70px;
+}
+
+.trend-date {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.trend-bar-container {
+  height: 120px;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.trend-bar {
+  width: 24px;
+  border-radius: 4px 4px 0 0;
+  transition: all 0.3s ease;
+  min-height: 20px;
+}
+
+.trend-bar:hover {
+  transform: scaleY(1.1);
+  filter: brightness(1.1);
+}
+
+.trend-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.trend-transactions {
+  font-size: 0.7rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.trend-summary {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  background: linear-gradient(135deg, #8B4513, #D4AF37);
+  border-radius: 8px;
+  color: white;
+  margin-top: 16px;
+}
+
+.trend-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.trend-indicator.positive {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.trend-indicator.negative {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+/* Responsive Professionale */
+@media (max-width: 768px) {
+  .dashboard-enterprise-pro {
+    padding: var(--space-4, 16px);
+  }
+  
+  .dashboard-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-4, 16px);
+  }
+  
+  .gender-row {
+    flex-direction: column;
+    gap: var(--space-3, 12px);
+  }
+  
+  .hourly-heatmap {
+    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  }
+  
+  .metric-value {
+    font-size: 2rem;
+  }
+  
+  .system-indicators {
+    gap: var(--space-2, 8px);
+  }
+}

@@ -1,0 +1,41 @@
+[Unit]
+Description=NFC Bridge Server per Loyalty System - Versione Migliorata
+After=network.target pcscd.service usb.target
+Wants=pcscd.service
+Requires=network.target
+StartLimitInterval=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=sapori
+WorkingDirectory=/home/sapori/nfc-bridge
+Environment=NODE_ENV=production
+Environment=NFC_BRIDGE_PORT=3001
+
+# Pre-controlli prima dell'avvio
+ExecStartPre=/bin/sleep 15
+ExecStartPre=/bin/bash -c 'echo "🔍 Verifica lettore USB..." && until lsusb | grep -q "072f:2200\\|ACR122"; do echo "⏳ Attendo lettore USB..."; sleep 3; done && echo "✅ Lettore USB rilevato"'
+ExecStartPre=/bin/bash -c 'echo "🔍 Verifica pcscd..." && until systemctl is-active --quiet pcscd; do echo "⏳ Attendo pcscd..."; sleep 2; done && echo "✅ pcscd attivo"'
+ExecStartPre=/bin/bash -c 'echo "🔍 Test lettore NFC..." && timeout 8 pcsc_scan -n || (echo "⚠️ Lettore non risponde, riavvio pcscd..." && systemctl restart pcscd && sleep 5)'
+
+# Avvio servizio
+ExecStart=/usr/bin/node server.js
+
+# Configurazione restart
+Restart=always
+RestartSec=45
+TimeoutStartSec=120
+TimeoutStopSec=30
+
+# Logging migliorato
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nfc-bridge
+
+# Sicurezza
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target
