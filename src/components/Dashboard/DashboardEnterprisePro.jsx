@@ -411,7 +411,7 @@ const DashboardEnterprisePro = () => {
   const checkSystemStatus = async () => {
     try {
       // Check print server
-      const printResponse = await fetch('http://localhost:3002/print/status')
+      const printResponse = await fetch('/api/print/status')
       const printStatus = printResponse.ok ? 'online' : 'offline'
       
       return {
