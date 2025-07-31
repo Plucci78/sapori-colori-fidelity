@@ -30,8 +30,8 @@ export default async function handler(req, res) {
       }
     }
     
-    // URL del tunnel NFC - HTTP funziona server-to-server
-    const printUrl = 'http://nfc.saporiecolori.net/print/receipt'
+    // URL del tunnel ngrok per print server - HTTPS funziona server-to-server
+    const printUrl = 'https://sacred-eagle-similarly.ngrok-free.app/print/receipt'
     
     const logId = receiptData.giftCard?.code || receiptData.orderId || 'N/A'
     console.log('🧾 Print Proxy: Stampa ricevuta', logId, 'via', printUrl)
