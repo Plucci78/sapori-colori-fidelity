@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       }
     }
     
-    // URL del tunnel NFC - HTTP funziona server-to-server
+    // URL del tunnel ngrok per print server - HTTPS funziona server-to-server
     const printUrl = 'https://sacred-eagle-similarly.ngrok-free.app/print/receipt'
     
     const logId = receiptData.giftCard?.code || receiptData.orderId || 'N/A'
