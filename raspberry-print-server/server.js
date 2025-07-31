@@ -5,19 +5,85 @@ const moment = require('moment')
 const { createCanvas, loadImage } = require('canvas')
 const QRCode = require('qrcode')
 const fs = require('fs')
+const { exec } = require('child_process')
+const { promisify } = require('util')
 
 const app = express()
 const PORT = process.env.PRINT_SERVER_PORT || 3002
+const execAsync = promisify(exec)
 
-// Configurazione stampante
-const PRINTER_CONFIG = {
+// IP dinamico della stampante (verrà rilevato automaticamente)
+let CURRENT_PRINTER_IP = null
+
+// Configurazione base stampante (IP viene aggiornato dinamicamente)
+const BASE_PRINTER_CONFIG = {
   type: PrinterTypes.EPSON,
-  interface: 'tcp://192.168.1.17:9100',
   characterSet: CharacterSet.PC852_LATIN2,
   removeSpecialCharacters: true,
   lineCharacter: "=",
   options: {
     timeout: 5000
+  }
+}
+
+// Funzione per rilevare IP stampante automaticamente
+const discoverPrinterIP = async () => {
+  try {
+    console.log('🔍 Ricerca automatica stampante sulla rete...')
+    
+    // Scansiona la rete locale per porte 9100 (stampanti ESC/POS)
+    const { stdout } = await execAsync('nmap -p 9100 --open 192.168.1.0/24 2>/dev/null | grep -B4 "9100/tcp open"')
+    
+    const lines = stdout.split('\n')
+    for (const line of lines) {
+      if (line.includes('Nmap scan report for')) {
+        const ip = line.match(/(\d+\.\d+\.\d+\.\d+)/)?.[1]
+        if (ip) {
+          console.log(`✅ Stampante trovata su IP: ${ip}:9100`)
+          return ip
+        }
+      }
+    }
+    
+    // Fallback: prova gli IP più comuni per stampanti
+    const commonIPs = ['192.168.1.17', '192.168.1.100', '192.168.1.101', '192.168.1.200']
+    
+    for (const ip of commonIPs) {
+      try {
+        console.log(`🔍 Test IP: ${ip}:9100`)
+        const testConfig = { ...BASE_PRINTER_CONFIG, interface: `tcp://${ip}:9100` }
+        const testPrinter = new ThermalPrinter(testConfig)
+        const isConnected = await testPrinter.isPrinterConnected()
+        
+        if (isConnected) {
+          console.log(`✅ Stampante confermata su IP: ${ip}:9100`)
+          return ip
+        }
+      } catch (error) {
+        console.log(`❌ IP ${ip}:9100 non risponde`)
+      }
+    }
+    
+    throw new Error('Nessuna stampante trovata sulla rete')
+    
+  } catch (error) {
+    console.error('❌ Errore ricerca stampante:', error.message)
+    
+    // Ultimo tentativo con IP default
+    console.log('🆘 Uso IP default: 192.168.1.17:9100')
+    return '192.168.1.17'
+  }
+}
+
+// Funzione per ottenere configurazione stampante aggiornata
+const getPrinterConfig = async () => {
+  if (!CURRENT_PRINTER_IP) {
+    CURRENT_PRINTER_IP = await discoverPrinterIP()
+  }
+  
+  return {
+    ...BASE_PRINTER_CONFIG,
+    interface: `tcp://${CURRENT_PRINTER_IP}:9100`
   }
 }
 
@@ -30,10 +96,11 @@ const logOperation = (operation, data = {}) => {
   console.log(`[${new Date().toISOString()}] ${operation}:`, data)
 }
 
-// Funzione per creare l'istanza della stampante
-const createPrinter = () => {
-  let printer = new ThermalPrinter(PRINTER_CONFIG)
-  return printer
+// Funzione per creare l'istanza della stampante con IP dinamico
+const createPrinter = async () => {
+  const config = await getPrinterConfig()
+  console.log(`🖨️ Creo stampante su: ${config.interface}`)
+  return new ThermalPrinter(config)
 }
 
 // Funzione per generare QR Code per Gift Card (SEMPLIFICATO per scanner)
@@ -229,7 +296,7 @@ const createGiftCardPNG = async (giftCardData) => {
 
 // Funzione per creare gift card con template JSON strutturato
 const createGiftCardWithJSONTemplate = async (giftCardData) => {
-  const printer = createPrinter()
+  const printer = await createPrinter()
   
   const value = parseFloat(giftCardData.value || giftCardData.amount || giftCardData.balance).toFixed(2)
   const recipient = giftCardData.recipient_name || giftCardData.recipient || ''
@@ -461,7 +528,7 @@ const createBackupGiftCardImage = async (giftCardData) => {
 
 // Funzione per stampare Gift Card PROFESSIONALE con PNG
 const printGiftCard = async (giftCardData) => {
-  const printer = createPrinter()
+  const printer = await createPrinter()
   
   try {
     // Test connessione
@@ -505,7 +572,7 @@ const printGiftCard = async (giftCardData) => {
 
 // Funzione per stampare ricevute di vendita
 const printSalesReceipt = async (receiptData) => {
-  const printer = createPrinter()
+  const printer = await createPrinter()
   
   try {
     const isConnected = await printer.isPrinterConnected()
@@ -668,17 +735,55 @@ const printSalesReceipt = async (receiptData) => {
 // API ENDPOINTS
 // ===================================
 
+// POST /print/discover - Forza ricerca stampante
+app.post('/print/discover', async (req, res) => {
+  try {
+    console.log('🔍 Avvio ricerca manuale stampante...')
+    
+    // Reset IP corrente per forzare nuova ricerca
+    CURRENT_PRINTER_IP = null
+    
+    // Rileva nuovo IP
+    const newIP = await discoverPrinterIP()
+    CURRENT_PRINTER_IP = newIP
+    
+    // Test connessione
+    const printer = await createPrinter()
+    const isConnected = await printer.isPrinterConnected()
+    
+    const result = {
+      success: true,
+      discoveredIP: newIP,
+      connected: isConnected,
+      message: `Stampante ${isConnected ? 'trovata e connessa' : 'trovata ma non connessa'} su ${newIP}:9100`,
+      timestamp: new Date().toISOString()
+    }
+    
+    logOperation('MANUAL_DISCOVERY', result)
+    res.json(result)
+    
+  } catch (error) {
+    console.error('❌ Errore ricerca manuale:', error)
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    })
+  }
+})
+
 // GET /print/status - Stato della stampante
 app.get('/print/status', async (req, res) => {
   try {
-    const printer = createPrinter()
+    const printer = await createPrinter()
     const isConnected = await printer.isPrinterConnected()
     
     const status = {
       connected: isConnected,
       printerType: 'Bisofice ESC/POS 80mm',
-      interface: '192.168.1.100:9100',
-      lastCheck: new Date().toISOString()
+      interface: `${CURRENT_PRINTER_IP}:9100`,
+      lastCheck: new Date().toISOString(),
+      autoDiscovered: CURRENT_PRINTER_IP !== null
     }
     
     logOperation('STATUS_CHECK', status)
@@ -725,7 +830,7 @@ app.post('/print/gift-card', async (req, res) => {
     })
     
     // GENERA E STAMPA IL PNG PROFESSIONALE
-    const printer = createPrinter()
+    const printer = await createPrinter()
     
     const isConnected = await printer.isPrinterConnected()
     if (!isConnected) {
@@ -780,7 +885,7 @@ app.post('/print/gift-card', async (req, res) => {
 
 // Funzione per stampare ricevuta saldo wallet
 const printBalanceReceipt = async (receiptData) => {
-  const printer = createPrinter()
+  const printer = await createPrinter()
   
   try {
     const isConnected = await printer.isPrinterConnected()
@@ -968,7 +1073,7 @@ app.post('/print/receipt', async (req, res) => {
 // POST /print/test-commands - Test comandi ESC/POS
 app.post('/print/test-commands', async (req, res) => {
   try {
-    const printer = createPrinter()
+    const printer = await createPrinter()
     
     const isConnected = await printer.isPrinterConnected()
     if (!isConnected) {
@@ -1042,7 +1147,7 @@ app.post('/print/test-commands', async (req, res) => {
 // POST /print/test-chars - Test caratteri supportati
 app.post('/print/test-chars', async (req, res) => {
   try {
-    const printer = createPrinter()
+    const printer = await createPrinter()
     
     const isConnected = await printer.isPrinterConnected()
     if (!isConnected) {
@@ -1203,7 +1308,7 @@ app.post('/print/test-json', async (req, res) => {
 // POST /print/test-simple - Versione SEMPLICISSIMA
 app.post('/print/test-simple', async (req, res) => {
   try {
-    const printer = createPrinter()
+    const printer = await createPrinter()
     
     const isConnected = await printer.isPrinterConnected()
     if (!isConnected) {
@@ -1242,7 +1347,7 @@ app.post('/print/test-simple', async (req, res) => {
 // POST /print/test-png - Test stampa immagine PNG 
 app.post('/print/test-png', async (req, res) => {
   try {
-    const printer = createPrinter()
+    const printer = await createPrinter()
     
     const isConnected = await printer.isPrinterConnected()
     if (!isConnected) {
@@ -1332,7 +1437,7 @@ app.post('/print/test-png', async (req, res) => {
 // POST /print/test-debug - Test DEBUG nuovo template
 app.post('/print/test-debug', async (req, res) => {
   try {
-    const printer = createPrinter()
+    const printer = await createPrinter()
     
     const isConnected = await printer.isPrinterConnected()
     if (!isConnected) {
@@ -1554,7 +1659,7 @@ const startServer = async () => {
     
     // Test iniziale stampante
     console.log('🖨️  Test connessione stampante...')
-    const printer = createPrinter()
+    const printer = await createPrinter()
     const isConnected = await printer.isPrinterConnected()
     
     console.log('🖨️  Stampante connessa:', isConnected ? '✅' : '❌')
@@ -1564,7 +1669,7 @@ const startServer = async () => {
       console.log('')
       console.log('🚀 Print Server avviato su porta', PORT)
       console.log('🖨️  Stampante: Bisofice ESC/POS 80mm')
-      console.log('🌐 IP Stampante: 192.168.1.100:9100')
+      console.log('🌐 IP Stampante:', `${CURRENT_PRINTER_IP}:9100`)
       console.log('📡 API disponibili:')
       console.log(`   GET  http://localhost:${PORT}/print/status`)
       console.log(`   POST http://localhost:${PORT}/print/gift-card`)

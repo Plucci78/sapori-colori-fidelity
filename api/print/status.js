@@ -9,7 +9,7 @@ export default async function handler(req, res) {
 
   try {
     // URL del tunnel NFC - HTTP funziona server-to-server
-    const printUrl = 'http://nfc.saporiecolori.net/print/status'
+    const printUrl = 'https://sacred-eagle-similarly.ngrok-free.app/print/status'
     
     console.log('🖨️ Print Proxy: Controllo stato stampante via', printUrl)
     
