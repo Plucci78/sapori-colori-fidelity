@@ -986,6 +986,149 @@ const printBalanceReceipt = async (receiptData) => {
   }
 }
 
+// Funzione per stampare ricevuta abbonamento
+const printSubscriptionReceipt = async (receiptData) => {
+  const printer = await createPrinter()
+  
+  try {
+    const isConnected = await printer.isPrinterConnected()
+    if (!isConnected) {
+      throw new Error('Stampante non connessa')
+    }
+
+    logOperation('PRINT_SUBSCRIPTION_START', { 
+      customer: receiptData.customer,
+      plan: receiptData.subscriptionDetails?.planName,
+      total: receiptData.total
+    })
+
+    printer.clear()
+
+    // Header ricevuta abbonamento
+    printer.alignCenter()
+    printer.setTextSize(1, 1)
+    printer.bold(true)
+    printer.println("SAPORI & COLORI")
+    printer.bold(false)
+    printer.setTextSize(0, 0)
+    printer.println("Panetteria Gastronomica")
+    printer.println("Via Bagaladi 7")
+    printer.println("00132 Roma")
+    printer.println("Tel: 0639911640")
+    printer.println("P.IVA: 16240351003")
+    printer.println("════════════════════════════════")
+    printer.bold(true)
+    printer.setTextSize(1, 1)
+    printer.println("RICEVUTA ABBONAMENTO")
+    printer.bold(false)
+    printer.setTextSize(0, 0)
+    printer.println("════════════════════════════════")
+    printer.newLine()
+
+    // Dettagli abbonamento
+    printer.alignLeft()
+    printer.println(`N. Ordine: ${receiptData.orderId || 'N/A'}`)
+    printer.println(`Data: ${moment().format('DD/MM/YYYY HH:mm')}`)
+    printer.println(`Operatore: ${receiptData.operator || 'Sistema'}`)
+    printer.println(`Cliente: ${receiptData.customer}`)
+    printer.println("--------------------------------")
+    printer.newLine()
+
+    // Dettagli piano abbonamento
+    printer.println("PIANO ABBONAMENTO:")
+    printer.println("--------------------------------")
+    const planName = receiptData.subscriptionDetails?.planName || 'Piano Abbonamento'
+    const planDuration = receiptData.subscriptionDetails?.duration || 'N/A'
+    
+    printer.println(`Piano: ${planName}`)
+    printer.println(`Durata: ${planDuration}`)
+    
+    if (receiptData.subscriptionDetails?.startDate) {
+      printer.println(`Inizio: ${receiptData.subscriptionDetails.startDate}`)
+    }
+    if (receiptData.subscriptionDetails?.endDate) {
+      printer.println(`Scadenza: ${receiptData.subscriptionDetails.endDate}`)
+    }
+    
+    printer.println("--------------------------------")
+    
+    // Totali
+    const printAlignedLine = (label, amount, isBold = false) => {
+      const amountStr = `EUR ${parseFloat(amount).toFixed(2)}`
+      const spaces = Math.max(1, 32 - label.length - amountStr.length)
+      const spacesStr = ' '.repeat(spaces)
+      
+      printer.alignLeft()
+      if (isBold) printer.bold(true)
+      printer.println(`${label}${spacesStr}${amountStr}`)
+      if (isBold) printer.bold(false)
+    }
+    
+    if (receiptData.subtotal) {
+      printAlignedLine("Subtotale:", receiptData.subtotal)
+    }
+    
+    if (receiptData.tax) {
+      printAlignedLine("IVA:", receiptData.tax)
+    }
+
+    printer.println("════════════════════════════════")
+    printer.setTextSize(1, 1)
+    printAlignedLine("TOTALE:", receiptData.total, true)
+    printer.setTextSize(0, 0)
+    printer.println("════════════════════════════════")
+    printer.newLine()
+
+    // Metodo pagamento
+    if (receiptData.paymentMethod) {
+      printer.alignLeft()
+      printer.println(`Pagamento: ${receiptData.paymentMethod}`)
+      printer.newLine()
+    }
+
+    // Informazioni abbonamento
+    printer.println("INFORMAZIONI ABBONAMENTO:")
+    printer.println("• Servizio attivo dalla data di inizio")
+    printer.println("• Benefici validi fino alla scadenza")
+    printer.println("• Non rimborsabile")
+    printer.println("• Non trasferibile")
+    printer.newLine()
+
+    // Footer
+    printer.alignCenter()
+    printer.println("Grazie per aver scelto")
+    printer.bold(true)
+    printer.println("SAPORI E COLORI!")
+    printer.bold(false)
+    printer.println("Il tuo abbonamento è attivo! 🎉")
+    printer.newLine()
+
+    printer.cut()
+    await printer.execute()
+    
+    logOperation('PRINT_SUBSCRIPTION_SUCCESS', { 
+      customer: receiptData.customer,
+      plan: receiptData.subscriptionDetails?.planName,
+      timestamp: new Date().toISOString()
+    })
+
+    return {
+      success: true,
+      message: 'Ricevuta abbonamento stampata con successo',
+      type: 'subscription',
+      timestamp: new Date().toISOString()
+    }
+
+  } catch (error) {
+    logOperation('PRINT_SUBSCRIPTION_ERROR', { 
+      error: error.message,
+      customer: receiptData.customer 
+    })
+    
+    throw error
+  }
+}
+
 // POST /print/receipt - Stampa ricevuta di vendita
 app.post('/print/receipt', async (req, res) => {
   try {
