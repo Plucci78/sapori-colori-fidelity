@@ -826,12 +826,6 @@ const GiftCardManagement = ({ showNotification }) => {
                           onClick={() => {
                             // Trova la gift card più aggiornata dalla lista corrente
                             const updatedCard = giftCards.find(gc => gc.id === card.id) || card
-                            console.log('🔍 Preview Card Debug:', {
-                              originalCard: card,
-                              updatedCard: updatedCard,
-                              amount: updatedCard.amount,
-                              balance: updatedCard.balance
-                            })
                             setPreviewCard(updatedCard)
                             setShowPreviewModal(true)
                           }}
@@ -1341,11 +1335,6 @@ const GiftCardManagement = ({ showNotification }) => {
                     <div className="decorative-pattern"></div>
                     
                     <div className="card-value-section">
-                      {console.log('🎯 Modal Render Debug:', {
-                        amount: previewCard.amount,
-                        balance: previewCard.balance,
-                        isEqual: previewCard.balance === previewCard.amount
-                      })}
                       {/* Se la gift card non è mai stata usata, mostra solo il valore */}
                       {previewCard.balance === previewCard.amount ? (
                         // Layout singolo per gift card non utilizzata
@@ -1359,10 +1348,13 @@ const GiftCardManagement = ({ showNotification }) => {
                           <div className="value-amount" style={{
                             fontSize: '2.2rem',
                             fontWeight: 'bold',
-                            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+                            color: '#FFFFFF !important',
+                            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
                             letterSpacing: '1px',
                             lineHeight: '1.1',
-                            margin: '0'
+                            margin: '0',
+                            zIndex: '999',
+                            position: 'relative'
                           }}>{formatCurrency(previewCard.amount)}</div>
                           
                           {/* Badge per gift card nuova */}
@@ -1402,10 +1394,13 @@ const GiftCardManagement = ({ showNotification }) => {
                               <div className="value-amount" style={{
                                 fontSize: '1.6rem',
                                 fontWeight: 'bold',
-                                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+                                color: '#FFFFFF !important',
+                                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
                                 letterSpacing: '1px',
                                 lineHeight: '1.1',
-                                margin: '0'
+                                margin: '0',
+                                zIndex: '999',
+                                position: 'relative'
                               }}>{formatCurrency(previewCard.amount)}</div>
                             </div>
 
@@ -1420,12 +1415,14 @@ const GiftCardManagement = ({ showNotification }) => {
                               }}>SALDO</div>
                               <div className="balance-amount" style={{
                                 fontSize: '1.6rem',
-                                color: previewCard.balance > 0 ? '#FFD700' : '#FF6B6B',
+                                color: previewCard.balance > 0 ? '#FFD700 !important' : '#FF6B6B !important',
                                 fontWeight: 'bold',
-                                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+                                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
                                 letterSpacing: '1px',
                                 lineHeight: '1.1',
-                                margin: '0'
+                                margin: '0',
+                                zIndex: '999',
+                                position: 'relative'
                               }}>{formatCurrency(previewCard.balance)}</div>
                             </div>
                           </div>
