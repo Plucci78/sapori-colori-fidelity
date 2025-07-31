@@ -826,6 +826,12 @@ const GiftCardManagement = ({ showNotification }) => {
                           onClick={() => {
                             // Trova la gift card più aggiornata dalla lista corrente
                             const updatedCard = giftCards.find(gc => gc.id === card.id) || card
+                            console.log('🔍 Preview Card Debug:', {
+                              originalCard: card,
+                              updatedCard: updatedCard,
+                              amount: updatedCard.amount,
+                              balance: updatedCard.balance
+                            })
                             setPreviewCard(updatedCard)
                             setShowPreviewModal(true)
                           }}
@@ -1335,6 +1341,11 @@ const GiftCardManagement = ({ showNotification }) => {
                     <div className="decorative-pattern"></div>
                     
                     <div className="card-value-section">
+                      {console.log('🎯 Modal Render Debug:', {
+                        amount: previewCard.amount,
+                        balance: previewCard.balance,
+                        isEqual: previewCard.balance === previewCard.amount
+                      })}
                       {/* Se la gift card non è mai stata usata, mostra solo il valore */}
                       {previewCard.balance === previewCard.amount ? (
                         // Layout singolo per gift card non utilizzata
