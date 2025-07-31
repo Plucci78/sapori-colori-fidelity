@@ -31,10 +31,7 @@ export default async function handler(req, res) {
     }
     
     // URL del tunnel ngrok per print server - HTTPS funziona server-to-server
-    const baseUrl = 'https://sacred-eagle-similarly.ngrok-free.app'
-    const printUrl = receiptData.giftCard 
-      ? `${baseUrl}/print/gift-card`
-      : `${baseUrl}/print/receipt`
+    const printUrl = 'https://sacred-eagle-similarly.ngrok-free.app/print/receipt'
     
     const logId = receiptData.giftCard?.code || receiptData.orderId || 'N/A'
     console.log('🧾 Print Proxy: Stampa ricevuta', logId, 'via', printUrl)
