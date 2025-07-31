@@ -241,7 +241,7 @@ const WalletCashRegister = ({ showNotification }) => {
     try {
       setLoading(true)
       
-      const response = await fetch('http://localhost:3002/print/receipt', {
+      const response = await fetch('/api/print/receipt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -313,7 +313,7 @@ utilizzabile per tutti i nostri prodotti.
         (lastTransaction.paymentMethod === 'contanti' ? 'Contanti' : 'Bancomat') : 
         'Wallet'
 
-      const response = await fetch('http://localhost:3002/print/receipt', {
+      const response = await fetch('/api/print/receipt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -370,7 +370,7 @@ utilizzabile per tutti i nostri prodotti.
         operatorId: transaction.operator_id
       }
 
-      const response = await fetch('http://localhost:3002/print/receipt', {
+      const response = await fetch('/api/print/receipt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(receiptData)
@@ -707,7 +707,7 @@ utilizzabile per tutti i nostri prodotti.
                             try {
                               setLoading(true)
                               
-                              const response = await fetch('http://localhost:3002/print/receipt', {
+                              const response = await fetch('/api/print/receipt', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
