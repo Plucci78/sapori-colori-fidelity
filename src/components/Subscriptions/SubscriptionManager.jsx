@@ -48,6 +48,8 @@ const SubscriptionManager = ({ showNotification }) => {
   const [loading, setLoading] = useState(true)
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showCancelModal, setShowCancelModal] = useState(false)
+  const [subscriptionToCancel, setSubscriptionToCancel] = useState(null)
   const [customers, setCustomers] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   
@@ -554,6 +556,53 @@ const SubscriptionManager = ({ showNotification }) => {
     }
   }
 
+  // Funzione per cancellare abbonamento con conferma
+  const handleCancelSubscription = (subscription) => {
+    setSubscriptionToCancel(subscription)
+    setShowCancelModal(true)
+  }
+
+  // Conferma cancellazione abbonamento
+  const confirmCancelSubscription = async () => {
+    if (!subscriptionToCancel) return
+    
+    try {
+      setLoading(true)
+      
+      // Imposta lo stato dell'abbonamento come 'cancelled' invece di eliminarlo
+      const { error } = await supabase
+        .from('customer_subscriptions')
+        .update({ 
+          status: 'cancelled'
+        })
+        .eq('id', subscriptionToCancel.id)
+
+      if (error) throw error
+
+      // Aggiorna lo stato locale rimuovendo l'abbonamento dalla vista attivi
+      setCustomerSubscriptions(prev => 
+        prev.filter(sub => sub.id !== subscriptionToCancel.id)
+      )
+
+      showNotification?.(`Abbonamento di ${subscriptionToCancel.customer_name} cancellato con successo`, 'success')
+      
+      // Chiudi modal e resetta stato
+      setShowCancelModal(false)
+      setSubscriptionToCancel(null)
+      
+      // Ricarica dati
+      setTimeout(() => {
+        loadSubscriptions()
+      }, 500)
+      
+    } catch (error) {
+      console.error('Errore cancellazione abbonamento:', error)
+      showNotification?.('Errore nella cancellazione dell\'abbonamento', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Gestisce cliente trovato via NFC per uso abbonamento
   const handleNFCCustomerForUse = async (customer) => {
     try {
@@ -821,14 +870,24 @@ const SubscriptionManager = ({ showNotification }) => {
                     </span>
                   </div>
                   
-                  <button 
-                    className="card-use-btn"
-                    onClick={() => handleUseSubscription(subscription.id)}
-                    disabled={subscription.remaining_usage <= 0}
-                    style={{ background: subscription.plan.gradient }}
-                  >
-                    {subscription.remaining_usage <= 0 ? '🔒 ESAURITO' : '🎯 USA ABBONAMENTO'}
-                  </button>
+                  <div className="card-actions">
+                    <button 
+                      className="card-use-btn"
+                      onClick={() => handleUseSubscription(subscription.id)}
+                      disabled={subscription.remaining_usage <= 0}
+                      style={{ background: subscription.plan.gradient }}
+                    >
+                      {subscription.remaining_usage <= 0 ? '🔒 ESAURITO' : '🎯 USA ABBONAMENTO'}
+                    </button>
+                    
+                    <button 
+                      className="card-cancel-btn"
+                      onClick={() => handleCancelSubscription(subscription)}
+                      title="Cancella abbonamento"
+                    >
+                      🗑️ CANCELLA
+                    </button>
+                  </div>
                 </div>
               </div>
             )
@@ -1175,6 +1234,49 @@ const SubscriptionManager = ({ showNotification }) => {
                 onClick={confirmNFCUseSubscription}
               >
                 ✅ Conferma Utilizzo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Conferma Cancellazione */}
+      {showCancelModal && subscriptionToCancel && (
+        <div className="modal-overlay" onClick={() => setShowCancelModal(false)}>
+          <div className="modal-content cancel-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>⚠️ Conferma Cancellazione</h3>
+            </div>
+            
+            <div className="modal-body">
+              <div className="cancel-warning">
+                <p>Sei sicuro di voler cancellare l'abbonamento?</p>
+                <div className="subscription-details">
+                  <strong>Cliente:</strong> {subscriptionToCancel.customer_name}<br/>
+                  <strong>Piano:</strong> {subscriptionToCancel.plan.name}<br/>
+                  <strong>Utilizzi rimanenti:</strong> {subscriptionToCancel.remaining_usage}<br/>
+                  <strong>Scadenza:</strong> {new Date(subscriptionToCancel.end_date).toLocaleDateString('it-IT')}
+                </div>
+                <p className="warning-text">
+                  ⚠️ <strong>Attenzione:</strong> Questa azione non può essere annullata. 
+                  L'abbonamento sarà contrassegnato come cancellato e non potrà più essere utilizzato.
+                </p>
+              </div>
+            </div>
+            
+            <div className="modal-footer">
+              <button 
+                className="btn btn-secondary"
+                onClick={() => setShowCancelModal(false)}
+              >
+                ❌ Annulla
+              </button>
+              <button 
+                className="btn btn-danger"
+                onClick={confirmCancelSubscription}
+                disabled={loading}
+              >
+                🗑️ {loading ? 'Cancellazione...' : 'Conferma Cancellazione'}
               </button>
             </div>
           </div>

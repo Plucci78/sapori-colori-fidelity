@@ -361,13 +361,21 @@ utilizzabile per tutti i nostri prodotti.
       setLoading(true)
       
       const receiptData = {
+        orderId: `WALLET-${transaction.id}`,
         customer: transaction.customer,
-        amount: transaction.amount,
-        type: transaction.type,
-        balance: transaction.balance,
+        total: Math.abs(parseFloat(transaction.amount || 0)).toFixed(2),
+        operator: transaction.operator_id || 'Sistema',
         paymentMethod: transaction.payment_method || 'contanti',
-        date: new Date(transaction.created_at).toLocaleString('it-IT'),
-        operatorId: transaction.operator_id
+        items: [
+          {
+            name: transaction.type === 'ricarica' ? 'Ricarica Wallet' : 
+                  transaction.type === 'spesa' ? 'Pagamento Wallet' : 
+                  'Transazione Wallet',
+            quantity: 1,
+            price: Math.abs(parseFloat(transaction.amount || 0)).toFixed(2),
+            total: Math.abs(parseFloat(transaction.amount || 0)).toFixed(2)
+          }
+        ]
       }
 
       const response = await fetch('/api/print/receipt', {

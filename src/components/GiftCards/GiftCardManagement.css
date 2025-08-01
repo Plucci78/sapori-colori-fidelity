@@ -63,11 +63,26 @@
 }
 
 .receipts-table thead {
+  display: block;
+  position: sticky;
+  top: 0;
   background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+  z-index: 10;
+}
+
+.receipts-table tbody {
+  display: block;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.receipts-table thead tr,
+.receipts-table tbody tr {
   display: table;
   width: 100%;
   table-layout: fixed;
 }
+
 
 .receipts-table th {
   padding: var(--space-4, 16px) var(--space-3, 12px);
@@ -80,17 +95,7 @@
   border: none;
 }
 
-.receipts-table tbody {
-  display: block;
-  max-height: 400px;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
 .receipts-table tbody tr {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
   border-bottom: 1px solid #e5e7eb;
   transition: all 0.2s ease;
 }
@@ -110,93 +115,6 @@
   font-size: var(--text-sm, 14px);
   color: var(--gray-700, #374151);
   border: none;
-}
-
-/* ===================================
-   QR CODE STYLES
-   =================================== */
-
-.qr-code-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.6);
-}
-
-.qr-code-container canvas {
-  display: block !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  border-radius: 4px;
-  background: white !important;
-  min-width: 60px !important;
-  min-height: 60px !important;
-}
-
-/* ===================================
-   PREVIEW FOOTER BUTTONS
-   =================================== */
-
-.preview-footer {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  border-top: 1px solid #e5e7eb;
-  background: #f9fafb;
-}
-
-.preview-footer .btn {
-  min-width: 140px;
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  border: none;
-}
-
-.preview-footer .btn-info {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
-}
-
-.preview-footer .btn-info:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-}
-
-.preview-footer .btn-warning {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
-}
-
-.preview-footer .btn-warning:hover {
-  background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
-}
-
-.preview-footer .btn-success:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
-}
-
-.preview-footer .btn-brand-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
-}
-
-.preview-footer .btn-secondary:hover {
-  background: #6b7280;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
 }
 
 .receipts-table .date-cell {
@@ -406,62 +324,38 @@
 
 .table-responsive {
   overflow-x: auto;
-  max-height: 500px;
-  overflow-y: auto;
-  border-radius: 12px;
-  display: block;
-}
-
-/* Stile per la scrollbar della tabella ricevute */
-.table-responsive::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.table-responsive::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
-}
-
-.table-responsive::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
-  border-radius: 4px;
-  transition: all 0.3s ease;
-}
-
-.table-responsive::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #B8860B 0%, #8B7D3A 100%);
-}
-
-/* Stile per la scrollbar del tbody */
-.receipts-table tbody::-webkit-scrollbar {
-  width: 8px;
-}
-
-.receipts-table tbody::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
-}
-
-.receipts-table tbody::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
-  border-radius: 4px;
-  transition: all 0.3s ease;
-}
-
-.receipts-table tbody::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #B8860B 0%, #8B7D3A 100%);
 }
 
 .gift-cards-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
+  display: block;
 }
 
 .gift-cards-table thead {
+  display: block;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+}
+
+.gift-cards-table tbody {
+  display: block;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.gift-cards-table thead tr,
+.gift-cards-table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.gift-cards-table thead tr {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  position: relative;
 }
 
 .gift-cards-table thead::after {
@@ -743,7 +637,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -960,13 +854,16 @@
 
 .card-header {
   text-align: center;
-  margin-bottom: var(--space-3, 12px);
+  margin-bottom: var(--space-1, 4px);
   background: none !important;
   background-color: transparent !important;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-1, 4px);
+  gap: 2px;
+  height: auto;
+  min-height: 40px;
+  max-height: 45px;
 }
 
 .gift-card-front .card-header {
@@ -988,30 +885,30 @@
 }
 
 .business-name {
-  font-size: 1.4rem !important;
+  font-size: 1.1rem !important;
   font-weight: bold;
   text-transform: uppercase;
-  letter-spacing: 2px !important;
+  letter-spacing: 1px !important;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   margin: 0 !important;
   background: none !important;
   background-color: transparent !important;
   color: white !important;
   white-space: nowrap;
-  line-height: 1.2 !important;
+  line-height: 1.1 !important;
 }
 
 .gift-card-title {
-  font-size: 0.85rem !important;
+  font-size: 0.7rem !important;
   font-weight: 300;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   opacity: 0.9;
   background: none !important;
   background-color: transparent !important;
   color: white !important;
   margin: 0 !important;
   white-space: nowrap;
-  line-height: 1.2 !important;
+  line-height: 1.1 !important;
 }
 
 .card-main {
@@ -1033,14 +930,27 @@
     radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 2px, transparent 2px),
     radial-gradient(circle at 40% 60%, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
   background-size: 50px 50px, 30px 30px, 20px 20px;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .card-value-section {
   text-align: center;
-  margin: var(--space-2, 8px) 0 !important;
-  z-index: 2;
+  margin: 6px 0 !important;
+  z-index: 10; /* Aumentato per essere sicuro che sia sopra */
   position: relative;
-  padding: 0 var(--space-2, 8px) !important;
+  padding: 0 8px !important;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-value-section * {
+  z-index: 10;
+  position: relative;
 }
 
 .value-label {

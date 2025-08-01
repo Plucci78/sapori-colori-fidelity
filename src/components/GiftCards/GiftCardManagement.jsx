@@ -184,7 +184,7 @@ const GiftCardManagement = ({ showNotification }) => {
     }
   }
 
-  // Funzione per inviare email gift card semplificata
+  // Funzione per inviare email gift card con PDF allegato
   const sendGiftCardEmail = async (giftCardData, purchaserData) => {
     if (!giftCardData.recipient_email) {
       return { success: true, message: 'Nessuna email destinatario fornita' }
@@ -192,90 +192,139 @@ const GiftCardManagement = ({ showNotification }) => {
 
     try {
       const emailData = {
-        to_email: giftCardData.recipient_email,
         to_name: giftCardData.recipient_name,
-        from_name: 'Sapori & Colori',
-        reply_to: 'noreply@saporicolori.it',
-        
-        // Dati specifici gift card
-        gift_card_code: giftCardData.code,
-        gift_card_amount: formatCurrency(giftCardData.amount),
-        recipient_name: giftCardData.recipient_name,
-        personal_message: giftCardData.message || 'Ti auguriamo di goderti questa esperienza gastronomica!',
-        purchaser_name: purchaserData?.name || 'Un amico speciale',
-        
-        // Template specifico per gift card
+        to_email: giftCardData.recipient_email,
         subject: `🎁 Hai ricevuto una Gift Card da Sapori & Colori!`,
-        message: `
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%); color: white; padding: 30px; text-align: center; border-radius: 12px 12px 0 0; }
-        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 12px 12px; }
-        .gift-card { background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%); color: white; padding: 25px; border-radius: 12px; margin: 20px 0; text-align: center; }
-        .code { font-family: monospace; font-size: 24px; font-weight: bold; letter-spacing: 3px; background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; margin: 15px 0; }
-        .message { background: white; padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #D4AF37; }
-        .footer { text-align: center; color: #666; font-size: 12px; margin-top: 20px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🎁 SAPORI & COLORI</h1>
-            <h2>Hai ricevuto una Gift Card!</h2>
-        </div>
-        
-        <div class="content">
-            <p><strong>Ciao ${giftCardData.recipient_name}!</strong></p>
+        reply_to: 'saporiecolori.b@gmail.com',
+        message_html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #D4AF37; text-align: center;">🎁 Hai ricevuto una Gift Card!</h2>
+          
+          <p><strong>Ciao ${giftCardData.recipient_name}!</strong></p>
+          
+          <p>${purchaserData?.name || 'Qualcuno di speciale'} ti ha inviato una fantastica Gift Card per goderti le delizie di <strong>Sapori & Colori</strong>!</p>
+          
+          ${giftCardData.message ? `
+          <div style="background: #fef3c7; border: 2px solid #D4AF37; border-radius: 8px; padding: 15px; margin: 20px 0;">
+            <h4 style="margin: 0 0 10px 0; color: #92400e;">💌 Messaggio personale:</h4>
+            <p style="margin: 0; font-style: italic; color: #451a03;">"${giftCardData.message}"</p>
+          </div>
+          ` : ''}
+          
+          <!-- GIFT CARD COMPATTA -->
+          <div style="
+            background: linear-gradient(135deg, #FFD700 0%, #D4AF37 50%, #B8860B 100%);
+            color: white; 
+            padding: 20px; 
+            border-radius: 15px; 
+            margin: 25px auto; 
+            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4);
+            border: 2px solid rgba(255, 215, 0, 0.8);
+            position: relative;
+            width: 380px;
+            height: 180px;
+            display: table;
+          ">
+            <!-- Decorazioni -->
+            <div style="position: absolute; top: 10px; right: 15px; font-size: 16px; opacity: 0.4;">✨🍝🍷</div>
             
-            <p>${purchaserData?.name || 'Qualcuno di speciale'} ti ha inviato una fantastica Gift Card per goderti le delizie di <strong>Sapori & Colori</strong>!</p>
-            
-            ${giftCardData.message ? `
-            <div class="message">
-                <h4>💌 Messaggio personale:</h4>
-                <p><em>"${giftCardData.message}"</em></p>
+            <!-- Contenuto centrato -->
+            <div style="display: table-cell; vertical-align: middle; text-align: center; width: 100%; height: 100%;">
+              
+              <!-- Header -->
+              <div style="margin-bottom: 15px;">
+                <div style="
+                  margin: 0; 
+                  font-size: 24px; 
+                  font-weight: bold; 
+                  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                  letter-spacing: 1px;
+                ">SAPORI & COLORI</div>
+                <div style="margin: 5px 0 0 0; font-size: 12px; opacity: 0.8; letter-spacing: 2px;">GIFT CARD</div>
+              </div>
+              
+              <!-- Valore -->
+              <div style="
+                font-size: 32px; 
+                font-weight: bold; 
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                margin-bottom: 15px;
+              ">${formatCurrency(giftCardData.amount)}</div>
+              
+              <!-- Codice -->
+              <div style="
+                background: rgba(255,255,255,0.95); 
+                color: #8B4513;
+                padding: 8px 15px; 
+                border-radius: 8px; 
+                display: inline-block;
+                border: 1px dashed #D4AF37;
+                margin-bottom: 10px;
+              ">
+                <div style="font-size: 16px; font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: 2px;">
+                  ${giftCardData.code}
+                </div>
+              </div>
+              
+              <!-- Info -->
+              <div style="font-size: 10px; opacity: 0.7; margin-top: 10px;">
+                Saldo: ${formatCurrency(giftCardData.balance)} • ${giftCardData.expires_at ? new Date(giftCardData.expires_at).toLocaleDateString('it-IT') : 'No scadenza'}
+              </div>
+              
             </div>
-            ` : ''}
+          </div>
+          
+          <div style="background: #f0f9ff; border: 2px solid #0ea5e9; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h4 style="color: #0c4a6e; margin: 0 0 15px 0;">🎯 Come utilizzare la Gift Card</h4>
             
-            <div class="gift-card">
-                <h3>🎊 LA TUA GIFT CARD 🎊</h3>
-                <p><strong>Valore:</strong> ${formatCurrency(giftCardData.amount)}</p>
-                <div class="code">${giftCardData.code}</div>
-                <p><small>Conserva questo codice per utilizzare la tua gift card</small></p>
+            <div style="display: flex; align-items: flex-start; gap: 20px; margin-bottom: 15px;">
+              <!-- Istruzioni -->
+              <div style="flex: 1;">
+                <ol style="color: #0c4a6e; padding-left: 20px; margin: 0;">
+                  <li style="margin-bottom: 8px;">Vieni al ristorante <strong>Sapori & Colori</strong></li>
+                  <li style="margin-bottom: 8px;">Mostra il <strong>QR code</strong> o comunica il codice: <strong>${giftCardData.code}</strong></li>
+                  <li style="margin-bottom: 8px;">L'importo verrà scalato automaticamente dal tuo ordine</li>
+                </ol>
+              </div>
+              
+              <!-- QR Code -->
+              <div style="text-align: center; min-width: 100px;">
+                <div style="
+                  background: white; 
+                  padding: 8px; 
+                  border-radius: 8px;
+                  border: 2px solid #0ea5e9;
+                  display: inline-block;
+                ">
+                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(giftCardData.code)}" 
+                       alt="QR Code Gift Card" 
+                       style="display: block; width: 80px; height: 80px;" />
+                </div>
+                <div style="font-size: 11px; color: #0c4a6e; margin-top: 5px; font-weight: 600;">
+                  📱 SCANSIONA QUI
+                </div>
+              </div>
             </div>
             
-            <h4>📍 Come utilizzarla:</h4>
-            <ol>
-                <li>Vieni al nostro ristorante <strong>Sapori & Colori</strong></li>
-                <li>Comunica il codice: <strong>${giftCardData.code}</strong></li>
-                <li>L'importo verrà scalato automaticamente dal tuo ordine</li>
-            </ol>
-            
-            <p><strong>📞 Contatti:</strong><br>
-            📍 Via della Gastronomia, 123 - Città<br>
-            📞 +39 123 456 7890<br>
-            🌐 www.saporicolori.it</p>
-            
-            <p style="text-align: center; color: #D4AF37; font-weight: bold;">
-                Ti aspettiamo per un'esperienza gastronomica indimenticabile! 🍝✨
-            </p>
-            
-            <div style="text-align: center; margin: 20px 0; padding: 15px; background: #f0f8ff; border-radius: 8px; border: 2px dashed #D4AF37;">
-                <p style="color: #D4AF37; font-weight: bold; margin: 0;">💡 Come utilizzare la Gift Card</p>
-                <p style="color: #666; font-size: 12px; margin: 5px 0 0 0;">Presenta questo codice: <strong>${giftCardData.code}</strong> al momento del pagamento</p>
+            <div style="background: rgba(14, 165, 233, 0.1); padding: 12px; border-radius: 6px; font-size: 14px; color: #0c4a6e;">
+              💡 Puoi utilizzare la gift card in più visite fino ad esaurimento del saldo
             </div>
-        </div>
-        
-        <div class="footer">
+          </div>
+          
+          <div style="background: #fff8e1; border: 1px solid #ffc107; border-radius: 8px; padding: 15px; margin: 20px 0; text-align: center;">
+            <h4 style="color: #8B4513; margin: 0 0 10px 0;">📞 I nostri contatti</h4>
+            <p style="margin: 5px 0; color: #8B4513;">📍 Via Bagaladi,7 - Roma</p>
+            <p style="margin: 5px 0; color: #8B4513;">📞 06 39911640</p>
+            <p style="margin: 5px 0; color: #8B4513;">🌐 www.saporiecolori.net</p>
+          </div>
+          
+          <p style="text-align: center; color: #D4AF37; font-weight: bold; font-size: 16px;">
+            Ti aspettiamo per un'esperienza gastronomica indimenticabile! 🍝✨
+          </p>
+          
+          <div style="text-align: center; color: #666; font-size: 12px; margin-top: 30px; border-top: 1px solid #dee2e6; padding-top: 15px;">
             <p>Questa email è stata generata automaticamente dal sistema di gestione gift card di Sapori & Colori</p>
-        </div>
-    </div>
-</body>
-</html>
-        `
+          </div>
+        </div>`
       }
 
       await emailjs.send(
@@ -302,8 +351,8 @@ const GiftCardManagement = ({ showNotification }) => {
       const code = generateCode()
       const amount = parseFloat(newCard.amount)
       
-      // Trova i dati dell'acquirente per l'email
-      const purchaser = customers.find(c => c.id === newCard.purchaser_customer_id)
+      // Trova i dati dell'acquirente per l'email (commentato per ora)
+      // const purchaser = customers.find(c => c.id === newCard.purchaser_customer_id)
       
       const { error } = await supabase
         .from('gift_cards')
@@ -311,13 +360,13 @@ const GiftCardManagement = ({ showNotification }) => {
           code,
           purchaser_customer_id: newCard.purchaser_customer_id,
           amount: amount,
-          purchase_amount: amount, // Per ora uguale al valore, in futuro si potrebbe avere uno sconto
+          balance: amount,
+          purchase_amount: amount,
           recipient_name: newCard.recipient_name,
           recipient_email: newCard.recipient_email || null,
           message: newCard.message || null,
           expires_at: newCard.expires_at || null,
-          status: 'active',
-          balance: amount
+          status: 'active'
         })
 
       if (error) throw error
@@ -512,158 +561,381 @@ const GiftCardManagement = ({ showNotification }) => {
     }
   }
 
-  // Export gift card to PDF con layout verticale
+  // SOSTITUISCI la funzione exportGiftCardToPDF con questa che USA L'HTML
   const exportGiftCardToPDF = async (giftCard, forEmail = false) => {
     try {
-      // Genera il QR code prima dell'export
-      await generateQRCode(giftCard)
+      // Crea un template HTML invisibile ottimizzato per PDF
+      const pdfContainer = document.createElement('div')
+      pdfContainer.style.position = 'absolute'
+      pdfContainer.style.left = '-9999px'
+      pdfContainer.style.top = '0'
+      pdfContainer.style.width = '210mm' // A4 width
+      pdfContainer.style.height = '297mm' // A4 height
+      pdfContainer.style.background = 'white'
+      pdfContainer.style.fontFamily = 'Arial, sans-serif'
+      pdfContainer.style.color = '#333'
+      pdfContainer.style.padding = '15mm'
+      pdfContainer.style.boxSizing = 'border-box'
       
-      // Aspetta un momento per il rendering del QR
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Template HTML PROFESSIONALE
+      pdfContainer.innerHTML = `
+        <div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+          
+          <!-- HEADER -->
+          <div style="
+            background: linear-gradient(135deg, #8B4513 0%, #D4AF37 100%);
+            color: white;
+            padding: 18px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(139, 69, 19, 0.3);
+          ">
+            <h1 style="
+              margin: 0 0 5px 0;
+              font-size: 26px;
+              font-weight: bold;
+              text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+              letter-spacing: 1px;
+            ">🎁 SAPORI & COLORI</h1>
+            <p style="
+              margin: 0;
+              font-size: 14px;
+              opacity: 0.9;
+              font-weight: 300;
+            ">Gift Card Digitale</p>
+          </div>
+
+          <!-- GIFT CARD PRINCIPALE -->
+          <div style="
+            background: linear-gradient(135deg, #D4AF37 0%, #B8860B 50%, #8B7D3A 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 0 auto 25px auto;
+            width: 320px;
+            height: 200px;
+            position: relative;
+            box-shadow: 0 10px 35px rgba(212, 175, 55, 0.35);
+            border: 2px solid rgba(255, 215, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: white;
+          ">
+            
+            <!-- Header Gift Card -->
+            <div style="text-align: center; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 10px;">
+              <h2 style="
+                margin: 0 0 3px 0;
+                font-size: 18px;
+                font-weight: bold;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+                letter-spacing: 1px;
+              ">SAPORI & COLORI</h2>
+              <p style="
+                margin: 0;
+                font-size: 10px;
+                opacity: 0.9;
+                letter-spacing: 1px;
+              ">GIFT CARD</p>
+            </div>
+
+            <!-- Valore -->
+            <div style="text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center;">
+              <div style="
+                font-size: 36px;
+                font-weight: bold;
+                text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+                margin-bottom: 8px;
+                color: #FFF8DC;
+              ">${formatCurrency(giftCard.amount)}</div>
+              
+              ${giftCard.balance < giftCard.amount ? `
+                <div style="
+                  font-size: 14px;
+                  color: #FFB6C1;
+                  font-weight: 600;
+                  background: rgba(0,0,0,0.2);
+                  padding: 3px 10px;
+                  border-radius: 12px;
+                  display: inline-block;
+                  margin: 0 auto;
+                ">Saldo: ${formatCurrency(giftCard.balance)}</div>
+              ` : ''}
+            </div>
+
+            <!-- Footer Gift Card -->
+            <div style="display: flex; justify-content: space-between; align-items: end;">
+              <div style="flex: 1;">
+                <div style="font-size: 8px; opacity: 0.8; margin-bottom: 2px;">DESTINATARIO:</div>
+                <div style="font-size: 12px; font-weight: bold; text-transform: uppercase;">${giftCard.recipient_name}</div>
+                <div style="font-size: 8px; font-family: monospace; margin-top: 5px; opacity: 0.9;">CODICE: ${giftCard.code}</div>
+              </div>
+              
+              <!-- QR Code Placeholder -->
+              <div style="
+                width: 45px;
+                height: 45px;
+                background: white;
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 6px;
+                color: #8B4513;
+                font-weight: bold;
+                border: 2px solid rgba(255,255,255,0.8);
+              " id="qr-placeholder-${giftCard.code}">
+                QR CODE
+              </div>
+            </div>
+          </div>
+
+          <!-- INFORMAZIONI DETTAGLIATE -->
+          <div style="
+            background: #f8fafc;
+            border: 2px solid #D4AF37;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 20px;
+          ">
+            <h3 style="
+              margin: 0 0 15px 0;
+              color: #8B4513;
+              font-size: 16px;
+              font-weight: bold;
+              border-bottom: 2px solid #D4AF37;
+              padding-bottom: 8px;
+            ">📋 DETTAGLI GIFT CARD</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 12px;">
+              <div>
+                <div style="margin-bottom: 10px;">
+                  <strong style="color: #8B4513;">Codice:</strong><br>
+                  <span style="font-family: monospace; background: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 11px;">${giftCard.code}</span>
+                </div>
+                <div style="margin-bottom: 10px;">
+                  <strong style="color: #8B4513;">Destinatario:</strong><br>
+                  <span>${giftCard.recipient_name}</span>
+                </div>
+                <div style="margin-bottom: 10px;">
+                  <strong style="color: #8B4513;">Data Acquisto:</strong><br>
+                  <span>${formatDate(giftCard.purchase_date)}</span>
+                </div>
+              </div>
+              <div>
+                <div style="margin-bottom: 10px;">
+                  <strong style="color: #8B4513;">Valore Originale:</strong><br>
+                  <span style="font-size: 14px; font-weight: bold; color: #059669;">${formatCurrency(giftCard.amount)}</span>
+                </div>
+                <div style="margin-bottom: 10px;">
+                  <strong style="color: #8B4513;">Saldo Attuale:</strong><br>
+                  <span style="font-size: 14px; font-weight: bold; color: ${giftCard.balance > 0 ? '#059669' : '#dc2626'};">${formatCurrency(giftCard.balance)}</span>
+                </div>
+                <div style="margin-bottom: 10px;">
+                  <strong style="color: #8B4513;">Scadenza:</strong><br>
+                  <span>${giftCard.expires_at ? formatDate(giftCard.expires_at) : 'Nessuna scadenza'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          ${giftCard.message ? `
+            <!-- MESSAGGIO PERSONALIZZATO -->
+            <div style="
+              background: linear-gradient(135deg, #fef3c7 0%, #fbbf24 20%);
+              border: 2px solid #D4AF37;
+              border-radius: 10px;
+              padding: 12px;
+              margin-bottom: 20px;
+            ">
+              <h4 style="
+                margin: 0 0 8px 0;
+                color: #92400e;
+                font-size: 12px;
+                font-weight: bold;
+              ">💌 MESSAGGIO PERSONALIZZATO</h4>
+              <p style="
+                margin: 0;
+                font-style: italic;
+                font-size: 11px;
+                color: #451a03;
+                line-height: 1.4;
+                background: rgba(255,255,255,0.7);
+                padding: 8px;
+                border-radius: 6px;
+                border-left: 3px solid #D4AF37;
+              ">"${giftCard.message}"</p>
+            </div>
+          ` : ''}
+
+          <!-- ISTRUZIONI PER L'UTILIZZO -->
+          <div style="
+            background: #f0f9ff;
+            border: 2px solid #0ea5e9;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+          ">
+            <h4 style="
+              margin: 0 0 12px 0;
+              color: #0c4a6e;
+              font-size: 14px;
+              font-weight: bold;
+            ">🎯 COME UTILIZZARE LA GIFT CARD</h4>
+            
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
+              <div style="text-align: center;">
+                <div style="
+                  width: 30px;
+                  height: 30px;
+                  background: #0ea5e9;
+                  color: white;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 14px;
+                  font-weight: bold;
+                  margin: 0 auto 6px auto;
+                ">1</div>
+                <p style="margin: 0; font-size: 10px; color: #0c4a6e; font-weight: 600;">
+                  Vieni al ristorante<br>SAPORI & COLORI
+                </p>
+              </div>
+              
+              <div style="text-align: center;">
+                <div style="
+                  width: 30px;
+                  height: 30px;
+                  background: #0ea5e9;
+                  color: white;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 14px;
+                  font-weight: bold;
+                  margin: 0 auto 6px auto;
+                ">2</div>
+                <p style="margin: 0; font-size: 10px; color: #0c4a6e; font-weight: 600;">
+                  Mostra il codice QR<br>o comunica il codice
+                </p>
+              </div>
+              
+              <div style="text-align: center;">
+                <div style="
+                  width: 30px;
+                  height: 30px;
+                  background: #0ea5e9;
+                  color: white;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 14px;
+                  font-weight: bold;
+                  margin: 0 auto 6px auto;
+                ">3</div>
+                <p style="margin: 0; font-size: 10px; color: #0c4a6e; font-weight: 600;">
+                  L'importo verrà scalato<br>automaticamente
+                </p>
+              </div>
+            </div>
+            
+            <div style="
+              background: rgba(14, 165, 233, 0.1);
+              padding: 8px;
+              border-radius: 6px;
+              font-size: 10px;
+              color: #0c4a6e;
+              font-weight: 600;
+            ">
+              💡 Puoi utilizzare la gift card in più visite fino ad esaurimento del saldo
+            </div>
+          </div>
+
+          <!-- FOOTER -->
+          <div style="
+            border-top: 2px solid #D4AF37;
+            padding-top: 20px;
+            text-align: center;
+            margin-top: auto;
+          ">
+            <div style="margin-bottom: 10px; color: #8B4513; font-weight: bold; font-size: 14px;">
+              📍 Via Bagaladi,7 - Roma &nbsp;|&nbsp; 📞 06 39911640 &nbsp;|&nbsp; 🌐 www.saporiecolori.net
+            </div>
+            <div style="font-size: 11px; color: #6b7280; line-height: 1.4;">
+              Gift card non rimborsabile in denaro • Valida per tutti i prodotti<br>
+              Documento generato il ${new Date().toLocaleDateString('it-IT')} alle ${new Date().toLocaleTimeString('it-IT')}
+            </div>
+          </div>
+
+        </div>
+      `
       
-      const frontElement = document.getElementById('gift-card-front')
-      const backElement = document.getElementById('gift-card-back')
-      const qrCanvas = document.getElementById(`qr-code-${giftCard.code}`)
+      // Aggiungi al DOM temporaneamente
+      document.body.appendChild(pdfContainer)
       
-      if (!frontElement || !backElement) {
-        throw new Error('Elementi gift card non trovati')
+      // Genera QR codes reali
+      try {
+        const qrData = `GIFTCARD:${giftCard.code}:${giftCard.balance}`
+        
+        // QR piccolo sulla card
+        const qrSmallElement = document.getElementById(`qr-placeholder-${giftCard.code}`)
+        if (qrSmallElement) {
+          const qrSmallCanvas = document.createElement('canvas')
+          await QRCode.toCanvas(qrSmallCanvas, qrData, {
+            width: 60,
+            margin: 1,
+            color: { dark: '#8B4513', light: '#FFFFFF' }
+          })
+          qrSmallElement.innerHTML = ''
+          qrSmallElement.appendChild(qrSmallCanvas)
+        }
+        
+      } catch (qrError) {
+        console.warn('⚠️ QR Code generation failed:', qrError)
       }
       
-      // Scale per ridurre dimensioni se necessario
-      const scale = forEmail ? 1 : 2
-      const quality = forEmail ? 0.7 : 0.9
+      // Aspetta rendering
+      await new Promise(resolve => setTimeout(resolve, 1000))
       
-      // Cattura fronte e retro
-      const frontCanvas = await html2canvas(frontElement, {
-        scale: scale,
+      // Cattura come immagine con html2canvas
+      const canvas = await html2canvas(pdfContainer, {
+        scale: 2, // Alta qualità
         useCORS: true,
-        backgroundColor: '#FFFFFF',
-        width: 400,
-        height: 250
+        backgroundColor: '#ffffff',
+        width: 794, // A4 width in pixels at 96 DPI
+        height: 1123, // A4 height in pixels at 96 DPI
+        scrollX: 0,
+        scrollY: 0
       })
       
-      const backCanvas = await html2canvas(backElement, {
-        scale: scale,
-        useCORS: true,
-        backgroundColor: '#FFFFFF',
-        width: 400,
-        height: 250
-      })
+      // Rimuovi dal DOM
+      document.body.removeChild(pdfContainer)
       
-      // Crea PDF in formato A4 portrait per il nuovo layout
+      // Crea PDF con l'immagine
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
       })
       
-      const pageWidth = pdf.internal.pageSize.getWidth()
-      const margin = 10
-      const contentWidth = pageWidth - (margin * 2)
+      const imgData = canvas.toDataURL('image/jpeg', 0.9)
+      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297)
       
-      let currentY = margin
-      
-      // Aggiungi intestazione
-      pdf.setFontSize(20)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('🎁 GIFT CARD - SAPORI & COLORI', pageWidth / 2, currentY, { align: 'center' })
-      currentY += 15
-      
-      // Sezione fronte e retro (affiancate)
-      pdf.setFontSize(14)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('FRONTE', margin + 30, currentY)
-      pdf.text('RETRO', margin + contentWidth/2 + 30, currentY)
-      currentY += 8
-      
-      // Calcola dimensioni per le carte affiancate
-      const cardWidth = (contentWidth - 10) / 2 // 10mm di spazio tra le carte
-      const cardHeight = (cardWidth * 250) / 400 // Mantiene proporzioni
-      
-      // Aggiungi fronte (sinistra)
-      const frontImgData = frontCanvas.toDataURL('image/jpeg', quality)
-      pdf.addImage(frontImgData, 'JPEG', margin, currentY, cardWidth, cardHeight)
-      
-      // Aggiungi retro (destra)
-      const backImgData = backCanvas.toDataURL('image/jpeg', quality)
-      pdf.addImage(backImgData, 'JPEG', margin + cardWidth + 10, currentY, cardWidth, cardHeight)
-      
-      currentY += cardHeight + 15
-      
-      // Sezione messaggio personalizzato
-      if (giftCard.message) {
-        pdf.setFontSize(14)
-        pdf.setFont('helvetica', 'bold')
-        pdf.text('💌 MESSAGGIO PERSONALIZZATO', pageWidth / 2, currentY, { align: 'center' })
-        currentY += 10
-        
-        // Box per il messaggio
-        pdf.setDrawColor(212, 175, 55) // Colore oro
-        pdf.setLineWidth(1)
-        pdf.rect(margin, currentY, contentWidth, 25)
-        
-        // Sfondo leggero per il messaggio
-        pdf.setFillColor(249, 246, 238) // Beige molto chiaro
-        pdf.rect(margin, currentY, contentWidth, 25, 'F')
-        
-        // Testo del messaggio
-        pdf.setFontSize(12)
-        pdf.setFont('helvetica', 'italic')
-        pdf.setTextColor(139, 69, 19) // Marrone
-        
-        // Divide il messaggio in righe se troppo lungo
-        const messageLines = pdf.splitTextToSize(`"${giftCard.message}"`, contentWidth - 10)
-        pdf.text(messageLines, margin + 5, currentY + 8)
-        
-        currentY += 35
-      } else {
-        currentY += 10
+      // Se è per email, restituisci base64
+      if (forEmail) {
+        return pdf.output('datauristring').split(',')[1] // Solo la parte base64
       }
-      
-      // Sezione QR Code
-      pdf.setFontSize(14)
-      pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(0, 0, 0) // Nero
-      pdf.text('📱 QR CODE PER SCANSIONE', pageWidth / 2, currentY, { align: 'center' })
-      currentY += 10
-      
-      if (qrCanvas) {
-        // Crea un QR code più grande per il PDF
-        const qrSize = 40 // 40mm
-        const qrX = (pageWidth - qrSize) / 2
-        
-        // Box per il QR code
-        pdf.setDrawColor(212, 175, 55)
-        pdf.setFillColor(255, 255, 255)
-        pdf.rect(qrX - 5, currentY - 5, qrSize + 10, qrSize + 15, 'FD')
-        
-        // QR Code
-        const qrImgData = qrCanvas.toDataURL('image/png', 1)
-        pdf.addImage(qrImgData, 'PNG', qrX, currentY, qrSize, qrSize)
-        
-        currentY += qrSize + 8
-        
-        // Istruzioni per il QR
-        pdf.setFontSize(10)
-        pdf.setFont('helvetica', 'normal')
-        pdf.text('Scansiona questo codice al momento del pagamento', pageWidth / 2, currentY, { align: 'center' })
-        currentY += 5
-        
-        pdf.setFontSize(8)
-        pdf.setTextColor(100, 100, 100)
-        pdf.text(`Codice: ${giftCard.code} | Saldo: ${formatCurrency(giftCard.balance)}`, pageWidth / 2, currentY, { align: 'center' })
-      }
-      
-      // Footer
-      currentY += 15
-      pdf.setFontSize(8)
-      pdf.setTextColor(100, 100, 100)
-      pdf.text('📍 Via della Gastronomia, 123 - Città | 📞 +39 123 456 7890 | 🌐 www.saporicolori.it', pageWidth / 2, currentY, { align: 'center' })
       
       return pdf
+      
     } catch (error) {
-      console.error('Errore export PDF:', error)
-      throw error
+      console.error('❌ Errore export PDF con HTML:', error)
+      throw new Error('Impossibile generare il PDF: ' + error.message)
     }
   }
 
@@ -1308,19 +1580,6 @@ const GiftCardManagement = ({ showNotification }) => {
       {showPreviewModal && previewCard && (
         <div className="modal-overlay" onClick={() => setShowPreviewModal(false)}>
           <div className="preview-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="preview-header">
-              <h2>🎁 Anteprima Gift Card</h2>
-              
-              
-              <button 
-                className="btn btn-secondary"
-                onClick={() => setShowPreviewModal(false)}
-              >
-                ✕
-              </button>
-            </div>
-            
-
             <div className="gift-card-preview">
               {/* FRONTE GIFT CARD */}
               <div className="gift-card-front" id="gift-card-front">
@@ -1335,20 +1594,25 @@ const GiftCardManagement = ({ showNotification }) => {
                     <div className="decorative-pattern"></div>
                     
                     <div className="card-value-section">
-                      {/* Se la gift card non è mai stata usata, mostra solo il valore */}
-                      {previewCard.balance === previewCard.amount ? (
-                        // Layout singolo per gift card non utilizzata
+                      {/* Layout a due colonne per mostrare sempre valore e saldo */}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '12px',
+                        alignItems: 'start'
+                      }}>
+                        {/* Colonna Sinistra - Valore Originale */}
                         <div style={{ textAlign: 'center' }}>
                           <div className="value-label" style={{
-                            fontSize: '0.7rem',
+                            fontSize: '0.6rem',
                             letterSpacing: '1px',
                             opacity: 0.8,
-                            marginBottom: '6px'
+                            marginBottom: '4px'
                           }}>VALORE</div>
                           <div className="value-amount" style={{
-                            fontSize: '2.2rem',
+                            fontSize: '1.6rem',
                             fontWeight: 'bold',
-                            color: '#FFFFFF !important',
+                            color: '#FFFFFF',
                             textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
                             letterSpacing: '1px',
                             lineHeight: '1.1',
@@ -1356,95 +1620,47 @@ const GiftCardManagement = ({ showNotification }) => {
                             zIndex: '999',
                             position: 'relative'
                           }}>{formatCurrency(previewCard.amount)}</div>
-                          
-                          {/* Badge per gift card nuova */}
-                          <div style={{
-                            fontSize: '0.7rem',
-                            marginTop: '10px',
-                            padding: '4px 12px',
-                            background: 'rgba(255, 215, 0, 0.3)',
-                            borderRadius: '12px',
-                            color: '#FFD700',
-                            textAlign: 'center',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            letterSpacing: '1px',
-                            display: 'inline-block'
-                          }}>
-                            NUOVA
-                          </div>
                         </div>
-                      ) : (
-                        // Layout a due colonne per gift card utilizzata
-                        <>
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 1fr',
-                            gap: '12px',
-                            alignItems: 'start'
-                          }}>
-                            {/* Colonna Sinistra - Valore Originale */}
-                            <div style={{ textAlign: 'center' }}>
-                              <div className="value-label" style={{
-                                fontSize: '0.6rem',
-                                letterSpacing: '1px',
-                                opacity: 0.8,
-                                marginBottom: '4px'
-                              }}>VALORE</div>
-                              <div className="value-amount" style={{
-                                fontSize: '1.6rem',
-                                fontWeight: 'bold',
-                                color: '#FFFFFF !important',
-                                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                                letterSpacing: '1px',
-                                lineHeight: '1.1',
-                                margin: '0',
-                                zIndex: '999',
-                                position: 'relative'
-                              }}>{formatCurrency(previewCard.amount)}</div>
-                            </div>
 
-                            {/* Colonna Destra - Saldo Attuale */}
-                            <div style={{ textAlign: 'center' }}>
-                              <div className="balance-label" style={{
-                                fontSize: '0.6rem',
-                                letterSpacing: '1px',
-                                opacity: 0.9,
-                                marginBottom: '4px',
-                                color: '#FFF8DC'
-                              }}>SALDO</div>
-                              <div className="balance-amount" style={{
-                                fontSize: '1.6rem',
-                                color: previewCard.balance > 0 ? '#FFD700 !important' : '#FF6B6B !important',
-                                fontWeight: 'bold',
-                                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                                letterSpacing: '1px',
-                                lineHeight: '1.1',
-                                margin: '0',
-                                zIndex: '999',
-                                position: 'relative'
-                              }}>{formatCurrency(previewCard.balance)}</div>
-                            </div>
-                          </div>
-                          
-                          {/* Indicatore di stato per gift card utilizzata */}
-                          <div style={{
-                            fontSize: '0.65rem',
-                            marginTop: '8px',
-                            padding: '3px 10px',
-                            background: previewCard.balance > 0 ? 'rgba(255, 215, 0, 0.2)' : 'rgba(255, 107, 107, 0.2)',
-                            borderRadius: '12px',
-                            color: previewCard.balance > 0 ? '#FFD700' : '#FF6B6B',
-                            textAlign: 'center',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
+                        {/* Colonna Destra - Saldo Attuale */}
+                        <div style={{ textAlign: 'center' }}>
+                          <div className="balance-label" style={{
+                            fontSize: '0.6rem',
                             letterSpacing: '1px',
-                            display: 'inline-block'
-                          }}>
-                            {previewCard.balance > 0 ? 'PARZIALMENTE USATA' : 'UTILIZZATA'}
-                          </div>
-                        </>
-                      )}
+                            opacity: 0.9,
+                            marginBottom: '4px',
+                            color: '#FFF8DC'
+                          }}>SALDO</div>
+                          <div className="balance-amount" style={{
+                            fontSize: '1.6rem',
+                            color: previewCard.balance > 0 ? '#FFD700' : '#FF6B6B',
+                            fontWeight: 'bold',
+                            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+                            letterSpacing: '1px',
+                            lineHeight: '1.1',
+                            margin: '0',
+                            zIndex: '999',
+                            position: 'relative'
+                          }}>{formatCurrency(previewCard.balance)}</div>
+                        </div>
+                      </div>
+                      
+                      {/* Indicatore di stato per gift card */}
+                      <div style={{
+                        fontSize: '0.65rem',
+                        marginTop: '8px',
+                        padding: '3px 10px',
+                        background: previewCard.balance > 0 ? (previewCard.balance < previewCard.amount ? 'rgba(255, 215, 0, 0.2)' : 'rgba(76, 175, 80, 0.3)') : 'rgba(255, 107, 107, 0.2)',
+                        borderRadius: '12px',
+                        color: previewCard.balance > 0 ? (previewCard.balance < previewCard.amount ? '#FFD700' : '#90EE90') : '#FF6B6B',
+                        textAlign: 'center',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px',
+                        display: 'inline-block'
+                      }}>
+                        {previewCard.balance >= previewCard.amount ? 'NUOVA' : (previewCard.balance > 0 ? 'PARZIALMENTE USATA' : 'UTILIZZATA')}
+                      </div>
                     </div>
                     
                     <div className="card-recipient-section">
@@ -1541,9 +1757,9 @@ const GiftCardManagement = ({ showNotification }) => {
                     </div>
                     
                     <div className="contact-info">
-                      <div className="contact-item">📍 Via della Gastronomia, 123 - Città</div>
-                      <div className="contact-item">📞 +39 123 456 7890</div>
-                      <div className="contact-item">🌐 www.saporicolori.it</div>
+                      <div className="contact-item">📍 Via Bagaladi,7 - Roma</div>
+                      <div className="contact-item">📞 06 39911640</div>
+                      <div className="contact-item">🌐 www.saporiecolori.net</div>
                     </div>
                   </div>
                 </div>
@@ -1552,14 +1768,24 @@ const GiftCardManagement = ({ showNotification }) => {
 
             <div className="preview-footer">
               <button 
-                className="btn btn-secondary"
+                className="btn"
+                style={{
+                  backgroundColor: '#000000',
+                  color: 'white',
+                  border: '1px solid #000000'
+                }}
                 onClick={() => setShowPreviewModal(false)}
               >
                 Chiudi
               </button>
               
               <button 
-                className="btn btn-info"
+                className="btn"
+                style={{
+                  backgroundColor: '#000000',
+                  color: 'white',
+                  border: '1px solid #000000'
+                }}
                 onClick={async () => {
                   try {
                     // PDF alta qualità per download
@@ -1585,7 +1811,12 @@ const GiftCardManagement = ({ showNotification }) => {
               </button>
               
               <button 
-                className="btn btn-warning"
+                className="btn"
+                style={{
+                  backgroundColor: '#000000',
+                  color: 'white',
+                  border: '1px solid #000000'
+                }}
                 onClick={async () => {
                   if (!previewCard.recipient_email) {
                     showNotification?.('Nessuna email destinatario configurata', 'error')
@@ -1612,7 +1843,12 @@ const GiftCardManagement = ({ showNotification }) => {
               </button>
               
               <button 
-                className="btn btn-success"
+                className="btn"
+                style={{
+                  backgroundColor: '#000000',
+                  color: 'white',
+                  border: '1px solid #000000'
+                }}
                 onClick={async () => {
                   // Registra la stampa della ricevuta
                   const recorded = await recordReceiptPrint(previewCard, 'courtesy', 'Ricevuta di cortesia stampata')
@@ -1643,7 +1879,12 @@ const GiftCardManagement = ({ showNotification }) => {
               </button>
               
               <button 
-                className="btn btn-brand-primary"
+                className="btn"
+                style={{
+                  backgroundColor: '#000000',
+                  color: 'white',
+                  border: '1px solid #000000'
+                }}
                 onClick={async () => {
                   // Registra la stampa della gift card
                   const recorded = await recordReceiptPrint(previewCard, 'gift_card', 'Gift card stampata')
