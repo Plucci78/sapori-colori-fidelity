@@ -6,6 +6,22 @@
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sapori & Colori - Gestione Fidelity</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Theme color -->
+  <meta name="theme-color" content="#D4AF37">
+  
+  <!-- Apple PWA tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Sapori & Colori">
+  
+  <!-- Icons -->
+  <link rel="apple-touch-icon" href="/icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/icon-512x512.png">
 </head>
 
 <body>
@@ -17,6 +33,20 @@
     referrerpolicy="origin"></script>
 
   <script type="module" src="/src/main.jsx"></script>
+  
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js')
+          .then(function(registration) {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          }, function(err) {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+      });
+    }
+  </script>
 </body>
 
 </html>

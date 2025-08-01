@@ -11,6 +11,7 @@ const ClientPortal = ({ token }) => {
   const [prizes, setPrizes] = useState([])
   const [levels, setLevels] = useState([])
   const [coupons, setCoupons] = useState([]) // NUOVO STATO PER I COUPON
+  const [subscriptions, setSubscriptions] = useState([]) // NUOVO STATO PER GLI ABBONAMENTI
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [notification, setNotification] = useState({ show: false, message: '', type: '' })
@@ -82,6 +83,18 @@ const ClientPortal = ({ token }) => {
           .eq('status', 'active')
           .gte('expiry_date', new Date().toISOString())
         setCoupons(couponsData || [])
+
+        // Carica abbonamenti del cliente
+        const { data: subscriptionsData } = await supabase
+          .from('customer_subscriptions')
+          .select(`
+            *,
+            subscription_plans!inner(*)
+          `)
+          .eq('customer_id', customerData.id)
+          .in('status', ['active', 'expiring'])
+          .order('created_at', { ascending: false })
+        setSubscriptions(subscriptionsData || [])
       }
 
       // Carica premi del livello cliente o inferiore
@@ -109,6 +122,23 @@ const ClientPortal = ({ token }) => {
     if (!customer?.referral_code) return;
     copyToClipboard(customer.referral_code, () => showNotification('✅ Codice Copiato!'));
   };
+
+  // Calcola giorni rimanenti per abbonamento
+  const getDaysRemaining = (endDate) => {
+    const now = new Date()
+    const end = new Date(endDate)
+    const diffTime = end - now
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return Math.max(0, diffDays)
+  }
+
+  // Formatta valuta
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('it-IT', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(amount)
+  }
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('it-IT', {
@@ -447,6 +477,178 @@ const ClientPortal = ({ token }) => {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+          {/* =============================== */}
+
+          {/* === SEZIONE ABBONAMENTI === */}
+          {subscriptions.length > 0 && (
+            <div className="client-section">
+              <h3>🎯 I tuoi Abbonamenti</h3>
+              <div className="subscriptions-grid" style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+                gap: '20px' 
+              }}>
+                {subscriptions.map(subscription => {
+                  const daysRemaining = getDaysRemaining(subscription.end_date)
+                  const isExpiring = daysRemaining <= 3
+                  const plan = subscription.subscription_plans
+
+                  return (
+                    <div 
+                      key={subscription.id} 
+                      className={`subscription-card ${isExpiring ? 'expiring' : ''}`}
+                      style={{ 
+                        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+                        border: `2px solid ${isExpiring ? '#f59e0b' : '#8B4513'}`,
+                        borderRadius: '12px',
+                        padding: '20px',
+                        position: 'relative',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      {/* Header */}
+                      <div style={{
+                        background: 'linear-gradient(135deg, #8B4513 0%, #D4AF37 100%)',
+                        color: 'white',
+                        padding: '12px',
+                        margin: '-20px -20px 16px -20px',
+                        borderRadius: '12px 12px 0 0',
+                        textAlign: 'center'
+                      }}>
+                        <h4 style={{ margin: '0 0 4px 0', fontSize: '16px' }}>
+                          {plan?.name || 'Abbonamento'}
+                        </h4>
+                        <p style={{ margin: 0, fontSize: '12px', opacity: 0.9 }}>
+                          {plan?.description}
+                        </p>
+                      </div>
+
+                      {/* Bollini Utilizzi */}
+                      <div style={{ marginBottom: '16px' }}>
+                        <div style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center', 
+                          marginBottom: '8px' 
+                        }}>
+                          <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#8B4513' }}>
+                            Utilizzi
+                          </span>
+                          <span style={{ fontSize: '12px', color: '#666' }}>
+                            {subscription.remaining_usage}/{plan?.max_usage || 0} rimasti
+                          </span>
+                        </div>
+                        
+                        <div style={{ 
+                          display: 'grid', 
+                          gridTemplateColumns: `repeat(${Math.min(plan?.max_usage || 0, 10)}, 1fr)`, 
+                          gap: '4px',
+                          maxWidth: '200px'
+                        }}>
+                          {Array.from({ length: plan?.max_usage || 0 }, (_, index) => {
+                            const isUsed = index < (plan?.max_usage - subscription.remaining_usage)
+                            return (
+                              <div 
+                                key={index}
+                                style={{
+                                  width: '20px',
+                                  height: '20px',
+                                  borderRadius: '50%',
+                                  background: isUsed 
+                                    ? 'linear-gradient(135deg, #8B4513 0%, #D4AF37 100%)' 
+                                    : '#e5e7eb',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '10px',
+                                  color: 'white',
+                                  fontWeight: 'bold'
+                                }}
+                              >
+                                {isUsed ? '✓' : ''}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Info Scadenza */}
+                      <div style={{ 
+                        background: isExpiring ? '#fef3c7' : '#f0f9ff',
+                        border: `1px solid ${isExpiring ? '#f59e0b' : '#0ea5e9'}`,
+                        borderRadius: '8px',
+                        padding: '12px',
+                        textAlign: 'center',
+                        marginBottom: '12px'
+                      }}>
+                        <div style={{ 
+                          fontSize: '14px', 
+                          fontWeight: 'bold',
+                          color: isExpiring ? '#92400e' : '#0c4a6e',
+                          marginBottom: '4px'
+                        }}>
+                          {isExpiring ? '⚠️ In scadenza!' : '✅ Attivo'}
+                        </div>
+                        <div style={{ 
+                          fontSize: '12px',
+                          color: isExpiring ? '#92400e' : '#0c4a6e'
+                        }}>
+                          {daysRemaining > 0 ? (
+                            <>⏰ {daysRemaining} giorni rimanenti<br/>
+                            Scade: {new Date(subscription.end_date).toLocaleDateString('it-IT')}</>
+                          ) : (
+                            '❌ Scaduto'
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Valore */}
+                      <div style={{ 
+                        textAlign: 'center',
+                        padding: '8px',
+                        background: 'rgba(139, 69, 19, 0.1)',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        color: '#8B4513'
+                      }}>
+                        <strong>Valore: {formatCurrency(subscription.total_amount_paid || 0)}</strong>
+                      </div>
+
+                      {/* Badge status */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        background: subscription.status === 'active' ? '#22c55e' : '#f59e0b',
+                        color: 'white',
+                        padding: '4px 8px',
+                        borderRadius: '12px',
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase'
+                      }}>
+                        {subscription.status === 'active' ? '✅ ATTIVO' : '⚠️ SCADENZA'}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Messaggio informativo */}
+              <div style={{
+                marginTop: '16px',
+                padding: '12px',
+                background: '#f0f9ff',
+                border: '1px solid #0ea5e9',
+                borderRadius: '8px',
+                textAlign: 'center',
+                fontSize: '14px',
+                color: '#0c4a6e'
+              }}>
+                💡 <strong>I tuoi abbonamenti si aggiornano automaticamente</strong> ogni volta che vengono utilizzati in negozio
               </div>
             </div>
           )}
