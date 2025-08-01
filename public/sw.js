@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sapori-colori-v1';
+const CACHE_NAME = 'sapori-colori-v2';
 const urlsToCache = [
   '/',
   '/static/js/bundle.js',
@@ -17,15 +17,28 @@ self.addEventListener('install', function(event) {
 });
 
 self.addEventListener('fetch', function(event) {
+  // Solo per richieste GET e non per API calls
+  if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
+    return;
+  }
+  
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then(function(response) {
-        if (response) {
-          return response;
+        // Se la richiesta ha successo, salva in cache
+        if (response.status === 200) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME)
+            .then(function(cache) {
+              cache.put(event.request, responseClone);
+            });
         }
-        return fetch(event.request);
-      }
-    )
+        return response;
+      })
+      .catch(function() {
+        // Solo se fallisce, usa la cache
+        return caches.match(event.request);
+      })
   );
 });
 
