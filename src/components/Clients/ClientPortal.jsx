@@ -21,13 +21,29 @@ const ClientPortal = ({ token }) => {
     setLoginError('')
 
     try {
-      // Cerca cliente per email o telefono
-      const { data: customerData, error } = await supabase
+      // Normalizza input (rimuovi spazi e converti minuscolo per email)
+      const normalizedInput = loginInput.trim().toLowerCase()
+      
+      // Prima prova con email
+      let { data: customerData, error } = await supabase
         .from('customers')
         .select('*')
-        .or(`email.eq.${loginInput},phone.eq.${loginInput}`)
-        .eq('active', true)
+        .eq('email', normalizedInput)
+        .eq('is_active', true)
         .single()
+
+      // Se non trovato con email, prova con telefono
+      if (error || !customerData) {
+        const phoneResult = await supabase
+          .from('customers')
+          .select('*')
+          .eq('phone', loginInput.trim())
+          .eq('is_active', true)
+          .single()
+        
+        customerData = phoneResult.data
+        error = phoneResult.error
+      }
 
       if (error || !customerData) {
         setLoginError('Cliente non trovato. Verifica email o telefono.')
@@ -281,11 +297,7 @@ const ClientPortal = ({ token }) => {
         setSubscriptions(subscriptionsData || [])
       }
 
-      // Carica premi del livello cliente o inferiore
-      const customerLevel = getCustomerLevel(customerData.points, levelsData || [])
-      const availableLevels = (levelsData || [])
-        .filter(level => level.sort_order <= customerLevel.sort_order)
-        .map(level => level.name)
+      // Carica TUTTI i premi (per tutti i livelli)
       const { data: prizesData } = await supabase
         .from('prizes')
         .select('*')
@@ -473,6 +485,41 @@ const ClientPortal = ({ token }) => {
               </div>
             </div>
           </div>
+
+          {/* === SEZIONE WALLET === */}
+          {customer?.wallet_balance && customer.wallet_balance > 0 && (
+            <div className="client-section">
+              <h3>💳 Il tuo Wallet</h3>
+              <div style={{
+                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                borderRadius: '15px',
+                padding: '25px',
+                textAlign: 'center',
+                color: 'white',
+                boxShadow: '0 8px 25px rgba(16, 185, 129, 0.3)',
+                marginBottom: '20px'
+              }}>
+                <div style={{ fontSize: '2.5em', marginBottom: '10px' }}>💰</div>
+                <div style={{ fontSize: '2.2em', fontWeight: 'bold', marginBottom: '8px' }}>
+                  {formatCurrency(customer.wallet_balance)}
+                </div>
+                <div style={{ fontSize: '1.1em', opacity: 0.9 }}>
+                  Credito Disponibile
+                </div>
+                <div style={{ 
+                  fontSize: '0.9em', 
+                  opacity: 0.8, 
+                  marginTop: '10px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  padding: '8px 15px',
+                  borderRadius: '20px',
+                  display: 'inline-block'
+                }}>
+                  💡 Utilizzalo per i tuoi acquisti in negozio
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* === BOX REFERRAL MINIMALE === */}
           {customer?.referral_code && (
@@ -839,7 +886,7 @@ const ClientPortal = ({ token }) => {
           {/* =============================== */}
 
           <div className="client-section">
-            <h3>🎁 Premi Disponibili per il tuo livello</h3>
+            <h3>🎁 Tutti i Premi Disponibili</h3>
             <div className="prizes-grid">
               {prizes.map(prize => {
                 const prizeLevel = levels.find(l => l.name === prize.required_level)
@@ -1038,8 +1085,7 @@ const ClientPortalFromStorage = ({ customerData }) => {
         .order('created_at', { ascending: false })
       setSubscriptions(subscriptionsData || [])
 
-      // Carica premi del livello cliente o inferiore
-      const customerLevel = getCustomerLevel(freshCustomerData.points, levelsData || [])
+      // Carica TUTTI i premi (per tutti i livelli)
       const { data: prizesData } = await supabase
         .from('prizes')
         .select('*')
@@ -1241,6 +1287,41 @@ const ClientPortalFromStorage = ({ customerData }) => {
         </div>
       </div>
 
+      {/* === SEZIONE WALLET === */}
+      {customer?.wallet_balance && customer.wallet_balance > 0 && (
+        <div className="client-section">
+          <h3>💳 Il tuo Wallet</h3>
+          <div style={{
+            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+            borderRadius: '15px',
+            padding: '25px',
+            textAlign: 'center',
+            color: 'white',
+            boxShadow: '0 8px 25px rgba(16, 185, 129, 0.3)',
+            marginBottom: '20px'
+          }}>
+            <div style={{ fontSize: '2.5em', marginBottom: '10px' }}>💰</div>
+            <div style={{ fontSize: '2.2em', fontWeight: 'bold', marginBottom: '8px' }}>
+              {formatCurrency(customer.wallet_balance)}
+            </div>
+            <div style={{ fontSize: '1.1em', opacity: 0.9 }}>
+              Credito Disponibile
+            </div>
+            <div style={{ 
+              fontSize: '0.9em', 
+              opacity: 0.8, 
+              marginTop: '10px',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              padding: '8px 15px',
+              borderRadius: '20px',
+              display: 'inline-block'
+            }}>
+              💡 Utilizzalo per i tuoi acquisti in negozio
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Referral section */}
       {customer?.referral_code && (
         <div className="client-section">
@@ -1265,7 +1346,176 @@ const ClientPortalFromStorage = ({ customerData }) => {
         </div>
       )}
 
-      {/* Resto delle sezioni... */}
+      {/* === SEZIONE COUPON === */}
+      {coupons.length > 0 && (
+        <div className="client-section">
+          <h3>🎁 I tuoi Coupon</h3>
+          <div className="coupons-grid" style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+            gap: '20px' 
+          }}>
+            {coupons.slice(0, 2).map(coupon => (
+              <div key={coupon.id} className="coupon-card">
+                <div style={{ textAlign: 'center', marginBottom: '15px' }}>
+                  <p style={{ fontSize: '2.2em', fontWeight: 'bold', color: '#E53E3E', margin: '0' }}>
+                    {coupon.type === 'percentage' ? `${coupon.value}%` : `${coupon.value}€`}
+                  </p>
+                </div>
+                <h4 style={{ color: '#333', marginBottom: '15px', textAlign: 'center', fontSize: '1.1em' }}>
+                  {coupon.description}
+                </h4>
+                <p style={{ borderTop: '1px dashed #eee', textAlign: 'center', fontSize: '0.9em', color: '#666', paddingTop: '10px', marginTop: '15px' }}>
+                  Scade il: {new Date(coupon.expiry_date).toLocaleDateString('it-IT')}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* === SEZIONE ABBONAMENTI === */}
+      {subscriptions.length > 0 && (
+        <div className="client-section">
+          <h3>🎯 I tuoi Abbonamenti</h3>
+          <div className="subscriptions-grid" style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+            gap: '20px' 
+          }}>
+            {subscriptions.map(subscription => {
+              const daysRemaining = getDaysRemaining(subscription.end_date)
+              const isExpiring = daysRemaining <= 3
+              const plan = subscription.subscription_plans
+
+              return (
+                <div key={subscription.id} className={`subscription-card ${isExpiring ? 'expiring' : ''}`}
+                  style={{ 
+                    background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+                    border: `2px solid ${isExpiring ? '#f59e0b' : '#8B4513'}`,
+                    borderRadius: '12px',
+                    padding: '20px',
+                    position: 'relative'
+                  }}>
+                  <div style={{
+                    background: 'linear-gradient(135deg, #8B4513 0%, #D4AF37 100%)',
+                    color: 'white',
+                    padding: '12px',
+                    margin: '-20px -20px 16px -20px',
+                    borderRadius: '12px 12px 0 0',
+                    textAlign: 'center'
+                  }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '16px' }}>
+                      {plan?.name || 'Abbonamento'}
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '12px', opacity: 0.9 }}>
+                      {plan?.description}
+                    </p>
+                  </div>
+                  <div style={{ 
+                    background: isExpiring ? '#fef3c7' : '#f0f9ff',
+                    border: `1px solid ${isExpiring ? '#f59e0b' : '#0ea5e9'}`,
+                    borderRadius: '8px',
+                    padding: '12px',
+                    textAlign: 'center',
+                    marginBottom: '12px'
+                  }}>
+                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: isExpiring ? '#92400e' : '#0c4a6e', marginBottom: '4px' }}>
+                      {isExpiring ? '⚠️ In scadenza!' : '✅ Attivo'}
+                    </div>
+                    <div style={{ fontSize: '12px', color: isExpiring ? '#92400e' : '#0c4a6e' }}>
+                      {daysRemaining > 0 ? `⏰ ${daysRemaining} giorni rimanenti` : '❌ Scaduto'}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* === SEZIONE PREMI === */}
+      <div className="client-section">
+        <h3>🎁 Tutti i Premi Disponibili</h3>
+        <div className="prizes-grid">
+          {prizes.map(prize => {
+            const prizeLevel = levels.find(l => l.name === prize.required_level)
+            return (
+              <div key={prize.id} className={`prize-card ${customer.points >= prize.points_cost ? 'available' : 'unavailable'}`}>
+                {prize.image_url && (
+                  <img src={prize.image_url} alt={prize.name} className="prize-image" />
+                )}
+                <div className="prize-info">
+                  <div className="prize-header">
+                    <h4>{prize.name}</h4>
+                    {prizeLevel && (
+                      <div className="prize-level-badge" style={{
+                        backgroundColor: prizeLevel.primary_color,
+                        color: 'white',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        borderRadius: 8,
+                        padding: '2px 8px',
+                        marginLeft: 8
+                      }}>
+                        <span dangerouslySetInnerHTML={{ __html: prizeLevel.icon_svg }} />
+                        <span>{prizeLevel.name}</span>
+                      </div>
+                    )}
+                  </div>
+                  <p>{prize.description}</p>
+                  <div className="prize-cost">
+                    <span className="cost-gems">
+                      <img src="/gemma-rossa.png" alt="gemma" style={{ width: 22, height: 22, marginRight: 4, verticalAlign: 'middle', display: 'inline-block' }} />
+                      {prize.points_cost}
+                    </span>
+                    {customer.points >= prize.points_cost ? (
+                      <span className="cost-status available">✅ Disponibile</span>
+                    ) : (
+                      <span className="cost-status unavailable">
+                        📍 Ti mancano {prize.points_cost - customer.points} GEMME
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* === SEZIONE TRANSAZIONI === */}
+      <div className="client-section">
+        <h3>📊 Le tue ultime visite</h3>
+        {transactions.length > 0 ? (
+          <div className="transactions-list">
+            {transactions.map(transaction => (
+              <div key={transaction.id} className="transaction-item">
+                <div className="transaction-info">
+                  <div className="transaction-type">
+                    {transaction.type === 'acquistare' ? '🛍️ Acquisto' : '🎁 Premio Riscattato'}
+                  </div>
+                  <div className="transaction-date">
+                    {formatDate(transaction.created_at)}
+                  </div>
+                </div>
+                <div className="transaction-points">
+                  <span className={transaction.points_earned > 0 ? 'points-gained' : 'points-used'}>
+                    {transaction.points_earned > 0 ? '+' : ''}{transaction.points_earned} GEMME
+                  </span>
+                  {transaction.amount > 0 && (
+                    <span className="transaction-amount">€{transaction.amount}</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="no-transactions">Nessuna transazione ancora registrata.</p>
+        )}
+      </div>
+
       <div className="client-footer">
         <p>
           <strong>Sapori & Colori</strong><br />
