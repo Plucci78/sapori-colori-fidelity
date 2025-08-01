@@ -6,27 +6,186 @@ import QRCodeGenerator from '../Common/QRCodeGenerator'
 import { copyToClipboard } from '../../utils/clipboardUtils'
 
 const ClientPortal = ({ token }) => {
+  const [loginStep, setLoginStep] = useState('welcome') // 'welcome', 'login', 'loading'
+  const [loginInput, setLoginInput] = useState('')
+  const [loginError, setLoginError] = useState('')
+
+  // Funzione per accesso cliente tramite email/telefono
+  const handleClientLogin = async () => {
+    if (!loginInput.trim()) {
+      setLoginError('Inserisci email o telefono')
+      return
+    }
+
+    setLoginStep('loading')
+    setLoginError('')
+
+    try {
+      // Cerca cliente per email o telefono
+      const { data: customerData, error } = await supabase
+        .from('customers')
+        .select('*')
+        .or(`email.eq.${loginInput},phone.eq.${loginInput}`)
+        .eq('active', true)
+        .single()
+
+      if (error || !customerData) {
+        setLoginError('Cliente non trovato. Verifica email o telefono.')
+        setLoginStep('login')
+        return
+      }
+
+      // Salva cliente in localStorage per sessioni future
+      localStorage.setItem('pwa_customer_id', customerData.id)
+      localStorage.setItem('pwa_customer_data', JSON.stringify(customerData))
+      
+      // Forza ricarica del componente con il cliente trovato
+      window.location.reload()
+
+    } catch (err) {
+      console.error('Errore login cliente:', err)
+      setLoginError('Errore durante l\'accesso. Riprova.')
+      setLoginStep('login')
+    }
+  }
+
   // Gestione PWA senza token
   if (token === 'PWA_NO_TOKEN') {
+    // Controlla se cliente già salvato in localStorage
+    const savedCustomerId = localStorage.getItem('pwa_customer_id')
+    const savedCustomerData = localStorage.getItem('pwa_customer_data')
+    
+    if (savedCustomerId && savedCustomerData) {
+      // Cliente già loggato, mostra direttamente il portale
+      try {
+        const customerData = JSON.parse(savedCustomerData)
+        // Simula un token usando i dati salvati
+        // Usa il componente esistente ma con dati da localStorage
+        return <ClientPortalFromStorage customerData={customerData} />
+      } catch (e) {
+        // Se ci sono errori nel parsing, pulisci e mostra login
+        localStorage.removeItem('pwa_customer_id')
+        localStorage.removeItem('pwa_customer_data')
+      }
+    }
+
+    // Mostra welcome o form login
     return (
       <div className="client-portal" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #8B4513 0%, #D4AF37 100%)' }}>
-        <div style={{ textAlign: 'center', color: 'white', padding: '40px', borderRadius: '20px', background: 'rgba(0,0,0,0.3)' }}>
+        <div style={{ textAlign: 'center', color: 'white', padding: '40px', borderRadius: '20px', background: 'rgba(0,0,0,0.3)', maxWidth: '400px', width: '90%' }}>
           <img
             src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png"
             alt="Sapori & Colori"
             style={{ width: '120px', marginBottom: '20px' }}
           />
-          <h1 style={{ fontSize: '24px', marginBottom: '20px' }}>Benvenuto nella Fidelity App!</h1>
-          <p style={{ fontSize: '16px', marginBottom: '30px', lineHeight: '1.5' }}>
-            Per accedere al tuo portale personale,<br/>
-            scansiona il QR code che ti abbiamo inviato<br/>
-            o clicca sul link ricevuto via email/SMS.
-          </p>
-          <div style={{ fontSize: '48px', marginBottom: '20px' }}>📱✨</div>
-          <p style={{ fontSize: '14px', opacity: '0.9' }}>
-            App installata con successo!<br/>
-            Riceverai notifiche per offerte e premi.
-          </p>
+          
+          {loginStep === 'welcome' && (
+            <>
+              <h1 style={{ fontSize: '24px', marginBottom: '20px' }}>Benvenuto nella Fidelity App!</h1>
+              <p style={{ fontSize: '16px', marginBottom: '30px', lineHeight: '1.5' }}>
+                La tua app per gestire punti,<br/>
+                abbonamenti e premi del ristorante<br/>
+                <strong>Sapori & Colori</strong>
+              </p>
+              <div style={{ fontSize: '48px', marginBottom: '30px' }}>📱✨</div>
+              <button
+                onClick={() => setLoginStep('login')}
+                style={{
+                  background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 100%)',
+                  color: '#8B4513',
+                  border: 'none',
+                  padding: '15px 30px',
+                  borderRadius: '25px',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 15px rgba(212, 175, 55, 0.4)',
+                  transition: 'transform 0.2s'
+                }}
+                onMouseDown={(e) => e.target.style.transform = 'scale(0.95)'}
+                onMouseUp={(e) => e.target.style.transform = 'scale(1)'}
+                onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+              >
+                🚀 Accedi al tuo Portale
+              </button>
+            </>
+          )}
+
+          {loginStep === 'login' && (
+            <>
+              <h2 style={{ fontSize: '22px', marginBottom: '20px' }}>Accedi al tuo Portale</h2>
+              <p style={{ fontSize: '14px', marginBottom: '25px', opacity: '0.9' }}>
+                Inserisci la tua email o numero di telefono<br/>
+                per accedere ai tuoi punti e premi
+              </p>
+              
+              <input
+                type="text"
+                placeholder="Email o Telefono"
+                value={loginInput}
+                onChange={(e) => setLoginInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleClientLogin()}
+                style={{
+                  width: '100%',
+                  padding: '15px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  fontSize: '16px',
+                  marginBottom: '20px',
+                  textAlign: 'center',
+                  outline: 'none'
+                }}
+              />
+              
+              {loginError && (
+                <p style={{ color: '#ffcccb', fontSize: '14px', marginBottom: '20px' }}>
+                  ⚠️ {loginError}
+                </p>
+              )}
+              
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <button
+                  onClick={() => setLoginStep('welcome')}
+                  style={{
+                    background: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    padding: '12px 20px',
+                    borderRadius: '20px',
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ← Indietro
+                </button>
+                <button
+                  onClick={handleClientLogin}
+                  style={{
+                    background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 100%)',
+                    color: '#8B4513',
+                    border: 'none',
+                    padding: '12px 25px',
+                    borderRadius: '20px',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  🔑 Accedi
+                </button>
+              </div>
+            </>
+          )}
+
+          {loginStep === 'loading' && (
+            <>
+              <h2 style={{ fontSize: '22px', marginBottom: '20px' }}>Accesso in corso...</h2>
+              <div style={{ fontSize: '40px', marginBottom: '20px' }}>⏳</div>
+              <p style={{ fontSize: '14px', opacity: '0.9' }}>
+                Stiamo verificando i tuoi dati...
+              </p>
+            </>
+          )}
         </div>
       </div>
     )
@@ -783,6 +942,340 @@ const ClientPortal = ({ token }) => {
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+// Componente per gestire clienti salvati in localStorage  
+const ClientPortalFromStorage = ({ customerData }) => {
+  const [customer, setCustomer] = useState(customerData)
+  const [transactions, setTransactions] = useState([])
+  const [prizes, setPrizes] = useState([])
+  const [levels, setLevels] = useState([])
+  const [coupons, setCoupons] = useState([])
+  const [subscriptions, setSubscriptions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' })
+
+  // Funzione per mostrare notifiche semplici
+  const showNotification = (message, type = 'success') => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => {
+      setNotification({ show: false, message: '', type: '' });
+    }, 3000);
+  };
+
+  // Funzione per logout (pulisce localStorage)
+  const handleLogout = () => {
+    localStorage.removeItem('pwa_customer_id')
+    localStorage.removeItem('pwa_customer_data')
+    window.location.reload()
+  }
+
+  useEffect(() => {
+    loadClientData()
+  }, [])
+
+  const loadClientData = async () => {
+    setLoading(true)
+    setError(null)
+    
+    try {
+      // Carica livelli configurati
+      const { data: levelsData } = await supabase
+        .from('customer_levels')
+        .select('*')
+        .eq('active', true)
+        .order('sort_order')
+      setLevels(levelsData || [])
+
+      // Aggiorna dati cliente dal database (per avere dati freschi)
+      const { data: freshCustomerData, error: customerError } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', customerData.id)
+        .single()
+        
+      if (customerError || !freshCustomerData) {
+        console.error('Errore ricarica cliente:', customerError)
+        // Se il cliente non esiste più, fa logout
+        handleLogout()
+        return
+      }
+      
+      setCustomer(freshCustomerData)
+      // Aggiorna anche il localStorage con dati freschi
+      localStorage.setItem('pwa_customer_data', JSON.stringify(freshCustomerData))
+
+      // Carica transazioni cliente (ultime 10)
+      const { data: transactionsData } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('customer_id', freshCustomerData.id)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      setTransactions(transactionsData || [])
+
+      // Carica coupon del cliente
+      const { data: couponsData } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('customer_id', freshCustomerData.id)
+        .eq('status', 'active')
+        .gte('expiry_date', new Date().toISOString())
+      setCoupons(couponsData || [])
+
+      // Carica abbonamenti del cliente
+      const { data: subscriptionsData } = await supabase
+        .from('customer_subscriptions')
+        .select(`
+          *,
+          subscription_plans!inner(*)
+        `)
+        .eq('customer_id', freshCustomerData.id)
+        .in('status', ['active', 'expiring'])
+        .order('created_at', { ascending: false })
+      setSubscriptions(subscriptionsData || [])
+
+      // Carica premi del livello cliente o inferiore
+      const customerLevel = getCustomerLevel(freshCustomerData.points, levelsData || [])
+      const { data: prizesData } = await supabase
+        .from('prizes')
+        .select('*')
+        .eq('active', true)
+        .order('points_cost')
+      setPrizes(prizesData || [])
+
+    } catch (err) {
+      console.error('Errore caricamento:', err)
+      setError('Errore nel caricamento dei dati')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Resto della logica identica al componente principale...
+  // Funzione per la copia del codice referral
+  const handleCopyReferralCode = () => {
+    if (!customer?.referral_code) return;
+    copyToClipboard(customer.referral_code, () => showNotification('✅ Codice Copiato!'));
+  };
+
+  // Calcola giorni rimanenti per abbonamento
+  const getDaysRemaining = (endDate) => {
+    const now = new Date()
+    const end = new Date(endDate)
+    const diffTime = end - now
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return Math.max(0, diffDays)
+  }
+
+  // Formatta valuta
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('it-IT', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(amount)
+  }
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('it-IT', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="client-portal-loading">
+        <div className="loading-spinner"></div>
+        <p>Caricamento in corso...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="client-portal-error">
+        <div className="error-icon">❌</div>
+        <h2>Errore caricamento</h2>
+        <p>{error}</p>
+        <button onClick={handleLogout} style={{ marginTop: '20px', padding: '10px 20px', borderRadius: '5px', border: 'none', background: '#8B4513', color: 'white' }}>
+          🔄 Riprova accesso
+        </button>
+      </div>
+    )
+  }
+
+  const customerLevel = getCustomerLevel(customer.points, levels)
+  const nextLevelInfo = getNextLevelInfo(customer.points, levels)
+
+  return (
+    <div
+      className="client-portal"
+      style={{
+        background: customer && customerLevel ? (customerLevel.background_gradient || '#fff') : '#fff',
+        minHeight: '100vh',
+        transition: 'background 0.5s'
+      }}
+    >
+      {notification.show && (
+        <div className={`portal-notification ${notification.type}`}>
+          {notification.message}
+        </div>
+      )}
+
+      {/* Pulsante logout per PWA */}
+      <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 1000 }}>
+        <button
+          onClick={handleLogout}
+          style={{
+            background: 'rgba(139, 69, 19, 0.8)',
+            color: 'white',
+            border: 'none',
+            padding: '8px 12px',
+            borderRadius: '15px',
+            fontSize: '12px',
+            cursor: 'pointer'
+          }}
+        >
+          🚪 Esci
+        </button>
+      </div>
+
+      {/* Resto del contenuto identico al componente principale... */}
+      <div className="client-header">
+        <img
+          src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png"
+          alt="Sapori & Colori"
+          className="client-logo"
+        />
+        <div className="client-info">
+          <h1>Ciao {customer.name}! 👋</h1>
+          <div className="client-level" style={{ backgroundColor: customerLevel.primary_color }}>
+            <span className="level-icon">
+              <div dangerouslySetInnerHTML={{ __html: customerLevel.icon_svg }} />
+            </span>
+            <span>Cliente {customerLevel.name}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="client-gems-card">
+        <div className="gems-display">
+          <div className="gems-icon">💎</div>
+          <div className="gems-info">
+            <h2>{customer.points}</h2>
+            <p>GEMME Disponibili</p>
+          </div>
+        </div>
+        <div className="gems-progress">
+          <div
+            className="progress-bar"
+            title={`${Math.round(nextLevelInfo.progress)}% completato`}
+          >
+            <div
+              className="progress-fill"
+              style={{
+                width: `${nextLevelInfo.progress}%`,
+                background: customerLevel.primary_color
+              }}
+            ></div>
+          </div>
+          {nextLevelInfo.hasNextLevel ? (
+            <p>Prossimo livello ({nextLevelInfo.nextLevelName}): {nextLevelInfo.gemsNeeded} GEMME</p>
+          ) : (
+            <p>🏆 Hai raggiunto il livello massimo!</p>
+          )}
+        </div>
+      </div>
+
+      {/* QR Code section */}
+      <div className="qr-recognition-section">
+        <div className="qr-section-header">
+          <h3 className="qr-recognition-title">📱 Il tuo QR Code di Riconoscimento</h3>
+          <p className="qr-recognition-subtitle">
+            Mostra questo codice in negozio per essere riconosciuto istantaneamente
+          </p>
+        </div>
+        <div className="qr-central-container">
+          <div className="qr-wrapper">
+            <div className="qr-display-card">
+              <QRCodeGenerator
+                value={`CUSTOMER:${customer.id}`}
+                size={240}
+                backgroundColor="#ffffff"
+                foregroundColor={customerLevel.primary_color || "#8B4513"}
+                className="customer-qr-code"
+              />
+            </div>
+            <div className="qr-info-card">
+              <div className="qr-customer-info">
+                <h4>👤 {customer.name}</h4>
+                <p>ID Cliente: #{customer.id.substring(0,8)}</p>
+                <div className="qr-level-badge" style={{ backgroundColor: customerLevel.primary_color }}>
+                  <span dangerouslySetInnerHTML={{ __html: customerLevel.icon_svg }} />
+                  <span>{customerLevel.name}</span>
+                </div>
+              </div>
+              <div className="qr-instructions">
+                <div className="instruction-item">
+                  <span className="step">1️⃣</span>
+                  <span>Mostra il QR al personale</span>
+                </div>
+                <div className="instruction-item">
+                  <span className="step">2️⃣</span>
+                  <span>Verrai riconosciuto automaticamente</span>
+                </div>
+                <div className="instruction-item">
+                  <span className="step">3️⃣</span>
+                  <span>Accumula GEMME con i tuoi acquisti</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Referral section */}
+      {customer?.referral_code && (
+        <div className="client-section">
+          <h3>💌 Invita un Amico, Guadagnate Entrambi!</h3>
+          <p style={{ textAlign: 'center', marginTop: '10px', fontSize: '0.9em', color: '#666' }}>
+            Condividi il tuo codice personale. Il tuo amico riceverà <strong>5 GEMME</strong> di benvenuto e tu ne riceverai <strong>20</strong> dopo il suo primo acquisto!
+          </p>
+          <div className="referral-code-minimal" onClick={handleCopyReferralCode} style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '15px 20px',
+            borderRadius: '10px',
+            border: '1px solid #ddd',
+            backgroundColor: '#f9f9f9',
+            maxWidth: '300px',
+            margin: '0 auto'
+          }}>
+            <span style={{ fontSize: '2.2em', fontWeight: 'bold', color: '#333' }}>{customer.referral_code}</span>
+            <img src="/refer-icon.png" alt="Referral Icon" style={{ width: '44px', height: '44px', marginLeft: '15px' }} />
+          </div>
+        </div>
+      )}
+
+      {/* Resto delle sezioni... */}
+      <div className="client-footer">
+        <p>
+          <strong>Sapori & Colori</strong><br />
+          Via Bagaladi 7, 00132 Roma<br />
+          Tel: 06 39911640<br />
+        </p>
+        <p className="footer-note">
+          💡 Non lasciare a casa la tua tessera fedeltà: è il tuo biglietto d'oro per raccogliere punti e conquistare i nostri premi più golosi! 🏆🥖
+        </p>
+      </div>
     </div>
   )
 }
