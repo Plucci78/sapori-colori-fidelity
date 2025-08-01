@@ -6,6 +6,31 @@ import QRCodeGenerator from '../Common/QRCodeGenerator'
 import { copyToClipboard } from '../../utils/clipboardUtils'
 
 const ClientPortal = ({ token }) => {
+  // Gestione PWA senza token
+  if (token === 'PWA_NO_TOKEN') {
+    return (
+      <div className="client-portal" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #8B4513 0%, #D4AF37 100%)' }}>
+        <div style={{ textAlign: 'center', color: 'white', padding: '40px', borderRadius: '20px', background: 'rgba(0,0,0,0.3)' }}>
+          <img
+            src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png"
+            alt="Sapori & Colori"
+            style={{ width: '120px', marginBottom: '20px' }}
+          />
+          <h1 style={{ fontSize: '24px', marginBottom: '20px' }}>Benvenuto nella Fidelity App!</h1>
+          <p style={{ fontSize: '16px', marginBottom: '30px', lineHeight: '1.5' }}>
+            Per accedere al tuo portale personale,<br/>
+            scansiona il QR code che ti abbiamo inviato<br/>
+            o clicca sul link ricevuto via email/SMS.
+          </p>
+          <div style={{ fontSize: '48px', marginBottom: '20px' }}>📱✨</div>
+          <p style={{ fontSize: '14px', opacity: '0.9' }}>
+            App installata con successo!<br/>
+            Riceverai notifiche per offerte e premi.
+          </p>
+        </div>
+      </div>
+    )
+  }
   const [customer, setCustomer] = useState(null)
   const [transactions, setTransactions] = useState([])
   const [prizes, setPrizes] = useState([])

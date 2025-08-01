@@ -1986,9 +1986,12 @@ for (const customer of recipients) {
     }
   }, [showNotification])
 
-  // Check per mostrare solo il portale cliente se siamo su /cliente/:token
+  // Check per mostrare solo il portale cliente se siamo su /cliente/:token o /portal
   useEffect(() => {
     const path = window.location.pathname
+    const params = new URLSearchParams(window.location.search)
+    
+    // Route /cliente/:token (esistente)
     const clientMatch = path.match(/^\/cliente\/(.+)$/)
     if (clientMatch) {
       const token = clientMatch[1]
@@ -1997,6 +2000,19 @@ for (const customer of recipients) {
         return
       } else {
         window.location.href = '/'
+      }
+    }
+    
+    // Route /portal (nuova per PWA)
+    if (path === '/portal') {
+      const token = params.get('token')
+      if (token && isValidToken(token)) {
+        setClientPortalToken(token)
+        return
+      } else {
+        // Se siamo su /portal senza token valido, mostra messaggio per PWA
+        setClientPortalToken('PWA_NO_TOKEN')
+        return
       }
     }
     
