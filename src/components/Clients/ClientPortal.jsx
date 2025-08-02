@@ -766,10 +766,10 @@ const ClientPortal = ({ token }) => {
                           marginBottom: '8px' 
                         }}>
                           <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#8B4513' }}>
-                            Utilizzi
+                            Utilizzi Abbonamento
                           </span>
                           <span style={{ fontSize: '12px', color: '#666' }}>
-                            {subscription.remaining_usage}/{plan?.max_usage || 0} rimasti
+                            {(plan?.max_usage || 0) - (subscription.remaining_usage || 0)}/{plan?.max_usage || 0} utilizzati
                           </span>
                         </div>
                         
@@ -780,7 +780,9 @@ const ClientPortal = ({ token }) => {
                           maxWidth: '200px'
                         }}>
                           {Array.from({ length: plan?.max_usage || 0 }, (_, index) => {
-                            const isUsed = index < (plan?.max_usage - subscription.remaining_usage)
+                            // Calcolo corretto: i primi X bollini sono utilizzati
+                            const usedCount = (plan?.max_usage || 0) - (subscription.remaining_usage || 0)
+                            const isUsed = index < usedCount
                             return (
                               <div 
                                 key={index}
@@ -799,7 +801,7 @@ const ClientPortal = ({ token }) => {
                                   fontWeight: 'bold'
                                 }}
                               >
-                                {isUsed ? '✓' : ''}
+                                {isUsed ? '✓' : index + 1}
                               </div>
                             )
                           })}
@@ -1425,6 +1427,9 @@ const ClientPortalFromStorage = ({ customerData }) => {
                     </div>
                     <div style={{ fontSize: '12px', color: isExpiring ? '#92400e' : '#0c4a6e' }}>
                       {daysRemaining > 0 ? `⏰ ${daysRemaining} giorni rimanenti` : '❌ Scaduto'}
+                    </div>
+                    <div style={{ fontSize: '11px', color: isExpiring ? '#92400e' : '#0c4a6e', marginTop: '4px', opacity: 0.8 }}>
+                      Utilizzi rimasti: {subscription.remaining_usage || 0}
                     </div>
                   </div>
                 </div>
