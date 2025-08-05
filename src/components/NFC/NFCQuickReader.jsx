@@ -33,10 +33,10 @@ const NFCQuickReader = ({ onCustomerFound, showNotification }) => {
               return
             }
 
-            // Poi cerchiamo il cliente
+            // Poi cerchiamo il cliente (incluso avatar_url)
             const { data: customerData, error: customerError } = await supabase
               .from('customers')
-              .select('id, name, phone, email, points, created_at')
+              .select('id, name, phone, email, points, created_at, avatar_url')
               .eq('id', tagData.customer_id)
               .single()
 

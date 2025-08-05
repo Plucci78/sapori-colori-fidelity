@@ -21,10 +21,10 @@ const NFCViewSimple = ({ showNotification }) => {
   // Carica dati dal database
   const loadData = async () => {
     try {
-      // Carica clienti
+      // Carica clienti (incluso avatar_url)
       const { data: customersData, error: customersError } = await supabase
         .from('customers')
-        .select('id, name, phone, email, points')
+        .select('id, name, phone, email, points, avatar_url')
         .order('name')
 
       if (customersError) throw customersError
