@@ -1,4 +1,3 @@
-import OneSignal from 'react-onesignal'
 import { ONESIGNAL_CONFIG, isDevelopment } from '../config/onesignal'
 
 class OneSignalService {
@@ -7,64 +6,58 @@ class OneSignalService {
     this.playerId = null
   }
 
-  // Inizializza OneSignal
+  // Inizializza OneSignal con SDK nativo (senza CDN)
   async initialize() {
     if (this.initialized) return
 
     try {
-      console.log('🔔 Inizializzazione OneSignal...')
+      console.log('🔔 Inizializzazione OneSignal nativo...')
       
-      await OneSignal.init({
-        appId: ONESIGNAL_CONFIG.appId,
-        allowLocalhostAsSecureOrigin: ONESIGNAL_CONFIG.allowLocalhostAsSecureOrigin,
-        
-        // Configurazioni notifiche
-        notificationClickHandling: ONESIGNAL_CONFIG.notificationClickHandling,
-        welcomeNotification: ONESIGNAL_CONFIG.welcomeNotification,
-        promptOptions: ONESIGNAL_CONFIG.promptOptions,
+      // Verifica se il browser supporta le notifiche push
+      if (!('Notification' in window)) {
+        console.log('⚠️ Browser non supporta notifiche push')
+        return false
+      }
 
-        // Service Worker personalizzato self-hosted (evita CDN)
-        serviceWorkerUpdaterPath: '/OneSignalSDKUpdaterWorker.js',
-        serviceWorkerPath: '/OneSignalSDKWorker.js',
-        
-        // Configurazioni per evitare caricamenti CDN
-        persistNotification: false,
-        autoRegister: false
+      if (!('serviceWorker' in navigator)) {
+        console.log('⚠️ Browser non supporta Service Workers')
+        return false
+      }
+
+      // Registra il Service Worker manualmente
+      const registration = await navigator.serviceWorker.register('/OneSignalSDKWorker.js', {
+        scope: '/'
       })
 
+      console.log('✅ Service Worker registrato:', registration.scope)
+      
       this.initialized = true
-      console.log('✅ OneSignal inizializzato con successo')
-
-      // Ottieni Player ID se l'utente è già registrato
-      this.playerId = await OneSignal.getPlayerId()
-      if (this.playerId) {
-        console.log('👤 Player ID esistente:', this.playerId)
-      }
+      console.log('✅ OneSignal inizializzato con successo (modalità nativa)')
 
       return true
     } catch (error) {
-      console.error('❌ Errore inizializzazione OneSignal:', error)
+      console.error('❌ Errore inizializzazione OneSignal nativo:', error)
       return false
     }
   }
 
-  // Registra utente per notifiche push
+  // Registra utente per notifiche push (modalità nativa)
   async registerUser(customerData) {
     if (!this.initialized) {
       await this.initialize()
     }
 
     try {
-      console.log('📱 Registrazione utente OneSignal:', customerData.name)
+      console.log('📱 Registrazione utente OneSignal nativo:', customerData.name)
 
-      // Verifica se l'utente ha già dato il permesso
-      const currentPermission = await OneSignal.getPermission()
+      // Verifica permesso attuale
+      const currentPermission = Notification.permission
       console.log('🔍 Permesso attuale:', currentPermission)
 
       let permission = currentPermission
       
       // Se non ha ancora dato il permesso, mostra messaggio personalizzato prima
-      if (!permission) {
+      if (permission !== 'granted') {
         // Mostra messaggio personalizzato in italiano prima del popup del browser
         const userAccepted = await this.showCustomPermissionDialog(customerData.name)
         if (!userAccepted) {
@@ -73,65 +66,89 @@ class OneSignalService {
         }
         
         console.log('📝 Richiesta permesso notifiche al browser...')
-        permission = await OneSignal.requestPermission()
+        permission = await Notification.requestPermission()
         
-        // Aspetta un po' per permettere al popup di processare la risposta
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        if (!permission) {
+        if (permission !== 'granted') {
           console.log('⚠️ Utente ha rifiutato le notifiche nel browser')
           return null
         }
       }
 
-      // Ottieni Player ID con retry
-      let attempts = 0
-      const maxAttempts = 5
-      
-      while (attempts < maxAttempts) {
-        this.playerId = await OneSignal.getPlayerId()
-        if (this.playerId) break
-        
-        console.log(`🔄 Tentativo ${attempts + 1}/${maxAttempts} per ottenere Player ID...`)
-        await new Promise(resolve => setTimeout(resolve, 500))
-        attempts++
-      }
-
-      if (!this.playerId) {
-        console.log('⚠️ Impossibile ottenere Player ID dopo', maxAttempts, 'tentativi')
-        return null
-      }
-
-      // Associa dati utente
-      await OneSignal.setTags({
-        customer_id: customerData.id,
-        customer_name: customerData.name,
-        customer_email: customerData.email || '',
-        customer_phone: customerData.phone || '',
-        customer_points: customerData.points || 0,
-        registration_date: new Date().toISOString()
+      // Crea una subscription alle notifiche push
+      const registration = await navigator.serviceWorker.ready
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: this.urlBase64ToUint8Array(ONESIGNAL_CONFIG.vapidKey || 'YOUR_VAPID_KEY')
       })
 
-      console.log('✅ Utente registrato OneSignal:', this.playerId)
+      // Genera un ID univoco per questo utente
+      this.playerId = this.generatePlayerId(subscription)
       
-      // Forza chiusura eventuali popup rimasti aperti
-      try {
-        const onesignalElements = document.querySelectorAll('[id*="onesignal"], [class*="onesignal"]')
-        onesignalElements.forEach(el => {
-          if (el.style.display !== 'none') {
-            console.log('🔒 Nascondo elemento OneSignal rimasto aperto')
-            el.style.display = 'none'
-          }
-        })
-      } catch (e) {
-        console.log('⚠️ Errore pulizia popup OneSignal:', e)
-      }
+      // Registra la subscription con OneSignal
+      await this.registerWithOneSignal(customerData, subscription)
+
+      console.log('✅ Utente registrato OneSignal nativo:', this.playerId)
       
       return this.playerId
 
     } catch (error) {
-      console.error('❌ Errore registrazione OneSignal:', error)
+      console.error('❌ Errore registrazione OneSignal nativo:', error)
       return null
+    }
+  }
+
+  // Helper per convertire VAPID key
+  urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4)
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+    const rawData = window.atob(base64)
+    const outputArray = new Uint8Array(rawData.length)
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i)
+    }
+    return outputArray
+  }
+
+  // Genera Player ID dalla subscription
+  generatePlayerId(subscription) {
+    const endpoint = subscription.endpoint
+    return btoa(endpoint).replace(/[^a-zA-Z0-9]/g, '').substring(0, 36)
+  }
+
+  // Registra con OneSignal API
+  async registerWithOneSignal(customerData, subscription) {
+    try {
+      const response = await fetch('https://onesignal.com/api/v1/players', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',  
+          'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`
+        },
+        body: JSON.stringify({
+          app_id: ONESIGNAL_CONFIG.appId,
+          device_type: 5, // Web Push
+          identifier: subscription.endpoint,
+          notification_types: 1,
+          tags: {
+            customer_id: customerData.id,
+            customer_name: customerData.name,
+            customer_email: customerData.email || '',
+            customer_phone: customerData.phone || '',
+            customer_points: customerData.points || 0,
+            registration_date: new Date().toISOString()
+          }
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('✅ Player registrato con OneSignal:', result.id)
+        return result.id
+      } else {
+        console.error('❌ Errore registrazione player OneSignal:', await response.text())
+      }
+    } catch (error) {
+      console.error('❌ Errore chiamata API OneSignal:', error)
     }
   }
 
@@ -365,57 +382,84 @@ class OneSignalService {
     })
   }
 
-  // Aggiorna dati utente
+  // Aggiorna dati utente (modalità nativa)
   async updateUserData(customerData) {
     if (!this.playerId) return
 
     try {
-      await OneSignal.setTags({
-        customer_points: customerData.points || 0,
-        last_update: new Date().toISOString()
+      // Aggiorna i tag tramite API OneSignal
+      const response = await fetch(`https://onesignal.com/api/v1/players/${this.playerId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`
+        },
+        body: JSON.stringify({
+          app_id: ONESIGNAL_CONFIG.appId,
+          tags: {
+            customer_points: customerData.points || 0,
+            last_update: new Date().toISOString()
+          }
+        })
       })
-      console.log('✅ Dati utente aggiornati OneSignal')
+
+      if (response.ok) {
+        console.log('✅ Dati utente aggiornati OneSignal nativo')
+      }
     } catch (error) {
-      console.error('❌ Errore aggiornamento dati OneSignal:', error)
+      console.error('❌ Errore aggiornamento dati OneSignal nativo:', error)
     }
   }
 
-  // Ottieni stato notifiche
+  // Ottieni stato notifiche (modalità nativa)
   async getNotificationStatus() {
     if (!this.initialized) return null
 
     try {
-      const permission = await OneSignal.getPermission()
-      const playerId = await OneSignal.getPlayerId()
-      const isSubscribed = await OneSignal.isSubscribed()
-
+      const permission = Notification.permission
+      const pushSupported = 'serviceWorker' in navigator && 'PushManager' in window
+      
       return {
         permission,
-        playerId,
-        isSubscribed,
-        pushSupported: OneSignal.isPushSupported()
+        playerId: this.playerId,
+        isSubscribed: permission === 'granted',
+        pushSupported
       }
     } catch (error) {
-      console.error('❌ Errore stato notifiche:', error)
+      console.error('❌ Errore stato notifiche nativo:', error)
       return null
     }
   }
 
-  // Logout utente (rimuovi tags)
+  // Logout utente (modalità nativa)
   async logoutUser() {
     if (!this.playerId) return
 
     try {
-      await OneSignal.deleteTags([
-        'customer_id',
-        'customer_name', 
-        'customer_email',
-        'customer_phone',
-        'customer_points'
-      ])
-      console.log('✅ Logout OneSignal completato')
+      // Rimuovi tag dal player
+      const response = await fetch(`https://onesignal.com/api/v1/players/${this.playerId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`
+        },
+        body: JSON.stringify({
+          app_id: ONESIGNAL_CONFIG.appId,
+          tags: {
+            customer_id: '',
+            customer_name: '', 
+            customer_email: '',
+            customer_phone: '',
+            customer_points: ''
+          }
+        })
+      })
+
+      if (response.ok) {
+        console.log('✅ Logout OneSignal nativo completato')
+      }
     } catch (error) {
-      console.error('❌ Errore logout OneSignal:', error)
+      console.error('❌ Errore logout OneSignal nativo:', error)
     }
   }
 

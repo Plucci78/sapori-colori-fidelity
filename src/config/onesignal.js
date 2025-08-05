@@ -4,6 +4,7 @@
 export const ONESIGNAL_CONFIG = {
   appId: '61a2318f-68f7-4a79-8beb-203c58bf8763', // OneSignal App ID
   restApiKey: 'you6ukdzyu7vfcm2qzjiulvnc',
+  vapidKey: 'BIb8s6lbKZErzNSnYjzWpCQ-FgEOYMgF0CQ8j4YdIj6h5g8VIj_8lXZJlBwqC8Ae5rCjzYpVjNsw9z7fPmTXVMg', // VAPID public key (esempio)
   allowLocalhostAsSecureOrigin: true, // Per sviluppo locale
   
   // Configurazioni notifiche
