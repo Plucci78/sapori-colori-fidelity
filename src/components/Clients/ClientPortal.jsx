@@ -9,7 +9,6 @@ import OneSignal from 'react-onesignal'
 import MobileNavigation from './MobileNavigation'
 import QRModal from './QRModal'
 import ImageUpload from '../Common/ImageUpload'
-import DatabaseChecker from '../Common/DatabaseChecker'
 
 const ClientPortal = ({ token }) => {
   const [loginStep, setLoginStep] = useState('welcome') // 'welcome', 'login', 'loading'
@@ -1812,9 +1811,6 @@ const ClientPortalFromStorage = ({ customerData }) => {
                 )}
               </div>
             </div>
-            
-            {/* Database Checker - Solo per test */}
-            <DatabaseChecker />
           </div>
         )
 
