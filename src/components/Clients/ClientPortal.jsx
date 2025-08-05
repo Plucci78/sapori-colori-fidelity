@@ -1456,6 +1456,52 @@ const ClientPortalFromStorage = ({ customerData }) => {
                             Utilizzi rimasti: {subscription.remaining_usage || 0}
                           </div>
                         </div>
+                        
+                        {/* Bollini utilizzi abbonamento */}
+                        <div style={{ marginBottom: '16px' }}>
+                          <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center', 
+                            marginBottom: '8px' 
+                          }}>
+                            <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#8B4513' }}>
+                              Utilizzi Abbonamento
+                            </span>
+                            <span style={{ fontSize: '11px', color: '#666' }}>
+                              {(plan?.max_usage || 0) - (subscription.remaining_usage || 0)}/{plan?.max_usage || 0} utilizzati
+                            </span>
+                          </div>
+                          
+                          <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: `repeat(${Math.min(plan?.max_usage || 0, 10)}, 1fr)`, 
+                            gap: '3px',
+                            maxWidth: '180px',
+                            margin: '0 auto'
+                          }}>
+                            {Array.from({ length: plan?.max_usage || 0 }, (_, index) => {
+                              // Calcolo corretto: i primi X bollini sono utilizzati
+                              const usedCount = (plan?.max_usage || 0) - (subscription.remaining_usage || 0)
+                              const isUsed = index < usedCount
+                              return (
+                                <div 
+                                  key={index}
+                                  style={{
+                                    width: '16px',
+                                    height: '16px',
+                                    borderRadius: '50%',
+                                    backgroundColor: isUsed ? '#ef4444' : '#10b981',
+                                    border: '1px solid #fff',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                                    transition: 'all 0.2s ease'
+                                  }}
+                                  title={isUsed ? 'Utilizzato' : 'Disponibile'}
+                                />
+                              )
+                            })}
+                          </div>
+                        </div>
                       </div>
                     )
                   })}
