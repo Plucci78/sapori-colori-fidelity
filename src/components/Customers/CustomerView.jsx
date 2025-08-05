@@ -788,7 +788,36 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
 
               <div className="customer-info-box flex items-center gap-6">
                 <div className="customer-avatar">
-                  {selectedCustomer.name.charAt(0).toUpperCase()}
+                  {selectedCustomer.avatar_url ? (
+                    <img 
+                      src={selectedCustomer.avatar_url} 
+                      alt={`Avatar di ${selectedCustomer.name}`}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        borderRadius: '50%'
+                      }}
+                      onError={(e) => {
+                        // Se l'immagine non si carica, mostra la lettera
+                        e.target.style.display = 'none'
+                        e.target.nextSibling.style.display = 'flex'
+                      }}
+                    />
+                  ) : null}
+                  <div 
+                    style={{ 
+                      display: selectedCustomer.avatar_url ? 'none' : 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '100%',
+                      height: '100%',
+                      fontSize: '1.5em',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    {selectedCustomer.name.charAt(0).toUpperCase()}
+                  </div>
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-3">
@@ -1429,8 +1458,32 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                         <td>
                           <div className="customer-cell">
                             <div className={`gender-avatar ${gender === 'm' || gender === 'male' ? 'male' : gender === 'f' || gender === 'female' ? 'female' : 'neutral'}`}>
-                              {gender === 'm' || gender === 'male' ? '👨' : 
-                               gender === 'f' || gender === 'female' ? '👩' : '👤'}
+                              {customer.avatar_url ? (
+                                <img 
+                                  src={customer.avatar_url} 
+                                  alt={`Avatar di ${customer.name}`}
+                                  style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    borderRadius: '50%'
+                                  }}
+                                  onError={(e) => {
+                                    // Se l'immagine non si carica, mostra l'icona genere
+                                    e.target.style.display = 'none'
+                                    e.target.nextSibling.style.display = 'block'
+                                  }}
+                                />
+                              ) : null}
+                              <span 
+                                style={{ 
+                                  display: customer.avatar_url ? 'none' : 'block',
+                                  fontSize: '1.3em'
+                                }}
+                              >
+                                {gender === 'm' || gender === 'male' ? '👨' : 
+                                 gender === 'f' || gender === 'female' ? '👩' : '👤'}
+                              </span>
                             </div>
                             <div className="customer-info-text">
                               <div className="customer-name">{customer.name}</div>
