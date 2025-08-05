@@ -1508,6 +1508,110 @@ const ClientPortalFromStorage = ({ customerData }) => {
                 </div>
               </div>
             )}
+
+            {/* QR Code Section */}
+            <div className="client-section">
+              <h3>📱 Il tuo QR Code di Riconoscimento</h3>
+              <p style={{ textAlign: 'center', marginBottom: '20px', fontSize: '0.9em', color: '#666' }}>
+                Mostra questo codice in negozio per essere riconosciuto istantaneamente
+              </p>
+              
+              <div style={{
+                background: 'white',
+                borderRadius: '20px',
+                padding: '30px 20px',
+                textAlign: 'center',
+                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+                border: `3px solid ${customerLevel.primary_color}`,
+                margin: '0 auto',
+                maxWidth: '350px'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '20px'
+                }}>
+                  {/* QR Code */}
+                  <div style={{
+                    padding: '20px',
+                    background: 'white',
+                    borderRadius: '15px',
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+                    border: '2px solid #f0f0f0'
+                  }}>
+                    <QRCodeGenerator
+                      value={`CUSTOMER:${customer.id}`}
+                      size={200}
+                      backgroundColor="#ffffff"
+                      foregroundColor={customerLevel.primary_color || "#8B4513"}
+                      style={{ display: 'block', margin: '0 auto' }}
+                    />
+                  </div>
+                  
+                  {/* Customer Info */}
+                  <div style={{ textAlign: 'center' }}>
+                    <h4 style={{ 
+                      color: customerLevel.primary_color, 
+                      margin: '0 0 8px 0', 
+                      fontSize: '1.2em',
+                      fontWeight: 'bold' 
+                    }}>
+                      👤 {customer.name}
+                    </h4>
+                    <p style={{ 
+                      margin: '0 0 12px 0', 
+                      fontSize: '0.9em', 
+                      color: '#666',
+                      fontFamily: 'monospace' 
+                    }}>
+                      ID: #{customer.id.substring(0,8)}
+                    </p>
+                    <div style={{
+                      backgroundColor: customerLevel.primary_color,
+                      color: 'white',
+                      padding: '8px 16px',
+                      borderRadius: '20px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '0.9em',
+                      fontWeight: 'bold'
+                    }}>
+                      <span dangerouslySetInnerHTML={{ __html: customerLevel.icon_svg }} />
+                      <span>{customerLevel.name}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Instructions */}
+                <div style={{ 
+                  marginTop: '25px', 
+                  padding: '15px',
+                  background: '#f8f9fa',
+                  borderRadius: '12px',
+                  fontSize: '0.85em'
+                }}>
+                  <div style={{ marginBottom: '8px', fontWeight: 'bold', color: '#8B4513' }}>
+                    🎯 Come usarlo:
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'left' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>1️⃣</span>
+                      <span>Mostra il QR al personale</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>2️⃣</span>
+                      <span>Verrai riconosciuto automaticamente</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>3️⃣</span>
+                      <span>Accumula GEMME con i tuoi acquisti</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </>
         )
 

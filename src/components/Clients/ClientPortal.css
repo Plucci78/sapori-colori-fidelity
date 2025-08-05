@@ -407,3 +407,157 @@
     display: none !important;
   }
 }
+
+/* === QR CODE STYLING === */
+
+/* QR Section Layout */
+.qr-recognition-section {
+  margin: 30px 0;
+  padding: 0 20px;
+}
+
+.qr-section-header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.qr-recognition-title {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #8B4513;
+  margin-bottom: 8px;
+}
+
+.qr-recognition-subtitle {
+  font-size: 1em;
+  color: #666;
+  margin: 0;
+}
+
+/* QR Central Container */
+.qr-central-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.qr-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 25px;
+  max-width: 400px;
+  width: 100%;
+}
+
+/* QR Display Card */
+.qr-display-card {
+  background: white;
+  padding: 25px;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border: 3px solid #8B4513;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.customer-qr-code {
+  display: block !important;
+  margin: 0 auto !important;
+}
+
+/* QR Info Card */
+.qr-info-card {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 15px;
+  width: 100%;
+  text-align: center;
+}
+
+.qr-customer-info {
+  margin-bottom: 20px;
+}
+
+.qr-customer-info h4 {
+  color: #8B4513;
+  font-size: 1.2em;
+  font-weight: bold;
+  margin: 0 0 8px 0;
+}
+
+.qr-customer-info p {
+  color: #666;
+  font-size: 0.9em;
+  font-family: monospace;
+  margin: 0 0 12px 0;
+}
+
+.qr-level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  color: white;
+  font-size: 0.9em;
+  font-weight: bold;
+}
+
+/* QR Instructions */
+.qr-instructions {
+  text-align: left;
+}
+
+.instruction-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 0.9em;
+}
+
+.instruction-item .step {
+  font-size: 1.1em;
+  flex-shrink: 0;
+}
+
+/* Responsive QR Code */
+@media (max-width: 768px) {
+  .qr-recognition-section {
+    padding: 0 15px;
+  }
+  
+  .qr-display-card {
+    padding: 20px;
+    margin: 0 10px;
+  }
+  
+  .customer-qr-code canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+  
+  .qr-wrapper {
+    gap: 20px;
+  }
+  
+  .qr-info-card {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .qr-display-card {
+    padding: 15px;
+  }
+  
+  .qr-recognition-title {
+    font-size: 1.3em;
+  }
+  
+  .qr-recognition-subtitle {
+    font-size: 0.9em;
+  }
+}
