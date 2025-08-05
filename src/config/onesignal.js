@@ -20,14 +20,49 @@ export const ONESIGNAL_CONFIG = {
     disable: true // Disabilitiamo per ora
   },
 
-  // Prompt settings
+  // Localizzazione italiana
+  language: 'it',
+  
+  // Prompt settings con messaggi personalizzati
   promptOptions: {
     slidedown: {
       enabled: true,
-      actionMessage: "Vuoi ricevere notifiche sui tuoi premi e offerte speciali?",
-      acceptButton: "Sì, attiva notifiche",
-      cancelButton: "Non ora"
+      actionMessage: "🔔 Vuoi ricevere notifiche sui tuoi premi e offerte speciali di Sapori & Colori?",
+      acceptButton: "✅ Sì, attiva notifiche",
+      cancelButton: "❌ Non ora",
+      showCredit: false // Nasconde "Powered by OneSignal"
+    },
+    customlink: {
+      enabled: true,
+      style: "button",
+      size: "medium",
+      color: {
+        button: '#8B4513',
+        text: '#FFFFFF'
+      },
+      text: {
+        subscribe: "🔔 Attiva Notifiche",
+        unsubscribe: "🔕 Disattiva Notifiche",
+        explanation: "Ricevi offerte e aggiornamenti sui tuoi premi"
+      }
     }
+  },
+
+  // Configurazioni avanzate per localizzazione
+  autoRegister: false, // Controllo manuale della registrazione
+  autoResubscribe: true,
+  
+  // Messaggi personalizzati per vari stati
+  text: {
+    'message.action.subscribe': '✅ Perfetto! Riceverai le nostre notifiche',
+    'message.action.subscribed': '🔔 Notifiche già attive',
+    'message.action.resubscribed': '🔄 Notifiche riattivate',
+    'message.action.unsubscribed': '🔕 Notifiche disattivate',
+    'dialog.main.title': 'Notifiche Sapori & Colori',
+    'dialog.main.button.subscribe': 'Attiva Notifiche',
+    'dialog.main.button.unsubscribe': 'Disattiva',
+    'dialog.blocked.title': 'Sblocca le notifiche',
+    'dialog.blocked.message': 'Clicca sull\'icona della notifica nella barra degli indirizzi per attivarle.'
   }
 }
 
