@@ -5,6 +5,7 @@ import './ClientPortal.css'; // <-- 1. AGGIUNGI QUESTO IMPORT
 import QRCodeGenerator from '../Common/QRCodeGenerator'
 import { copyToClipboard } from '../../utils/clipboardUtils'
 import oneSignalService from '../../services/onesignalService'
+import OneSignal from 'react-onesignal'
 import MobileNavigation from './MobileNavigation'
 import QRModal from './QRModal'
 
@@ -1072,9 +1073,39 @@ const ClientPortalFromStorage = ({ customerData }) => {
       try {
         await oneSignalService.initialize()
         
-        // Se cliente non ha Player ID, registralo
+        // Controlla se il cliente ha già un Player ID attivo
+        const currentPlayerId = await OneSignal.getPlayerId()
         const savedPlayerId = localStorage.getItem('pwa_onesignal_player_id')
-        if (!savedPlayerId && customerData) {
+        
+        console.log('🔍 Player ID check:', { currentPlayerId, savedPlayerId, customerName: customerData?.name })
+        
+        // Se ha un Player ID attivo ma non è salvato nel localStorage o database
+        if (currentPlayerId && customerData) {
+          localStorage.setItem('pwa_onesignal_player_id', currentPlayerId)
+          
+          // Verifica se è già salvato nel database
+          const { data: customerCheck } = await supabase
+            .from('customers')
+            .select('onesignal_player_id')
+            .eq('id', customerData.id)
+            .single()
+          
+          if (!customerCheck?.onesignal_player_id || customerCheck.onesignal_player_id !== currentPlayerId) {
+            console.log('💾 Aggiornamento Player ID nel database per cliente esistente')
+            const { error: updateError } = await supabase
+              .from('customers')
+              .update({ onesignal_player_id: currentPlayerId })
+              .eq('id', customerData.id)
+            
+            if (updateError) {
+              console.error('⚠️ Errore salvataggio Player ID nel database:', updateError)
+            } else {
+              console.log('✅ Player ID aggiornato nel database per cliente:', customerData.name)
+            }
+          }
+        } 
+        // Se non ha Player ID, prova a registrarlo
+        else if (!savedPlayerId && customerData) {
           const playerId = await oneSignalService.registerUser(customerData)
           if (playerId) {
             localStorage.setItem('pwa_onesignal_player_id', playerId)
@@ -1088,7 +1119,7 @@ const ClientPortalFromStorage = ({ customerData }) => {
             if (updateError) {
               console.error('⚠️ Errore salvataggio Player ID nel database:', updateError)
             } else {
-              console.log('✅ Player ID salvato nel database per cliente esistente:', customerData.name)
+              console.log('✅ Player ID salvato nel database per cliente nuovo:', customerData.name)
             }
           }
         }
