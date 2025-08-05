@@ -1,5 +1,24 @@
 /* CSS Module per CustomerView - Scrolling isolato */
 
+/* Customer Avatar in Detail Section */
+.customer-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #8B4513 0%, #D4AF37 100%);
+  color: white;
+  font-size: 2em;
+  font-weight: bold;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
 /* Stili per clienti deselezionati */
 .customer-deactivated {
   opacity: 0.6;

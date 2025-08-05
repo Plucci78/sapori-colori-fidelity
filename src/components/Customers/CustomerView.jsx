@@ -787,7 +787,7 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
               )}
 
               <div className="customer-info-box flex items-center gap-6">
-                <div className="customer-avatar">
+                <div className={styles.customerAvatar}>
                   {selectedCustomer.avatar_url ? (
                     <img 
                       src={selectedCustomer.avatar_url} 
