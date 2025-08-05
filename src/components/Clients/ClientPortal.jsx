@@ -8,6 +8,7 @@ import oneSignalService from '../../services/onesignalService'
 import OneSignal from 'react-onesignal'
 import MobileNavigation from './MobileNavigation'
 import QRModal from './QRModal'
+import ImageUpload from '../Common/ImageUpload'
 
 const ClientPortal = ({ token }) => {
   const [loginStep, setLoginStep] = useState('welcome') // 'welcome', 'login', 'loading'
@@ -1743,7 +1744,21 @@ const ClientPortalFromStorage = ({ customerData }) => {
               padding: '25px',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '4em', marginBottom: '15px' }}>👤</div>
+              {/* Upload immagine profilo */}
+              <div style={{ marginBottom: '20px' }}>
+                <ImageUpload
+                  currentImage={customer.avatar_url}
+                  customerId={customer.id}
+                  onImageUploaded={(newImageUrl) => {
+                    // Aggiorna lo stato locale del customer
+                    setCustomer(prev => ({ ...prev, avatar_url: newImageUrl }))
+                    showNotification(newImageUrl ? '✅ Foto profilo aggiornata!' : '✅ Foto profilo rimossa!')
+                  }}
+                  maxSize={3}
+                  bucketName="customer-avatars"
+                />
+              </div>
+              
               <h2 style={{ color: '#8B4513', marginBottom: '10px' }}>{customer.name}</h2>
               <div className="client-level" style={{ 
                 backgroundColor: customerLevel.primary_color,
@@ -1825,12 +1840,45 @@ const ClientPortalFromStorage = ({ customerData }) => {
           className="client-logo"
         />
         <div className="client-info">
-          <h1>Ciao {customer.name}! 👋</h1>
-          <div className="client-level" style={{ backgroundColor: customerLevel.primary_color }}>
-            <span className="level-icon">
-              <div dangerouslySetInnerHTML={{ __html: customerLevel.icon_svg }} />
-            </span>
-            <span>Cliente {customerLevel.name}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
+            {customer.avatar_url ? (
+              <img 
+                src={customer.avatar_url} 
+                alt={`Avatar di ${customer.name}`}
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: `3px solid ${customerLevel.primary_color}`,
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                }}
+              />
+            ) : (
+              <div style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${customerLevel.primary_color} 0%, ${customerLevel.primary_color}80 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.8em',
+                color: 'white',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+              }}>
+                👤
+              </div>
+            )}
+            <div>
+              <h1 style={{ margin: '0 0 8px 0' }}>Ciao {customer.name}! 👋</h1>
+              <div className="client-level" style={{ backgroundColor: customerLevel.primary_color }}>
+                <span className="level-icon">
+                  <div dangerouslySetInnerHTML={{ __html: customerLevel.icon_svg }} />
+                </span>
+                <span>Cliente {customerLevel.name}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
