@@ -3,7 +3,7 @@
 
 export const ONESIGNAL_CONFIG = {
   appId: '61a2318f-68f7-4a79-8beb-203c58bf8763', // OneSignal App ID
-  restApiKey: 'os_v2_app_mgrddd3i65fhtc7lea6frp4hmmyou6ukdzyu7vfcm2qzjiulvnc3wnewh66pban3dtkw4pcsyapuh4wrlqw7lxgbemnkir6eu5s4fvy',
+  restApiKey: 'you6ukdzyu7vfcm2qzjiulvnc',
   allowLocalhostAsSecureOrigin: true, // Per sviluppo locale
   
   // Configurazioni notifiche
