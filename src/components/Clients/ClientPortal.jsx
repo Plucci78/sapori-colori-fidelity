@@ -5,6 +5,8 @@ import './ClientPortal.css'; // <-- 1. AGGIUNGI QUESTO IMPORT
 import QRCodeGenerator from '../Common/QRCodeGenerator'
 import { copyToClipboard } from '../../utils/clipboardUtils'
 import oneSignalService from '../../services/onesignalService'
+import MobileNavigation from './MobileNavigation'
+import QRModal from './QRModal'
 
 const ClientPortal = ({ token }) => {
   const [loginStep, setLoginStep] = useState('welcome') // 'welcome', 'login', 'loading'
@@ -64,6 +66,18 @@ const ClientPortal = ({ token }) => {
           console.log('✅ Cliente registrato OneSignal:', playerId)
           // Salva Player ID per uso futuro
           localStorage.setItem('pwa_onesignal_player_id', playerId)
+          
+          // Salva Player ID nel database del cliente
+          const { error: updateError } = await supabase
+            .from('customers')
+            .update({ onesignal_player_id: playerId })
+            .eq('id', customerData.id)
+          
+          if (updateError) {
+            console.error('⚠️ Errore salvataggio Player ID nel database:', updateError)
+          } else {
+            console.log('✅ Player ID salvato nel database per cliente:', customerData.name)
+          }
         }
       } catch (error) {
         console.error('⚠️ Errore registrazione OneSignal:', error)
@@ -1021,6 +1035,10 @@ const ClientPortalFromStorage = ({ customerData }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [notification, setNotification] = useState({ show: false, message: '', type: '' })
+  
+  // Mobile Navigation States
+  const [activeSection, setActiveSection] = useState('home')
+  const [showQRModal, setShowQRModal] = useState(false)
 
   // Funzione per mostrare notifiche semplici
   const showNotification = (message, type = 'success') => {
@@ -1060,6 +1078,18 @@ const ClientPortalFromStorage = ({ customerData }) => {
           const playerId = await oneSignalService.registerUser(customerData)
           if (playerId) {
             localStorage.setItem('pwa_onesignal_player_id', playerId)
+            
+            // Salva Player ID nel database del cliente
+            const { error: updateError } = await supabase
+              .from('customers')
+              .update({ onesignal_player_id: playerId })
+              .eq('id', customerData.id)
+            
+            if (updateError) {
+              console.error('⚠️ Errore salvataggio Player ID nel database:', updateError)
+            } else {
+              console.log('✅ Player ID salvato nel database per cliente esistente:', customerData.name)
+            }
           }
         }
       } catch (error) {
@@ -1206,9 +1236,334 @@ const ClientPortalFromStorage = ({ customerData }) => {
   const customerLevel = getCustomerLevel(customer.points, levels)
   const nextLevelInfo = getNextLevelInfo(customer.points, levels)
 
+  // Funzione per renderizzare la sezione attiva
+  const renderActiveSection = () => {
+    switch(activeSection) {
+      case 'home':
+        return (
+          <>
+            <div className="client-gems-card">
+              <div className="gems-display">
+                <div className="gems-icon">💎</div>
+                <div className="gems-info">
+                  <h2>{customer.points}</h2>
+                  <p>GEMME Disponibili</p>
+                </div>
+              </div>
+              <div className="gems-progress">
+                <div
+                  className="progress-bar"
+                  title={`${Math.round(nextLevelInfo.progress)}% completato`}
+                >
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width: `${nextLevelInfo.progress}%`,
+                      background: customerLevel.primary_color
+                    }}
+                  ></div>
+                </div>
+                {nextLevelInfo.hasNextLevel ? (
+                  <p>Prossimo livello ({nextLevelInfo.nextLevelName}): {nextLevelInfo.gemsNeeded} GEMME</p>
+                ) : (
+                  <p>🏆 Hai raggiunto il livello massimo!</p>
+                )}
+              </div>
+            </div>
+
+            {/* === SEZIONE WALLET === */}
+            {customer?.wallet_balance && customer.wallet_balance > 0 && (
+              <div className="client-section">
+                <h3>💳 Il tuo Wallet</h3>
+                <div style={{
+                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                  borderRadius: '15px',
+                  padding: '25px',
+                  textAlign: 'center',
+                  color: 'white',
+                  boxShadow: '0 8px 25px rgba(16, 185, 129, 0.3)',
+                  marginBottom: '20px'
+                }}>
+                  <div style={{ fontSize: '2.5em', marginBottom: '10px' }}>💰</div>
+                  <div style={{ fontSize: '2.2em', fontWeight: 'bold', marginBottom: '8px' }}>
+                    {formatCurrency(customer.wallet_balance)}
+                  </div>
+                  <div style={{ fontSize: '1.1em', opacity: 0.9 }}>
+                    Credito Disponibile
+                  </div>
+                  <div style={{ 
+                    fontSize: '0.9em', 
+                    opacity: 0.8, 
+                    marginTop: '10px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    padding: '8px 15px',
+                    borderRadius: '20px',
+                    display: 'inline-block'
+                  }}>
+                    💡 Utilizzalo per i tuoi acquisti in negozio
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Referral section */}
+            {customer?.referral_code && (
+              <div className="client-section">
+                <h3>💌 Invita un Amico, Guadagnate Entrambi!</h3>
+                <p style={{ textAlign: 'center', marginTop: '10px', fontSize: '0.9em', color: '#666' }}>
+                  Condividi il tuo codice personale. Il tuo amico riceverà <strong>5 GEMME</strong> di benvenuto e tu ne riceverai <strong>20</strong> dopo il suo primo acquisto!
+                </p>
+                <div className="referral-code-minimal" onClick={handleCopyReferralCode} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '15px 20px',
+                  borderRadius: '10px',
+                  border: '1px solid #ddd',
+                  backgroundColor: '#f9f9f9',
+                  maxWidth: '300px',
+                  margin: '0 auto'
+                }}>
+                  <span style={{ fontSize: '2.2em', fontWeight: 'bold', color: '#333' }}>{customer.referral_code}</span>
+                  <img src="/refer-icon.png" alt="Referral Icon" style={{ width: '44px', height: '44px', marginLeft: '15px' }} />
+                </div>
+              </div>
+            )}
+
+            {/* === SEZIONE COUPON === */}
+            {coupons.length > 0 && (
+              <div className="client-section">
+                <h3>🎁 I tuoi Coupon</h3>
+                <div className="coupons-grid" style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+                  gap: '20px' 
+                }}>
+                  {coupons.slice(0, 2).map(coupon => (
+                    <div key={coupon.id} className="coupon-card">
+                      <div style={{ textAlign: 'center', marginBottom: '15px' }}>
+                        <p style={{ fontSize: '2.2em', fontWeight: 'bold', color: '#E53E3E', margin: '0' }}>
+                          {coupon.type === 'percentage' ? `${coupon.value}%` : `${coupon.value}€`}
+                        </p>
+                      </div>
+                      <h4 style={{ color: '#333', marginBottom: '15px', textAlign: 'center', fontSize: '1.1em' }}>
+                        {coupon.description}
+                      </h4>
+                      <p style={{ borderTop: '1px dashed #eee', textAlign: 'center', fontSize: '0.9em', color: '#666', paddingTop: '10px', marginTop: '15px' }}>
+                        Scade il: {new Date(coupon.expiry_date).toLocaleDateString('it-IT')}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* === SEZIONE ABBONAMENTI === */}
+            {subscriptions.length > 0 && (
+              <div className="client-section">
+                <h3>🎯 I tuoi Abbonamenti</h3>
+                <div className="subscriptions-grid" style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+                  gap: '20px' 
+                }}>
+                  {subscriptions.map(subscription => {
+                    const daysRemaining = getDaysRemaining(subscription.end_date)
+                    const isExpiring = daysRemaining <= 3
+                    const plan = subscription.subscription_plans
+
+                    return (
+                      <div key={subscription.id} className={`subscription-card ${isExpiring ? 'expiring' : ''}`}
+                        style={{ 
+                          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+                          border: `2px solid ${isExpiring ? '#f59e0b' : '#8B4513'}`,
+                          borderRadius: '12px',
+                          padding: '20px',
+                          position: 'relative'
+                        }}>
+                        <div style={{
+                          background: 'linear-gradient(135deg, #8B4513 0%, #D4AF37 100%)',
+                          color: 'white',
+                          padding: '12px',
+                          margin: '-20px -20px 16px -20px',
+                          borderRadius: '12px 12px 0 0',
+                          textAlign: 'center'
+                        }}>
+                          <h4 style={{ margin: '0 0 4px 0', fontSize: '16px' }}>
+                            {plan?.name || 'Abbonamento'}
+                          </h4>
+                          <p style={{ margin: 0, fontSize: '12px', opacity: 0.9 }}>
+                            {plan?.description}
+                          </p>
+                        </div>
+                        <div style={{ 
+                          background: isExpiring ? '#fef3c7' : '#f0f9ff',
+                          border: `1px solid ${isExpiring ? '#f59e0b' : '#0ea5e9'}`,
+                          borderRadius: '8px',
+                          padding: '12px',
+                          textAlign: 'center',
+                          marginBottom: '12px'
+                        }}>
+                          <div style={{ fontSize: '14px', fontWeight: 'bold', color: isExpiring ? '#92400e' : '#0c4a6e', marginBottom: '4px' }}>
+                            {isExpiring ? '⚠️ In scadenza!' : '✅ Attivo'}
+                          </div>
+                          <div style={{ fontSize: '12px', color: isExpiring ? '#92400e' : '#0c4a6e' }}>
+                            {daysRemaining > 0 ? `⏰ ${daysRemaining} giorni rimanenti` : '❌ Scaduto'}
+                          </div>
+                          <div style={{ fontSize: '11px', color: isExpiring ? '#92400e' : '#0c4a6e', marginTop: '4px', opacity: 0.8 }}>
+                            Utilizzi rimasti: {subscription.remaining_usage || 0}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </>
+        )
+
+      case 'prizes':
+        return (
+          <div className="client-section">
+            <h3>🎁 Tutti i Premi Disponibili</h3>
+            <div className="prizes-grid">
+              {prizes.map(prize => {
+                const prizeLevel = levels.find(l => l.name === prize.required_level)
+                return (
+                  <div key={prize.id} className={`prize-card ${customer.points >= prize.points_cost ? 'available' : 'unavailable'}`}>
+                    {prize.image_url && (
+                      <img src={prize.image_url} alt={prize.name} className="prize-image" />
+                    )}
+                    <div className="prize-info">
+                      <div className="prize-header">
+                        <h4>{prize.name}</h4>
+                        {prizeLevel && (
+                          <div className="prize-level-badge" style={{
+                            backgroundColor: prizeLevel.primary_color,
+                            color: 'white',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            borderRadius: 8,
+                            padding: '2px 8px',
+                            marginLeft: 8
+                          }}>
+                            <span dangerouslySetInnerHTML={{ __html: prizeLevel.icon_svg }} />
+                            <span>{prizeLevel.name}</span>
+                          </div>
+                        )}
+                      </div>
+                      <p>{prize.description}</p>
+                      <div className="prize-cost">
+                        <span className="cost-gems">
+                          <img src="/gemma-rossa.png" alt="gemma" style={{ width: 22, height: 22, marginRight: 4, verticalAlign: 'middle', display: 'inline-block' }} />
+                          {prize.points_cost}
+                        </span>
+                        {customer.points >= prize.points_cost ? (
+                          <span className="cost-status available">✅ Disponibile</span>
+                        ) : (
+                          <span className="cost-status unavailable">
+                            📍 Ti mancano {prize.points_cost - customer.points} GEMME
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+
+      case 'history':
+        return (
+          <div className="client-section">
+            <h3>📊 Le tue ultime visite</h3>
+            {transactions.length > 0 ? (
+              <div className="transactions-list">
+                {transactions.map(transaction => (
+                  <div key={transaction.id} className="transaction-item">
+                    <div className="transaction-info">
+                      <div className="transaction-type">
+                        {transaction.type === 'acquistare' ? '🛍️ Acquisto' : '🎁 Premio Riscattato'}
+                      </div>
+                      <div className="transaction-date">
+                        {formatDate(transaction.created_at)}
+                      </div>
+                    </div>
+                    <div className="transaction-points">
+                      <span className={transaction.points_earned > 0 ? 'points-gained' : 'points-used'}>
+                        {transaction.points_earned > 0 ? '+' : ''}{transaction.points_earned} GEMME
+                      </span>
+                      {transaction.amount > 0 && (
+                        <span className="transaction-amount">€{transaction.amount}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="no-transactions">Nessuna transazione ancora registrata.</p>
+            )}
+          </div>
+        )
+
+      case 'profile':
+        return (
+          <div className="client-section">
+            <h3>👤 Il tuo Profilo</h3>
+            <div style={{
+              background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+              border: '2px solid #8B4513',
+              borderRadius: '15px',
+              padding: '25px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '4em', marginBottom: '15px' }}>👤</div>
+              <h2 style={{ color: '#8B4513', marginBottom: '10px' }}>{customer.name}</h2>
+              <div className="client-level" style={{ 
+                backgroundColor: customerLevel.primary_color,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 16px',
+                borderRadius: '20px',
+                color: 'white',
+                fontWeight: 'bold',
+                marginBottom: '20px'
+              }}>
+                <span dangerouslySetInnerHTML={{ __html: customerLevel.icon_svg }} />
+                <span>Cliente {customerLevel.name}</span>
+              </div>
+              
+              <div style={{ 
+                background: 'white',
+                borderRadius: '10px',
+                padding: '15px',
+                marginBottom: '15px',
+                textAlign: 'left'
+              }}>
+                <p><strong>📧 Email:</strong> {customer.email || 'Non specificata'}</p>
+                <p><strong>📱 Telefono:</strong> {customer.phone || 'Non specificato'}</p>
+                <p><strong>🗓️ Membro dal:</strong> {new Date(customer.created_at).toLocaleDateString('it-IT')}</p>
+                <p><strong>💎 GEMME Totali:</strong> {customer.points}</p>
+                {customer.referral_code && (
+                  <p><strong>🔗 Codice Referral:</strong> {customer.referral_code}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+
+      default:
+        return null
+    }
+  }
+
   return (
     <div
-      className="client-portal"
+      className="client-portal content-with-nav"
       style={{
         background: customer && customerLevel ? (customerLevel.background_gradient || '#fff') : '#fff',
         minHeight: '100vh',
@@ -1239,7 +1594,7 @@ const ClientPortalFromStorage = ({ customerData }) => {
         </button>
       </div>
 
-      {/* Resto del contenuto identico al componente principale... */}
+      {/* Header sempre visibile */}
       <div className="client-header">
         <img
           src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png"
@@ -1257,313 +1612,8 @@ const ClientPortalFromStorage = ({ customerData }) => {
         </div>
       </div>
 
-      <div className="client-gems-card">
-        <div className="gems-display">
-          <div className="gems-icon">💎</div>
-          <div className="gems-info">
-            <h2>{customer.points}</h2>
-            <p>GEMME Disponibili</p>
-          </div>
-        </div>
-        <div className="gems-progress">
-          <div
-            className="progress-bar"
-            title={`${Math.round(nextLevelInfo.progress)}% completato`}
-          >
-            <div
-              className="progress-fill"
-              style={{
-                width: `${nextLevelInfo.progress}%`,
-                background: customerLevel.primary_color
-              }}
-            ></div>
-          </div>
-          {nextLevelInfo.hasNextLevel ? (
-            <p>Prossimo livello ({nextLevelInfo.nextLevelName}): {nextLevelInfo.gemsNeeded} GEMME</p>
-          ) : (
-            <p>🏆 Hai raggiunto il livello massimo!</p>
-          )}
-        </div>
-      </div>
-
-      {/* QR Code section */}
-      <div className="qr-recognition-section">
-        <div className="qr-section-header">
-          <h3 className="qr-recognition-title">📱 Il tuo QR Code di Riconoscimento</h3>
-          <p className="qr-recognition-subtitle">
-            Mostra questo codice in negozio per essere riconosciuto istantaneamente
-          </p>
-        </div>
-        <div className="qr-central-container">
-          <div className="qr-wrapper">
-            <div className="qr-display-card">
-              <QRCodeGenerator
-                value={`CUSTOMER:${customer.id}`}
-                size={240}
-                backgroundColor="#ffffff"
-                foregroundColor={customerLevel.primary_color || "#8B4513"}
-                className="customer-qr-code"
-              />
-            </div>
-            <div className="qr-info-card">
-              <div className="qr-customer-info">
-                <h4>👤 {customer.name}</h4>
-                <p>ID Cliente: #{customer.id.substring(0,8)}</p>
-                <div className="qr-level-badge" style={{ backgroundColor: customerLevel.primary_color }}>
-                  <span dangerouslySetInnerHTML={{ __html: customerLevel.icon_svg }} />
-                  <span>{customerLevel.name}</span>
-                </div>
-              </div>
-              <div className="qr-instructions">
-                <div className="instruction-item">
-                  <span className="step">1️⃣</span>
-                  <span>Mostra il QR al personale</span>
-                </div>
-                <div className="instruction-item">
-                  <span className="step">2️⃣</span>
-                  <span>Verrai riconosciuto automaticamente</span>
-                </div>
-                <div className="instruction-item">
-                  <span className="step">3️⃣</span>
-                  <span>Accumula GEMME con i tuoi acquisti</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* === SEZIONE WALLET === */}
-      {customer?.wallet_balance && customer.wallet_balance > 0 && (
-        <div className="client-section">
-          <h3>💳 Il tuo Wallet</h3>
-          <div style={{
-            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-            borderRadius: '15px',
-            padding: '25px',
-            textAlign: 'center',
-            color: 'white',
-            boxShadow: '0 8px 25px rgba(16, 185, 129, 0.3)',
-            marginBottom: '20px'
-          }}>
-            <div style={{ fontSize: '2.5em', marginBottom: '10px' }}>💰</div>
-            <div style={{ fontSize: '2.2em', fontWeight: 'bold', marginBottom: '8px' }}>
-              {formatCurrency(customer.wallet_balance)}
-            </div>
-            <div style={{ fontSize: '1.1em', opacity: 0.9 }}>
-              Credito Disponibile
-            </div>
-            <div style={{ 
-              fontSize: '0.9em', 
-              opacity: 0.8, 
-              marginTop: '10px',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              padding: '8px 15px',
-              borderRadius: '20px',
-              display: 'inline-block'
-            }}>
-              💡 Utilizzalo per i tuoi acquisti in negozio
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Referral section */}
-      {customer?.referral_code && (
-        <div className="client-section">
-          <h3>💌 Invita un Amico, Guadagnate Entrambi!</h3>
-          <p style={{ textAlign: 'center', marginTop: '10px', fontSize: '0.9em', color: '#666' }}>
-            Condividi il tuo codice personale. Il tuo amico riceverà <strong>5 GEMME</strong> di benvenuto e tu ne riceverai <strong>20</strong> dopo il suo primo acquisto!
-          </p>
-          <div className="referral-code-minimal" onClick={handleCopyReferralCode} style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '15px 20px',
-            borderRadius: '10px',
-            border: '1px solid #ddd',
-            backgroundColor: '#f9f9f9',
-            maxWidth: '300px',
-            margin: '0 auto'
-          }}>
-            <span style={{ fontSize: '2.2em', fontWeight: 'bold', color: '#333' }}>{customer.referral_code}</span>
-            <img src="/refer-icon.png" alt="Referral Icon" style={{ width: '44px', height: '44px', marginLeft: '15px' }} />
-          </div>
-        </div>
-      )}
-
-      {/* === SEZIONE COUPON === */}
-      {coupons.length > 0 && (
-        <div className="client-section">
-          <h3>🎁 I tuoi Coupon</h3>
-          <div className="coupons-grid" style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-            gap: '20px' 
-          }}>
-            {coupons.slice(0, 2).map(coupon => (
-              <div key={coupon.id} className="coupon-card">
-                <div style={{ textAlign: 'center', marginBottom: '15px' }}>
-                  <p style={{ fontSize: '2.2em', fontWeight: 'bold', color: '#E53E3E', margin: '0' }}>
-                    {coupon.type === 'percentage' ? `${coupon.value}%` : `${coupon.value}€`}
-                  </p>
-                </div>
-                <h4 style={{ color: '#333', marginBottom: '15px', textAlign: 'center', fontSize: '1.1em' }}>
-                  {coupon.description}
-                </h4>
-                <p style={{ borderTop: '1px dashed #eee', textAlign: 'center', fontSize: '0.9em', color: '#666', paddingTop: '10px', marginTop: '15px' }}>
-                  Scade il: {new Date(coupon.expiry_date).toLocaleDateString('it-IT')}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* === SEZIONE ABBONAMENTI === */}
-      {subscriptions.length > 0 && (
-        <div className="client-section">
-          <h3>🎯 I tuoi Abbonamenti</h3>
-          <div className="subscriptions-grid" style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-            gap: '20px' 
-          }}>
-            {subscriptions.map(subscription => {
-              const daysRemaining = getDaysRemaining(subscription.end_date)
-              const isExpiring = daysRemaining <= 3
-              const plan = subscription.subscription_plans
-
-              return (
-                <div key={subscription.id} className={`subscription-card ${isExpiring ? 'expiring' : ''}`}
-                  style={{ 
-                    background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-                    border: `2px solid ${isExpiring ? '#f59e0b' : '#8B4513'}`,
-                    borderRadius: '12px',
-                    padding: '20px',
-                    position: 'relative'
-                  }}>
-                  <div style={{
-                    background: 'linear-gradient(135deg, #8B4513 0%, #D4AF37 100%)',
-                    color: 'white',
-                    padding: '12px',
-                    margin: '-20px -20px 16px -20px',
-                    borderRadius: '12px 12px 0 0',
-                    textAlign: 'center'
-                  }}>
-                    <h4 style={{ margin: '0 0 4px 0', fontSize: '16px' }}>
-                      {plan?.name || 'Abbonamento'}
-                    </h4>
-                    <p style={{ margin: 0, fontSize: '12px', opacity: 0.9 }}>
-                      {plan?.description}
-                    </p>
-                  </div>
-                  <div style={{ 
-                    background: isExpiring ? '#fef3c7' : '#f0f9ff',
-                    border: `1px solid ${isExpiring ? '#f59e0b' : '#0ea5e9'}`,
-                    borderRadius: '8px',
-                    padding: '12px',
-                    textAlign: 'center',
-                    marginBottom: '12px'
-                  }}>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: isExpiring ? '#92400e' : '#0c4a6e', marginBottom: '4px' }}>
-                      {isExpiring ? '⚠️ In scadenza!' : '✅ Attivo'}
-                    </div>
-                    <div style={{ fontSize: '12px', color: isExpiring ? '#92400e' : '#0c4a6e' }}>
-                      {daysRemaining > 0 ? `⏰ ${daysRemaining} giorni rimanenti` : '❌ Scaduto'}
-                    </div>
-                    <div style={{ fontSize: '11px', color: isExpiring ? '#92400e' : '#0c4a6e', marginTop: '4px', opacity: 0.8 }}>
-                      Utilizzi rimasti: {subscription.remaining_usage || 0}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* === SEZIONE PREMI === */}
-      <div className="client-section">
-        <h3>🎁 Tutti i Premi Disponibili</h3>
-        <div className="prizes-grid">
-          {prizes.map(prize => {
-            const prizeLevel = levels.find(l => l.name === prize.required_level)
-            return (
-              <div key={prize.id} className={`prize-card ${customer.points >= prize.points_cost ? 'available' : 'unavailable'}`}>
-                {prize.image_url && (
-                  <img src={prize.image_url} alt={prize.name} className="prize-image" />
-                )}
-                <div className="prize-info">
-                  <div className="prize-header">
-                    <h4>{prize.name}</h4>
-                    {prizeLevel && (
-                      <div className="prize-level-badge" style={{
-                        backgroundColor: prizeLevel.primary_color,
-                        color: 'white',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        borderRadius: 8,
-                        padding: '2px 8px',
-                        marginLeft: 8
-                      }}>
-                        <span dangerouslySetInnerHTML={{ __html: prizeLevel.icon_svg }} />
-                        <span>{prizeLevel.name}</span>
-                      </div>
-                    )}
-                  </div>
-                  <p>{prize.description}</p>
-                  <div className="prize-cost">
-                    <span className="cost-gems">
-                      <img src="/gemma-rossa.png" alt="gemma" style={{ width: 22, height: 22, marginRight: 4, verticalAlign: 'middle', display: 'inline-block' }} />
-                      {prize.points_cost}
-                    </span>
-                    {customer.points >= prize.points_cost ? (
-                      <span className="cost-status available">✅ Disponibile</span>
-                    ) : (
-                      <span className="cost-status unavailable">
-                        📍 Ti mancano {prize.points_cost - customer.points} GEMME
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* === SEZIONE TRANSAZIONI === */}
-      <div className="client-section">
-        <h3>📊 Le tue ultime visite</h3>
-        {transactions.length > 0 ? (
-          <div className="transactions-list">
-            {transactions.map(transaction => (
-              <div key={transaction.id} className="transaction-item">
-                <div className="transaction-info">
-                  <div className="transaction-type">
-                    {transaction.type === 'acquistare' ? '🛍️ Acquisto' : '🎁 Premio Riscattato'}
-                  </div>
-                  <div className="transaction-date">
-                    {formatDate(transaction.created_at)}
-                  </div>
-                </div>
-                <div className="transaction-points">
-                  <span className={transaction.points_earned > 0 ? 'points-gained' : 'points-used'}>
-                    {transaction.points_earned > 0 ? '+' : ''}{transaction.points_earned} GEMME
-                  </span>
-                  {transaction.amount > 0 && (
-                    <span className="transaction-amount">€{transaction.amount}</span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="no-transactions">Nessuna transazione ancora registrata.</p>
-        )}
-      </div>
+      {/* Contenuto dinamico basato sulla sezione attiva */}
+      {renderActiveSection()}
 
       <div className="client-footer">
         <p>
@@ -1575,6 +1625,22 @@ const ClientPortalFromStorage = ({ customerData }) => {
           💡 Non lasciare a casa la tua tessera fedeltà: è il tuo biglietto d'oro per raccogliere punti e conquistare i nostri premi più golosi! 🏆🥖
         </p>
       </div>
+
+      {/* Mobile Navigation Bar */}
+      <MobileNavigation
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+        onGemClick={() => setShowQRModal(true)}
+        customerPoints={customer.points}
+      />
+
+      {/* QR Modal */}
+      <QRModal
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)}
+        customer={customer}
+        customerLevel={getCustomerLevel(customer.points, levels)}
+      />
     </div>
   )
 }

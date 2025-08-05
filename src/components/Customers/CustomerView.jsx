@@ -11,6 +11,7 @@ import { playAddGemmeSound } from '../../utils/soundUtils'
 import PrivacyManagement from '../Privacy/PrivacyManagement'
 import styles from './CustomerView.module.css' // CSS Module isolato
 import './CustomerButtonsOverride.css' // Override specifico per pulsanti neri
+import './CustomerTable.css' // Styling per tabella clienti
 
 function CustomerView({
   customerLevels,
@@ -1359,6 +1360,171 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
       )}
 
       {/* ANIMAZIONE GEMME */}
+      {/* TABELLA TUTTI I CLIENTI */}
+      <div className="card">
+        <div className="card-header">
+          <h2 className="card-title flex items-center gap-3">
+            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            Lista Completa Clienti
+          </h2>
+          <p className="card-subtitle">Visualizza tutti i clienti registrati nel sistema</p>
+        </div>
+        <div className="card-body">
+          {/* Conteggi Riassuntivi */}
+          <div className="customers-summary-grid mb-6">
+            <div className="summary-card">
+              <div className="summary-icon">👥</div>
+              <div className="summary-content">
+                <div className="summary-number">{customers.length}</div>
+                <div className="summary-label">Clienti Totali</div>
+              </div>
+            </div>
+            <div className="summary-card">
+              <div className="summary-icon male">👨</div>
+              <div className="summary-content">
+                <div className="summary-number">{customers.filter(c => c.gender === 'M' || c.gender === 'male').length}</div>
+                <div className="summary-label">Maschi</div>
+              </div>
+            </div>
+            <div className="summary-card">
+              <div className="summary-icon female">👩</div>
+              <div className="summary-content">
+                <div className="summary-number">{customers.filter(c => c.gender === 'F' || c.gender === 'female').length}</div>
+                <div className="summary-label">Femmine</div>
+              </div>
+            </div>
+            <div className="summary-card">
+              <div className="summary-icon">🔔</div>
+              <div className="summary-content">
+                <div className="summary-number">{customers.filter(c => c.onesignal_player_id).length}</div>
+                <div className="summary-label">Con Notifiche</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tabella Clienti */}
+          {customers.length > 0 ? (
+            <div className="customers-table-wrapper">
+              <table className="customers-table">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Contatti</th>
+                    <th>Punti</th>
+                    <th>Livello</th>
+                    <th>Stato</th>
+                    <th>Registrato</th>
+                    <th>Azioni</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customers.map(customer => {
+                    const gender = customer.gender?.toLowerCase()
+                    const customerLevel = getCustomerLevel(customer.points)
+                    
+                    return (
+                      <tr key={customer.id} className={selectedCustomer?.id === customer.id ? 'selected' : ''}>
+                        <td>
+                          <div className="customer-cell">
+                            <div className={`gender-avatar ${gender === 'm' || gender === 'male' ? 'male' : gender === 'f' || gender === 'female' ? 'female' : 'neutral'}`}>
+                              {gender === 'm' || gender === 'male' ? '👨' : 
+                               gender === 'f' || gender === 'female' ? '👩' : '👤'}
+                            </div>
+                            <div className="customer-info-text">
+                              <div className="customer-name">{customer.name}</div>
+                              <div className="customer-id">#{customer.id.substring(0, 8)}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="contact-cell">
+                            {customer.email && (
+                              <div className="contact-item">
+                                <span className="contact-icon">📧</span>
+                                <span className="contact-value">{customer.email}</span>
+                              </div>
+                            )}
+                            {customer.phone && (
+                              <div className="contact-item">
+                                <span className="contact-icon">📱</span>
+                                <span className="contact-value">{customer.phone}</span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="points-cell">
+                            <img src="/gemma-rossa.png" alt="Gemme" className="points-gem" />
+                            <span className="points-number">{customer.points || 0}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div 
+                            className="level-badge"
+                            style={{ backgroundColor: customerLevel.primary_color }}
+                          >
+                            <span dangerouslySetInnerHTML={{ __html: customerLevel.icon_svg }} />
+                            <span>{customerLevel.name}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className={`status-badge ${customer.is_active ? 'active' : 'inactive'}`}>
+                            <span className="status-icon">
+                              {customer.is_active ? '✅' : '❌'}
+                            </span>
+                            <span className="status-text">
+                              {customer.is_active ? 'Attivo' : 'Disattivo'}
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="registration-date">
+                            {new Date(customer.created_at).toLocaleDateString('it-IT', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric'
+                            })}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="actions-cell">
+                            <button
+                              onClick={() => setSelectedCustomer(customer)}
+                              className="action-btn select-btn"
+                              title="Seleziona cliente"
+                            >
+                              👁️
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedCustomer(customer)
+                                setShowEditModal(true)
+                              }}
+                              className="action-btn edit-btn"
+                              title="Modifica cliente"
+                            >
+                              ✏️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="no-customers-state">
+              <div className="no-customers-icon">👥</div>
+              <h3>Nessun cliente trovato</h3>
+              <p>I clienti appariranno qui una volta registrati nel sistema</p>
+            </div>
+          )}
+        </div>
+      </div>
+
       {showGemmeRain && (
         <div className="gemme-rain">
           {[...Array(18)].map((_, i) => (

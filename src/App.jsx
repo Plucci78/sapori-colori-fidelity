@@ -37,6 +37,7 @@ import ClientPortal from './components/Clients/ClientPortal'
 import CouponManagement from './components/Coupons/CouponManagement'
 import GiftCardManagement from './components/GiftCards/GiftCardManagement'
 import WalletCashRegister from './components/Wallet/WalletCashRegister'
+import NotificationsDashboard from './components/Admin/NotificationsDashboard'
 import { generateClientToken, isValidToken } from './utils/tokenUtils'
 import nfcService from './services/nfcService'
 import { birthdayScheduler } from './services/birthdayScheduler'
@@ -854,6 +855,18 @@ const fixReferralData = async (customerId) => {
       ),
       description: 'Gestione NFC con Android',
       permission: 'canViewCustomers'
+    },
+    {
+      id: 'notifications',
+      title: 'Notifiche Push',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zm-8.5-1.5a5 5 0 1110 0 5 5 0 01-10 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0" />
+        </svg>
+      ),
+      description: 'Dashboard notifiche OneSignal',
+      permission: 'canSendEmails'
     },
     {
       id: 'settings',
@@ -2234,6 +2247,12 @@ for (const customer of recipients) {
         return (
           <ProtectedComponent permission="canViewCustomers">
             <NFCViewHybrid showNotification={showNotification} />
+          </ProtectedComponent>
+        )
+      case 'notifications':
+        return (
+          <ProtectedComponent permission="canSendEmails">
+            <NotificationsDashboard />
           </ProtectedComponent>
         )
       case 'settings':

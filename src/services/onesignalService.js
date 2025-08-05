@@ -139,6 +139,74 @@ class OneSignalService {
       console.error('❌ Errore logout OneSignal:', error)
     }
   }
+
+  // Invia notifica push (solo per admin)
+  async sendNotification({ title, message, playerIds, url, tags = null }) {
+    try {
+      console.log(`📤 Invio notifica a ${playerIds.length} utenti:`, title)
+
+      const notificationData = {
+        app_id: ONESIGNAL_CONFIG.appId,
+        headings: { en: title, it: title },
+        contents: { en: message, it: message },
+        include_player_ids: playerIds
+      }
+
+      // Aggiungi URL se fornito
+      if (url) {
+        notificationData.url = url
+      }
+
+      // Aggiungi filtri per tag se forniti
+      if (tags && Object.keys(tags).length > 0) {
+        // Costruisci filtri OneSignal per tag
+        const filters = Object.entries(tags).map(([key, value], index) => {
+          const filter = { field: 'tag', key, relation: '=', value: value.toString() }
+          if (index > 0) {
+            return [{ operator: 'AND' }, filter]
+          }
+          return filter
+        }).flat()
+        
+        notificationData.filters = filters
+        delete notificationData.include_player_ids // Usa filtri invece di player IDs specifici
+      }
+
+      // Chiamata REST API OneSignal
+      const response = await fetch('https://onesignal.com/api/v1/notifications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`
+        },
+        body: JSON.stringify(notificationData)
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.id) {
+        console.log('✅ Notifica inviata con successo:', result.id)
+        return {
+          success: true,
+          notificationId: result.id,
+          recipients: result.recipients || playerIds.length
+        }
+      } else {
+        console.error('❌ Errore invio notifica:', result)
+        return {
+          success: false,
+          error: result.errors ? result.errors.join(', ') : 'Errore sconosciuto'
+        }
+      }
+
+    } catch (error) {
+      console.error('❌ Errore invio notifica:', error)
+      return {
+        success: false,
+        error: error.message || 'Errore di rete'
+      }
+    }
+  }
 }
 
 // Istanza singleton

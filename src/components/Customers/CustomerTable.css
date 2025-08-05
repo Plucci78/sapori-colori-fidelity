@@ -1,0 +1,477 @@
+/* Customer Table Styling for CustomerView */
+
+/* Summary Grid */
+.customers-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.summary-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8em;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  flex-shrink: 0;
+}
+
+.summary-icon.male {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+}
+
+.summary-icon.female {
+  background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+  color: white;
+}
+
+.summary-content {
+  flex: 1;
+}
+
+.summary-number {
+  font-size: 2.2em;
+  font-weight: bold;
+  color: #1f2937;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.summary-label {
+  font-size: 0.9em;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Table Wrapper */
+.customers-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Table Styles */
+.customers-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+.customers-table th {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 16px 12px;
+  text-align: left;
+  font-weight: bold;
+  color: #374151;
+  font-size: 0.9em;
+  border-bottom: 2px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.customers-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.customers-table tr:hover {
+  background: #f8fafc;
+}
+
+.customers-table tr.selected {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.customers-table tr.selected:hover {
+  background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+}
+
+/* Customer Cell */
+.customer-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 200px;
+}
+
+.gender-avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3em;
+  flex-shrink: 0;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.gender-avatar.male {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-color: #2563eb;
+  color: white;
+}
+
+.gender-avatar.female {
+  background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+  border-color: #db2777;
+  color: white;
+}
+
+.gender-avatar.neutral {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  border-color: #5b6b7b;
+  color: white;
+}
+
+.customer-info-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.customer-name {
+  font-weight: bold;
+  color: #1f2937;
+  font-size: 1.05em;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.customer-id {
+  font-size: 0.8em;
+  color: #6b7280;
+  font-family: 'Courier New', monospace;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* Contact Cell */
+.contact-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contact-icon {
+  font-size: 0.9em;
+  width: 18px;
+  text-align: center;
+}
+
+.contact-value {
+  font-size: 0.9em;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+/* Points Cell */
+.points-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  min-width: 100px;
+}
+
+.points-gem {
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.points-number {
+  font-weight: bold;
+  color: #8B4513;
+  font-size: 1.1em;
+}
+
+/* Level Badge */
+.level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 20px;
+  color: white;
+  font-size: 0.85em;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  min-width: 100px;
+  justify-content: center;
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 16px;
+  font-size: 0.85em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-badge.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.status-badge.inactive {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.status-icon {
+  font-size: 1em;
+}
+
+.status-text {
+  font-size: 0.9em;
+}
+
+/* Registration Date */
+.registration-date {
+  font-size: 0.9em;
+  color: #6b7280;
+  font-family: 'Courier New', monospace;
+  text-align: center;
+  background: #f9fafb;
+  padding: 4px 8px;
+  border-radius: 6px;
+  min-width: 90px;
+}
+
+/* Actions Cell */
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1.1em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.select-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+}
+
+.select-btn:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+}
+
+.edit-btn {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.edit-btn:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+}
+
+/* No Customers State */
+.no-customers-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.no-customers-icon {
+  font-size: 4em;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.no-customers-state h3 {
+  font-size: 1.5em;
+  color: #374151;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.no-customers-state p {
+  font-size: 1em;
+  line-height: 1.5;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .customers-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .customers-table {
+    font-size: 0.9em;
+  }
+  
+  .customers-table th,
+  .customers-table td {
+    padding: 12px 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .customers-summary-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .summary-card {
+    padding: 16px;
+  }
+  
+  .summary-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.5em;
+  }
+  
+  .summary-number {
+    font-size: 1.8em;
+  }
+  
+  .customer-cell {
+    min-width: 150px;
+  }
+  
+  .gender-avatar {
+    width: 35px;
+    height: 35px;
+    font-size: 1.1em;
+  }
+  
+  .customer-name {
+    font-size: 0.95em;
+  }
+  
+  .contact-cell {
+    min-width: 140px;
+  }
+  
+  .contact-value {
+    max-width: 100px;
+    font-size: 0.85em;
+  }
+  
+  .points-cell {
+    min-width: 80px;
+  }
+  
+  .points-gem {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .action-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 1em;
+  }
+}
+
+@media (max-width: 480px) {
+  .customers-table-wrapper {
+    font-size: 0.8em;
+  }
+  
+  .customers-table th,
+  .customers-table td {
+    padding: 8px 4px;
+  }
+  
+  .customer-cell {
+    gap: 8px;
+    min-width: 120px;
+  }
+  
+  .gender-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 1em;
+  }
+  
+  .contact-cell {
+    min-width: 100px;
+  }
+  
+  .contact-value {
+    max-width: 80px;
+    font-size: 0.8em;
+  }
+  
+  .level-badge {
+    font-size: 0.75em;
+    padding: 6px 8px;
+    min-width: 80px;
+  }
+  
+  .status-badge {
+    font-size: 0.75em;
+    padding: 4px 6px;
+  }
+  
+  .registration-date {
+    font-size: 0.8em;
+    min-width: 70px;
+  }
+}

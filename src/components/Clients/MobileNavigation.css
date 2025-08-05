@@ -1,0 +1,237 @@
+/* Mobile Navigation Bar */
+.mobile-navigation {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, #8B4513 0%, #D4AF37 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-navigation .nav-item,
+.mobile-navigation .gem-button,
+.mobile-navigation .gem-container,
+.mobile-navigation .gem-icon,
+.mobile-navigation .gem-image {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.nav-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 0;
+  max-width: 500px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.mobile-navigation .nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 50px;
+  position: relative;
+  outline: none;
+  border: none;
+  background: none;
+}
+
+.mobile-navigation .nav-item:not(.gem-button) {
+  opacity: 0.7;
+}
+
+.mobile-navigation .nav-item:not(.gem-button):hover,
+.mobile-navigation .nav-item:not(.gem-button).active {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.mobile-navigation .nav-icon {
+  font-size: 20px;
+  margin-bottom: 2px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.mobile-navigation .nav-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.5px;
+}
+
+/* Gemma Centrale - Effetto 3D */
+.gem-button {
+  position: relative;
+  transform: translateY(-10px);
+  z-index: 10;
+  outline: none;
+  border: none;
+  background: none;
+}
+
+.gem-button:focus,
+.gem-button:focus-visible {
+  outline: none;
+  border: none;
+}
+
+.gem-button {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.gem-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  border: none;
+}
+
+.gem-container:focus,
+.gem-container:focus-visible {
+  outline: none;
+  border: none;
+}
+
+.gem-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 50%, #7F1D1D 100%);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 
+    0 8px 16px rgba(220, 38, 38, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  border: 3px solid #FFD700;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  outline: none;
+}
+
+/* FORCE: Rimuovi qualsiasi effetto hover/active/focus SOLO per mobile navigation */
+.mobile-navigation .gem-icon:hover,
+.mobile-navigation .gem-icon:active,
+.mobile-navigation .gem-icon:focus,
+.mobile-navigation .gem-button:hover,
+.mobile-navigation .gem-button:active,
+.mobile-navigation .gem-button:focus,
+.mobile-navigation .gem-container:hover,
+.mobile-navigation .gem-container:active,
+.mobile-navigation .gem-container:focus {
+  transform: none;
+  box-shadow: 
+    0 8px 16px rgba(220, 38, 38, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  outline: none;
+  background: transparent;
+}
+
+
+.gem-image {
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  margin-bottom: -2px;
+  background: transparent;
+  border: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.gem-points {
+  font-size: 10px;
+  font-weight: bold;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  line-height: 1;
+}
+
+.gem-glow {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(220, 38, 38, 0.3) 0%, transparent 70%);
+  animation: gemPulse 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes gemPulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .nav-container {
+    padding: 6px 0;
+  }
+  
+  .nav-item {
+    padding: 6px 8px;
+    min-width: 45px;
+  }
+  
+  .nav-icon {
+    font-size: 18px;
+  }
+  
+  .nav-label {
+    font-size: 9px;
+  }
+  
+  .gem-icon {
+    width: 55px;
+    height: 55px;
+  }
+  
+  .gem-symbol {
+    font-size: 18px;
+  }
+}
+
+/* Per contenuto con padding bottom per navigation */
+.content-with-nav {
+  padding-bottom: 90px; /* Spazio per navigation bar */
+}
