@@ -1098,6 +1098,48 @@ const ClientPortalFromStorage = ({ customerData }) => {
     }
     
     initOneSignal()
+    
+    // Timer per forzare chiusura popup OneSignal bloccati
+    const closeOneSignalPopups = () => {
+      try {
+        // Trova tutti gli elementi OneSignal
+        const onesignalElements = document.querySelectorAll(
+          '.onesignal-slidedown-container, .onesignal-popover-container, [id*="onesignal"], [class*="onesignal"]'
+        )
+        
+        let foundVisiblePopup = false
+        onesignalElements.forEach(el => {
+          const isVisible = el.offsetParent !== null || 
+                           window.getComputedStyle(el).display !== 'none' ||
+                           window.getComputedStyle(el).visibility !== 'hidden'
+          
+          if (isVisible && (el.classList.contains('onesignal-slidedown-container') || 
+                           el.classList.contains('onesignal-popover-container'))) {
+            console.log('🔒 Forzando chiusura popup OneSignal bloccato')
+            el.style.display = 'none'
+            el.style.visibility = 'hidden'
+            el.style.opacity = '0'
+            el.style.pointerEvents = 'none'
+            el.classList.add('onesignal-reset')
+            foundVisiblePopup = true
+          }
+        })
+        
+        if (foundVisiblePopup) {
+          console.log('✅ Popup OneSignal chiusi forzatamente')
+        }
+      } catch (error) {
+        console.log('⚠️ Errore chiusura popup OneSignal:', error)
+      }
+    }
+    
+    // Controlla ogni 3 secondi per popup bloccati
+    const popupCheckInterval = setInterval(closeOneSignalPopups, 3000)
+    
+    // Pulizia al dismount
+    return () => {
+      clearInterval(popupCheckInterval)
+    }
   }, [])
 
   const loadClientData = async () => {

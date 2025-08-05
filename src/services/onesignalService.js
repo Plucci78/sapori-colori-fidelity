@@ -53,17 +53,41 @@ class OneSignalService {
     try {
       console.log('📱 Registrazione utente OneSignal:', customerData.name)
 
-      // Richiedi permesso notifiche
-      const permission = await OneSignal.requestPermission()
+      // Verifica se l'utente ha già dato il permesso
+      const currentPermission = await OneSignal.getPermission()
+      console.log('🔍 Permesso attuale:', currentPermission)
+
+      let permission = currentPermission
+      
+      // Se non ha ancora dato il permesso, richiedilo
       if (!permission) {
-        console.log('⚠️ Utente ha rifiutato le notifiche')
-        return null
+        console.log('📝 Richiesta permesso notifiche...')
+        permission = await OneSignal.requestPermission()
+        
+        // Aspetta un po' per permettere al popup di processare la risposta
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        if (!permission) {
+          console.log('⚠️ Utente ha rifiutato le notifiche')
+          return null
+        }
       }
 
-      // Ottieni Player ID
-      this.playerId = await OneSignal.getPlayerId()
+      // Ottieni Player ID con retry
+      let attempts = 0
+      const maxAttempts = 5
+      
+      while (attempts < maxAttempts) {
+        this.playerId = await OneSignal.getPlayerId()
+        if (this.playerId) break
+        
+        console.log(`🔄 Tentativo ${attempts + 1}/${maxAttempts} per ottenere Player ID...`)
+        await new Promise(resolve => setTimeout(resolve, 500))
+        attempts++
+      }
+
       if (!this.playerId) {
-        console.log('⚠️ Impossibile ottenere Player ID')
+        console.log('⚠️ Impossibile ottenere Player ID dopo', maxAttempts, 'tentativi')
         return null
       }
 
@@ -78,6 +102,20 @@ class OneSignalService {
       })
 
       console.log('✅ Utente registrato OneSignal:', this.playerId)
+      
+      // Forza chiusura eventuali popup rimasti aperti
+      try {
+        const onesignalElements = document.querySelectorAll('[id*="onesignal"], [class*="onesignal"]')
+        onesignalElements.forEach(el => {
+          if (el.style.display !== 'none') {
+            console.log('🔒 Nascondo elemento OneSignal rimasto aperto')
+            el.style.display = 'none'
+          }
+        })
+      } catch (e) {
+        console.log('⚠️ Errore pulizia popup OneSignal:', e)
+      }
+      
       return this.playerId
 
     } catch (error) {

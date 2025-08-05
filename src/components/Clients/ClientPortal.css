@@ -341,3 +341,69 @@
     -moz-transform: scale(1);
   }
 }
+
+/* === FIX ONESIGNAL POPUP BLOCCATI === */
+
+/* Fix per interferenze CSS con OneSignal */
+.client-portal .onesignal-slidedown-container,
+.client-portal .onesignal-bell-launcher,
+.client-portal .onesignal-popover-container {
+  z-index: 999999 !important;
+}
+
+/* Fix per popup OneSignal bloccati */
+.onesignal-slidedown-container.hidden,
+.onesignal-popover-container.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Forza chiusura popup OneSignal dopo 15 secondi se rimane aperto */
+.onesignal-slidedown-container {
+  animation: onesignal-auto-hide 15s forwards;
+}
+
+@keyframes onesignal-auto-hide {
+  0% { opacity: 1; }
+  95% { opacity: 1; }
+  100% { 
+    opacity: 0 !important; 
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transform: translateY(-100%) !important;
+  }
+}
+
+/* Override per popup persistenti */
+[id*="onesignal"]:not([id*="container"]) {
+  transition: all 0.3s ease !important;
+}
+
+/* Classe di reset per forzare la chiusura */
+.onesignal-reset,
+.onesignal-slidedown-container.onesignal-reset {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Fix specifico per slidedown che non si chiude */
+.onesignal-slidedown-container[style*="block"] {
+  animation: force-close-popup 1s forwards !important;
+}
+
+@keyframes force-close-popup {
+  0% { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% { 
+    opacity: 0 !important;
+    transform: translateY(-100%) !important;
+    display: none !important;
+  }
+}
