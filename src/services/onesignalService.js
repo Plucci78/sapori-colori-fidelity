@@ -23,9 +23,13 @@ class OneSignalService {
         welcomeNotification: ONESIGNAL_CONFIG.welcomeNotification,
         promptOptions: ONESIGNAL_CONFIG.promptOptions,
 
-        // Service Worker personalizzato (integrazione con quello esistente)
-        serviceWorkerUpdaterPath: 'OneSignalSDKUpdaterWorker.js',
-        serviceWorkerPath: 'OneSignalSDKWorker.js'
+        // Service Worker personalizzato self-hosted (evita CDN)
+        serviceWorkerUpdaterPath: '/OneSignalSDKUpdaterWorker.js',
+        serviceWorkerPath: '/OneSignalSDKWorker.js',
+        
+        // Configurazioni per evitare caricamenti CDN
+        persistNotification: false,
+        autoRegister: false
       })
 
       this.initialized = true
