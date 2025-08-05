@@ -445,7 +445,17 @@ const ClientPortal = ({ token }) => {
 
           <div className="client-gems-card">
             <div className="gems-display">
-              <div className="gems-icon">💎</div>
+              <div className="gems-icon">
+                <img 
+                  src="/gemma-rossa.png" 
+                  alt="Gemme" 
+                  style={{ 
+                    width: '40px', 
+                    height: '40px',
+                    filter: 'drop-shadow(0 2px 8px rgba(220, 38, 38, 0.4))'
+                  }}
+                />
+              </div>
               <div className="gems-info">
                 <h2>{customer.points}</h2>
                 <p>GEMME Disponibili</p>
@@ -453,11 +463,11 @@ const ClientPortal = ({ token }) => {
             </div>
             <div className="gems-progress">
               <div
-                className="progress-bar"
+                className="level-progress-bar"
                 title={`${Math.round(nextLevelInfo.progress)}% completato`}
               >
                 <div
-                  className="progress-fill"
+                  className="level-progress-fill"
                   style={{
                     width: `${nextLevelInfo.progress}%`,
                     background: customerLevel.primary_color
@@ -1319,7 +1329,17 @@ const ClientPortalFromStorage = ({ customerData }) => {
           <>
             <div className="client-gems-card">
               <div className="gems-display">
-                <div className="gems-icon">💎</div>
+                <div className="gems-icon">
+                  <img 
+                    src="/gemma-rossa.png" 
+                    alt="Gemme" 
+                    style={{ 
+                      width: '40px', 
+                      height: '40px',
+                      filter: 'drop-shadow(0 2px 8px rgba(220, 38, 38, 0.4))'
+                    }}
+                  />
+                </div>
                 <div className="gems-info">
                   <h2>{customer.points}</h2>
                   <p>GEMME Disponibili</p>
@@ -1327,11 +1347,11 @@ const ClientPortalFromStorage = ({ customerData }) => {
               </div>
               <div className="gems-progress">
                 <div
-                  className="progress-bar"
+                  className="level-progress-bar"
                   title={`${Math.round(nextLevelInfo.progress)}% completato`}
                 >
                   <div
-                    className="progress-fill"
+                    className="level-progress-fill"
                     style={{
                       width: `${nextLevelInfo.progress}%`,
                       background: customerLevel.primary_color
