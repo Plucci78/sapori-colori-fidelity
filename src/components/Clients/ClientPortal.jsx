@@ -4,6 +4,7 @@ import { getCustomerLevel, getNextLevelInfo } from '../../utils/levelsUtils'
 import './ClientPortal.css'; // <-- 1. AGGIUNGI QUESTO IMPORT
 import QRCodeGenerator from '../Common/QRCodeGenerator'
 import { copyToClipboard } from '../../utils/clipboardUtils'
+import oneSignalService from '../../services/onesignalService'
 
 const ClientPortal = ({ token }) => {
   const [loginStep, setLoginStep] = useState('welcome') // 'welcome', 'login', 'loading'
@@ -54,6 +55,20 @@ const ClientPortal = ({ token }) => {
       // Salva cliente in localStorage per sessioni future
       localStorage.setItem('pwa_customer_id', customerData.id)
       localStorage.setItem('pwa_customer_data', JSON.stringify(customerData))
+      
+      // 🔔 REGISTRA UTENTE SU ONESIGNAL PER NOTIFICHE PUSH
+      try {
+        console.log('🔔 Registrazione OneSignal per:', customerData.name)
+        const playerId = await oneSignalService.registerUser(customerData)
+        if (playerId) {
+          console.log('✅ Cliente registrato OneSignal:', playerId)
+          // Salva Player ID per uso futuro
+          localStorage.setItem('pwa_onesignal_player_id', playerId)
+        }
+      } catch (error) {
+        console.error('⚠️ Errore registrazione OneSignal:', error)
+        // Non bloccare il login se OneSignal fallisce
+      }
       
       // Forza ricarica del componente con il cliente trovato
       window.location.reload()
@@ -1016,7 +1031,16 @@ const ClientPortalFromStorage = ({ customerData }) => {
   };
 
   // Funzione per logout (pulisce localStorage)
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // 🔔 Logout OneSignal
+    try {
+      await oneSignalService.logoutUser()
+      localStorage.removeItem('pwa_onesignal_player_id')
+    } catch (error) {
+      console.error('⚠️ Errore logout OneSignal:', error)
+    }
+    
+    // Logout normale
     localStorage.removeItem('pwa_customer_id')
     localStorage.removeItem('pwa_customer_data')
     window.location.reload()
@@ -1024,6 +1048,26 @@ const ClientPortalFromStorage = ({ customerData }) => {
 
   useEffect(() => {
     loadClientData()
+    
+    // 🔔 Inizializza OneSignal per cliente già loggato
+    const initOneSignal = async () => {
+      try {
+        await oneSignalService.initialize()
+        
+        // Se cliente non ha Player ID, registralo
+        const savedPlayerId = localStorage.getItem('pwa_onesignal_player_id')
+        if (!savedPlayerId && customerData) {
+          const playerId = await oneSignalService.registerUser(customerData)
+          if (playerId) {
+            localStorage.setItem('pwa_onesignal_player_id', playerId)
+          }
+        }
+      } catch (error) {
+        console.error('⚠️ Errore inizializzazione OneSignal PWA:', error)
+      }
+    }
+    
+    initOneSignal()
   }, [])
 
   const loadClientData = async () => {
