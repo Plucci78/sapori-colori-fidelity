@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     // OneSignal API configuration
     const ONESIGNAL_CONFIG = {
       appId: '61a2318f-68f7-4a79-8beb-203c58bf8763',
-      restApiKey: 'you6ukdzyu7vfcm2qzjiulvnc'
+      restApiKey: 'os_v2_app_mgrddd3i65fhtc7lea6frp4hmncfypt3q7mugmfh4hi67xyyoz3emmmkj5zd7hwbgt7qwkoxxyavzlux76q47oot2e5e6qieftmnf4a'
     }
 
     const notificationData = {
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`,
+        'Authorization': `Bearer ${ONESIGNAL_CONFIG.restApiKey}`,
         'Accept': 'application/json'
       },
       body: JSON.stringify(notificationData)
