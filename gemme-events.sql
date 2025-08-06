@@ -1,7 +1,7 @@
 -- Tabella per eventi pioggia gemme (comunicazione gestionale -> portale)
 CREATE TABLE IF NOT EXISTS gemme_events (
   id SERIAL PRIMARY KEY,
-  customer_id INT REFERENCES customers(id) ON DELETE CASCADE,
+  customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
   event_type VARCHAR(50) NOT NULL DEFAULT 'gemme_gained',
   points_earned INT NOT NULL,
   transaction_amount DECIMAL(10,2),
