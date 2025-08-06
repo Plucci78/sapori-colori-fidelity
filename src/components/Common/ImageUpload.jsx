@@ -67,7 +67,7 @@ const ImageUpload = ({
       console.log('📤 Uploading file:', fileName)
 
       // Upload su Supabase Storage
-      const { data, error: uploadError } = await supabase.storage
+      let { data, error: uploadError } = await supabase.storage
         .from(bucketName)
         .upload(filePath, file, {
           cacheControl: '3600',
