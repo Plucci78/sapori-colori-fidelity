@@ -109,10 +109,31 @@ class OneSignalService {
     return outputArray
   }
 
-  // Genera Player ID dalla subscription
+  // Genera Player ID UUID valido per OneSignal
   generatePlayerId(subscription) {
+    // Crea un hash dall'endpoint per avere sempre lo stesso ID per lo stesso utente
     const endpoint = subscription.endpoint
-    return btoa(endpoint).replace(/[^a-zA-Z0-9]/g, '').substring(0, 36)
+    const hash = this.simpleHash(endpoint)
+    
+    // Genera UUID v4 deterministico basato sull'hash
+    const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = (hash + Math.random() * 16) % 16 | 0
+      const v = c === 'x' ? r : (r & 0x3 | 0x8)
+      return v.toString(16)
+    })
+    
+    return uuid
+  }
+
+  // Helper per creare hash semplice
+  simpleHash(str) {
+    let hash = 0
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // Convert to 32-bit integer
+    }
+    return Math.abs(hash)
   }
 
   // Registra con OneSignal API
