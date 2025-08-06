@@ -6,12 +6,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { playerId, customerData } = req.body
+    const { subscription, customerData } = req.body
 
     // Validazione
-    if (!playerId || !customerData) {
+    if (!subscription || !customerData) {
       return res.status(400).json({ 
-        error: 'Missing required fields: playerId, customerData' 
+        error: 'Missing required fields: subscription, customerData' 
       })
     }
 
@@ -21,12 +21,14 @@ export default async function handler(req, res) {
       restApiKey: 'os_v2_app_mgrddd3i65fhtc7lea6frp4hmncfypt3q7mugmfh4hi67xyyoz3emmmkj5zd7hwbgt7qwkoxxyavzlux76q47oot2e5e6qieftmnf4a'
     }
 
-    // Crea player su OneSignal con il nostro UUID
+    // Crea player su OneSignal con i dati della subscription reale
     const playerData = {
       app_id: ONESIGNAL_CONFIG.appId,
       device_type: 5, // Web Push
-      id: playerId, // Usa il nostro UUID
       notification_types: 1,
+      web_push_topic: subscription.endpoint,
+      web_auth: subscription.keys.auth,
+      web_p256: subscription.keys.p256dh,
       tags: {
         customer_id: customerData.id,
         customer_name: customerData.name,
@@ -37,7 +39,7 @@ export default async function handler(req, res) {
       }
     }
 
-    console.log('🔧 Registrazione player OneSignal:', playerId)
+    console.log('🔧 Registrazione player OneSignal con subscription reale')
 
     // Chiamata API OneSignal per creare player
     const response = await fetch('https://onesignal.com/api/v1/players', {
@@ -54,10 +56,10 @@ export default async function handler(req, res) {
     const result = await response.json()
 
     if (response.ok || response.status === 409) { // 409 = already exists, è ok
-      console.log('✅ Player registrato con OneSignal:', result.id || playerId)
+      console.log('✅ Player registrato con OneSignal:', result.id)
       return res.status(200).json({
         success: true,
-        playerId: result.id || playerId
+        playerId: result.id
       })
     } else {
       console.error('❌ Errore registrazione player:', result)

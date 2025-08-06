@@ -97,17 +97,15 @@ class OneSignalService {
       console.log('✅ Push subscription creata')
       console.log('📋 Subscription endpoint:', subscription.endpoint)
 
-      // Genera un ID univoco per questo utente
-      this.playerId = this.generatePlayerId(subscription)
-      console.log('🆔 Player ID generato:', this.playerId)
+      // Prima registra con OneSignal per ottenere un Player ID valido
+      console.log('🔄 Registrando con OneSignal API per ottenere Player ID valido...')
+      this.playerId = await this.registerWithOneSignal(customerData, subscription)
       
-      // Registra il player con OneSignal
-      console.log('🔄 Registrando con OneSignal API...')
-      const registeredPlayerId = await this.registerWithOneSignal(customerData, this.playerId)
-      
-      if (registeredPlayerId) {
-        this.playerId = registeredPlayerId
-        console.log('✅ Player ID confermato da OneSignal:', this.playerId)
+      if (this.playerId) {
+        console.log('✅ Player ID ottenuto da OneSignal:', this.playerId)
+      } else {
+        console.error('❌ Impossibile ottenere Player ID da OneSignal')
+        return null
       }
 
       console.log('✅ Utente registrato OneSignal nativo:', this.playerId)
@@ -160,9 +158,10 @@ class OneSignalService {
   }
 
   // Registra con OneSignal tramite API route
-  async registerWithOneSignal(customerData, playerId) {
+  async registerWithOneSignal(customerData, subscription) {
     try {
-      console.log('🔧 Registrazione player con OneSignal API route:', playerId)
+      console.log('🔧 Registrazione player con OneSignal API route')
+      console.log('📋 Subscription endpoint:', subscription.endpoint.substring(0, 50) + '...')
       
       const response = await fetch('/api/create-player', {
         method: 'POST',
@@ -170,7 +169,13 @@ class OneSignalService {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          playerId,
+          subscription: {
+            endpoint: subscription.endpoint,
+            keys: {
+              p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')))),
+              auth: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth'))))
+            }
+          },
           customerData
         })
       })
