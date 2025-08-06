@@ -463,70 +463,47 @@ class OneSignalService {
     }
   }
 
-  // Invia notifica push (solo per admin)
+  // Invia notifica push tramite API route (risolve CORS)
   async sendNotification({ title, message, playerIds, url, tags = null }) {
     try {
       console.log(`📤 Invio notifica a ${playerIds.length} utenti:`, title)
 
-      const notificationData = {
-        app_id: ONESIGNAL_CONFIG.appId,
-        headings: { en: title, it: title },
-        contents: { en: message, it: message },
-        include_player_ids: playerIds
-      }
-
-      // Aggiungi URL se fornito
-      if (url) {
-        notificationData.url = url
-      }
-
-      // Aggiungi filtri per tag se forniti
-      if (tags && Object.keys(tags).length > 0) {
-        // Costruisci filtri OneSignal per tag
-        const filters = Object.entries(tags).map(([key, value], index) => {
-          const filter = { field: 'tag', key, relation: '=', value: value.toString() }
-          if (index > 0) {
-            return [{ operator: 'AND' }, filter]
-          }
-          return filter
-        }).flat()
-        
-        notificationData.filters = filters
-        delete notificationData.include_player_ids // Usa filtri invece di player IDs specifici
-      }
-
-      // Chiamata REST API OneSignal
-      const response = await fetch('https://onesignal.com/api/v1/notifications', {
+      // Usa l'API route invece della chiamata diretta OneSignal per evitare CORS
+      const response = await fetch('/api/send-notification', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(notificationData)
+        body: JSON.stringify({
+          title,
+          message,
+          playerIds,
+          url
+        })
       })
 
       const result = await response.json()
 
-      if (response.ok && result.id) {
-        console.log('✅ Notifica inviata con successo:', result.id)
+      if (result.success) {
+        console.log('✅ Notifica inviata tramite API route:', result.notificationId)
         return {
           success: true,
-          notificationId: result.id,
-          recipients: result.recipients || playerIds.length
+          notificationId: result.notificationId,
+          recipients: result.recipients
         }
       } else {
-        console.error('❌ Errore invio notifica:', result)
+        console.error('❌ Errore invio notifica via API:', result.error)
         return {
           success: false,
-          error: result.errors ? result.errors.join(', ') : 'Errore sconosciuto'
+          error: result.error
         }
       }
 
     } catch (error) {
-      console.error('❌ Errore invio notifica:', error)
+      console.error('❌ Errore chiamata API route notifiche:', error)
       return {
         success: false,
-        error: error.message || 'Errore di rete'
+        error: error.message || 'Errore di connessione'
       }
     }
   }
