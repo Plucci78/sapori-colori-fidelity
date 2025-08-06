@@ -9,6 +9,7 @@ import { supabase } from '../../supabase'
 import { copyToClipboard, copyReferralCode } from '../../utils/clipboardUtils'
 import { playAddGemmeSound } from '../../utils/soundUtils'
 import PrivacyManagement from '../Privacy/PrivacyManagement'
+import oneSignalService from '../../services/onesignalService'
 import styles from './CustomerView.module.css' // CSS Module isolato
 import './CustomerButtonsOverride.css' // Override specifico per pulsanti neri
 import './CustomerTable.css' // Styling per tabella clienti
@@ -419,11 +420,48 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
           <div className="bg-white rounded-lg w-full h-full max-w-none max-h-none overflow-auto" style={{ margin: '20px', maxWidth: 'calc(100vw - 40px)', maxHeight: 'calc(100vh - 40px)' }}>
             <RegistrationWizard
-              onComplete={(customer, successMessage) => {
+              onComplete={async (customer, successMessage) => {
                 loadCustomers()
                 setShowRegistrationWizard(false)
                 setSelectedCustomer(customer)
                 showNotification(successMessage || `✅ Cliente ${customer.name} registrato con successo!`, 'success')
+                
+                // 🔔 Invia notifica push agli admin per nuovo cliente registrato
+                try {
+                  // Trova tutti gli admin con player IDs per le notifiche
+                  const { data: adminProfiles } = await supabase
+                    .from('profiles')
+                    .select('id, full_name, email')
+                    .eq('role', 'admin')
+                    .eq('active', true)
+
+                  if (adminProfiles && adminProfiles.length > 0) {
+                    // Trova i clienti admin (che hanno player IDs OneSignal)
+                    const adminEmails = adminProfiles.map(admin => admin.email)
+                    const { data: adminCustomers } = await supabase
+                      .from('customers')
+                      .select('onesignal_player_id')
+                      .in('email', adminEmails)
+                      .not('onesignal_player_id', 'is', null)
+
+                    if (adminCustomers && adminCustomers.length > 0) {
+                      const playerIds = adminCustomers.map(c => c.onesignal_player_id).filter(Boolean)
+                      
+                      if (playerIds.length > 0) {
+                        await oneSignalService.sendNotification({
+                          title: '👤 Nuovo Cliente Registrato!',
+                          message: `${customer.name} si è appena registrato - ${customer.points || 0} punti iniziali`,
+                          playerIds: playerIds,
+                          url: '/customers'
+                        })
+                        console.log(`✅ Notifica nuovo cliente inviata a ${playerIds.length} admin`)
+                      }
+                    }
+                  }
+                } catch (error) {
+                  console.error('⚠️ Errore invio notifica nuovo cliente:', error)
+                  // Non bloccare la registrazione se fallisce la notifica
+                }
               }}
               onCancel={() => setShowRegistrationWizard(false)}
               showNotification={showNotification}
