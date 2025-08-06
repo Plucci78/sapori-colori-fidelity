@@ -303,84 +303,164 @@ const ClientPortal = ({ token }) => {
     }
   };
 
-  // 🎆 EFFETTO PIOGGIA GEMME SPETTACOLARE
+  // 💥 EFFETTO ESPLOSIONE GEMME SPETTACOLARE
   const createSpectacularGemmeEffect = (pointsEarned) => {
-    console.log(`🎆 Creando effetto spettacolare per +${pointsEarned} GEMME`);
+    console.log(`💥 Creando ESPLOSIONE spettacolare per +${pointsEarned} GEMME`);
     
     // SUONO (stesso del gestionale)
     try {
       const gemmeSound = new Audio('/sounds/coin.wav');
       gemmeSound.volume = 0.8;
-      gemmeSound.play().catch(error => {
-        console.warn('🔇 Audio bloccato (necessaria interazione utente):', error.message);
-      });
+      gemmeSound.play().catch(() => {}); // Fail silently se audio bloccato
     } catch (error) {
-      console.warn('❌ Errore caricamento audio:', error);
+      // Fail silently
     }
     
-    // CSS per effetto
+    // CSS per effetto ESPLOSIONE
     const style = document.createElement('style');
     style.id = 'spectacular-gemme-style';
     style.innerHTML = `
-      .spectacular-rain {
+      .spectacular-explosion {
         pointer-events: none; position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
         z-index: 9999; overflow: hidden;
-        background: radial-gradient(circle at 50% 30%, rgba(212,175,55,0.2) 0%, transparent 50%);
-        animation: backgroundPulse 4s ease-in-out;
+        background: radial-gradient(circle at 50% 50%, rgba(220,38,38,0.4) 0%, rgba(212,175,55,0.3) 30%, transparent 70%);
+        animation: explosionFlash 3s ease-out;
       }
-      @keyframes backgroundPulse { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
-      .spectacular-gem {
-        position: absolute; width: 50px; height: 50px;
-        animation: spectacularFall 2.5s ease-out forwards; user-select: none;
-        filter: drop-shadow(0 0 15px #dc2626) brightness(1.4) saturate(1.6);
+      @keyframes explosionFlash { 
+        0% { opacity: 0; background-color: rgba(255,215,0,0.8); } 
+        5% { opacity: 1; background-color: rgba(255,255,255,0.9); }
+        15% { opacity: 0.8; background-color: rgba(220,38,38,0.6); }
+        100% { opacity: 0; background-color: transparent; } 
       }
-      @keyframes spectacularFall {
-        0% { top: -60px; opacity: 0; transform: rotate(0deg) scale(0.2); }
-        15% { opacity: 1; transform: rotate(120deg) scale(1.3); }
-        85% { opacity: 0.8; transform: rotate(600deg) scale(1); }
-        100% { top: 100vh; opacity: 0; transform: rotate(720deg) scale(0.3); }
+      .explosion-gem {
+        position: absolute; width: 60px; height: 60px;
+        animation-fill-mode: forwards; user-select: none;
+        filter: drop-shadow(0 0 20px #dc2626) brightness(1.6) saturate(2) contrast(1.3);
+        z-index: 10001;
       }
-      .explosion-burst {
-        position: absolute; top: 50%; left: 50%; width: 180px; height: 180px;
-        margin: -90px 0 0 -90px; border-radius: 50%;
-        background: radial-gradient(circle, rgba(220,38,38,0.9) 0%, rgba(239,68,68,0.7) 25%, rgba(212,175,55,0.5) 50%, transparent 100%);
-        animation: explosionBurst 1.2s ease-out;
+      @keyframes explosionBlast {
+        0% { 
+          transform: scale(0.1) rotate(0deg); 
+          opacity: 1; 
+        }
+        15% { 
+          transform: scale(1.8) rotate(180deg); 
+          opacity: 1; 
+        }
+        100% { 
+          opacity: 0.2; 
+          transform: scale(0.4) rotate(720deg); 
+        }
       }
-      @keyframes explosionBurst {
-        0% { transform: scale(0); opacity: 1; }
-        40% { transform: scale(2.5); opacity: 0.9; }
-        100% { transform: scale(5); opacity: 0; }
+      .mega-burst {
+        position: absolute; top: 50%; left: 50%; 
+        width: 300px; height: 300px;
+        margin: -150px 0 0 -150px; border-radius: 50%;
+        background: radial-gradient(circle, 
+          rgba(255,255,255,1) 0%, 
+          rgba(255,215,0,0.9) 20%, 
+          rgba(220,38,38,0.8) 40%, 
+          rgba(212,175,55,0.6) 60%, 
+          transparent 100%);
+        animation: megaExplosion 1.5s ease-out;
+        z-index: 10000;
+      }
+      @keyframes megaExplosion {
+        0% { 
+          transform: scale(0); 
+          opacity: 1; 
+          filter: brightness(2) blur(0px);
+        }
+        30% { 
+          transform: scale(1.2); 
+          opacity: 1; 
+          filter: brightness(1.8) blur(2px);
+        }
+        70% { 
+          transform: scale(2.5); 
+          opacity: 0.7; 
+          filter: brightness(1.4) blur(4px);
+        }
+        100% { 
+          transform: scale(4); 
+          opacity: 0; 
+          filter: brightness(1) blur(8px);
+        }
+      }
+      .screen-shake {
+        animation: screenShake 0.8s ease-in-out;
+      }
+      @keyframes screenShake {
+        0%, 100% { transform: translateX(0) translateY(0); }
+        10% { transform: translateX(-10px) translateY(-5px); }
+        20% { transform: translateX(10px) translateY(5px); }
+        30% { transform: translateX(-8px) translateY(-3px); }
+        40% { transform: translateX(8px) translateY(3px); }
+        50% { transform: translateX(-6px) translateY(-2px); }
+        60% { transform: translateX(6px) translateY(2px); }
+        70% { transform: translateX(-4px) translateY(-1px); }
+        80% { transform: translateX(4px) translateY(1px); }
+        90% { transform: translateX(-2px) translateY(-1px); }
       }
     `;
     document.head.appendChild(style);
     
-    // Container effetto
-    const rain = document.createElement('div');
-    rain.className = 'spectacular-rain';
-    rain.id = 'spectacular-gemme-container';
-    document.body.appendChild(rain);
-    
-    // Esplosione centrale
+    // SHAKE dello schermo
+    document.body.classList.add('screen-shake');
     setTimeout(() => {
-      const burst = document.createElement('div');
-      burst.className = 'explosion-burst';
-      rain.appendChild(burst);
-    }, 100);
+      document.body.classList.remove('screen-shake');
+    }, 800);
     
-    // Gemme che cadono (numero basato sui punti guadagnati)
-    const gemCount = Math.min(Math.max(pointsEarned, 15), 40);
+    // Container effetto
+    const explosion = document.createElement('div');
+    explosion.className = 'spectacular-explosion';
+    explosion.id = 'spectacular-gemme-container';
+    document.body.appendChild(explosion);
+    
+    // MEGA ESPLOSIONE centrale
+    setTimeout(() => {
+      const megaBurst = document.createElement('div');
+      megaBurst.className = 'mega-burst';
+      explosion.appendChild(megaBurst);
+    }, 50);
+    
+    // ESPLOSIONE RADIALE di gemme (come fuochi d'artificio)
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const gemCount = Math.min(Math.max(pointsEarned * 2, 25), 60); // Più gemme!
+    
     for (let i = 0; i < gemCount; i++) {
       setTimeout(() => {
         const gem = document.createElement('img');
         gem.src = '/gemma-rossa.png';
         gem.alt = 'gemma';
-        gem.className = 'spectacular-gem';
-        gem.style.left = Math.random() * 95 + '%';
-        gem.style.animationDelay = Math.random() * 0.8 + 's';
-        gem.style.animationDuration = (2 + Math.random()) + 's';
-        rain.appendChild(gem);
-      }, i * 60);
+        gem.className = 'explosion-gem';
+        
+        // Posizione centrale di partenza
+        gem.style.left = centerX - 30 + 'px';
+        gem.style.top = centerY - 30 + 'px';
+        
+        // Direzione casuale dell'esplosione
+        const angle = (360 / gemCount) * i + Math.random() * 30;
+        const distance = 200 + Math.random() * 400;
+        const finalX = centerX + Math.cos(angle * Math.PI / 180) * distance;
+        const finalY = centerY + Math.sin(angle * Math.PI / 180) * distance;
+        
+        // Animazione esplosiva
+        const duration = 1.5 + Math.random() * 1.5;
+        gem.style.animation = `explosionBlast ${duration}s ease-out forwards`;
+        
+        explosion.appendChild(gem);
+        
+        // Animazione verso la posizione finale
+        setTimeout(() => {
+          gem.style.transition = `all ${duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+          gem.style.left = finalX - 30 + 'px';
+          gem.style.top = finalY - 30 + 'px';
+        }, 100);
+        
+      }, i * 20); // Intervallo più veloce per effetto esplosivo
     }
     
     // Cleanup dopo 4 secondi
@@ -389,7 +469,7 @@ const ClientPortal = ({ token }) => {
       const styleEl = document.getElementById('spectacular-gemme-style');
       if (container) document.body.removeChild(container);
       if (styleEl) document.head.removeChild(styleEl);
-      console.log('✨ Effetto spettacolare completato!');
+      console.log('💥 Esplosione spettacolare completata!');
     }, 4000);
   };
 
@@ -400,7 +480,14 @@ const ClientPortal = ({ token }) => {
 
   // 💎 POLLING EVENTI PIOGGIA GEMME ogni 5 secondi
   useEffect(() => {
-    if (!customer?.id) return;
+    // Usa localStorage invece di customer state per evitare dependency issues
+    const customerData = localStorage.getItem('pwa_customer_data');
+    if (!customerData) return;
+
+    const parsedCustomer = JSON.parse(customerData);
+    if (!parsedCustomer?.id) return;
+
+    console.log('🎯 Avvio polling gemme per cliente:', parsedCustomer.name);
 
     // Controllo immediato
     checkGemmeEvents();
@@ -411,7 +498,7 @@ const ClientPortal = ({ token }) => {
     }, 5000); // 5 secondi
 
     return () => clearInterval(interval);
-  }, [customer?.id])
+  }, []) // Nessuna dependency - si avvia una volta sola quando il componente si monta
 
   const loadClientData = async () => {
     setLoading(true)
@@ -1205,6 +1292,12 @@ const ClientPortalFromStorage = ({ customerData }) => {
   // Mobile Navigation States
   const [activeSection, setActiveSection] = useState('home')
   const [showQRModal, setShowQRModal] = useState(false)
+  
+  // Impostazioni audio
+  const [audioEnabled, setAudioEnabled] = useState(() => {
+    const saved = localStorage.getItem('pwa_audio_enabled');
+    return saved !== null ? JSON.parse(saved) : true; // Default true
+  })
 
   // Funzione per mostrare notifiche semplici
   const showNotification = (message, type = 'success') => {
@@ -1212,6 +1305,248 @@ const ClientPortalFromStorage = ({ customerData }) => {
     setTimeout(() => {
       setNotification({ show: false, message: '', type: '' });
     }, 3000);
+  };
+
+  // 💎 CONTROLLO EVENTI PIOGGIA GEMME dal gestionale
+  const checkGemmeEvents = async () => {
+    if (!customer?.id) return;
+    
+    try {
+      // Cerca eventi non processati per questo cliente
+      const { data: events, error } = await supabase
+        .from('gemme_events')
+        .select('*')
+        .eq('customer_id', customer.id)
+        .eq('is_processed', false)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('❌ Errore controllo eventi gemme:', error);
+        return;
+      }
+
+      if (events && events.length > 0) {
+        // Processo tutti gli eventi non processati
+        for (const event of events) {
+          console.log(`💎 Evento gemme trovato: +${event.points_earned} GEMME`);
+          
+          // 🎆 EFFETTO SPETTACOLARE con SUONO
+          createSpectacularGemmeEffect(event.points_earned);
+          
+          // Marca l'evento come processato
+          await supabase
+            .from('gemme_events')
+            .update({ is_processed: true })
+            .eq('id', event.id);
+          
+          // Ricarica i dati del cliente per aggiornare i punti
+          loadClientData();
+          
+          // Mostra notifica
+          showNotification(`🎉 Hai guadagnato ${event.points_earned} GEMME da un acquisto di €${event.transaction_amount}!`, 'success');
+          
+          // Pausa tra eventi multipli
+          if (events.length > 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Errore durante controllo eventi gemme:', error);
+    }
+  };
+
+  // 💥 EFFETTO ESPLOSIONE GEMME SPETTACOLARE - PWA
+  const createSpectacularGemmeEffect = (pointsEarned) => {
+    console.log(`💥 PWA - Creando ESPLOSIONE spettacolare per +${pointsEarned} GEMME`);
+    
+    // SUONO solo se abilitato nelle impostazioni
+    if (audioEnabled) {
+      try {
+        const gemmeSound = new Audio('/sounds/coin.wav');
+        gemmeSound.volume = 0.8;
+        gemmeSound.play().catch(() => {}); // Fail silently se audio bloccato
+      } catch (error) {
+        // Fail silently
+      }
+    }
+    
+    // CSS per effetto ESPLOSIONE
+    const style = document.createElement('style');
+    style.id = 'spectacular-gemme-style';
+    style.innerHTML = `
+      .spectacular-explosion {
+        pointer-events: none; position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        z-index: 9999; overflow: hidden;
+        background: radial-gradient(circle at 50% 50%, rgba(220,38,38,0.4) 0%, rgba(212,175,55,0.3) 30%, transparent 70%);
+        animation: explosionFlash 3s ease-out;
+      }
+      @keyframes explosionFlash { 
+        0% { opacity: 0; background-color: rgba(255,215,0,0.8); } 
+        5% { opacity: 1; background-color: rgba(255,255,255,0.9); }
+        15% { opacity: 0.8; background-color: rgba(220,38,38,0.6); }
+        100% { opacity: 0; background-color: transparent; } 
+      }
+      .explosion-gem {
+        position: absolute; width: 60px; height: 60px;
+        animation-fill-mode: forwards; user-select: none;
+        filter: drop-shadow(0 0 20px #dc2626) brightness(1.6) saturate(2) contrast(1.3);
+        z-index: 10001;
+      }
+      @keyframes explosionBlast {
+        0% { 
+          transform: scale(0.1) rotate(0deg); 
+          opacity: 1; 
+        }
+        15% { 
+          transform: scale(1.8) rotate(180deg); 
+          opacity: 1; 
+        }
+        100% { 
+          opacity: 0.2; 
+          transform: scale(0.4) rotate(720deg); 
+        }
+      }
+      .mega-burst {
+        position: absolute; top: 50%; left: 50%; 
+        width: 300px; height: 300px;
+        margin: -150px 0 0 -150px; border-radius: 50%;
+        background: radial-gradient(circle, 
+          rgba(255,255,255,1) 0%, 
+          rgba(255,215,0,0.9) 20%, 
+          rgba(220,38,38,0.8) 40%, 
+          rgba(212,175,55,0.6) 60%, 
+          transparent 100%);
+        animation: megaExplosion 1.5s ease-out;
+        z-index: 10000;
+      }
+      @keyframes megaExplosion {
+        0% { 
+          transform: scale(0); 
+          opacity: 1; 
+          filter: brightness(2) blur(0px);
+        }
+        30% { 
+          transform: scale(1.2); 
+          opacity: 1; 
+          filter: brightness(1.8) blur(2px);
+        }
+        70% { 
+          transform: scale(2.5); 
+          opacity: 0.7; 
+          filter: brightness(1.4) blur(4px);
+        }
+        100% { 
+          transform: scale(4); 
+          opacity: 0; 
+          filter: brightness(1) blur(8px);
+        }
+      }
+      .screen-shake {
+        animation: screenShake 0.8s ease-in-out;
+      }
+      @keyframes screenShake {
+        0%, 100% { transform: translateX(0) translateY(0); }
+        10% { transform: translateX(-10px) translateY(-5px); }
+        20% { transform: translateX(10px) translateY(5px); }
+        30% { transform: translateX(-8px) translateY(-3px); }
+        40% { transform: translateX(8px) translateY(3px); }
+        50% { transform: translateX(-6px) translateY(-2px); }
+        60% { transform: translateX(6px) translateY(2px); }
+        70% { transform: translateX(-4px) translateY(-1px); }
+        80% { transform: translateX(4px) translateY(1px); }
+        90% { transform: translateX(-2px) translateY(-1px); }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // SHAKE dello schermo
+    document.body.classList.add('screen-shake');
+    setTimeout(() => {
+      document.body.classList.remove('screen-shake');
+    }, 800);
+    
+    // Container effetto
+    const explosion = document.createElement('div');
+    explosion.className = 'spectacular-explosion';
+    explosion.id = 'spectacular-gemme-container';
+    document.body.appendChild(explosion);
+    
+    // MEGA ESPLOSIONE centrale
+    setTimeout(() => {
+      const megaBurst = document.createElement('div');
+      megaBurst.className = 'mega-burst';
+      explosion.appendChild(megaBurst);
+    }, 50);
+    
+    // ESPLOSIONE RADIALE di gemme (come fuochi d'artificio)
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const gemCount = Math.min(Math.max(pointsEarned * 2, 25), 60); // Più gemme!
+    
+    for (let i = 0; i < gemCount; i++) {
+      setTimeout(() => {
+        const gem = document.createElement('img');
+        gem.src = '/gemma-rossa.png';
+        gem.alt = 'gemma';
+        gem.className = 'explosion-gem';
+        
+        // Posizione centrale di partenza
+        gem.style.left = centerX - 30 + 'px';
+        gem.style.top = centerY - 30 + 'px';
+        
+        // Direzione casuale dell'esplosione
+        const angle = (360 / gemCount) * i + Math.random() * 30;
+        const distance = 200 + Math.random() * 400;
+        const finalX = centerX + Math.cos(angle * Math.PI / 180) * distance;
+        const finalY = centerY + Math.sin(angle * Math.PI / 180) * distance;
+        
+        // Animazione esplosiva
+        const duration = 1.5 + Math.random() * 1.5;
+        gem.style.animation = `explosionBlast ${duration}s ease-out forwards`;
+        
+        explosion.appendChild(gem);
+        
+        // Animazione verso la posizione finale
+        setTimeout(() => {
+          gem.style.transition = `all ${duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+          gem.style.left = finalX - 30 + 'px';
+          gem.style.top = finalY - 30 + 'px';
+        }, 100);
+        
+      }, i * 20); // Intervallo più veloce per effetto esplosivo
+    }
+    
+    // Cleanup dopo 4 secondi
+    setTimeout(() => {
+      const container = document.getElementById('spectacular-gemme-container');
+      const styleEl = document.getElementById('spectacular-gemme-style');
+      if (container) document.body.removeChild(container);
+      if (styleEl) document.head.removeChild(styleEl);
+      console.log('💥 Esplosione PWA spettacolare completata!');
+    }, 4000);
+  };
+
+  // Funzione per toggle audio
+  const toggleAudio = async () => {
+    const newState = !audioEnabled;
+    setAudioEnabled(newState);
+    localStorage.setItem('pwa_audio_enabled', JSON.stringify(newState));
+    
+    if (newState) {
+      // Test audio quando viene abilitato
+      try {
+        const testSound = new Audio('/sounds/coin.wav');
+        testSound.volume = 0.5;
+        await testSound.play();
+        showNotification('🔊 Audio abilitato! Suoni effetti attivi', 'success');
+      } catch (error) {
+        showNotification('🔊 Audio abilitato! (Tocca lo schermo per attivare i suoni)', 'success');
+      }
+    } else {
+      showNotification('🔇 Audio disabilitato', 'success');
+    }
   };
 
   // Funzione per logout (pulisce localStorage)
@@ -1337,6 +1672,23 @@ const ClientPortalFromStorage = ({ customerData }) => {
       clearInterval(popupCheckInterval)
     }
   }, [])
+
+  // 💎 POLLING EVENTI PIOGGIA GEMME ogni 5 secondi per PWA
+  useEffect(() => {
+    if (!customer?.id) return;
+
+    console.log('🎯 Avvio polling gemme per cliente PWA:', customer.name);
+
+    // Controllo immediato
+    checkGemmeEvents();
+
+    // Poi ogni 5 secondi
+    const interval = setInterval(() => {
+      checkGemmeEvents();
+    }, 5000); // 5 secondi
+
+    return () => clearInterval(interval);
+  }, [customer?.id]) // Dipende dall'ID del cliente
 
   const loadClientData = async () => {
     setLoading(true)
@@ -1963,6 +2315,170 @@ const ClientPortalFromStorage = ({ customerData }) => {
                 {customer.referral_code && (
                   <p><strong>🔗 Codice Referral:</strong> {customer.referral_code}</p>
                 )}
+              </div>
+            </div>
+          </div>
+        )
+
+      case 'settings':
+        return (
+          <div className="client-section">
+            <h3>⚙️ Impostazioni</h3>
+            <div style={{
+              background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+              border: '2px solid #8B4513',
+              borderRadius: '15px',
+              padding: '25px'
+            }}>
+              {/* Sezione Audio */}
+              <div style={{ marginBottom: '25px' }}>
+                <h4 style={{ color: '#8B4513', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  🔊 Audio Effetti
+                </h4>
+                <div style={{
+                  background: 'white',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                      Suoni degli Effetti Gemme
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#666' }}>
+                      {audioEnabled ? 
+                        '🔊 Attivo - Sentirai il suono quando guadagni gemme' : 
+                        '🔇 Disattivo - Nessun suono negli effetti'
+                      }
+                    </div>
+                  </div>
+                  <button
+                    onClick={toggleAudio}
+                    style={{
+                      background: audioEnabled ? 
+                        'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 
+                        'linear-gradient(135deg, #6B7280 0%, #4B5563 100%)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px 24px',
+                      borderRadius: '25px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: audioEnabled ? 
+                        '0 4px 15px rgba(16, 185, 129, 0.3)' : 
+                        '0 4px 15px rgba(107, 114, 128, 0.3)'
+                    }}
+                  >
+                    {audioEnabled ? '🔊 ATTIVO' : '🔇 DISATTIVO'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Test Notifiche Push */}
+              <div style={{ marginBottom: '25px' }}>
+                <h4 style={{ color: '#8B4513', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  🔔 Test Notifiche Push
+                </h4>
+                <div style={{
+                  background: 'white',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                      Testa Sistema Notifiche
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#666' }}>
+                      Verifica se le notifiche push funzionano
+                    </div>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        showNotification('🔄 Testando notifiche push...', 'success');
+                        
+                        // Test completo del sistema OneSignal
+                        console.log('=== 🔔 TEST NOTIFICHE PUSH ===');
+                        
+                        // 1. Verifica inizializzazione
+                        const isInitialized = await oneSignalService.initialize();
+                        console.log('✅ OneSignal inizializzato:', isInitialized);
+                        
+                        // 2. Controlla permessi
+                        const notificationStatus = await oneSignalService.getNotificationStatus();
+                        console.log('📋 Status notifiche:', notificationStatus);
+                        
+                        // 3. Registra utente se non già fatto
+                        let playerId = localStorage.getItem('pwa_onesignal_player_id');
+                        if (!playerId) {
+                          console.log('🔄 Registrando utente...');
+                          playerId = await oneSignalService.registerUser(customer);
+                          console.log('✅ Player ID ottenuto:', playerId);
+                        }
+                        
+                        // 4. Invia notifica di test
+                        if (playerId) {
+                          console.log('📤 Inviando notifica di test...');
+                          const result = await oneSignalService.sendNotification({
+                            title: '🎉 Test Notification',
+                            message: `Ciao ${customer.name}! Le notifiche funzionano perfettamente!`,
+                            playerIds: [playerId],
+                            url: window.location.href
+                          });
+                          console.log('📨 Risultato invio:', result);
+                          
+                          if (result.success) {
+                            showNotification('✅ Test completato! Controlla se hai ricevuto la notifica', 'success');
+                          } else {
+                            showNotification(`❌ Errore test: ${result.error}`, 'error');
+                          }
+                        } else {
+                          showNotification('❌ Impossibile ottenere Player ID', 'error');
+                        }
+                        
+                        console.log('=== 🏁 FINE TEST ===');
+                        
+                      } catch (error) {
+                        console.error('❌ Errore test notifiche:', error);
+                        showNotification(`❌ Errore test: ${error.message}`, 'error');
+                      }
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px 24px',
+                      borderRadius: '25px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)'
+                    }}
+                  >
+                    🧪 TESTA NOTIFICHE
+                  </button>
+                </div>
+              </div>
+
+              {/* Info sezione */}
+              <div style={{
+                background: 'rgba(59, 130, 246, 0.1)',
+                border: '1px solid #3B82F6',
+                borderRadius: '10px',
+                padding: '15px',
+                textAlign: 'left'
+              }}>
+                <div style={{ fontSize: '14px', color: '#1E40AF' }}>
+                  <strong>💡 Nota:</strong> Se abiliti l'audio ma non senti i suoni, assicurati di aver interagito con la pagina (tocca lo schermo) per permettere ai browser di riprodurre l'audio.
+                </div>
               </div>
             </div>
           </div>

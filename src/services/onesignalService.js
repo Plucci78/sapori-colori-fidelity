@@ -12,6 +12,8 @@ class OneSignalService {
 
     try {
       console.log('🔔 Inizializzazione OneSignal nativo...')
+      console.log('🌐 URL corrente:', window.location.href)
+      console.log('🔑 VAPID Key presente:', !!ONESIGNAL_CONFIG.vapidKey)
       
       // Verifica se il browser supporta le notifiche push
       if (!('Notification' in window)) {
@@ -24,12 +26,19 @@ class OneSignalService {
         return false
       }
 
+      if (!('PushManager' in window)) {
+        console.log('⚠️ Browser non supporta PushManager')
+        return false
+      }
+
       // Registra il Service Worker manualmente
+      console.log('📋 Registrando Service Worker...')
       const registration = await navigator.serviceWorker.register('/OneSignalSDKWorker.js', {
         scope: '/'
       })
 
       console.log('✅ Service Worker registrato:', registration.scope)
+      console.log('📱 Service Worker attivo:', registration.active !== null)
       
       this.initialized = true
       console.log('✅ OneSignal inizializzato con successo (modalità nativa)')
@@ -37,6 +46,7 @@ class OneSignalService {
       return true
     } catch (error) {
       console.error('❌ Errore inizializzazione OneSignal nativo:', error)
+      console.error('📚 Stack trace:', error.stack)
       return false
     }
   }
@@ -75,20 +85,29 @@ class OneSignalService {
       }
 
       // Crea una subscription alle notifiche push
+      console.log('🔄 Aspettando Service Worker ready...')
       const registration = await navigator.serviceWorker.ready
+      console.log('✅ Service Worker ready')
+      
+      console.log('🔄 Creando push subscription...')
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(ONESIGNAL_CONFIG.vapidKey || 'YOUR_VAPID_KEY')
+        applicationServerKey: this.urlBase64ToUint8Array(ONESIGNAL_CONFIG.vapidKey)
       })
+      console.log('✅ Push subscription creata')
+      console.log('📋 Subscription endpoint:', subscription.endpoint)
 
       // Genera un ID univoco per questo utente
       this.playerId = this.generatePlayerId(subscription)
+      console.log('🆔 Player ID generato:', this.playerId)
       
       // Registra il player con OneSignal
+      console.log('🔄 Registrando con OneSignal API...')
       const registeredPlayerId = await this.registerWithOneSignal(customerData, this.playerId)
       
       if (registeredPlayerId) {
         this.playerId = registeredPlayerId
+        console.log('✅ Player ID confermato da OneSignal:', this.playerId)
       }
 
       console.log('✅ Utente registrato OneSignal nativo:', this.playerId)
@@ -483,7 +502,7 @@ class OneSignalService {
   }
 
   // Invia notifica push tramite API route (risolve CORS)
-  async sendNotification({ title, message, playerIds, url, tags = null }) {
+  async sendNotification({ title, message, playerIds, url }) {
     try {
       console.log(`📤 Invio notifica a ${playerIds.length} utenti:`, title)
 
