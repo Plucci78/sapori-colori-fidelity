@@ -67,9 +67,11 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('❌ Errore server notifiche:', error)
+    console.error('❌ Stack trace:', error.stack)
     return res.status(500).json({
       success: false,
-      error: 'Errore interno del server'
+      error: `Errore server: ${error.message}`,
+      stack: error.stack
     })
   }
 }
