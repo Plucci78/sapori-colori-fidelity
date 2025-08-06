@@ -46,13 +46,10 @@ const NotificationsDashboard = () => {
       console.log('🔍 TUTTI i clienti nel database:', allCustomers)
       console.log('🔍 Clienti con player_id:', allCustomers?.filter(c => c.onesignal_player_id))
       
-      // Carica clienti attivi con player_id OneSignal
+      // Carica clienti attivi con player_id OneSignal (senza join che causa errore 400)
       const { data: customersData } = await supabase
         .from('customers')
-        .select(`
-          *,
-          customer_levels(name, primary_color, icon_svg)
-        `)
+        .select('*')
         .eq('is_active', true)
         .not('onesignal_player_id', 'is', null)
         .order('created_at', { ascending: false })
