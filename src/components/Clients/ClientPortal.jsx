@@ -8,6 +8,7 @@ import oneSignalService from '../../services/onesignalService'
 import MobileNavigation from './MobileNavigation'
 import QRModal from './QRModal'
 import ImageUpload from '../Common/ImageUpload'
+import GemmeRain from '../Effects/GemmeRain' // NUOVO: componente pioggia gemme
 
 const ClientPortal = ({ token }) => {
   const [loginStep, setLoginStep] = useState('welcome') // 'welcome', 'login', 'loading'
@@ -245,6 +246,7 @@ const ClientPortal = ({ token }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [notification, setNotification] = useState({ show: false, message: '', type: '' })
+  const [showGemmeRain, setShowGemmeRain] = useState(false) // NUOVO: pioggia gemme automatica
 
   // Funzione per mostrare notifiche semplici
   const showNotification = (message, type = 'success') => {
@@ -254,10 +256,79 @@ const ClientPortal = ({ token }) => {
     }, 3000);
   };
 
+  // 💎 CONTROLLO EVENTI PIOGGIA GEMME dal gestionale
+  const checkGemmeEvents = async () => {
+    if (!customer?.id) return;
+    
+    try {
+      // Cerca eventi non processati per questo cliente
+      const { data: events, error } = await supabase
+        .from('gemme_events')
+        .select('*')
+        .eq('customer_id', customer.id)
+        .eq('is_processed', false)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('❌ Errore controllo eventi gemme:', error);
+        return;
+      }
+
+      if (events && events.length > 0) {
+        // Processo tutti gli eventi non processati
+        for (const event of events) {
+          console.log(`💎 Evento gemme trovato: +${event.points_earned} GEMME`);
+          
+          // Mostra la pioggia di gemme
+          setShowGemmeRain(true);
+          
+          // Marca l'evento come processato
+          await supabase
+            .from('gemme_events')
+            .update({ is_processed: true })
+            .eq('id', event.id);
+          
+          // Ricarica i dati del cliente per aggiornare i punti
+          loadClientData();
+          
+          // Mostra notifica
+          showNotification(`🎉 Hai guadagnato ${event.points_earned} GEMME da un acquisto di €${event.transaction_amount}!`, 'success');
+          
+          // Ferma la pioggia dopo 3 secondi
+          setTimeout(() => {
+            setShowGemmeRain(false);
+          }, 3000);
+          
+          // Pausa tra eventi multipli
+          if (events.length > 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Errore durante controllo eventi gemme:', error);
+    }
+  };
+
   useEffect(() => {
     loadClientData()
     // eslint-disable-next-line
   }, [token])
+
+  // 💎 POLLING EVENTI PIOGGIA GEMME ogni 5 secondi
+  useEffect(() => {
+    if (!customer?.id) return;
+
+    // Controllo immediato
+    checkGemmeEvents();
+
+    // Poi ogni 5 secondi
+    const interval = setInterval(() => {
+      checkGemmeEvents();
+    }, 5000); // 5 secondi
+
+    return () => clearInterval(interval);
+  }, [customer?.id])
 
   const loadClientData = async () => {
     setLoading(true)
@@ -413,6 +484,9 @@ const ClientPortal = ({ token }) => {
           {notification.message}
         </div>
       )}
+
+      {/* 💎 PIOGGIA GEMME AUTOMATICA dal gestionale */}
+      {showGemmeRain && <GemmeRain />}
 
       {/* Se il cliente non è stato caricato, mostra un errore */}
       {!customer ? (

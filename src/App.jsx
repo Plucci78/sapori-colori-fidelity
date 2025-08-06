@@ -1709,6 +1709,25 @@ for (const customer of recipients) {
       // ← AGGIUNTO ACTIVITY LOG
       await activityService.logTransaction('TRANSACTION_CREATED', transaction.id, transaction)
 
+      // 💎 AGGIUNGI EVENTO PIOGGIA GEMME per comunicazione con portale
+      if (pointsEarned > 0) {
+        try {
+          await supabase
+            .from('gemme_events')
+            .insert([{
+              customer_id: selectedCustomer.id,
+              event_type: 'gemme_gained',
+              points_earned: pointsEarned,
+              transaction_amount: amount,
+              is_processed: false
+            }])
+          console.log(`💎 Evento pioggia gemme creato: +${pointsEarned} GEMME per ${selectedCustomer.name}`)
+        } catch (eventError) {
+          console.error('⚠️ Errore creazione evento gemme:', eventError)
+          // Non bloccare la transazione per questo errore
+        }
+      }
+
       // Controlla milestone email automatiche DINAMICHE
       if (pointsEarned > 0) {
         console.log(`📧 Controllo email livello per ${selectedCustomer.name}: ${selectedCustomer.points} → ${newPoints} GEMME`)
