@@ -58,7 +58,7 @@ const NFCView = ({ showNotification }) => {
     try {
       const { data, error } = await supabase
         .from('customers')
-        .select('id, name, phone, email, points')
+        .select('id, name, phone, email, points, avatar_url')
         .order('name')
 
       if (error) throw error
@@ -248,7 +248,7 @@ const NFCView = ({ showNotification }) => {
         // Ricarica anche i clienti per essere sicuri
         const { data: freshCustomers } = await supabase
           .from('customers')
-          .select('id, name, phone, email, points')
+          .select('id, name, phone, email, points, avatar_url')
           .order('name')
         
         const existingCustomer = freshCustomers?.find(c => 

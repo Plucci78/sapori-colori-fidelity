@@ -23,7 +23,6 @@
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.513.0",
     "multer": "^2.0.1",
-    "onesignal-ngx": "^2.2.2",
     "qr-scanner": "^1.4.2",
     "qrcode": "^1.5.4",
     "react": "^19.1.0",

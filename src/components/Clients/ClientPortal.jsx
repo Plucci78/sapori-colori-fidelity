@@ -5,7 +5,6 @@ import './ClientPortal.css'; // <-- 1. AGGIUNGI QUESTO IMPORT
 import QRCodeGenerator from '../Common/QRCodeGenerator'
 import { copyToClipboard } from '../../utils/clipboardUtils'
 import oneSignalService from '../../services/onesignalService'
-import OneSignal from 'react-onesignal'
 import MobileNavigation from './MobileNavigation'
 import QRModal from './QRModal'
 import ImageUpload from '../Common/ImageUpload'
@@ -1084,15 +1083,15 @@ const ClientPortalFromStorage = ({ customerData }) => {
       try {
         await oneSignalService.initialize()
         
-        // Controlla se il cliente ha già un Player ID attivo
-        const currentPlayerId = await OneSignal.getPlayerId()
+        // Controlla se il cliente ha già un Player ID salvato
         const savedPlayerId = localStorage.getItem('pwa_onesignal_player_id')
+        const dbPlayerId = customerData?.onesignal_player_id
         
-        console.log('🔍 Player ID check:', { currentPlayerId, savedPlayerId, customerName: customerData?.name })
+        console.log('🔍 Player ID check:', { savedPlayerId, dbPlayerId, customerName: customerData?.name })
         
-        // Se ha un Player ID attivo ma non è salvato nel localStorage o database
-        if (currentPlayerId && customerData) {
-          localStorage.setItem('pwa_onesignal_player_id', currentPlayerId)
+        // Se ha un Player ID nel database ma non nel localStorage
+        if (dbPlayerId && !savedPlayerId && customerData) {
+          localStorage.setItem('pwa_onesignal_player_id', dbPlayerId)
           
           // Verifica se è già salvato nel database
           const { data: customerCheck } = await supabase
@@ -1101,11 +1100,11 @@ const ClientPortalFromStorage = ({ customerData }) => {
             .eq('id', customerData.id)
             .single()
           
-          if (!customerCheck?.onesignal_player_id || customerCheck.onesignal_player_id !== currentPlayerId) {
+          if (!customerCheck?.onesignal_player_id || customerCheck.onesignal_player_id !== dbPlayerId) {
             console.log('💾 Aggiornamento Player ID nel database per cliente esistente')
             const { error: updateError } = await supabase
               .from('customers')
-              .update({ onesignal_player_id: currentPlayerId })
+              .update({ onesignal_player_id: dbPlayerId })
               .eq('id', customerData.id)
             
             if (updateError) {
