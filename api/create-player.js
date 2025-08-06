@@ -61,9 +61,22 @@ export default async function handler(req, res) {
       })
     } else {
       console.error('❌ Errore registrazione player:', result)
+      
+      // Gestisci errors che potrebbero non essere un array
+      let errorMessage = 'Errore registrazione player'
+      if (result.errors) {
+        if (Array.isArray(result.errors)) {
+          errorMessage = result.errors.join(', ')
+        } else if (typeof result.errors === 'string') {
+          errorMessage = result.errors
+        } else {
+          errorMessage = JSON.stringify(result.errors)
+        }
+      }
+      
       return res.status(500).json({
         success: false,
-        error: result.errors ? result.errors.join(', ') : 'Errore registrazione player'
+        error: errorMessage
       })
     }
 
