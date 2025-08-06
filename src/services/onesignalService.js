@@ -84,8 +84,12 @@ class OneSignalService {
       // Genera un ID univoco per questo utente
       this.playerId = this.generatePlayerId(subscription)
       
-      // Registra la subscription con OneSignal
-      await this.registerWithOneSignal(customerData, subscription)
+      // Registra il player con OneSignal
+      const registeredPlayerId = await this.registerWithOneSignal(customerData, this.playerId)
+      
+      if (registeredPlayerId) {
+        this.playerId = registeredPlayerId
+      }
 
       console.log('✅ Utente registrato OneSignal nativo:', this.playerId)
       
@@ -136,40 +140,34 @@ class OneSignalService {
     return Math.abs(hash)
   }
 
-  // Registra con OneSignal API
-  async registerWithOneSignal(customerData, subscription) {
+  // Registra con OneSignal tramite API route
+  async registerWithOneSignal(customerData, playerId) {
     try {
-      const response = await fetch('https://onesignal.com/api/v1/players', {
+      console.log('🔧 Registrazione player con OneSignal API route:', playerId)
+      
+      const response = await fetch('/api/create-player', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',  
-          'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          app_id: ONESIGNAL_CONFIG.appId,
-          device_type: 5, // Web Push
-          identifier: subscription.endpoint,
-          notification_types: 1,
-          tags: {
-            customer_id: customerData.id,
-            customer_name: customerData.name,
-            customer_email: customerData.email || '',
-            customer_phone: customerData.phone || '',
-            customer_points: customerData.points || 0,
-            registration_date: new Date().toISOString()
-          }
+          playerId,
+          customerData
         })
       })
 
-      if (response.ok) {
-        const result = await response.json()
-        console.log('✅ Player registrato con OneSignal:', result.id)
-        return result.id
+      const result = await response.json()
+
+      if (result.success) {
+        console.log('✅ Player registrato tramite API route:', result.playerId)
+        return result.playerId
       } else {
-        console.error('❌ Errore registrazione player OneSignal:', await response.text())
+        console.error('❌ Errore registrazione player via API:', result.error)
+        return null
       }
     } catch (error) {
-      console.error('❌ Errore chiamata API OneSignal:', error)
+      console.error('❌ Errore chiamata API route create-player:', error)
+      return null
     }
   }
 
