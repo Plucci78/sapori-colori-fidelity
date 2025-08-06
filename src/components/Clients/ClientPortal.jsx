@@ -8,7 +8,6 @@ import oneSignalService from '../../services/onesignalService'
 import MobileNavigation from './MobileNavigation'
 import QRModal from './QRModal'
 import ImageUpload from '../Common/ImageUpload'
-import GemmeRain from '../Effects/GemmeRain' // NUOVO: componente pioggia gemme
 
 const ClientPortal = ({ token }) => {
   const [loginStep, setLoginStep] = useState('welcome') // 'welcome', 'login', 'loading'
@@ -246,7 +245,6 @@ const ClientPortal = ({ token }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [notification, setNotification] = useState({ show: false, message: '', type: '' })
-  const [showGemmeRain, setShowGemmeRain] = useState(false) // NUOVO: pioggia gemme automatica
 
   // Funzione per mostrare notifiche semplici
   const showNotification = (message, type = 'success') => {
@@ -279,8 +277,8 @@ const ClientPortal = ({ token }) => {
         for (const event of events) {
           console.log(`💎 Evento gemme trovato: +${event.points_earned} GEMME`);
           
-          // Mostra la pioggia di gemme
-          setShowGemmeRain(true);
+          // 🎆 EFFETTO SPETTACOLARE con SUONO
+          createSpectacularGemmeEffect(event.points_earned);
           
           // Marca l'evento come processato
           await supabase
@@ -294,11 +292,6 @@ const ClientPortal = ({ token }) => {
           // Mostra notifica
           showNotification(`🎉 Hai guadagnato ${event.points_earned} GEMME da un acquisto di €${event.transaction_amount}!`, 'success');
           
-          // Ferma la pioggia dopo 3 secondi
-          setTimeout(() => {
-            setShowGemmeRain(false);
-          }, 3000);
-          
           // Pausa tra eventi multipli
           if (events.length > 1) {
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -308,6 +301,96 @@ const ClientPortal = ({ token }) => {
     } catch (error) {
       console.error('❌ Errore durante controllo eventi gemme:', error);
     }
+  };
+
+  // 🎆 EFFETTO PIOGGIA GEMME SPETTACOLARE
+  const createSpectacularGemmeEffect = (pointsEarned) => {
+    console.log(`🎆 Creando effetto spettacolare per +${pointsEarned} GEMME`);
+    
+    // SUONO (stesso del gestionale)
+    try {
+      const gemmeSound = new Audio('/sounds/coin.wav');
+      gemmeSound.volume = 0.8;
+      gemmeSound.play().catch(error => {
+        console.warn('🔇 Audio bloccato (necessaria interazione utente):', error.message);
+      });
+    } catch (error) {
+      console.warn('❌ Errore caricamento audio:', error);
+    }
+    
+    // CSS per effetto
+    const style = document.createElement('style');
+    style.id = 'spectacular-gemme-style';
+    style.innerHTML = `
+      .spectacular-rain {
+        pointer-events: none; position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        z-index: 9999; overflow: hidden;
+        background: radial-gradient(circle at 50% 30%, rgba(212,175,55,0.2) 0%, transparent 50%);
+        animation: backgroundPulse 4s ease-in-out;
+      }
+      @keyframes backgroundPulse { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+      .spectacular-gem {
+        position: absolute; width: 50px; height: 50px;
+        animation: spectacularFall 2.5s ease-out forwards; user-select: none;
+        filter: drop-shadow(0 0 15px #dc2626) brightness(1.4) saturate(1.6);
+      }
+      @keyframes spectacularFall {
+        0% { top: -60px; opacity: 0; transform: rotate(0deg) scale(0.2); }
+        15% { opacity: 1; transform: rotate(120deg) scale(1.3); }
+        85% { opacity: 0.8; transform: rotate(600deg) scale(1); }
+        100% { top: 100vh; opacity: 0; transform: rotate(720deg) scale(0.3); }
+      }
+      .explosion-burst {
+        position: absolute; top: 50%; left: 50%; width: 180px; height: 180px;
+        margin: -90px 0 0 -90px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(220,38,38,0.9) 0%, rgba(239,68,68,0.7) 25%, rgba(212,175,55,0.5) 50%, transparent 100%);
+        animation: explosionBurst 1.2s ease-out;
+      }
+      @keyframes explosionBurst {
+        0% { transform: scale(0); opacity: 1; }
+        40% { transform: scale(2.5); opacity: 0.9; }
+        100% { transform: scale(5); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Container effetto
+    const rain = document.createElement('div');
+    rain.className = 'spectacular-rain';
+    rain.id = 'spectacular-gemme-container';
+    document.body.appendChild(rain);
+    
+    // Esplosione centrale
+    setTimeout(() => {
+      const burst = document.createElement('div');
+      burst.className = 'explosion-burst';
+      rain.appendChild(burst);
+    }, 100);
+    
+    // Gemme che cadono (numero basato sui punti guadagnati)
+    const gemCount = Math.min(Math.max(pointsEarned, 15), 40);
+    for (let i = 0; i < gemCount; i++) {
+      setTimeout(() => {
+        const gem = document.createElement('img');
+        gem.src = '/gemma-rossa.png';
+        gem.alt = 'gemma';
+        gem.className = 'spectacular-gem';
+        gem.style.left = Math.random() * 95 + '%';
+        gem.style.animationDelay = Math.random() * 0.8 + 's';
+        gem.style.animationDuration = (2 + Math.random()) + 's';
+        rain.appendChild(gem);
+      }, i * 60);
+    }
+    
+    // Cleanup dopo 4 secondi
+    setTimeout(() => {
+      const container = document.getElementById('spectacular-gemme-container');
+      const styleEl = document.getElementById('spectacular-gemme-style');
+      if (container) document.body.removeChild(container);
+      if (styleEl) document.head.removeChild(styleEl);
+      console.log('✨ Effetto spettacolare completato!');
+    }, 4000);
   };
 
   useEffect(() => {
@@ -485,8 +568,6 @@ const ClientPortal = ({ token }) => {
         </div>
       )}
 
-      {/* 💎 PIOGGIA GEMME AUTOMATICA dal gestionale */}
-      {showGemmeRain && <GemmeRain />}
 
       {/* Se il cliente non è stato caricato, mostra un errore */}
       {!customer ? (
