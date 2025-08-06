@@ -34,14 +34,19 @@ export default async function handler(req, res) {
     }
 
     // Chiamata API OneSignal dal server
+    console.log('🔧 Invio notifica OneSignal:', { appId: ONESIGNAL_CONFIG.appId, playerIds })
+    
     const response = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`
+        'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`,
+        'Accept': 'application/json'
       },
       body: JSON.stringify(notificationData)
     })
+    
+    console.log('📡 OneSignal response status:', response.status)
 
     const result = await response.json()
 
