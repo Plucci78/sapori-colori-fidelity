@@ -280,7 +280,7 @@ const GiftCardManagement = ({ showNotification }) => {
               <!-- Istruzioni -->
               <div style="flex: 1;">
                 <ol style="color: #0c4a6e; padding-left: 20px; margin: 0;">
-                  <li style="margin-bottom: 8px;">Vieni al ristorante <strong>Sapori & Colori</strong></li>
+                  <li style="margin-bottom: 8px;">Vieni al forno gastronomico <strong>Sapori & Colori</strong></li>
                   <li style="margin-bottom: 8px;">Mostra il <strong>QR code</strong> o comunica il codice: <strong>${giftCardData.code}</strong></li>
                   <li style="margin-bottom: 8px;">L'importo verrà scalato automaticamente dal tuo ordine</li>
                 </ol>
@@ -801,7 +801,7 @@ const GiftCardManagement = ({ showNotification }) => {
                   margin: 0 auto 6px auto;
                 ">1</div>
                 <p style="margin: 0; font-size: 10px; color: #0c4a6e; font-weight: 600;">
-                  Vieni al ristorante<br>SAPORI & COLORI
+                  Vieni al forno gastronomico<br>SAPORI & COLORI
                 </p>
               </div>
               

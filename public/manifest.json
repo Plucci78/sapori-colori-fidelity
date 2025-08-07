@@ -1,7 +1,7 @@
 {
   "name": "Sapori & Colori - Fidelity App",
   "short_name": "Sapori & Colori",
-  "description": "La tua app per gestire punti, abbonamenti e premi del ristorante Sapori & Colori",
+  "description": "La tua app per gestire punti, abbonamenti e premi del forno gastronomico Sapori & Colori",
   "start_url": "/portal",
   "display": "standalone",
   "background_color": "#8B4513",

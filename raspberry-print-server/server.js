@@ -486,7 +486,7 @@ const createBackupGiftCardImage = async (giftCardData) => {
       <rect width="576" height="800" fill="white" stroke="#2C3E50" stroke-width="6"/>
       <rect x="0" y="0" width="576" height="160" fill="url(#headerGrad)"/>
       <text x="288" y="50" font-family="Arial Black" font-size="42" font-weight="bold" text-anchor="middle" fill="white">SAPORI E COLORI</text>
-      <text x="288" y="80" font-family="Arial" font-size="22" text-anchor="middle" fill="#BDC3C7">RISTORANTE</text>
+      <text x="288" y="80" font-family="Arial" font-size="22" text-anchor="middle" fill="#BDC3C7">FORNO GASTRONOMICO</text>
       <text x="288" y="110" font-family="Arial" font-size="18" text-anchor="middle" fill="#ECF0F1">Via Giuseppe Garibaldi, 123 - Nocera Inferiore</text>
       <text x="288" y="140" font-family="Arial" font-size="18" text-anchor="middle" fill="#ECF0F1">Tel: 081-123-4567</text>
       

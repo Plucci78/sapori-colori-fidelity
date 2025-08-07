@@ -189,7 +189,7 @@ const ClientPortal = ({ token }) => {
               <h1 style={{ fontSize: '24px', marginBottom: '20px' }}>Benvenuto nella Fidelity App!</h1>
               <p style={{ fontSize: '16px', marginBottom: '30px', lineHeight: '1.5' }}>
                 La tua app per gestire punti,<br/>
-                abbonamenti e premi del ristorante<br/>
+                abbonamenti e premi del forno gastronomico<br/>
                 <strong>Sapori & Colori</strong>
               </p>
               <div style={{ fontSize: '48px', marginBottom: '30px' }}>📱✨</div>
