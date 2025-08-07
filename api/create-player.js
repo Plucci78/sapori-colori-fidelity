@@ -21,12 +21,13 @@ export default async function handler(req, res) {
       restApiKey: 'os_v2_app_mgrddd3i65fhtc7lea6frp4hmncfypt3q7mugmfh4hi67xyyoz3emmmkj5zd7hwbgt7qwkoxxyavzlux76q47oot2e5e6qieftmnf4a'
     }
 
-    // Crea player su OneSignal con i dati della subscription reale
+    // Crea player su OneSignal con formato corretto per Web Push
     const playerData = {
       app_id: ONESIGNAL_CONFIG.appId,
       device_type: 5, // Web Push
       notification_types: 1,
-      web_push_topic: subscription.endpoint,
+      // Formato corretto per OneSignal Web Push  
+      identifier: subscription.endpoint,
       web_auth: subscription.keys.auth,
       web_p256: subscription.keys.p256dh,
       tags: {
@@ -40,6 +41,7 @@ export default async function handler(req, res) {
     }
 
     console.log('🔧 Registrazione player OneSignal con subscription reale')
+    console.log('📋 Dati player da inviare:', JSON.stringify(playerData, null, 2))
 
     // Chiamata API OneSignal per creare player
     const response = await fetch('https://onesignal.com/api/v1/players', {
