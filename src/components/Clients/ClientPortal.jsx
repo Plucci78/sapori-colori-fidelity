@@ -2487,6 +2487,209 @@ const ClientPortalFromStorage = ({ customerData }) => {
                   </button>
                 </div>
               </div>
+              
+              {/* Test Notifiche Browser Native */}
+              <div style={{ marginBottom: '25px' }}>
+                <h4 style={{ color: '#8B4513', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  🌐 Test Notifiche Browser Nativo
+                </h4>
+                <div style={{
+                  background: 'white',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                      Test Notifica Browser Nativa
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#666' }}>
+                      Testa il sistema base del browser senza OneSignal
+                    </div>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        console.log('=== 🌐 TEST NOTIFICA BROWSER NATIVA ===');
+                        
+                        // Verifica supporto
+                        if (!('Notification' in window)) {
+                          showNotification('❌ Browser non supporta notifiche', 'error');
+                          return;
+                        }
+                        
+                        // Verifica permesso
+                        let permission = Notification.permission;
+                        console.log('🔍 Permesso attuale:', permission);
+                        
+                        if (permission === 'default') {
+                          console.log('📝 Richiedendo permesso...');
+                          permission = await Notification.requestPermission();
+                        }
+                        
+                        if (permission !== 'granted') {
+                          showNotification('❌ Permesso notifiche negato', 'error');
+                          console.log('❌ Permesso negato:', permission);
+                          return;
+                        }
+                        
+                        // Crea notifica nativa
+                        console.log('✅ Permesso concesso, creando notifica nativa...');
+                        const notification = new Notification('🎉 Test Notifica Browser', {
+                          body: `Ciao ${customer.name}! Questa è una notifica nativa del browser`,
+                          icon: '/icon-192x192.png',
+                          badge: '/icon-192x192.png',
+                          tag: 'test-notification',
+                          requireInteraction: false
+                        });
+                        
+                        console.log('✅ Notifica creata:', notification);
+                        
+                        // Gestisci click
+                        notification.onclick = () => {
+                          console.log('👆 Click su notifica nativa');
+                          notification.close();
+                          window.focus();
+                        };
+                        
+                        // Auto-chiudi dopo 5 secondi
+                        setTimeout(() => {
+                          notification.close();
+                        }, 5000);
+                        
+                        showNotification('✅ Notifica browser nativa inviata! Dovresti vederla ora', 'success');
+                        console.log('=== 🏁 FINE TEST BROWSER NATIVO ===');
+                        
+                      } catch (error) {
+                        console.error('❌ Errore test notifica nativa:', error);
+                        showNotification(`❌ Errore: ${error.message}`, 'error');
+                      }
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px 24px',
+                      borderRadius: '25px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
+                    }}
+                  >
+                    🌐 TEST BROWSER
+                  </button>
+                </div>
+              </div>
+              
+              {/* Debug Service Worker */}
+              <div style={{ marginBottom: '25px' }}>
+                <h4 style={{ color: '#8B4513', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  🔧 Debug Service Worker
+                </h4>
+                <div style={{
+                  background: 'white',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                      Controlla Service Worker
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#666' }}>
+                      Verifica registrazione e stato del Service Worker
+                    </div>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        console.log('=== 🔧 DEBUG SERVICE WORKER ===');
+                        
+                        // Controlla supporto Service Worker
+                        if (!('serviceWorker' in navigator)) {
+                          showNotification('❌ Service Worker non supportato', 'error');
+                          return;
+                        }
+                        
+                        console.log('✅ Service Worker supportato');
+                        
+                        // Controlla registrazioni esistenti
+                        const registrations = await navigator.serviceWorker.getRegistrations();
+                        console.log('📋 Registrazioni Service Worker:', registrations.length);
+                        
+                        registrations.forEach((registration, index) => {
+                          console.log(`📝 Registration ${index}:`, {
+                            scope: registration.scope,
+                            active: registration.active?.scriptURL,
+                            installing: registration.installing?.scriptURL,
+                            waiting: registration.waiting?.scriptURL
+                          });
+                        });
+                        
+                        // Controlla stato specifico OneSignal
+                        try {
+                          const registration = await navigator.serviceWorker.getRegistration('/');
+                          if (registration) {
+                            console.log('✅ Registrazione OneSignal trovata:', {
+                              scope: registration.scope,
+                              active: !!registration.active,
+                              scriptURL: registration.active?.scriptURL
+                            });
+                            
+                            // Controlla se può gestire push
+                            if (registration.active) {
+                              console.log('📨 Service Worker attivo, testando push...');
+                              
+                              // Test del messaging
+                              registration.active.postMessage({
+                                type: 'TEST_MESSAGE',
+                                data: { test: true }
+                              });
+                              
+                              showNotification('✅ Service Worker attivo e funzionante', 'success');
+                            } else {
+                              console.log('⚠️ Service Worker registrato ma non attivo');
+                              showNotification('⚠️ Service Worker non attivo', 'warning');
+                            }
+                          } else {
+                            console.log('❌ Nessuna registrazione OneSignal trovata');
+                            showNotification('❌ Service Worker non registrato', 'error');
+                          }
+                        } catch (swError) {
+                          console.error('❌ Errore controllo registrazione:', swError);
+                          showNotification(`❌ Errore SW: ${swError.message}`, 'error');
+                        }
+                        
+                        console.log('=== 🏁 FINE DEBUG SERVICE WORKER ===');
+                        
+                      } catch (error) {
+                        console.error('❌ Errore debug Service Worker:', error);
+                        showNotification(`❌ Errore: ${error.message}`, 'error');
+                      }
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px 24px',
+                      borderRadius: '25px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)'
+                    }}
+                  >
+                    🔧 DEBUG SW
+                  </button>
+                </div>
+              </div>
 
               {/* Info sezione */}
               <div style={{
