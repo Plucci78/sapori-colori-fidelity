@@ -125,22 +125,25 @@ class OneSignalService {
         }
       }
 
-      // Attende che OneSignal sia pronto e ottiene l'ID utente
-      await window.OneSignal.getUserId().then(userId => {
+      // Attende che OneSignal generi il Player ID
+      console.log('🔄 Aspettando generazione Player ID...')
+      
+      // Aspetta fino a 10 secondi per il Player ID
+      let attempts = 0
+      while (!this.playerId && attempts < 100) {
+        const userId = await window.OneSignal.getUserId()
         if (userId) {
           this.playerId = userId
-          console.log('✅ Player ID da OneSignal SDK:', this.playerId)
+          console.log('✅ Player ID ottenuto:', this.playerId)
+          break
         }
-      })
+        await new Promise(resolve => setTimeout(resolve, 100))
+        attempts++
+      }
 
-      // Se non abbiamo ancora un ID, aspetta l'inizializzazione
       if (!this.playerId) {
-        await new Promise(resolve => {
-          window.OneSignal.getUserId().then(userId => {
-            this.playerId = userId
-            resolve()
-          })
-        })
+        console.error('❌ Impossibile ottenere Player ID dopo 10 secondi')
+        return null
       }
 
       // Imposta i tag utente per personalizzazione
