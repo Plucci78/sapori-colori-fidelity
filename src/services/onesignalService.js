@@ -15,10 +15,8 @@ class OneSignalService {
       console.log('🌐 URL corrente:', window.location.href)
       console.log('📱 User Agent:', navigator.userAgent.includes('iPhone') ? 'iOS' : navigator.userAgent.includes('Android') ? 'Android' : 'Desktop')
       
-      // Carica SDK OneSignal se non presente
-      if (!window.OneSignal) {
-        await this.loadOneSignalSDK()
-      }
+      // Aspetta che OneSignal SDK sia caricato
+      await this.waitForOneSignal()
 
       // Inizializza OneSignal
       await window.OneSignal.init({
@@ -53,27 +51,19 @@ class OneSignalService {
     }
   }
 
-  // Carica SDK OneSignal dinamicamente
-  async loadOneSignalSDK() {
-    return new Promise((resolve, reject) => {
-      if (window.OneSignal) {
-        resolve()
-        return
-      }
-
-      const script = document.createElement('script')
-      script.src = 'https://cdn.onesignal.com/sdks/OneSignalSDK.js'
-      script.async = true
-      script.onload = () => {
-        console.log('✅ OneSignal SDK caricato')
-        resolve()
-      }
-      script.onerror = (error) => {
-        console.error('❌ Errore caricamento OneSignal SDK:', error)
-        reject(error)
-      }
-      document.head.appendChild(script)
-    })
+  // Aspetta che OneSignal SDK sia disponibile
+  async waitForOneSignal() {
+    let attempts = 0
+    while (!window.OneSignal && attempts < 50) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+      attempts++
+    }
+    
+    if (!window.OneSignal) {
+      throw new Error('OneSignal SDK non caricato dopo 5 secondi')
+    }
+    
+    console.log('✅ OneSignal SDK disponibile')
   }
 
   // Registra utente per notifiche push con SDK ufficiale
