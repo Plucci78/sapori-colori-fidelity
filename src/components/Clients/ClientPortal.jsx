@@ -2537,15 +2537,34 @@ const ClientPortalFromStorage = ({ customerData }) => {
                         
                         // Crea notifica nativa
                         console.log('✅ Permesso concesso, creando notifica nativa...');
+                        
+                        // Verifica focus della tab
+                        const isTabFocused = !document.hidden;
+                        console.log('👁️ Tab è in focus:', isTabFocused);
+                        
                         const notification = new Notification('🎉 Test Notifica Browser', {
                           body: `Ciao ${customer.name}! Questa è una notifica nativa del browser`,
                           icon: '/icon-192x192.png',
                           badge: '/icon-192x192.png',
                           tag: 'test-notification',
-                          requireInteraction: false
+                          requireInteraction: false,
+                          silent: false
                         });
                         
                         console.log('✅ Notifica creata:', notification);
+                        
+                        // Aggiungi listener per tutti gli eventi
+                        notification.onshow = () => {
+                          console.log('👀 Notifica mostrata (onshow)');
+                        };
+                        
+                        notification.onclose = () => {
+                          console.log('❌ Notifica chiusa (onclose)');
+                        };
+                        
+                        notification.onerror = (error) => {
+                          console.error('⚠️ Errore notifica (onerror):', error);
+                        };
                         
                         // Gestisci click
                         notification.onclick = () => {
@@ -2554,12 +2573,13 @@ const ClientPortalFromStorage = ({ customerData }) => {
                           window.focus();
                         };
                         
-                        // Auto-chiudi dopo 5 secondi
+                        // Auto-chiudi dopo 10 secondi invece di 5 per più tempo
                         setTimeout(() => {
+                          console.log('⏰ Auto-chiusura notifica dopo 10 secondi');
                           notification.close();
-                        }, 5000);
+                        }, 10000);
                         
-                        showNotification('✅ Notifica browser nativa inviata! Dovresti vederla ora', 'success');
+                        showNotification('✅ Notifica browser inviata! Se non la vedi, apri una nuova tab e prova', 'success');
                         console.log('=== 🏁 FINE TEST BROWSER NATIVO ===');
                         
                       } catch (error) {
@@ -2699,8 +2719,17 @@ const ClientPortalFromStorage = ({ customerData }) => {
                 padding: '15px',
                 textAlign: 'left'
               }}>
-                <div style={{ fontSize: '14px', color: '#1E40AF' }}>
-                  <strong>💡 Nota:</strong> Se abiliti l'audio ma non senti i suoni, assicurati di aver interagito con la pagina (tocca lo schermo) per permettere ai browser di riprodurre l'audio.
+                <div style={{ fontSize: '14px', color: '#1E40AF', marginBottom: '10px' }}>
+                  <strong>💡 Audio:</strong> Se abiliti l'audio ma non senti i suoni, assicurati di aver interagito con la pagina (tocca lo schermo) per permettere ai browser di riprodurre l'audio.
+                </div>
+                <div style={{ fontSize: '14px', color: '#DC2626' }}>
+                  <strong>🔔 Notifiche:</strong> Se i test riportano successo ma non vedi le notifiche:
+                  <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                    <li>Controlla impostazioni browser: <code>Impostazioni → Privacy → Notifiche</code></li>
+                    <li>Su iPhone: <code>Impostazioni → Safari → Notifiche</code></li>
+                    <li>Prova ad aprire una nuova scheda del browser</li>
+                    <li>Controlla se hai "Non Disturbare" attivato</li>
+                  </ul>
                 </div>
               </div>
             </div>
