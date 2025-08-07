@@ -4,21 +4,36 @@ class OneSignalService {
   constructor() {
     this.initialized = false
     this.playerId = null
+    this.isInitializing = false
   }
 
   // Inizializza OneSignal con SDK ufficiale
   async initialize() {
-    if (this.initialized) return
+    // Evita doppia inizializzazione
+    if (this.initialized || this.isInitializing) {
+      console.log('⚠️ OneSignal già inizializzato o in fase di inizializzazione')
+      return this.initialized
+    }
+
+    this.isInitializing = true
 
     try {
       console.log('🔔 Inizializzazione OneSignal SDK ufficiale...')
       console.log('🌐 URL corrente:', window.location.href)
       console.log('📱 User Agent:', navigator.userAgent.includes('iPhone') ? 'iOS' : navigator.userAgent.includes('Android') ? 'Android' : 'Desktop')
       
+      // Controlla se OneSignal è già stato inizializzato globalmente
+      if (window.OneSignal && typeof window.OneSignal.initialized !== 'undefined') {
+        console.log('✅ OneSignal già inizializzato globalmente')
+        this.initialized = true
+        this.isInitializing = false
+        return true
+      }
+      
       // Aspetta che OneSignal SDK sia caricato
       await this.waitForOneSignal()
 
-      // Inizializza OneSignal
+      // Inizializza OneSignal solo se non è già inizializzato
       await window.OneSignal.init({
         appId: ONESIGNAL_CONFIG.appId,
         safari_web_id: ONESIGNAL_CONFIG.safariWebId || undefined,
@@ -43,10 +58,13 @@ class OneSignalService {
 
       console.log('✅ OneSignal SDK inizializzato')
       this.initialized = true
+      this.isInitializing = false
       return true
 
     } catch (error) {
       console.error('❌ Errore inizializzazione OneSignal SDK:', error)
+      this.initialized = false
+      this.isInitializing = false
       return false
     }
   }
@@ -68,8 +86,18 @@ class OneSignalService {
 
   // Registra utente per notifiche push con SDK ufficiale
   async registerUser(customerData) {
+    // Se c'è già un Player ID, evita doppia registrazione
+    if (this.playerId) {
+      console.log('⚠️ Utente già registrato con Player ID:', this.playerId)
+      return this.playerId
+    }
+
     if (!this.initialized) {
-      await this.initialize()
+      const success = await this.initialize()
+      if (!success) {
+        console.error('❌ Impossibile inizializzare OneSignal')
+        return null
+      }
     }
 
     try {
