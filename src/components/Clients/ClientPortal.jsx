@@ -1360,12 +1360,20 @@ const ClientPortalFromStorage = ({ customerData }) => {
   const createSpectacularGemmeEffect = (pointsEarned) => {
     console.log(`💥 PWA - Creando ESPLOSIONE spettacolare per +${pointsEarned} GEMME`);
     
-    // SUONO solo se abilitato nelle impostazioni
+    // SUONO solo se abilitato nelle impostazioni E sbloccato (importante per iOS)
     if (audioEnabled) {
       try {
         const gemmeSound = new Audio('/sounds/coin.wav');
         gemmeSound.volume = 0.8;
-        gemmeSound.play().catch(() => {}); // Fail silently se audio bloccato
+        
+        // Controlla se l'audio è stato sbloccato dall'utente (iOS/Safari)
+        const isAudioUnlocked = sessionStorage.getItem('audio_unlocked') === 'true';
+        
+        if (isAudioUnlocked) {
+          gemmeSound.play().catch(() => {}); // Fail silently se audio bloccato
+        } else {
+          console.log('🍎 Audio non ancora sbloccato - vai su Impostazioni e attiva l\'audio');
+        }
       } catch (error) {
         // Fail silently
       }
@@ -1535,17 +1543,24 @@ const ClientPortalFromStorage = ({ customerData }) => {
     localStorage.setItem('pwa_audio_enabled', JSON.stringify(newState));
     
     if (newState) {
-      // Test audio quando viene abilitato
+      // Test audio IMMEDIATO quando viene abilitato (importante per iOS)
       try {
         const testSound = new Audio('/sounds/coin.wav');
-        testSound.volume = 0.5;
+        testSound.volume = 0.8;
+        
+        // Su iOS/Safari, l'audio DEVE essere riprodotto in risposta diretta al click dell'utente
         await testSound.play();
-        showNotification('🔊 Audio abilitato! Suoni effetti attivi', 'success');
+        showNotification('🔊 Audio abilitato! Suoni effetti attivi ✨', 'success');
+        
+        // Salva che l'audio è stato "sbloccato" per questo session
+        sessionStorage.setItem('audio_unlocked', 'true');
       } catch (error) {
-        showNotification('🔊 Audio abilitato! (Tocca lo schermo per attivare i suoni)', 'success');
+        console.warn('🍎 Audio bloccato iOS/Safari:', error.message);
+        showNotification('🔊 Audio abilitato! (Su iPhone: interagisci prima con la pagina)', 'success');
       }
     } else {
       showNotification('🔇 Audio disabilitato', 'success');
+      sessionStorage.removeItem('audio_unlocked');
     }
   };
 
@@ -2352,6 +2367,11 @@ const ClientPortalFromStorage = ({ customerData }) => {
                         '🔊 Attivo - Sentirai il suono quando guadagni gemme' : 
                         '🔇 Disattivo - Nessun suono negli effetti'
                       }
+                      {audioEnabled && !sessionStorage.getItem('audio_unlocked') && (
+                        <div style={{ color: '#F59E0B', fontSize: '12px', marginTop: '4px' }}>
+                          🍎 Su iPhone: clicca il pulsante per sbloccare l'audio
+                        </div>
+                      )}
                     </div>
                   </div>
                   <button
@@ -2415,13 +2435,13 @@ const ClientPortalFromStorage = ({ customerData }) => {
                         const notificationStatus = await oneSignalService.getNotificationStatus();
                         console.log('📋 Status notifiche:', notificationStatus);
                         
-                        // 3. Registra utente se non già fatto
-                        let playerId = localStorage.getItem('pwa_onesignal_player_id');
-                        if (!playerId) {
-                          console.log('🔄 Registrando utente...');
-                          playerId = await oneSignalService.registerUser(customer);
-                          console.log('✅ Player ID ottenuto:', playerId);
-                        }
+                        // 3. Forza nuova registrazione per test (rimuove cache)
+                        console.log('🗑️ Rimuovendo Player ID cached per test...');
+                        localStorage.removeItem('pwa_onesignal_player_id');
+                        
+                        console.log('🔄 Registrando utente con nuovo sistema...');
+                        const playerId = await oneSignalService.registerUser(customer);
+                        console.log('✅ Player ID ottenuto:', playerId);
                         
                         // 4. Invia notifica di test
                         if (playerId) {
