@@ -2488,6 +2488,182 @@ const ClientPortalFromStorage = ({ customerData }) => {
           </div>
         )
 
+      case 'referral':
+        return (
+          <div className="client-section">
+            <h3>👥 Sistema Referral</h3>
+            
+            {/* Progresso referral */}
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9em', color: '#666', marginBottom: '8px' }}>
+                <span>Prossimo bonus a {Math.ceil((referredFriends.length) / 5) * 5} inviti</span>
+                <span style={{ fontWeight: 'bold', color: '#8B4513' }}>{referredFriends.length}/5</span>
+              </div>
+              <div style={{ width: '100%', height: '12px', backgroundColor: '#e0e0e0', borderRadius: '6px', overflow: 'hidden' }}>
+                <div 
+                  style={{ 
+                    height: '100%', 
+                    background: 'linear-gradient(to right, #8B4513, #D4AF37)',
+                    width: `${((referredFriends.length % 5) * 20)}%`,
+                    transition: 'width 0.5s ease'
+                  }}
+                ></div>
+              </div>
+            </div>
+
+            {/* Statistiche referral */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '20px' }}>
+              <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#fff3cd', borderRadius: '10px' }}>
+                <div style={{ fontSize: '1.5em', marginBottom: '5px' }}>👥</div>
+                <div style={{ fontSize: '1.8em', fontWeight: 'bold', color: '#8B4513' }}>{referredFriends.length}</div>
+                <div style={{ fontSize: '0.8em', color: '#666' }}>Amici Invitati</div>
+              </div>
+              <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#ffe6e6', borderRadius: '10px' }}>
+                <div style={{ fontSize: '1.5em', marginBottom: '5px' }}>💎</div>
+                <div style={{ fontSize: '1.8em', fontWeight: 'bold', color: '#d32f2f' }}>{referredFriends.length * getReferralPoints(referredFriends.length)}</div>
+                <div style={{ fontSize: '0.8em', color: '#666' }}>GEMME Guadagnate</div>
+              </div>
+              <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#f0f8ff', borderRadius: '10px' }}>
+                <div style={{ fontSize: '1.5em', marginBottom: '5px' }}>🎯</div>
+                <div style={{ fontSize: '1.2em', fontWeight: 'bold', color: '#8B4513' }}>{getReferralLevel(referredFriends.length)}</div>
+                <div style={{ fontSize: '0.8em', color: '#666' }}>Livello</div>
+              </div>
+            </div>
+
+            {/* Codice referral */}
+            <div style={{ marginBottom: '20px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '10px', border: '2px solid #8B4513' }}>
+              <div style={{ fontSize: '0.9em', fontWeight: '600', color: '#666', marginBottom: '10px', textAlign: 'center' }}>
+                Il tuo codice referral
+              </div>
+              <div 
+                className="referral-code-minimal" 
+                onClick={handleCopyReferralCode} 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '15px 20px',
+                  borderRadius: '8px',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #ddd',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <span style={{ fontSize: '2.2em', fontWeight: 'bold', color: '#333', letterSpacing: '2px' }}>
+                  {customer.referral_code}
+                </span>
+                <svg style={{ width: '24px', height: '24px', marginLeft: '15px', color: '#8B4513' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div style={{ fontSize: '0.8em', color: '#666', textAlign: 'center', marginTop: '5px' }}>
+                Clicca per copiare negli appunti
+              </div>
+            </div>
+
+            {/* Lista amici invitati */}
+            {referralLoading ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <div style={{ fontSize: '1.2em' }}>⏳ Caricamento referral...</div>
+              </div>
+            ) : referredFriends.length > 0 ? (
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ fontWeight: '600', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <svg style={{ width: '20px', height: '20px', color: '#8B4513' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                  Amici che hai invitato ({referredFriends.length})
+                </h4>
+                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                  {referredFriends.map((referral, index) => (
+                    <div key={referral.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', backgroundColor: '#f8f9fa', borderRadius: '8px', marginBottom: '8px', border: '1px solid #e0e0e0' }}>
+                      <div>
+                        <div style={{ fontWeight: '600', color: '#333' }}>
+                          {referral.referred?.name || 'Nome non disponibile'}
+                        </div>
+                        <div style={{ fontSize: '0.8em', color: '#666' }}>
+                          Registrato il {new Date(referral.created_at).toLocaleDateString('it-IT')}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ padding: '4px 8px', backgroundColor: referral.status === 'completed' ? '#d4edda' : '#fff3cd', color: referral.status === 'completed' ? '#155724' : '#856404', borderRadius: '12px', fontSize: '0.75em', fontWeight: '600' }}>
+                          {referral.status === 'completed' ? '✅ Completato' : '⏳ In attesa'}
+                        </span>
+                        {referral.status === 'completed' && (
+                          <span style={{ fontSize: '0.8em', fontWeight: 'bold', color: '#d32f2f' }}>
+                            +{getReferralPoints(index)} 💎
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '10px', border: '2px dashed #ddd' }}>
+                <div style={{ fontSize: '1.2em', marginBottom: '10px' }}>🎯</div>
+                <h4 style={{ fontWeight: '600', marginBottom: '10px' }}>Inizia a invitare amici!</h4>
+                <p style={{ fontSize: '0.9em', color: '#666', lineHeight: '1.4' }}>
+                  Condividi il tuo codice referral per guadagnare gemme extra. 
+                  I tuoi amici riceveranno <strong>10 gemme</strong> di benvenuto e tu ne guadagnerai <strong>{getReferralPoints(0)}</strong> al loro primo acquisto!
+                </p>
+              </div>
+            )}
+
+            {/* Bottoni condivisione */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginTop: '20px' }}>
+              <button 
+                onClick={() => {
+                  const message = `🎉 Ciao! Ti invito a scoprire il fantastico programma fedeltà di Sapori e Colori! Con il mio codice referral ${customer.referral_code} riceverai subito 10 GEMME gratuite! 💎\n\nRegistrati qui: ${window.location.origin}/portal?ref=${customer.referral_code}\n\nPiù acquisti, più gemme accumuli, più premi ottieni! 🎁`
+                  const url = `https://wa.me/?text=${encodeURIComponent(message)}`
+                  window.open(url, '_blank')
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '12px 16px',
+                  backgroundColor: '#25d366',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '0.9em',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.3s ease'
+                }}
+              >
+                📱 WhatsApp
+              </button>
+              <button 
+                onClick={async () => {
+                  const shareLink = `${window.location.origin}/portal?ref=${customer.referral_code}`
+                  await copyToClipboard(shareLink, () => showNotification('🔗 Link copiato negli appunti!'))
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '12px 16px',
+                  backgroundColor: '#8B4513',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '0.9em',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.3s ease'
+                }}
+              >
+                🔗 Copia Link
+              </button>
+            </div>
+          </div>
+        )
+
       case 'profile':
         return (
           <div className="client-section">

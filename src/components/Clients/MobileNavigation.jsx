@@ -5,8 +5,9 @@ const MobileNavigation = ({ activeSection, onSectionChange, onGemClick, customer
   const navItems = [
     { id: 'home', icon: '🏠', label: 'Home' },
     { id: 'prizes', icon: '🎁', label: 'Premi' },
-    { id: 'gem', icon: '💎', label: 'QR Code', isGem: true },
     { id: 'history', icon: '📊', label: 'Storico' },
+    { id: 'gem', icon: '💎', label: 'QR Code', isGem: true },
+    { id: 'referral', icon: '👥', label: 'Referral' },
     { id: 'profile', icon: '👤', label: 'Profilo' },
     { id: 'settings', icon: '⚙️', label: 'Impostazioni' }
   ]
