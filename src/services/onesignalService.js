@@ -103,17 +103,16 @@ class OneSignalService {
     try {
       console.log('📱 Registrazione utente OneSignal SDK:', customerData.name)
 
-      // Controlla se già sottoscritto
+      // Controlla se già sottoscritto (SEMPLIFICATO)
       console.log('🔍 Controllo stato permessi notifiche...')
-      let isSubscribed
+      let isSubscribed = 'default' // Assumiamo sempre che non sia ancora iscritto
+      
+      // Controllo rapido senza bloccare
       try {
-        isSubscribed = await window.OneSignal.getNotificationPermission()
-        console.log('✅ Stato attuale notifiche:', isSubscribed)
-      } catch (error) {
-        console.error('❌ Errore controllo permessi:', error)
-        // Prova metodo alternativo
         isSubscribed = Notification.permission || 'default'
-        console.log('🔄 Fallback - Stato permessi:', isSubscribed)
+        console.log('✅ Stato permessi browser:', isSubscribed)
+      } catch (error) {
+        console.log('ℹ️ Controllo permessi non disponibile, procedo...')
       }
 
       if (isSubscribed !== 'granted') {
