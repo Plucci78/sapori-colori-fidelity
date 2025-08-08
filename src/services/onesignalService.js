@@ -156,14 +156,29 @@ class OneSignalService {
       // Attende che OneSignal generi il Player ID
       console.log('🔄 Aspettando generazione Player ID...')
       
-      // Aspetta fino a 10 secondi per il Player ID
+      // Aspetta fino a 10 secondi per il Player ID (v16 API)
       let attempts = 0
       while (!this.playerId && attempts < 100) {
-        const userId = await window.OneSignal.getUserId()
-        if (userId) {
-          this.playerId = userId
-          console.log('✅ Player ID ottenuto:', this.playerId)
-          break
+        try {
+          // Prova prima v16 API
+          const userId = window.OneSignal.User?.PushSubscription?.id || await window.OneSignal.getUserId()
+          if (userId) {
+            this.playerId = userId
+            console.log('✅ Player ID ottenuto (v16):', this.playerId)
+            break
+          }
+        } catch (e) {
+          // Se v16 non funziona, prova v15
+          try {
+            const userId = await window.OneSignal.getUserId()
+            if (userId) {
+              this.playerId = userId
+              console.log('✅ Player ID ottenuto (v15):', this.playerId)
+              break
+            }
+          } catch (e2) {
+            console.log(`🔄 Tentativo ${attempts}/100 - Player ID non ancora disponibile`)
+          }
         }
         await new Promise(resolve => setTimeout(resolve, 100))
         attempts++
