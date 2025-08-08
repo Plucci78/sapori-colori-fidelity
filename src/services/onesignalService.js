@@ -97,52 +97,19 @@ class OneSignalService {
           console.log('✅ Stato permessi:', currentPermission)
 
           if (!currentPermission) {
-            // Messaggio personalizzato per l'utente
-            const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
-            let message = `🔔 Ciao ${customerData.name}!\n\n`
-            
-            if (isIOS && !this.isPWA()) {
-              message += `🍎 IMPORTANTE per iPhone/iPad:\n` +
-                        `Prima installa l'app: "Condividi" → "Aggiungi alla Home"\n\n`
-            }
-            
-            message += `Vuoi ricevere notifiche personalizzate su:\n` +
-                      `• 🎁 Premi disponibili\n` +
-                      `• ✨ Offerte speciali\n` +
-                      `• 🎯 Promozioni esclusive\n\n` +
-                      `(Il browser ti chiederà poi conferma)`
-            
             console.log('📝 Richiesta permesso notifiche tramite OneSignal SDK v16...')
             
-            // Sostituiamo confirm() con una Promise che gestisce il permesso immediatamente
-            const userResponse = await new Promise((confirmResolve) => {
-              const result = confirm(message)
-              if (!result) {
-                console.log('⚠️ Utente ha rifiutato la registrazione notifiche')
-                confirmResolve(null)
-                return
-              }
+            try {
+              // Usa SOLO il slidedown OneSignal che gestisce correttamente i user gesture
+              console.log('🎯 Tentativo slidedown prompt OneSignal v16...')
+              await OneSignal.Slidedown.promptPush({ force: true })
+              console.log('✅ Slidedown prompt completato')
               
-              // IMMEDIATAMENTE dopo il click OK, richiedi permesso (stesso stack di eventi!)
-              console.log('🎯 Tentativo Notification.requestPermission() nativo IMMEDIATO...')
-              Notification.requestPermission().then(permission => {
-                console.log('✅ Permesso browser nativo ottenuto:', permission)
-                confirmResolve(permission)
-              }).catch(error => {
-                console.error('❌ Errore Notification.requestPermission():', error)
-                confirmResolve(null)
-              })
-            })
-            
-            if (!userResponse) {
-              resolve(null)
-              return
-            }
-            
-            if (userResponse === 'granted') {
-              console.log('🎉 Permesso concesso! Aspetto che OneSignal crei subscription...')
-              // Aspetta che OneSignal processi il permesso concesso
+              // Aspetta che OneSignal processi la risposta utente
               await new Promise(resolve => setTimeout(resolve, 3000))
+              
+            } catch (error) {
+              console.error('❌ Errore slidedown prompt:', error)
             }
           }
 
