@@ -140,66 +140,89 @@ class OneSignalService {
         
         console.log('📝 Richiesta permesso notifiche tramite OneSignal SDK...')
         
-        // OneSignal gestisce automaticamente iOS, Android, Desktop
         try {
-          // Prova prima v16 API
-          if (window.OneSignal.User && window.OneSignal.User.PushSubscription) {
-            console.log('🔧 Usando OneSignal v16 API...')
-            await window.OneSignal.User.PushSubscription.optIn()
-            console.log('✅ Registrazione push v16 completata')
+          // Metodo semplificato - usa solo showSlidedownPrompt che gestisce tutto
+          if (window.OneSignal.showSlidedownPrompt) {
+            console.log('🎯 Usando slidedown prompt OneSignal...')
+            await window.OneSignal.showSlidedownPrompt()
+            console.log('✅ Slidedown prompt mostrato')
+          } else if (window.OneSignal.showNativePrompt) {
+            console.log('🎯 Usando native prompt OneSignal...')
+            await window.OneSignal.showNativePrompt() 
+            console.log('✅ Native prompt mostrato')
           } else {
-            // Fallback v15 API
-            console.log('🔧 Usando OneSignal v15 API...')
+            console.log('🔧 Fallback: registerForPushNotifications...')
             await window.OneSignal.registerForPushNotifications()
-            console.log('✅ Registrazione push v15 completata')
+            console.log('✅ Registrazione push completata')
           }
         } catch (error) {
           console.error('❌ Errore registrazione push:', error)
-          console.log('🔄 Tentativo metodo alternativo...')
-          try {
-            // Ultimo tentativo con metodo diretto
-            await window.OneSignal.showNativePrompt()
-            console.log('✅ Prompt nativo mostrato')
-          } catch (error2) {
-            console.error('❌ Tutti i metodi falliti:', error2)
-            return null
-          }
+          // Non bloccare per errori del prompt - continua a cercare Player ID
+          console.log('⚠️ Continuo senza popup (potrebbe essere già autorizzato)')
         }
       }
 
-      // Attende che OneSignal generi il Player ID
+      // Attende che OneSignal generi il Player ID con strategia migliorata
       console.log('🔄 Aspettando generazione Player ID...')
       
-      // Aspetta fino a 10 secondi per il Player ID (v16 API)
+      // Aspetta fino a 15 secondi con controlli più frequenti
       let attempts = 0
-      while (!this.playerId && attempts < 100) {
+      const maxAttempts = 150 // 15 secondi
+      
+      while (!this.playerId && attempts < maxAttempts) {
         try {
-          // Prova prima v16 API
-          const userId = window.OneSignal.User?.PushSubscription?.id || await window.OneSignal.getUserId()
-          if (userId) {
+          let userId = null
+          
+          // Strategia 1: v16 User API
+          if (window.OneSignal.User?.PushSubscription?.id) {
+            userId = window.OneSignal.User.PushSubscription.id
+            console.log('✅ Player ID trovato via v16 User API:', userId)
+          }
+          // Strategia 2: getUserId() method
+          else if (window.OneSignal.getUserId) {
+            userId = await window.OneSignal.getUserId()
+            if (userId) {
+              console.log('✅ Player ID trovato via getUserId():', userId)
+            }
+          }
+          // Strategia 3: getPlayerId() method (older versions)
+          else if (window.OneSignal.getPlayerId) {
+            userId = await window.OneSignal.getPlayerId()
+            if (userId) {
+              console.log('✅ Player ID trovato via getPlayerId():', userId)
+            }
+          }
+          
+          if (userId && userId !== null && userId !== undefined) {
             this.playerId = userId
-            console.log('✅ Player ID ottenuto (v16):', this.playerId)
             break
           }
-        } catch (e) {
-          // Se v16 non funziona, prova v15
-          try {
-            const userId = await window.OneSignal.getUserId()
-            if (userId) {
-              this.playerId = userId
-              console.log('✅ Player ID ottenuto (v15):', this.playerId)
-              break
-            }
-          } catch (e2) {
-            console.log(`🔄 Tentativo ${attempts}/100 - Player ID non ancora disponibile`)
-          }
+        } catch (error) {
+          console.log(`🔄 Tentativo ${attempts}/${maxAttempts} - Errore: ${error.message}`)
         }
-        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        await new Promise(resolve => setTimeout(resolve, 100)) // 100ms
         attempts++
       }
 
       if (!this.playerId) {
-        console.error('❌ Impossibile ottenere Player ID dopo 10 secondi')
+        console.error('❌ Impossibile ottenere Player ID dopo 15 secondi')
+        
+        // Debug extra: mostra stato OneSignal
+        try {
+          const permission = Notification.permission
+          const isSupported = window.OneSignal?.isPushNotificationsSupported?.()
+          console.log('🔍 Debug OneSignal:', { 
+            permission, 
+            isSupported, 
+            oneSignalExists: !!window.OneSignal,
+            userExists: !!window.OneSignal?.User,
+            subscriptionExists: !!window.OneSignal?.User?.PushSubscription
+          })
+        } catch (e) {
+          console.log('🔍 Errore debug OneSignal:', e.message)
+        }
+        
         return null
       }
 
