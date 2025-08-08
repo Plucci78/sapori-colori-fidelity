@@ -123,13 +123,24 @@ class OneSignalService {
             console.log('📝 Richiesta permesso notifiche tramite OneSignal SDK v16...')
             
             try {
-              // Usa il metodo v16 per richiedere permessi
-              await OneSignal.Notifications.requestPermission()
-              console.log('✅ Permesso richiesto')
+              // Usa il slidedown prompt OneSignal v16 invece del browser nativo
+              console.log('🎯 Tentativo slidedown prompt OneSignal v16...')
+              await OneSignal.Slidedown.promptPush({ force: true })
+              console.log('✅ Slidedown prompt mostrato')
+              
+              // Aspetta un po' per dare tempo all'utente di rispondere
+              await new Promise(resolve => setTimeout(resolve, 2000))
+              
             } catch (error) {
-              console.error('❌ Errore richiesta permesso:', error)
-              // Non bloccare per errori del prompt - continua a cercare Player ID
-              console.log('⚠️ Continuo senza popup (potrebbe essere già autorizzato)')
+              console.error('❌ Errore slidedown prompt:', error)
+              console.log('🔄 Fallback al browser nativo...')
+              
+              try {
+                await OneSignal.Notifications.requestPermission()
+                console.log('✅ Permesso browser richiesto')
+              } catch (fallbackError) {
+                console.error('❌ Errore anche con fallback:', fallbackError)
+              }
             }
           }
 
@@ -181,8 +192,25 @@ class OneSignalService {
               }, 1000)
             })
             
-            // Aspetta il primo che si risolve
-            const result = await Promise.race([subscriptionPromise, timeoutPromise])
+            // Aggiungi anche listener per cambio permessi
+            const permissionPromise = new Promise((permissionResolve) => {
+              OneSignal.Notifications.addEventListener('permissionChange', (permission) => {
+                console.log('🔔 Permesso cambiato:', permission)
+                if (permission) {
+                  // Aspetta un po' e controlla se ora c'è il subscription ID
+                  setTimeout(() => {
+                    const newId = OneSignal.User.PushSubscription.id
+                    if (newId) {
+                      console.log('✅ Subscription ID ottenuto dopo permesso:', newId)
+                      permissionResolve(newId)
+                    }
+                  }, 1000)
+                }
+              })
+            })
+            
+            // Aspetta il primo che si risolve tra tutti e tre
+            const result = await Promise.race([subscriptionPromise, timeoutPromise, permissionPromise])
             
             if (result) {
               this.playerId = result
