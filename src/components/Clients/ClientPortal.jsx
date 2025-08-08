@@ -118,31 +118,8 @@ const ClientPortal = ({ token }) => {
       localStorage.setItem('pwa_customer_id', customerData.id)
       localStorage.setItem('pwa_customer_data', JSON.stringify(customerData))
       
-      // 🔔 REGISTRA UTENTE SU ONESIGNAL PER NOTIFICHE PUSH
-      try {
-        console.log('🔔 Registrazione OneSignal per:', customerData.name)
-        const playerId = await oneSignalService.registerUser(customerData)
-        if (playerId) {
-          console.log('✅ Cliente registrato OneSignal:', playerId)
-          // Salva Player ID per uso futuro
-          localStorage.setItem('pwa_onesignal_player_id', playerId)
-          
-          // Salva Player ID nel database del cliente
-          const { error: updateError } = await supabase
-            .from('customers')
-            .update({ onesignal_player_id: playerId })
-            .eq('id', customerData.id)
-          
-          if (updateError) {
-            console.error('⚠️ Errore salvataggio Player ID nel database:', updateError)
-          } else {
-            console.log('✅ Player ID salvato nel database per cliente:', customerData.name)
-          }
-        }
-      } catch (error) {
-        console.error('⚠️ Errore registrazione OneSignal:', error)
-        // Non bloccare il login se OneSignal fallisce
-      }
+      // 🔔 OneSignal: Registrazione disponibile tramite pulsante (non automatica)
+      console.log('ℹ️ OneSignal pronto - clicca "Attiva Notifiche" per registrarti')
       
       // Forza ricarica del componente con il cliente trovato
       window.location.reload()
