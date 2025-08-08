@@ -123,24 +123,27 @@ class OneSignalService {
             console.log('📝 Richiesta permesso notifiche tramite OneSignal SDK v16...')
             
             try {
-              // PRIMA: Prova il prompt browser nativo diretto
-              console.log('🎯 Tentativo prompt browser nativo diretto...')
-              await OneSignal.Notifications.requestPermission()
-              console.log('✅ Prompt browser nativo mostrato')
+              // PRIMA: Prova il metodo browser nativo PURO (senza OneSignal wrapper)
+              console.log('🎯 Tentativo Notification.requestPermission() nativo...')
+              const permission = await Notification.requestPermission()
+              console.log('✅ Permesso browser nativo ottenuto:', permission)
               
-              // Aspetta un po' per dare tempo all'utente di rispondere
-              await new Promise(resolve => setTimeout(resolve, 2000))
+              if (permission === 'granted') {
+                console.log('🎉 Permesso concesso! Aspetto che OneSignal crei subscription...')
+                // Aspetta che OneSignal processi il permesso concesso
+                await new Promise(resolve => setTimeout(resolve, 3000))
+              }
               
             } catch (error) {
-              console.error('❌ Errore prompt nativo:', error)
-              console.log('🔄 Fallback al slidedown OneSignal...')
+              console.error('❌ Errore Notification.requestPermission():', error)
+              console.log('🔄 Fallback a OneSignal.Notifications.requestPermission...')
               
               try {
-                await OneSignal.Slidedown.promptPush({ force: true })
-                console.log('✅ Slidedown prompt mostrato come fallback')
+                await OneSignal.Notifications.requestPermission()
+                console.log('✅ OneSignal requestPermission chiamato')
                 await new Promise(resolve => setTimeout(resolve, 2000))
               } catch (fallbackError) {
-                console.error('❌ Errore anche con slidedown:', fallbackError)
+                console.error('❌ Errore anche con OneSignal:', fallbackError)
               }
             }
           }
