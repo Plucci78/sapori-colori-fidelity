@@ -352,6 +352,7 @@ class OneSignalService {
     console.log('🔔 promptPermission chiamato - usando registerUser...');
     const customerData = JSON.parse(localStorage.getItem('pwa_customer_data') || '{}');
     if (customerData.id) {
+      // Chiamata diretta senza popup duplicato
       return await this.registerUser(customerData);
     }
     return null;
