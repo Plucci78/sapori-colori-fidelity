@@ -1,4 +1,4 @@
-import { ONESIGNAL_CONFIG, isDevelopment } from '../config/onesignal'
+import { ONESIGNAL_CONFIG } from '../config/onesignal'
 
 class OneSignalService {
   constructor() {
