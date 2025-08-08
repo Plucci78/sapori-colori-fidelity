@@ -116,36 +116,25 @@ class OneSignalService {
       }
 
       if (isSubscribed !== 'granted') {
-        // Per iOS, mostra prima le istruzioni PWA se necessario
+        // Messaggio unico che gestisce sia iOS che altri dispositivi
         const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
+        let message = `🔔 Ciao ${customerData.name}!\n\n`
+        
         if (isIOS && !this.isPWA()) {
-          console.log('📱 iOS rilevato - richiesta installazione PWA')
-          const installAccepted = confirm(
-            `🍎 IMPORTANTE per iPhone/iPad:\n\n` +
-            `Per ricevere notifiche devi prima:\n` +
-            `1. Installare questa app: tocca "Condividi" 📤\n` +
-            `2. Scegli "Aggiungi alla schermata Home" ➕\n` +
-            `3. Tocca "Aggiungi"\n\n` +
-            `Vuoi continuare con la registrazione?`
-          )
-          if (!installAccepted) {
-            console.log('⚠️ Utente ha annullato installazione PWA')
-            return null
-          }
+          message += `🍎 IMPORTANTE per iPhone/iPad:\n` +
+                    `Prima installa l'app: "Condividi" → "Aggiungi alla Home"\n\n`
         }
         
-        // Mostra messaggio personalizzato prima del prompt
-        const userAccepted = confirm(
-          `🔔 Ciao ${customerData.name}!\n\n` +
-          `Vuoi ricevere notifiche personalizzate su:\n` +
-          `• 🎁 Premi disponibili\n` +
-          `• ✨ Offerte speciali\n` +
-          `• 🎯 Promozioni esclusive\n\n` +
-          `(Il browser ti chiederà poi conferma)`
-        )
+        message += `Vuoi ricevere notifiche personalizzate su:\n` +
+                  `• 🎁 Premi disponibili\n` +
+                  `• ✨ Offerte speciali\n` +
+                  `• 🎯 Promozioni esclusive\n\n` +
+                  `(Il browser ti chiederà poi conferma)`
+        
+        const userAccepted = confirm(message)
         
         if (!userAccepted) {
-          console.log('⚠️ Utente ha rifiutato nel messaggio personalizzato')
+          console.log('⚠️ Utente ha rifiutato la registrazione notifiche')
           return null
         }
         

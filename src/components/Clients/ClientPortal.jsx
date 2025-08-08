@@ -514,27 +514,7 @@ const ClientPortal = ({ token }) => {
     // eslint-disable-next-line
   }, [token])
 
-  // 💎 POLLING EVENTI PIOGGIA GEMME ogni 5 secondi
-  useEffect(() => {
-    // Usa localStorage invece di customer state per evitare dependency issues
-    const customerData = localStorage.getItem('pwa_customer_data');
-    if (!customerData) return;
-
-    const parsedCustomer = JSON.parse(customerData);
-    if (!parsedCustomer?.id) return;
-
-    console.log('🎯 Avvio polling gemme per cliente:', parsedCustomer.name);
-
-    // Controllo immediato
-    checkGemmeEvents();
-
-    // Poi ogni 5 secondi
-    const interval = setInterval(() => {
-      checkGemmeEvents();
-    }, 5000); // 5 secondi
-
-    return () => clearInterval(interval);
-  }, []) // Nessuna dependency - si avvia una volta sola quando il componente si monta
+  // ✅ POLLING RIMOSSO - usa solo quello nella sezione PWA (più sicuro)
 
   const loadClientData = async () => {
     setLoading(true)
