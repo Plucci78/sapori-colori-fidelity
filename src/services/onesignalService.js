@@ -123,23 +123,24 @@ class OneSignalService {
             console.log('📝 Richiesta permesso notifiche tramite OneSignal SDK v16...')
             
             try {
-              // Usa il slidedown prompt OneSignal v16 invece del browser nativo
-              console.log('🎯 Tentativo slidedown prompt OneSignal v16...')
-              await OneSignal.Slidedown.promptPush({ force: true })
-              console.log('✅ Slidedown prompt mostrato')
+              // PRIMA: Prova il prompt browser nativo diretto
+              console.log('🎯 Tentativo prompt browser nativo diretto...')
+              await OneSignal.Notifications.requestPermission()
+              console.log('✅ Prompt browser nativo mostrato')
               
               // Aspetta un po' per dare tempo all'utente di rispondere
               await new Promise(resolve => setTimeout(resolve, 2000))
               
             } catch (error) {
-              console.error('❌ Errore slidedown prompt:', error)
-              console.log('🔄 Fallback al browser nativo...')
+              console.error('❌ Errore prompt nativo:', error)
+              console.log('🔄 Fallback al slidedown OneSignal...')
               
               try {
-                await OneSignal.Notifications.requestPermission()
-                console.log('✅ Permesso browser richiesto')
+                await OneSignal.Slidedown.promptPush({ force: true })
+                console.log('✅ Slidedown prompt mostrato come fallback')
+                await new Promise(resolve => setTimeout(resolve, 2000))
               } catch (fallbackError) {
-                console.error('❌ Errore anche con fallback:', fallbackError)
+                console.error('❌ Errore anche con slidedown:', fallbackError)
               }
             }
           }
