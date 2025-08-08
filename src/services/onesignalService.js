@@ -165,9 +165,9 @@ class OneSignalService {
       // Attende che OneSignal generi il Player ID con strategia migliorata
       console.log('🔄 Aspettando generazione Player ID...')
       
-      // Aspetta fino a 15 secondi con controlli più frequenti
+      // Aspetta fino a 20 secondi con controlli più frequenti e strategie multiple
       let attempts = 0
-      const maxAttempts = 150 // 15 secondi
+      const maxAttempts = 200 // 20 secondi
       
       while (!this.playerId && attempts < maxAttempts) {
         try {
@@ -192,8 +192,31 @@ class OneSignalService {
               console.log('✅ Player ID trovato via getPlayerId():', userId)
             }
           }
+          // Strategia 4: Controllo diretto proprietà OneSignal (fallback robusto)
+          else if (window.OneSignal._state?.userId) {
+            userId = window.OneSignal._state.userId
+            console.log('✅ Player ID trovato via _state:', userId)
+          }
+          // Strategia 5: Event listener approach
+          else if (attempts > 50 && window.OneSignal.on) {
+            console.log('🔄 Tentativo registrazione event listener...')
+            try {
+              window.OneSignal.on('subscriptionChange', function(isSubscribed) {
+                if (isSubscribed) {
+                  window.OneSignal.getUserId().then(id => {
+                    if (id) {
+                      console.log('✅ Player ID ottenuto via event listener:', id)
+                      this.playerId = id
+                    }
+                  })
+                }
+              })
+            } catch (e) {
+              console.log('⚠️ Event listener non disponibile')
+            }
+          }
           
-          if (userId && userId !== null && userId !== undefined) {
+          if (userId && userId !== null && userId !== undefined && userId !== '') {
             this.playerId = userId
             break
           }
@@ -206,7 +229,7 @@ class OneSignalService {
       }
 
       if (!this.playerId) {
-        console.error('❌ Impossibile ottenere Player ID dopo 15 secondi')
+        console.error('❌ Impossibile ottenere Player ID dopo 20 secondi')
         
         // Debug extra: mostra stato OneSignal
         try {
@@ -219,8 +242,25 @@ class OneSignalService {
             userExists: !!window.OneSignal?.User,
             subscriptionExists: !!window.OneSignal?.User?.PushSubscription
           })
+          
+          // Tentativo di forzare rigenerazione Player ID
+          console.log('🔄 Tentativo forzatura rigenerazione Player ID...')
+          if (window.OneSignal.setSubscription) {
+            await window.OneSignal.setSubscription(true)
+            await new Promise(resolve => setTimeout(resolve, 2000))
+            
+            // Ultimo tentativo
+            if (window.OneSignal.getUserId) {
+              const finalId = await window.OneSignal.getUserId()
+              if (finalId) {
+                console.log('✅ Player ID ottenuto con forzatura:', finalId)
+                this.playerId = finalId
+                return finalId
+              }
+            }
+          }
         } catch (e) {
-          console.log('🔍 Errore debug OneSignal:', e.message)
+          console.log('🔍 Errore debug/forzatura OneSignal:', e.message)
         }
         
         return null
@@ -272,7 +312,7 @@ class OneSignalService {
     
     if (isIOS && !isPWA) {
       console.log('📱 Dispositivo iOS rilevato, PWA non installata')
-      return new Promise(resolve => {
+      return new Promise(() => {
         const dialog = document.createElement('div')
         dialog.innerHTML = `
           <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 999999; display: flex; align-items: center; justify-content: center; padding: 20px;">
@@ -281,7 +321,7 @@ class OneSignalService {
               <p>1. Tocca il pulsante <strong>Condividi</strong> 📤</p>
               <p>2. Seleziona <strong>"Aggiungi alla schermata Home"</strong> ➕</p>
               <p>3. Tocca <strong>"Aggiungi"</strong> per installare l'app</p>
-              <button onclick="this.closest('div').remove(); resolve(true)" 
+              <button onclick="this.closest('div').remove()" 
                       style="background: #8B4513; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold;">
                 Ho capito!
               </button>
