@@ -307,6 +307,26 @@ class OneSignalService {
     }
   }
 
+  // Metodi mancanti per compatibilità
+  async promptPermission() {
+    console.log('🔔 promptPermission chiamato - usando registerUser...');
+    const customerData = JSON.parse(localStorage.getItem('pwa_customer_data') || '{}');
+    if (customerData.id) {
+      return await this.registerUser(customerData);
+    }
+    return null;
+  }
+
+  // Listener per cambiamenti subscription  
+  onSubscriptionChange(callback) {
+    console.log('👂 onSubscriptionChange listener aggiunto');
+    // Implementazione semplice - potrebbe essere estesa se necessario
+    if (typeof callback === 'function') {
+      // Per ora solo log, può essere implementato con polling o eventi OneSignal
+      console.log('📡 Subscription change listener registrato');
+    }
+  }
+
   // Invia notifica push tramite API route (risolve CORS)
   async sendNotification({ title, message, playerIds, url }) {
     try {
