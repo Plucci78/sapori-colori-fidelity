@@ -1,2 +1,2 @@
-// Import OneSignal official SDK
-importScripts('https://cdn.onesignal.com/sdks/OneSignalSDKWorker.js');
+// Import OneSignal official SDK v16
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
