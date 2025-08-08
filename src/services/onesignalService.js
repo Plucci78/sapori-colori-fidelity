@@ -154,11 +154,28 @@ class OneSignalService {
         
         // OneSignal gestisce automaticamente iOS, Android, Desktop
         try {
-          await window.OneSignal.registerForPushNotifications()
-          console.log('✅ Registrazione push completata')
+          // Prova prima v16 API
+          if (window.OneSignal.User && window.OneSignal.User.PushSubscription) {
+            console.log('🔧 Usando OneSignal v16 API...')
+            await window.OneSignal.User.PushSubscription.optIn()
+            console.log('✅ Registrazione push v16 completata')
+          } else {
+            // Fallback v15 API
+            console.log('🔧 Usando OneSignal v15 API...')
+            await window.OneSignal.registerForPushNotifications()
+            console.log('✅ Registrazione push v15 completata')
+          }
         } catch (error) {
           console.error('❌ Errore registrazione push:', error)
-          return null
+          console.log('🔄 Tentativo metodo alternativo...')
+          try {
+            // Ultimo tentativo con metodo diretto
+            await window.OneSignal.showNativePrompt()
+            console.log('✅ Prompt nativo mostrato')
+          } catch (error2) {
+            console.error('❌ Tutti i metodi falliti:', error2)
+            return null
+          }
         }
       }
 
