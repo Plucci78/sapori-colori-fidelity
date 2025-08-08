@@ -104,8 +104,17 @@ class OneSignalService {
       console.log('📱 Registrazione utente OneSignal SDK:', customerData.name)
 
       // Controlla se già sottoscritto
-      const isSubscribed = await window.OneSignal.getNotificationPermission()
-      console.log('🔍 Stato attuale notifiche:', isSubscribed)
+      console.log('🔍 Controllo stato permessi notifiche...')
+      let isSubscribed
+      try {
+        isSubscribed = await window.OneSignal.getNotificationPermission()
+        console.log('✅ Stato attuale notifiche:', isSubscribed)
+      } catch (error) {
+        console.error('❌ Errore controllo permessi:', error)
+        // Prova metodo alternativo
+        isSubscribed = Notification.permission || 'default'
+        console.log('🔄 Fallback - Stato permessi:', isSubscribed)
+      }
 
       if (isSubscribed !== 'granted') {
         // Per iOS, mostra prima le istruzioni PWA se necessario
