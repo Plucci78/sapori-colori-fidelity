@@ -5,9 +5,12 @@ class OneSignalService {
     this.initialized = false
     this.playerId = null
     this.isInitializing = false
+    
+    // Inizializza OneSignalDeferred per v16
+    window.OneSignalDeferred = window.OneSignalDeferred || []
   }
 
-  // Inizializza OneSignal con SDK ufficiale
+  // Inizializza OneSignal con SDK v16 ufficiale
   async initialize() {
     // Evita doppia inizializzazione
     if (this.initialized || this.isInitializing) {
@@ -18,73 +21,56 @@ class OneSignalService {
     this.isInitializing = true
 
     try {
-      console.log('🔔 Inizializzazione OneSignal SDK ufficiale...')
+      console.log('🔔 Inizializzazione OneSignal SDK v16...')
       console.log('🌐 URL corrente:', window.location.href)
       console.log('📱 User Agent:', navigator.userAgent.includes('iPhone') ? 'iOS' : navigator.userAgent.includes('Android') ? 'Android' : 'Desktop')
       
-      // Controlla se OneSignal è già stato inizializzato globalmente
-      if (window.OneSignal && typeof window.OneSignal.initialized !== 'undefined') {
-        console.log('✅ OneSignal già inizializzato globalmente')
-        this.initialized = true
-        this.isInitializing = false
-        return true
-      }
-      
-      // Aspetta che OneSignal SDK sia caricato
-      await this.waitForOneSignal()
+      return new Promise((resolve) => {
+        window.OneSignalDeferred.push(async (OneSignal) => {
+          try {
+            await OneSignal.init({
+              appId: ONESIGNAL_CONFIG.appId,
+              safari_web_id: ONESIGNAL_CONFIG.safariWebId || undefined,
+              
+              // Configurazioni per tutti i browser
+              notifyButton: {
+                enable: false // Gestiamo il prompt manualmente
+              },
+              
+              // Configurazioni PWA/Web Push
+              serviceWorkerPath: '/OneSignalSDKWorker.js',
+              serviceWorkerUpdaterPath: '/OneSignalSDKUpdaterWorker.js',
+              
+              // Supporto multi-piattaforma automatico
+              autoResubscribe: true,
+              
+              // Prompt personalizzato
+              promptOptions: ONESIGNAL_CONFIG.promptOptions
+            })
 
-      // Inizializza OneSignal solo se non è già inizializzato
-      await window.OneSignal.init({
-        appId: ONESIGNAL_CONFIG.appId,
-        safari_web_id: ONESIGNAL_CONFIG.safariWebId || undefined,
-        allowLocalhostAsSecureOrigin: ONESIGNAL_CONFIG.allowLocalhostAsSecureOrigin,
-        
-        // Configurazioni per tutti i browser
-        notifyButton: {
-          enable: false // Gestiamo il prompt manualmente
-        },
-        
-        // Configurazioni PWA/Web Push
-        serviceWorkerPath: '/OneSignalSDKWorker.js',
-        serviceWorkerUpdaterPath: '/OneSignalSDKUpdaterWorker.js',
-        
-        // Supporto multi-piattaforma automatico
-        autoRegister: false,
-        autoResubscribe: true,
-        
-        // Prompt personalizzato
-        promptOptions: ONESIGNAL_CONFIG.promptOptions
+            console.log('✅ OneSignal SDK v16 inizializzato')
+            this.initialized = true
+            this.isInitializing = false
+            resolve(true)
+
+          } catch (error) {
+            console.error('❌ Errore inizializzazione OneSignal SDK v16:', error)
+            this.initialized = false
+            this.isInitializing = false
+            resolve(false)
+          }
+        })
       })
 
-      console.log('✅ OneSignal SDK inizializzato')
-      this.initialized = true
-      this.isInitializing = false
-      return true
-
     } catch (error) {
-      console.error('❌ Errore inizializzazione OneSignal SDK:', error)
+      console.error('❌ Errore setup OneSignal SDK v16:', error)
       this.initialized = false
       this.isInitializing = false
       return false
     }
   }
 
-  // Aspetta che OneSignal SDK sia disponibile
-  async waitForOneSignal() {
-    let attempts = 0
-    while (!window.OneSignal && attempts < 50) {
-      await new Promise(resolve => setTimeout(resolve, 100))
-      attempts++
-    }
-    
-    if (!window.OneSignal) {
-      throw new Error('OneSignal SDK non caricato dopo 5 secondi')
-    }
-    
-    console.log('✅ OneSignal SDK disponibile')
-  }
-
-  // Registra utente per notifiche push con SDK ufficiale
+  // Registra utente per notifiche push con SDK v16
   async registerUser(customerData) {
     // Se c'è già un Player ID, evita doppia registrazione
     if (this.playerId) {
@@ -100,193 +86,158 @@ class OneSignalService {
       }
     }
 
-    try {
-      console.log('📱 Registrazione utente OneSignal SDK:', customerData.name)
-
-      // Controlla se già sottoscritto (SEMPLIFICATO)
-      console.log('🔍 Controllo stato permessi notifiche...')
-      let isSubscribed = 'default' // Assumiamo sempre che non sia ancora iscritto
-      
-      // Controllo rapido senza bloccare
-      try {
-        isSubscribed = Notification.permission || 'default'
-        console.log('✅ Stato permessi browser:', isSubscribed)
-      } catch (error) {
-        console.log('ℹ️ Controllo permessi non disponibile, procedo...')
-      }
-
-      if (isSubscribed !== 'granted') {
-        // Messaggio unico che gestisce sia iOS che altri dispositivi
-        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
-        let message = `🔔 Ciao ${customerData.name}!\n\n`
-        
-        if (isIOS && !this.isPWA()) {
-          message += `🍎 IMPORTANTE per iPhone/iPad:\n` +
-                    `Prima installa l'app: "Condividi" → "Aggiungi alla Home"\n\n`
-        }
-        
-        message += `Vuoi ricevere notifiche personalizzate su:\n` +
-                  `• 🎁 Premi disponibili\n` +
-                  `• ✨ Offerte speciali\n` +
-                  `• 🎯 Promozioni esclusive\n\n` +
-                  `(Il browser ti chiederà poi conferma)`
-        
-        const userAccepted = confirm(message)
-        
-        if (!userAccepted) {
-          console.log('⚠️ Utente ha rifiutato la registrazione notifiche')
-          return null
-        }
-        
-        console.log('📝 Richiesta permesso notifiche tramite OneSignal SDK...')
-        
+    return new Promise((resolve) => {
+      window.OneSignalDeferred.push(async (OneSignal) => {
         try {
-          // Metodo semplificato - usa solo showSlidedownPrompt che gestisce tutto
-          if (window.OneSignal.showSlidedownPrompt) {
-            console.log('🎯 Usando slidedown prompt OneSignal...')
-            await window.OneSignal.showSlidedownPrompt()
-            console.log('✅ Slidedown prompt mostrato')
-          } else if (window.OneSignal.showNativePrompt) {
-            console.log('🎯 Usando native prompt OneSignal...')
-            await window.OneSignal.showNativePrompt() 
-            console.log('✅ Native prompt mostrato')
-          } else {
-            console.log('🔧 Fallback: registerForPushNotifications...')
-            await window.OneSignal.registerForPushNotifications()
-            console.log('✅ Registrazione push completata')
-          }
-        } catch (error) {
-          console.error('❌ Errore registrazione push:', error)
-          // Non bloccare per errori del prompt - continua a cercare Player ID
-          console.log('⚠️ Continuo senza popup (potrebbe essere già autorizzato)')
-        }
-      }
+          console.log('📱 Registrazione utente OneSignal SDK v16:', customerData.name)
 
-      // Attende che OneSignal generi il Player ID con strategia migliorata
-      console.log('🔄 Aspettando generazione Player ID...')
-      
-      // Aspetta fino a 20 secondi con controlli più frequenti e strategie multiple
-      let attempts = 0
-      const maxAttempts = 200 // 20 secondi
-      
-      while (!this.playerId && attempts < maxAttempts) {
-        try {
-          let userId = null
-          
-          // Strategia 1: v16 User API
-          if (window.OneSignal.User?.PushSubscription?.id) {
-            userId = window.OneSignal.User.PushSubscription.id
-            console.log('✅ Player ID trovato via v16 User API:', userId)
-          }
-          // Strategia 2: getUserId() method
-          else if (window.OneSignal.getUserId) {
-            userId = await window.OneSignal.getUserId()
-            if (userId) {
-              console.log('✅ Player ID trovato via getUserId():', userId)
+          // Controlla permessi notifiche
+          console.log('🔍 Controllo stato permessi notifiche...')
+          const currentPermission = OneSignal.Notifications.permission
+          console.log('✅ Stato permessi:', currentPermission)
+
+          if (!currentPermission) {
+            // Messaggio personalizzato per l'utente
+            const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
+            let message = `🔔 Ciao ${customerData.name}!\n\n`
+            
+            if (isIOS && !this.isPWA()) {
+              message += `🍎 IMPORTANTE per iPhone/iPad:\n` +
+                        `Prima installa l'app: "Condividi" → "Aggiungi alla Home"\n\n`
             }
-          }
-          // Strategia 3: getPlayerId() method (older versions)
-          else if (window.OneSignal.getPlayerId) {
-            userId = await window.OneSignal.getPlayerId()
-            if (userId) {
-              console.log('✅ Player ID trovato via getPlayerId():', userId)
+            
+            message += `Vuoi ricevere notifiche personalizzate su:\n` +
+                      `• 🎁 Premi disponibili\n` +
+                      `• ✨ Offerte speciali\n` +
+                      `• 🎯 Promozioni esclusive\n\n` +
+                      `(Il browser ti chiederà poi conferma)`
+            
+            const userAccepted = confirm(message)
+            
+            if (!userAccepted) {
+              console.log('⚠️ Utente ha rifiutato la registrazione notifiche')
+              resolve(null)
+              return
             }
-          }
-          // Strategia 4: Controllo diretto proprietà OneSignal (fallback robusto)
-          else if (window.OneSignal._state?.userId) {
-            userId = window.OneSignal._state.userId
-            console.log('✅ Player ID trovato via _state:', userId)
-          }
-          // Strategia 5: Event listener approach
-          else if (attempts > 50 && window.OneSignal.on) {
-            console.log('🔄 Tentativo registrazione event listener...')
+            
+            console.log('📝 Richiesta permesso notifiche tramite OneSignal SDK v16...')
+            
             try {
-              window.OneSignal.on('subscriptionChange', function(isSubscribed) {
-                if (isSubscribed) {
-                  window.OneSignal.getUserId().then(id => {
-                    if (id) {
-                      console.log('✅ Player ID ottenuto via event listener:', id)
-                      this.playerId = id
-                    }
-                  })
+              // Usa il metodo v16 per richiedere permessi
+              await OneSignal.Notifications.requestPermission()
+              console.log('✅ Permesso richiesto')
+            } catch (error) {
+              console.error('❌ Errore richiesta permesso:', error)
+              // Non bloccare per errori del prompt - continua a cercare Player ID
+              console.log('⚠️ Continuo senza popup (potrebbe essere già autorizzato)')
+            }
+          }
+
+          // Login utente con External ID per v16
+          if (customerData.id) {
+            console.log('🔑 Login utente con External ID:', customerData.id)
+            await OneSignal.login(customerData.id.toString())
+          }
+
+          // Attende che OneSignal generi il Subscription ID (Player ID) con API v16
+          console.log('🔄 Aspettando generazione Subscription ID (Player ID)...')
+          
+          // Strategia v16: usa l'event listener per subscription changes
+          let subscriptionId = OneSignal.User.PushSubscription.id
+          
+          if (subscriptionId) {
+            console.log('✅ Subscription ID già disponibile:', subscriptionId)
+            this.playerId = subscriptionId
+          } else {
+            console.log('🔄 Aspettando evento subscription change...')
+            
+            // Timeout per evitare attese infinite
+            const timeoutPromise = new Promise((timeoutResolve) => {
+              setTimeout(() => {
+                console.log('⏰ Timeout raggiunto per Subscription ID')
+                timeoutResolve(null)
+              }, 20000) // 20 secondi
+            })
+            
+            // Promise per l'evento subscription change
+            const subscriptionPromise = new Promise((subscriptionResolve) => {
+              const pushSubscriptionChangeListener = (event) => {
+                console.log('📡 Subscription change event:', event)
+                if (event.current.id) {
+                  console.log('✅ Subscription ID ottenuto via event:', event.current.id)
+                  subscriptionResolve(event.current.id)
                 }
+              }
+              
+              OneSignal.User.PushSubscription.addEventListener('change', pushSubscriptionChangeListener)
+              
+              // Controlla anche immediatamente se è già disponibile
+              setTimeout(() => {
+                const currentId = OneSignal.User.PushSubscription.id
+                if (currentId) {
+                  console.log('✅ Subscription ID trovato in controllo ritardato:', currentId)
+                  subscriptionResolve(currentId)
+                }
+              }, 1000)
+            })
+            
+            // Aspetta il primo che si risolve
+            const result = await Promise.race([subscriptionPromise, timeoutPromise])
+            
+            if (result) {
+              this.playerId = result
+              subscriptionId = result
+            }
+          }
+
+          if (!subscriptionId) {
+            console.error('❌ Impossibile ottenere Subscription ID dopo 20 secondi')
+            
+            // Debug extra per v16
+            try {
+              const permission = OneSignal.Notifications.permission
+              const isPushSupported = OneSignal.Notifications.isPushSupported()
+              const userId = OneSignal.User.onesignalId
+              const externalId = OneSignal.User.externalId
+              
+              console.log('🔍 Debug OneSignal v16:', { 
+                permission, 
+                isPushSupported,
+                userId,
+                externalId,
+                subscriptionId: OneSignal.User.PushSubscription.id,
+                subscriptionToken: OneSignal.User.PushSubscription.token
               })
             } catch (e) {
-              console.log('⚠️ Event listener non disponibile')
+              console.log('🔍 Errore debug OneSignal v16:', e.message)
             }
-          }
-          
-          if (userId && userId !== null && userId !== undefined && userId !== '') {
-            this.playerId = userId
-            break
-          }
-        } catch (error) {
-          console.log(`🔄 Tentativo ${attempts}/${maxAttempts} - Errore: ${error.message}`)
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 100)) // 100ms
-        attempts++
-      }
-
-      if (!this.playerId) {
-        console.error('❌ Impossibile ottenere Player ID dopo 20 secondi')
-        
-        // Debug extra: mostra stato OneSignal
-        try {
-          const permission = Notification.permission
-          const isSupported = window.OneSignal?.isPushNotificationsSupported?.()
-          console.log('🔍 Debug OneSignal:', { 
-            permission, 
-            isSupported, 
-            oneSignalExists: !!window.OneSignal,
-            userExists: !!window.OneSignal?.User,
-            subscriptionExists: !!window.OneSignal?.User?.PushSubscription
-          })
-          
-          // Tentativo di forzare rigenerazione Player ID
-          console.log('🔄 Tentativo forzatura rigenerazione Player ID...')
-          if (window.OneSignal.setSubscription) {
-            await window.OneSignal.setSubscription(true)
-            await new Promise(resolve => setTimeout(resolve, 2000))
             
-            // Ultimo tentativo
-            if (window.OneSignal.getUserId) {
-              const finalId = await window.OneSignal.getUserId()
-              if (finalId) {
-                console.log('✅ Player ID ottenuto con forzatura:', finalId)
-                this.playerId = finalId
-                return finalId
-              }
-            }
+            resolve(null)
+            return
           }
-        } catch (e) {
-          console.log('🔍 Errore debug/forzatura OneSignal:', e.message)
+
+          // Imposta i tag utente per personalizzazione con API v16
+          if (subscriptionId) {
+            await OneSignal.User.addTags({
+              customer_name: customerData.name,
+              customer_email: customerData.email || '',
+              customer_phone: customerData.phone || '',
+              customer_points: customerData.points?.toString() || '0',
+              subscription_date: new Date().toISOString(),
+              platform: this.getPlatform()
+            })
+            console.log('✅ Tag utente impostati')
+          }
+
+          console.log('✅ Utente registrato OneSignal SDK v16:', subscriptionId)
+          resolve(subscriptionId)
+
+        } catch (error) {
+          console.error('❌ Errore registrazione OneSignal SDK v16:', error)
+          resolve(null)
         }
-        
-        return null
-      }
-
-      // Imposta i tag utente per personalizzazione
-      if (this.playerId) {
-        await window.OneSignal.sendTags({
-          customer_id: customerData.id?.toString(),
-          customer_name: customerData.name,
-          customer_email: customerData.email || '',
-          customer_phone: customerData.phone || '',
-          customer_points: customerData.points?.toString() || '0',
-          subscription_date: new Date().toISOString(),
-          platform: this.getPlatform()
-        })
-        console.log('✅ Tag utente impostati')
-      }
-
-      console.log('✅ Utente registrato OneSignal SDK:', this.playerId)
-      return this.playerId
-
-    } catch (error) {
-      console.error('❌ Errore registrazione OneSignal SDK:', error)
-      return null
-    }
+      })
+    })
   }
 
   // Rileva piattaforma corrente
@@ -305,118 +256,105 @@ class OneSignalService {
            window.navigator.standalone === true
   }
 
-  // Mostra prompt installazione PWA per iOS se necessario
-  async showPWAInstallPrompt() {
-    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
-    const isPWA = this.isPWA()
-    
-    if (isIOS && !isPWA) {
-      console.log('📱 Dispositivo iOS rilevato, PWA non installata')
-      return new Promise(() => {
-        const dialog = document.createElement('div')
-        dialog.innerHTML = `
-          <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 999999; display: flex; align-items: center; justify-content: center; padding: 20px;">
-            <div style="background: white; border-radius: 12px; padding: 24px; max-width: 400px; text-align: center;">
-              <h3>🍎 Per ricevere notifiche su iPhone</h3>
-              <p>1. Tocca il pulsante <strong>Condividi</strong> 📤</p>
-              <p>2. Seleziona <strong>"Aggiungi alla schermata Home"</strong> ➕</p>
-              <p>3. Tocca <strong>"Aggiungi"</strong> per installare l'app</p>
-              <button onclick="this.closest('div').remove()" 
-                      style="background: #8B4513; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold;">
-                Ho capito!
-              </button>
-            </div>
-          </div>
-        `
-        document.body.appendChild(dialog)
-      })
-    }
-    return true
-  }
-
-
-  // Aggiorna dati utente con SDK ufficiale
+  // Aggiorna dati utente con SDK v16
   async updateUserData(customerData) {
     if (!this.initialized || !this.playerId) return
 
-    try {
-      await window.OneSignal.sendTags({
-        customer_id: customerData.id?.toString(),
-        customer_name: customerData.name,
-        customer_email: customerData.email || '',
-        customer_phone: customerData.phone || '',
-        customer_points: customerData.points?.toString() || '0',
-        last_update: new Date().toISOString(),
-        platform: this.getPlatform()
+    return new Promise((resolve) => {
+      window.OneSignalDeferred.push(async (OneSignal) => {
+        try {
+          await OneSignal.User.addTags({
+            customer_name: customerData.name,
+            customer_email: customerData.email || '',
+            customer_phone: customerData.phone || '',
+            customer_points: customerData.points?.toString() || '0',
+            last_update: new Date().toISOString(),
+            platform: this.getPlatform()
+          })
+          console.log('✅ Dati utente aggiornati OneSignal SDK v16')
+          resolve(true)
+        } catch (error) {
+          console.error('❌ Errore aggiornamento dati OneSignal SDK v16:', error)
+          resolve(false)
+        }
       })
-      console.log('✅ Dati utente aggiornati OneSignal SDK')
-    } catch (error) {
-      console.error('❌ Errore aggiornamento dati OneSignal SDK:', error)
-    }
+    })
   }
 
-  // Ottieni stato notifiche con SDK ufficiale
+  // Ottieni stato notifiche con SDK v16
   async getNotificationStatus() {
     if (!this.initialized) return null
 
-    try {
-      const permission = await window.OneSignal.getNotificationPermission()
-      const userId = await window.OneSignal.getUserId()
-      const isSupported = window.OneSignal.isPushNotificationsSupported()
-      const isPushEnabled = await window.OneSignal.isPushNotificationsEnabled()
-      
-      return {
-        permission,
-        playerId: userId,
-        isSubscribed: isPushEnabled,
-        pushSupported: isSupported,
-        platform: this.getPlatform()
-      }
-    } catch (error) {
-      console.error('❌ Errore stato notifiche SDK:', error)
-      return null
-    }
+    return new Promise((resolve) => {
+      window.OneSignalDeferred.push(async (OneSignal) => {
+        try {
+          const permission = OneSignal.Notifications.permission
+          const subscriptionId = OneSignal.User.PushSubscription.id
+          const isSupported = OneSignal.Notifications.isPushSupported()
+          const optedIn = OneSignal.User.PushSubscription.optedIn
+          
+          resolve({
+            permission,
+            playerId: subscriptionId,
+            isSubscribed: optedIn,
+            pushSupported: isSupported,
+            platform: this.getPlatform()
+          })
+        } catch (error) {
+          console.error('❌ Errore stato notifiche SDK v16:', error)
+          resolve(null)
+        }
+      })
+    })
   }
 
-  // Logout utente con SDK ufficiale
+  // Logout utente con SDK v16
   async logoutUser() {
     if (!this.initialized) return
 
-    try {
-      // Cancella tutti i tag utente
-      await window.OneSignal.deleteTags([
-        'customer_id',
-        'customer_name', 
-        'customer_email',
-        'customer_phone',
-        'customer_points'
-      ])
-      
-      this.playerId = null
-      console.log('✅ Logout OneSignal SDK completato')
-    } catch (error) {
-      console.error('❌ Errore logout OneSignal SDK:', error)
-    }
+    return new Promise((resolve) => {
+      window.OneSignalDeferred.push(async (OneSignal) => {
+        try {
+          // Rimuovi tutti i tag utente
+          await OneSignal.User.removeTags([
+            'customer_name', 
+            'customer_email',
+            'customer_phone',
+            'customer_points'
+          ])
+          
+          // Logout dall'External ID
+          await OneSignal.logout()
+          
+          this.playerId = null
+          console.log('✅ Logout OneSignal SDK v16 completato')
+          resolve(true)
+        } catch (error) {
+          console.error('❌ Errore logout OneSignal SDK v16:', error)
+          resolve(false)
+        }
+      })
+    })
   }
 
-  // Metodi mancanti per compatibilità
+  // Metodi per compatibilità con il codice esistente
   async promptPermission() {
-    console.log('🔔 promptPermission chiamato - usando registerUser...');
-    const customerData = JSON.parse(localStorage.getItem('pwa_customer_data') || '{}');
+    console.log('🔔 promptPermission chiamato - usando registerUser v16...')
+    const customerData = JSON.parse(localStorage.getItem('pwa_customer_data') || '{}')
     if (customerData.id) {
-      // Chiamata diretta senza popup duplicato
-      return await this.registerUser(customerData);
+      return await this.registerUser(customerData)
     }
-    return null;
+    return null
   }
 
-  // Listener per cambiamenti subscription  
+  // Listener per cambiamenti subscription v16
   onSubscriptionChange(callback) {
-    console.log('👂 onSubscriptionChange listener aggiunto');
-    // Implementazione semplice - potrebbe essere estesa se necessario
+    console.log('👂 onSubscriptionChange listener aggiunto per v16')
     if (typeof callback === 'function') {
-      // Per ora solo log, può essere implementato con polling o eventi OneSignal
-      console.log('📡 Subscription change listener registrato');
+      window.OneSignalDeferred.push((OneSignal) => {
+        OneSignal.User.PushSubscription.addEventListener('change', callback)
+        console.log('📡 Subscription change listener registrato v16')
+      })
     }
   }
 
