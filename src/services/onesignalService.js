@@ -221,21 +221,56 @@ class OneSignalService {
           if (!subscriptionId) {
             console.error('❌ Impossibile ottenere Subscription ID dopo 20 secondi')
             
-            // Debug extra per v16
+            // Debug extra per v16 - Mostra anche a schermo per mobile
             try {
               const permission = OneSignal.Notifications.permission
               const isPushSupported = OneSignal.Notifications.isPushSupported()
               const userId = OneSignal.User.onesignalId
               const externalId = OneSignal.User.externalId
+              const subscriptionId = OneSignal.User.PushSubscription.id
+              const subscriptionToken = OneSignal.User.PushSubscription.token
+              const browserPermission = Notification.permission
               
-              console.log('🔍 Debug OneSignal v16:', { 
+              const debugInfo = { 
                 permission, 
                 isPushSupported,
                 userId,
                 externalId,
-                subscriptionId: OneSignal.User.PushSubscription.id,
-                subscriptionToken: OneSignal.User.PushSubscription.token
-              })
+                subscriptionId,
+                subscriptionToken,
+                browserPermission
+              }
+              
+              console.log('🔍 Debug OneSignal v16:', debugInfo)
+              
+              // Mostra debug anche visivamente per mobile
+              const debugDiv = document.createElement('div')
+              debugDiv.id = 'onesignal-debug'
+              debugDiv.style.cssText = 'position:fixed;top:10px;left:10px;background:black;color:lime;padding:10px;font-family:monospace;font-size:12px;z-index:999999;max-width:90vw;overflow-wrap:break-word;'
+              debugDiv.innerHTML = `
+                <h4>🔍 OneSignal Debug</h4>
+                <div>Permission: ${permission}</div>
+                <div>Browser Permission: ${browserPermission}</div>
+                <div>Push Supported: ${isPushSupported}</div>
+                <div>User ID: ${userId || 'null'}</div>
+                <div>External ID: ${externalId || 'null'}</div>
+                <div>Subscription ID: ${subscriptionId || 'null'}</div>
+                <div>Subscription Token: ${subscriptionToken ? 'presente' : 'null'}</div>
+                <button onclick="this.parentElement.remove()" style="margin-top:10px;">Chiudi</button>
+              `
+              
+              // Rimuovi debug precedenti
+              const existing = document.getElementById('onesignal-debug')
+              if (existing) existing.remove()
+              
+              document.body.appendChild(debugDiv)
+              
+              // Auto-rimuovi dopo 30 secondi
+              setTimeout(() => {
+                const debugEl = document.getElementById('onesignal-debug')
+                if (debugEl) debugEl.remove()
+              }, 30000)
+              
             } catch (e) {
               console.log('🔍 Errore debug OneSignal v16:', e.message)
             }
