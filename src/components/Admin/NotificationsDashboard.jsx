@@ -181,6 +181,47 @@ const NotificationsDashboard = () => {
     }
   }
 
+  const checkCustomerLink = async () => {
+    const subscriptionId = '93b3efb8-3845-46dc-bbe9-23aaa0e7947e' // iPhone Subscription ID
+    const externalId = 'dd25f77d-dfab-4e28-8c89-d3a6a9a55b28' // External ID da OneSignal
+    
+    setLoading(true)
+    try {
+      showNotification('🔗 Verificando collegamento customer...', 'info')
+      
+      const response = await fetch('/api/check-customer-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          subscriptionId,
+          externalId
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.analysis.isLinked) {
+        showNotification(
+          `✅ Cliente collegato: ${result.database.customerBySubscription.name}`
+        )
+      } else {
+        const issues = result.analysis.issues.join(', ')
+        showNotification(`⚠️ Problemi collegamento: ${issues}`, 'error')
+      }
+
+      // Mostra dettagli in console per debug
+      console.log('🔗 Analisi collegamento customer:', result)
+      
+    } catch (error) {
+      console.error('Errore verifica collegamento:', error)
+      showNotification('❌ Errore durante la verifica collegamento', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const sendNotification = async () => {
     if (!notificationForm.title.trim() || !notificationForm.message.trim()) {
       showNotification('❌ Titolo e messaggio sono obbligatori', 'error')
@@ -278,6 +319,14 @@ const NotificationsDashboard = () => {
             disabled={loading}
           >
             📱 Fix iPhone Player ID
+          </button>
+
+          <button
+            className="btn-check-link"
+            onClick={checkCustomerLink}
+            disabled={loading}
+          >
+            🔗 Verifica Collegamento
           </button>
         </div>
       </div>
