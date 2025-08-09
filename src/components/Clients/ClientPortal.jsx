@@ -604,9 +604,21 @@ const ClientPortal = ({ token }) => {
   }
 
   // Funzione per la copia del codice referral
-  const handleCopyReferralCode = () => {
-    if (!customer?.referral_code) return;
-    copyToClipboard(customer.referral_code, () => showNotification('✅ Codice Copiato!'));
+  const handleCopyReferralCode = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!customer?.referral_code) {
+      showNotification('⚠️ Nessun codice referral disponibile', 'warning');
+      return;
+    }
+    
+    try {
+      await copyToClipboard(customer.referral_code, () => showNotification('✅ Codice Copiato!'));
+    } catch (error) {
+      console.error('❌ Errore copia referral:', error);
+      showNotification('❌ Errore durante la copia', 'error');
+    }
   };
 
   // Calcola giorni rimanenti per abbonamento
@@ -1955,9 +1967,21 @@ const ClientPortalFromStorage = ({ customerData }) => {
 
   // Resto della logica identica al componente principale...
   // Funzione per la copia del codice referral
-  const handleCopyReferralCode = () => {
-    if (!customer?.referral_code) return;
-    copyToClipboard(customer.referral_code, () => showNotification('✅ Codice Copiato!'));
+  const handleCopyReferralCode = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!customer?.referral_code) {
+      showNotification('⚠️ Nessun codice referral disponibile', 'warning');
+      return;
+    }
+    
+    try {
+      await copyToClipboard(customer.referral_code, () => showNotification('✅ Codice Copiato!'));
+    } catch (error) {
+      console.error('❌ Errore copia referral:', error);
+      showNotification('❌ Errore durante la copia', 'error');
+    }
   };
 
   // Calcola giorni rimanenti per abbonamento
