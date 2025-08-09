@@ -100,16 +100,31 @@ class OneSignalService {
             console.log('📝 Richiesta permesso notifiche tramite OneSignal SDK v16...')
             
             try {
-              // Usa SOLO il slidedown OneSignal che gestisce correttamente i user gesture
-              console.log('🎯 Tentativo slidedown prompt OneSignal v16...')
-              await OneSignal.Slidedown.promptPush({ force: true })
-              console.log('✅ Slidedown prompt completato')
+              // Mostra popup custom invece del slidedown OneSignal
+              console.log('🎯 Mostrando popup custom per permessi...')
+              const userAccepted = await this.showCustomNotificationDialog(customerData.name)
               
-              // Aspetta che OneSignal processi la risposta utente
-              await new Promise(resolve => setTimeout(resolve, 3000))
+              if (userAccepted) {
+                console.log('✅ Utente ha accettato - attivando permessi browser...')
+                // Usa l'API diretta OneSignal v16 per richiedere permesso
+                const permissionGranted = await OneSignal.Notifications.requestPermission()
+                console.log('📱 Permesso browser ricevuto:', permissionGranted)
+                
+                if (!permissionGranted) {
+                  console.log('⚠️ Utente ha rifiutato nel popup browser')
+                  resolve(null)
+                  return
+                }
+              } else {
+                console.log('⚠️ Utente ha rifiutato nel popup custom')
+                resolve(null)
+                return
+              }
               
             } catch (error) {
-              console.error('❌ Errore slidedown prompt:', error)
+              console.error('❌ Errore popup custom:', error)
+              resolve(null)
+              return
             }
           }
 
@@ -269,6 +284,236 @@ class OneSignalService {
           resolve(null)
         }
       })
+    })
+  }
+
+  // Mostra dialogo personalizzato per richiedere permesso notifiche (OneSignal v16)
+  async showCustomNotificationDialog(customerName) {
+    return new Promise((resolve) => {
+      // Crea il dialogo HTML
+      const dialog = document.createElement('div')
+      dialog.id = 'custom-notification-dialog-v16'
+      dialog.innerHTML = `
+        <div class="notification-overlay">
+          <div class="notification-dialog">
+            <div class="notification-header">
+              <img src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" 
+                   alt="Sapori & Colori" class="notification-logo">
+              <h3>🔔 Attiva le Notifiche Push</h3>
+            </div>
+            <div class="notification-content">
+              <p>Ciao <strong>${customerName}</strong>! 👋</p>
+              <p>Vuoi ricevere notifiche personalizzate sui tuoi:</p>
+              <ul>
+                <li>🎁 <strong>Premi disponibili</strong> quando raggiungi i punti necessari</li>
+                <li>✨ <strong>Offerte speciali</strong> dedicate al tuo livello</li>
+                <li>🎯 <strong>Promozioni esclusive</strong> per clienti fedeli</li>
+                <li>🎂 <strong>Auguri di compleanno</strong> con sorprese</li>
+              </ul>
+              <p class="notification-note">
+                📱 Dopo aver cliccato "Sì, attiva!", il browser ti chiederà conferma. 
+                <br>Clicca <strong>"Allow"</strong> o <strong>"Consenti"</strong> per completare.
+              </p>
+            </div>
+            <div class="notification-actions">
+              <button class="notification-btn deny">❌ Non ora</button>
+              <button class="notification-btn accept">✅ Sì, attiva!</button>
+            </div>
+          </div>
+        </div>
+      `
+
+      // Stili CSS inline
+      const style = document.createElement('style')
+      style.textContent = `
+        #custom-notification-dialog-v16 {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 99999;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .notification-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          animation: fadeIn 0.3s ease;
+        }
+
+        .notification-dialog {
+          background: white;
+          border-radius: 20px;
+          max-width: 480px;
+          width: 100%;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          animation: slideUp 0.3s ease;
+        }
+
+        .notification-header {
+          text-align: center;
+          padding: 24px 24px 16px 24px;
+          border-bottom: 1px solid #e5e7eb;
+        }
+
+        .notification-logo {
+          width: 60px;
+          height: 60px;
+          object-fit: contain;
+          margin-bottom: 12px;
+        }
+
+        .notification-header h3 {
+          margin: 0;
+          color: #8B4513;
+          font-size: 1.4em;
+          font-weight: bold;
+        }
+
+        .notification-content {
+          padding: 24px;
+        }
+
+        .notification-content p {
+          margin: 0 0 16px 0;
+          color: #374151;
+          line-height: 1.5;
+        }
+
+        .notification-content ul {
+          margin: 16px 0;
+          padding-left: 0;
+          list-style: none;
+        }
+
+        .notification-content li {
+          margin: 8px 0;
+          padding: 8px 12px;
+          background: #f8fafc;
+          border-radius: 8px;
+          border-left: 3px solid #8B4513;
+        }
+
+        .notification-note {
+          background: #fef3c7;
+          border: 1px solid #f59e0b;
+          border-radius: 10px;
+          padding: 12px;
+          font-size: 0.9em;
+          color: #92400e;
+        }
+
+        .notification-actions {
+          padding: 0 24px 24px 24px;
+          display: flex;
+          gap: 12px;
+        }
+
+        .notification-btn {
+          flex: 1;
+          padding: 14px 20px;
+          border: none;
+          border-radius: 12px;
+          font-size: 1em;
+          font-weight: bold;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .notification-btn.deny {
+          background: #f3f4f6;
+          color: #6b7280;
+        }
+
+        .notification-btn.deny:hover {
+          background: #e5e7eb;
+          transform: translateY(-1px);
+        }
+
+        .notification-btn.accept {
+          background: linear-gradient(135deg, #8B4513 0%, #D4AF37 100%);
+          color: white;
+          box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+        }
+
+        .notification-btn.accept:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(139, 69, 19, 0.4);
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+          from { 
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+          }
+          to { 
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @media (max-width: 480px) {
+          .notification-dialog {
+            margin: 10px;
+            max-width: none;
+          }
+          
+          .notification-header, .notification-content, .notification-actions {
+            padding: 16px;
+          }
+          
+          .notification-actions {
+            flex-direction: column;
+          }
+        }
+      `
+
+      // Aggiungi al DOM
+      document.head.appendChild(style)
+      document.body.appendChild(dialog)
+
+      // Event listeners
+      const acceptBtn = dialog.querySelector('.notification-btn.accept')
+      const denyBtn = dialog.querySelector('.notification-btn.deny')
+
+      const cleanup = () => {
+        document.body.removeChild(dialog)
+        document.head.removeChild(style)
+      }
+
+      acceptBtn.addEventListener('click', () => {
+        cleanup()
+        resolve(true)
+      })
+
+      denyBtn.addEventListener('click', () => {
+        cleanup()
+        resolve(false)
+      })
+
+      // Chiudi con ESC
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+          cleanup()
+          document.removeEventListener('keydown', handleKeyDown)
+          resolve(false)
+        }
+      }
+      document.addEventListener('keydown', handleKeyDown)
     })
   }
 
