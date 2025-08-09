@@ -78,16 +78,45 @@ class OneSignalService {
       return this.playerId
     }
 
+    // Controllo aggiuntivo: verifica se OneSignal ha già una subscription attiva
+    return new Promise((resolve) => {
+      window.OneSignalDeferred.push(async (OneSignal) => {
+        try {
+          const existingSubscriptionId = OneSignal.User.PushSubscription.id
+          const hasPermission = OneSignal.Notifications.permission
+          
+          if (existingSubscriptionId && hasPermission) {
+            console.log('✅ Subscription OneSignal già attiva:', existingSubscriptionId)
+            this.playerId = existingSubscriptionId
+            resolve(existingSubscriptionId)
+            return
+          }
+          
+          console.log('🆕 Nessuna subscription attiva - procedo con registrazione')
+          // Continua con la registrazione normale
+          this.performRegistration(customerData, resolve)
+          
+        } catch (error) {
+          console.error('❌ Errore controllo subscription esistente:', error)
+          // Se errore, procedi comunque con registrazione
+          this.performRegistration(customerData, resolve)
+        }
+      })
+    })
+  }
+
+  // Metodo separato per eseguire la registrazione
+  async performRegistration(customerData, resolve) {
     if (!this.initialized) {
       const success = await this.initialize()
       if (!success) {
         console.error('❌ Impossibile inizializzare OneSignal')
-        return null
+        resolve(null)
+        return
       }
     }
 
-    return new Promise((resolve) => {
-      window.OneSignalDeferred.push(async (OneSignal) => {
+    window.OneSignalDeferred.push(async (OneSignal) => {
         try {
           console.log('📱 Registrazione utente OneSignal SDK v16:', customerData.name)
 
@@ -284,7 +313,6 @@ class OneSignalService {
           resolve(null)
         }
       })
-    })
   }
 
   // Mostra dialogo personalizzato per richiedere permesso notifiche (OneSignal v16)
