@@ -113,6 +113,41 @@ const NotificationsDashboard = () => {
     }
   }
 
+  const fixPlayerId = async () => {
+    const correctPlayerId = '93b3efb8-3845-46dc-bbe9-23aaa0e7947e' // iPhone Subscription ID
+    const customerId = '3a6c6c13-ce52-436d-8d94-c045e8e2c5d6' // PASQUALE LUCCI ID
+    
+    setLoading(true)
+    try {
+      showNotification('🔧 Aggiornando Player ID iPhone...', 'info')
+      
+      const response = await fetch('/api/update-player-id', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          customerId,
+          newPlayerId: correctPlayerId
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        showNotification(`✅ ${result.message}`)
+        await loadData() // Ricarica i dati
+      } else {
+        showNotification(`❌ Errore: ${result.error}`, 'error')
+      }
+    } catch (error) {
+      console.error('Errore fix Player ID:', error)
+      showNotification('❌ Errore aggiornamento Player ID', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const verifyPlayerIds = async () => {
     setLoading(true)
     try {
@@ -235,6 +270,14 @@ const NotificationsDashboard = () => {
             disabled={loading}
           >
             {loading ? '🔍 Verificando...' : '🔧 Verifica Player ID'}
+          </button>
+          
+          <button
+            className="btn-fix-player-id"
+            onClick={() => fixPlayerId()}
+            disabled={loading}
+          >
+            📱 Fix iPhone Player ID
           </button>
         </div>
       </div>
