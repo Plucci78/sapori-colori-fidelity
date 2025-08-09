@@ -1482,6 +1482,58 @@ const ClientPortalFromStorage = ({ customerData }) => {
     return saved !== null ? JSON.parse(saved) : true; // Default true
   })
 
+  // Stati per referral (mancavano nel ClientPortalFromStorage!)
+  const [referredFriends, setReferredFriends] = useState([])
+  const [referralLoading, setReferralLoading] = useState(false)
+
+  // Funzioni referral (copiate dal componente principale)
+  const loadReferredFriends = async (customerId) => {
+    if (!customerId) return
+    
+    setReferralLoading(true)
+    try {
+      console.log('🔍 Caricamento referral per cliente:', customerId)
+      
+      const { data, error } = await supabase
+        .from('referrals')
+        .select(`
+          *,
+          referred:customers!referrals_referred_id_fkey(name, created_at, points)
+        `)
+        .eq('referrer_id', customerId)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('❌ Errore caricamento referral:', error)
+        return
+      }
+
+      console.log('📊 Referral trovati:', data?.length || 0)
+      setReferredFriends(data || [])
+    } catch (error) {
+      console.error('❌ Errore caricamento referral:', error)
+    } finally {
+      setReferralLoading(false)
+    }
+  }
+
+  const getReferralLevel = (count) => {
+    if (count >= 20) return 'GOLD'
+    if (count >= 10) return 'SILVER' 
+    if (count >= 5) return 'BRONZE'
+    return 'NOVICE'
+  }
+
+  const getReferralPoints = (count) => {
+    const level = getReferralLevel(count)
+    switch(level) {
+      case 'GOLD': return 10
+      case 'SILVER': return 8
+      case 'BRONZE': return 5
+      default: return 3
+    }
+  }
+
   // Funzione per mostrare notifiche semplici
   const showNotification = (message, type = 'success') => {
     setNotification({ show: true, message, type });
@@ -1958,6 +2010,9 @@ const ClientPortalFromStorage = ({ customerData }) => {
         .eq('active', true)
         .order('points_cost')
       setPrizes(prizesData || [])
+
+      // Carica referral del cliente (FIX per referredFriends undefined)
+      await loadReferredFriends(freshCustomerData.id)
 
     } catch (err) {
       console.error('Errore caricamento:', err)
