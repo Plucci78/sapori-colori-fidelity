@@ -32,6 +32,24 @@ export default async function handler(req, res) {
     }
 
     console.log(`📊 Trovati ${customers.length} clienti con Player ID`)
+    
+    // DEBUG: Mostra tutti i Player ID trovati
+    customers.forEach(c => {
+      console.log(`🔍 Cliente: ${c.name} - Player ID: ${c.onesignal_player_id}`)
+    })
+
+    if (customers.length === 0) {
+      console.log('⚠️ Nessun cliente con Player ID trovato')
+      return res.status(200).json({ 
+        success: true,
+        results: {
+          total: 0,
+          verified: [],
+          invalid: [],
+          reregistered: []
+        }
+      })
+    }
 
     const results = {
       total: customers.length,
@@ -46,7 +64,10 @@ export default async function handler(req, res) {
         console.log(`🔍 Verifico Player ID per ${customer.name}: ${customer.onesignal_player_id}`)
 
         // Verifica se il Player ID exists su OneSignal
-        const checkResponse = await fetch(`https://onesignal.com/api/v1/players/${customer.onesignal_player_id}?app_id=${ONESIGNAL_CONFIG.appId}`, {
+        const checkUrl = `https://onesignal.com/api/v1/players/${customer.onesignal_player_id}?app_id=${ONESIGNAL_CONFIG.appId}`
+        console.log(`🌐 Chiamata OneSignal: ${checkUrl}`)
+        
+        const checkResponse = await fetch(checkUrl, {
           method: 'GET',
           headers: {
             'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`,
@@ -54,18 +75,24 @@ export default async function handler(req, res) {
           }
         })
 
+        console.log(`📡 OneSignal response status: ${checkResponse.status}`)
+        
         if (checkResponse.ok) {
+          const playerData = await checkResponse.json()
+          console.log(`✅ Player data:`, playerData)
           console.log(`✅ Player ID valido: ${customer.name}`)
           results.verified.push({
             name: customer.name,
             playerId: customer.onesignal_player_id
           })
         } else {
-          console.log(`❌ Player ID invalido: ${customer.name} - ${checkResponse.status}`)
+          const errorData = await checkResponse.text()
+          console.log(`❌ Player ID invalido: ${customer.name} - Status: ${checkResponse.status}`)
+          console.log(`❌ Error response: ${errorData}`)
           results.invalid.push({
             name: customer.name,
             playerId: customer.onesignal_player_id,
-            error: checkResponse.status
+            error: `${checkResponse.status}: ${errorData}`
           })
 
           // Tenta di ri-registrare il Player ID
