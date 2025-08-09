@@ -49,7 +49,7 @@ export default async function handler(req, res) {
         const checkResponse = await fetch(`https://onesignal.com/api/v1/players/${customer.onesignal_player_id}?app_id=${ONESIGNAL_CONFIG.appId}`, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${ONESIGNAL_CONFIG.restApiKey}`,
+            'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`,
             'Accept': 'application/json'
           }
         })
@@ -88,7 +88,7 @@ export default async function handler(req, res) {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${ONESIGNAL_CONFIG.restApiKey}`,
+              'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`,
               'Accept': 'application/json'
             },
             body: JSON.stringify(playerData)

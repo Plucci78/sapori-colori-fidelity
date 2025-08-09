@@ -113,6 +113,39 @@ const NotificationsDashboard = () => {
     }
   }
 
+  const verifyPlayerIds = async () => {
+    setLoading(true)
+    try {
+      showNotification('🔍 Verificando Player ID...', 'info')
+      
+      const response = await fetch('/api/verify-players', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        const { verified, invalid, reregistered } = result.results
+        showNotification(
+          `✅ Verifica completata: ${verified.length} validi, ${invalid.length} invalidi, ${reregistered.length} ripristinati`
+        )
+        
+        // Ricarica i dati dopo la verifica
+        await loadData()
+      } else {
+        showNotification(`❌ Errore verifica: ${result.error}`, 'error')
+      }
+    } catch (error) {
+      console.error('Errore verifica Player ID:', error)
+      showNotification('❌ Errore durante la verifica Player ID', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const sendNotification = async () => {
     if (!notificationForm.title.trim() || !notificationForm.message.trim()) {
       showNotification('❌ Titolo e messaggio sono obbligatori', 'error')
@@ -194,6 +227,16 @@ const NotificationsDashboard = () => {
       <div className="dashboard-header">
         <h1>📱 Dashboard Notifiche Push</h1>
         <p>Gestisci e invia notifiche ai tuoi clienti tramite OneSignal</p>
+        
+        <div className="header-actions">
+          <button
+            className="btn-verify-players"
+            onClick={verifyPlayerIds}
+            disabled={loading}
+          >
+            {loading ? '🔍 Verificando...' : '🔧 Verifica Player ID'}
+          </button>
+        </div>
       </div>
 
       {/* Statistiche */}
