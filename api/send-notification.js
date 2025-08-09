@@ -25,7 +25,8 @@ export default async function handler(req, res) {
       app_id: ONESIGNAL_CONFIG.appId,
       headings: { en: title, it: title },
       contents: { en: message, it: message },
-      include_player_ids: playerIds
+      include_subscription_ids: playerIds, // Usato per OneSignal SDK v16 Subscription IDs
+      target_channel: "push"
     }
 
     // Aggiungi URL se fornito
@@ -33,10 +34,10 @@ export default async function handler(req, res) {
       notificationData.url = url
     }
 
-    // Chiamata API OneSignal dal server
-    console.log('🔧 Invio notifica OneSignal:', { appId: ONESIGNAL_CONFIG.appId, playerIds })
+    // Chiamata API OneSignal v2 dal server
+    console.log('🔧 Invio notifica OneSignal v2:', { appId: ONESIGNAL_CONFIG.appId, subscriptionIds: playerIds })
     
-    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+    const response = await fetch('https://api.onesignal.com/notifications', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
