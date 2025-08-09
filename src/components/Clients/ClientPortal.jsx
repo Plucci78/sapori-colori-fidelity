@@ -1802,8 +1802,10 @@ const ClientPortalFromStorage = ({ customerData }) => {
             }
           }
         } 
-        // Se non ha Player ID, prova a registrarlo
-        else if (!savedPlayerId && customerData) {
+        // SEMPRE tenta registrazione OneSignal v16 per ottenere nuovo Subscription ID
+        // (Il vecchio Player ID nel database è del legacy SDK, OneSignal v16 richiede nuova registrazione)
+        if (customerData && !savedPlayerId) {
+          console.log('🆕 Registrazione OneSignal v16 richiesta - Player ID legacy presente:', dbPlayerId)
           const playerId = await oneSignalService.registerUser(customerData)
           if (playerId) {
             localStorage.setItem('pwa_onesignal_player_id', playerId)
