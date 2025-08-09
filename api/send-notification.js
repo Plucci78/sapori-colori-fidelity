@@ -40,7 +40,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${ONESIGNAL_CONFIG.restApiKey}`,
+        'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`,
         'Accept': 'application/json'
       },
       body: JSON.stringify(notificationData)
