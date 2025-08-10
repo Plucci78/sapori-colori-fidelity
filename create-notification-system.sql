@@ -58,22 +58,22 @@ ALTER TABLE notification_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_templates ENABLE ROW LEVEL SECURITY;
 
 -- Policy per permettere inserimento/lettura a tutti gli utenti autenticati
-CREATE POLICY IF NOT EXISTS "Enable read for authenticated users" 
+CREATE POLICY "Enable read for authenticated users" 
 ON notification_history FOR SELECT 
 TO authenticated 
 USING (true);
 
-CREATE POLICY IF NOT EXISTS "Enable insert for authenticated users" 
+CREATE POLICY "Enable insert for authenticated users" 
 ON notification_history FOR INSERT 
 TO authenticated 
 WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Enable update for authenticated users" 
+CREATE POLICY "Enable update for authenticated users" 
 ON notification_history FOR UPDATE 
 TO authenticated 
 USING (true);
 
-CREATE POLICY IF NOT EXISTS "Enable read templates for authenticated users" 
+CREATE POLICY "Enable read templates for authenticated users" 
 ON notification_templates FOR ALL 
 TO authenticated 
 USING (true);
@@ -87,10 +87,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER IF NOT EXISTS update_notification_history_updated_at 
+DROP TRIGGER IF EXISTS update_notification_history_updated_at ON notification_history;
+CREATE TRIGGER update_notification_history_updated_at 
   BEFORE UPDATE ON notification_history 
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER IF NOT EXISTS update_notification_templates_updated_at 
+DROP TRIGGER IF EXISTS update_notification_templates_updated_at ON notification_templates;
+CREATE TRIGGER update_notification_templates_updated_at 
   BEFORE UPDATE ON notification_templates 
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
