@@ -13,6 +13,7 @@ const EditCustomerModal = ({
     email: '',
     phone: '',
     birth_date: '',
+    gender: '',
     notes: ''
   })
   const [loading, setSaving] = useState(false)
@@ -25,6 +26,7 @@ const EditCustomerModal = ({
         email: customer.email || '',
         phone: customer.phone || '',
         birth_date: customer.birth_date || '',
+        gender: customer.gender || '',
         notes: customer.notes || ''
       })
       setErrors({})
@@ -153,6 +155,21 @@ const EditCustomerModal = ({
                 className={errors.birth_date ? 'error' : ''}
               />
               {errors.birth_date && <span className="error-message">{errors.birth_date}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="gender">Sesso</label>
+              <select
+                id="gender"
+                value={formData.gender}
+                onChange={(e) => handleChange('gender', e.target.value)}
+                className={errors.gender ? 'error' : ''}
+              >
+                <option value="">Seleziona sesso...</option>
+                <option value="male">👨 Maschio</option>
+                <option value="female">👩 Femmina</option>
+              </select>
+              {errors.gender && <span className="error-message">{errors.gender}</span>}
             </div>
 
             <div className="form-group full-width">
