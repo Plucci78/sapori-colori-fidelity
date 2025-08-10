@@ -303,6 +303,48 @@ class OneSignalService {
               platform: this.getPlatform()
             })
             console.log('✅ Tag utente impostati')
+
+            // 🔄 SINCRONIZZAZIONE AUTOMATICA: Aggiorna entrambi gli ID OneSignal nel database
+            try {
+              const { createClient } = await import('@supabase/supabase-js')
+              const supabase = createClient(
+                'https://jexkalekaofsfcusdfjh.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpleGthbGVrYW9mc2ZjdXNkZmpoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0ODYyNjEzNCwiZXhwIjoyMDY0MjAyMTM0fQ.43plaZecrTvbwkr7U7g2Ucogkd0VgKRUg9VkJ--7JCU'
+              )
+
+              // Ottieni anche OneSignal User ID per completezza
+              const oneSignalUserId = OneSignal.User.onesignalId
+              
+              console.log('🔄 Sincronizzazione automatica ID OneSignal nel database...')
+              console.log('📝 Subscription ID:', subscriptionId)
+              console.log('📝 OneSignal User ID:', oneSignalUserId)
+
+              const updateData = {
+                onesignal_subscription_id: subscriptionId, // Nuovo campo per Subscription ID
+              }
+
+              // Se abbiamo anche il OneSignal User ID, aggiornalo
+              if (oneSignalUserId) {
+                updateData.onesignal_player_id = oneSignalUserId // Player ID ora è OneSignal User ID
+              }
+
+              const { error: updateError } = await supabase
+                .from('customers')
+                .update(updateData)
+                .eq('id', customerData.id)
+
+              if (updateError) {
+                console.error('❌ Errore sincronizzazione ID OneSignal:', updateError)
+              } else {
+                console.log('✅ ID OneSignal sincronizzati automaticamente nel database')
+                console.log('✅ Subscription ID (per notifiche):', subscriptionId)
+                if (oneSignalUserId) {
+                  console.log('✅ User ID (per identificazione):', oneSignalUserId)
+                }
+              }
+            } catch (syncError) {
+              console.error('❌ Errore durante sincronizzazione automatica:', syncError)
+            }
           }
 
           console.log('✅ Utente registrato OneSignal SDK v16:', subscriptionId)

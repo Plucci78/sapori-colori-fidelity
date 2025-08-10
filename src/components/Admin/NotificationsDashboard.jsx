@@ -46,12 +46,12 @@ const NotificationsDashboard = () => {
       console.log('🔍 TUTTI i clienti nel database:', allCustomers)
       console.log('🔍 Clienti con player_id:', allCustomers?.filter(c => c.onesignal_player_id))
       
-      // Carica clienti attivi con player_id OneSignal (senza join che causa errore 400)
+      // Carica clienti attivi con OneSignal ID (User ID o Subscription ID)
       const { data: customersData } = await supabase
         .from('customers')
         .select('*')
         .eq('is_active', true)
-        .not('onesignal_player_id', 'is', null)
+        .or('onesignal_player_id.not.is.null,onesignal_subscription_id.not.is.null')
         .order('created_at', { ascending: false })
       
       console.log('🔍 Clienti filtrati (attivi + player_id):', customersData)
@@ -68,7 +68,7 @@ const NotificationsDashboard = () => {
 
       // Calcola statistiche
       const totalSubscribers = customersData?.length || 0
-      const activeSubscribers = customersData?.filter(c => c.onesignal_player_id)?.length || 0
+      const activeSubscribers = customersData?.filter(c => c.onesignal_subscription_id)?.length || 0
       
       setStats({
         totalSubscribers,
@@ -222,6 +222,41 @@ const NotificationsDashboard = () => {
     }
   }
 
+  const syncOneSignalIds = async () => {
+    setLoading(true)
+    try {
+      showNotification('🔄 Sincronizzando OneSignal IDs...', 'info')
+      
+      const response = await fetch('/api/sync-onesignal-ids', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        showNotification(
+          `✅ ${result.message}`
+        )
+        
+        // Ricarica i dati dopo la sincronizzazione
+        await loadData()
+        
+        // Mostra dettagli in console
+        console.log('🔄 Risultati sincronizzazione:', result.results)
+      } else {
+        showNotification(`❌ Errore sincronizzazione: ${result.error}`, 'error')
+      }
+    } catch (error) {
+      console.error('Errore sincronizzazione OneSignal IDs:', error)
+      showNotification('❌ Errore durante la sincronizzazione OneSignal IDs', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const sendNotification = async () => {
     if (!notificationForm.title.trim() || !notificationForm.message.trim()) {
       showNotification('❌ Titolo e messaggio sono obbligatori', 'error')
@@ -237,8 +272,8 @@ const NotificationsDashboard = () => {
     setLoading(true)
     try {
       const playerIds = targetAudience
-        .filter(c => c.onesignal_player_id)
-        .map(c => c.onesignal_player_id)
+        .filter(c => c.onesignal_subscription_id)
+        .map(c => c.onesignal_subscription_id)
 
       if (playerIds.length === 0) {
         showNotification('❌ Nessun cliente ha le notifiche attive', 'error')
@@ -328,6 +363,14 @@ const NotificationsDashboard = () => {
           >
             🔗 Verifica Collegamento
           </button>
+
+          <button
+            className="btn-sync-ids"
+            onClick={syncOneSignalIds}
+            disabled={loading}
+          >
+            🔄 Sincronizza OneSignal IDs
+          </button>
         </div>
       </div>
 
@@ -384,7 +427,7 @@ const NotificationsDashboard = () => {
               </div>
               <div className="summary-item">
                 <span className="summary-icon">🔔</span>
-                <span className="summary-text">Con notifiche: <strong>{customers.filter(c => c.onesignal_player_id).length}</strong></span>
+                <span className="summary-text">Con notifiche: <strong>{customers.filter(c => c.onesignal_subscription_id).length}</strong></span>
               </div>
             </div>
 
@@ -403,7 +446,7 @@ const NotificationsDashboard = () => {
                 <tbody>
                   {customers.map(customer => {
                     const gender = customer.gender?.toLowerCase()
-                    const isNotificationActive = !!customer.onesignal_player_id
+                    const isNotificationActive = !!customer.onesignal_subscription_id
                     const customerLevel = levels.find(l => l.name === customer.current_level)
                     
                     return (
@@ -612,7 +655,7 @@ const NotificationsDashboard = () => {
                       }}
                     />
                     <span>{customer.name}</span>
-                    {!customer.onesignal_player_id && <small>(non attivo)</small>}
+                    {!customer.onesignal_subscription_id && <small>(non attivo)</small>}
                   </label>
                 ))}
               </div>
@@ -620,7 +663,7 @@ const NotificationsDashboard = () => {
           )}
 
           <div className="audience-preview">
-            <strong>📊 Anteprima invio:</strong> {targetAudience.filter(c => c.onesignal_player_id).length} clienti riceveranno la notifica
+            <strong>📊 Anteprima invio:</strong> {targetAudience.filter(c => c.onesignal_subscription_id).length} clienti riceveranno la notifica
           </div>
         </div>
 
