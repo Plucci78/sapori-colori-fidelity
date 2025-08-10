@@ -17,6 +17,7 @@ const RegistrationWizard = ({ onComplete, onCancel }) => {
     city: '',
     phone: '',
     email: '',
+    gender: '', // Aggiunto campo sesso
     notes: '',
     consents: {
       fidelity: true, // obbligatorio
@@ -40,6 +41,7 @@ const RegistrationWizard = ({ onComplete, onCancel }) => {
       case 1:
         if (!formData.name.trim()) newErrors.name = 'Nome obbligatorio'
         if (!formData.birthDate) newErrors.birthDate = 'Data nascita obbligatoria'
+        if (!formData.gender) newErrors.gender = 'Sesso obbligatorio'
         if (formData.name.length < 2) newErrors.name = 'Nome troppo corto'
         
         // Verifica età (18+)
@@ -328,6 +330,7 @@ const RegistrationWizard = ({ onComplete, onCancel }) => {
         phone: formData.phone.trim(),
         email: formData.email.trim() || null,
         birth_date: formData.birthDate,
+        gender: formData.gender,
         city: formData.city.trim(),
         notes: formData.notes.trim(),
         points: referrerId ? 10 : 0, // Bonus benvenuto se ha usato un referral
@@ -615,6 +618,20 @@ const RegistrationWizard = ({ onComplete, onCancel }) => {
                 max={new Date().toISOString().split('T')[0]}
               />
               {errors.birthDate && <span className="error-message">{errors.birthDate}</span>}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Sesso *</label>
+              <select 
+                className={`form-input-large ${errors.gender ? 'error' : ''}`}
+                value={formData.gender}
+                onChange={(e) => setFormData({...formData, gender: e.target.value})}
+              >
+                <option value="">Seleziona sesso...</option>
+                <option value="male">👨 Maschio</option>
+                <option value="female">👩 Femmina</option>
+              </select>
+              {errors.gender && <span className="error-message">{errors.gender}</span>}
             </div>
 
             <div className="form-group">
