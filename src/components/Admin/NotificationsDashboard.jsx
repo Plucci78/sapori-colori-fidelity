@@ -484,18 +484,22 @@ const NotificationsDashboard = () => {
                           <div className="onesignal-ids">
                             {customer.onesignal_player_id && (
                               <div className="onesignal-id">
-                                <span className="id-label">👤 User:</span>
-                                <span className="id-value">{customer.onesignal_player_id.substring(0, 8)}...</span>
+                                <span className="id-label">👤 User ID:</span>
+                                <span className="id-value" title={customer.onesignal_player_id}>
+                                  {customer.onesignal_player_id}
+                                </span>
                               </div>
                             )}
                             {customer.onesignal_subscription_id && (
                               <div className="onesignal-id">
-                                <span className="id-label">📱 Sub:</span>
-                                <span className="id-value">{customer.onesignal_subscription_id.substring(0, 8)}...</span>
+                                <span className="id-label">📱 Subscription ID:</span>
+                                <span className="id-value" title={customer.onesignal_subscription_id}>
+                                  {customer.onesignal_subscription_id}
+                                </span>
                               </div>
                             )}
                             {!customer.onesignal_player_id && !customer.onesignal_subscription_id && (
-                              <span className="no-ids">Nessun ID</span>
+                              <span className="no-ids">Nessun ID OneSignal</span>
                             )}
                           </div>
                         </td>

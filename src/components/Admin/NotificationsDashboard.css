@@ -53,35 +53,46 @@
 .onesignal-ids {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
+  gap: 8px;
+  min-width: 300px;
 }
 
 .onesignal-id {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  background: #f3f4f6;
-  padding: 2px 6px;
-  border-radius: 4px;
+  flex-direction: column;
+  gap: 2px;
+  background: #f8fafc;
+  padding: 8px;
+  border-radius: 6px;
+  border-left: 3px solid #3b82f6;
 }
 
 .id-label {
   font-weight: bold;
-  color: #6b7280;
-  font-size: 10px;
+  color: #374151;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .id-value {
+  font-family: 'Courier New', monospace;
   color: #1f2937;
+  font-size: 11px;
   font-weight: 500;
+  word-break: break-all;
+  background: white;
+  padding: 4px 6px;
+  border-radius: 3px;
+  border: 1px solid #e5e7eb;
 }
 
 .no-ids {
   color: #9ca3af;
   font-style: italic;
-  font-size: 11px;
+  font-size: 12px;
+  text-align: center;
+  padding: 12px;
 }
 
 .btn-verify-players:disabled {
