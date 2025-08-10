@@ -4,6 +4,7 @@ import oneSignalService from '../../services/onesignalService'
 import './NotificationsDashboard.css'
 
 const NotificationsDashboard = ({ customerLevels }) => {
+  console.log('🔍 NotificationsDashboard props:', { customerLevels })
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(false)
   const [notification, setNotification] = useState({ show: false, message: '', type: '' })
@@ -35,13 +36,26 @@ const NotificationsDashboard = ({ customerLevels }) => {
     loadData()
   }, [])
 
-  // Usa customerLevels passati da App.jsx invece di caricarli da customer_levels
-  useEffect(() => {
-    if (customerLevels && customerLevels.length > 0) {
-      setLevels(customerLevels)
-      console.log('📊 Livelli caricati per notifiche:', customerLevels)
+  // Carica livelli direttamente come gli altri componenti
+  const loadLevels = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('customer_levels')
+        .select('*')
+        .order('min_gems')
+      
+      if (data && !error) {
+        setLevels(data)
+        console.log('📊 Livelli caricati per notifiche:', data)
+      }
+    } catch (error) {
+      console.error('Errore caricamento livelli:', error)
     }
-  }, [customerLevels])
+  }
+
+  useEffect(() => {
+    loadLevels()
+  }, [])
 
   const loadData = async () => {
     setLoading(true)
