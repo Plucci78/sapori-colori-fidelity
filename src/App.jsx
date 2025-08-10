@@ -2271,7 +2271,7 @@ for (const customer of recipients) {
       case 'notifications':
         return (
           <ProtectedComponent permission="canSendEmails">
-            <NotificationsDashboard />
+            <NotificationsDashboard customerLevels={customerLevels} />
           </ProtectedComponent>
         )
       case 'settings':

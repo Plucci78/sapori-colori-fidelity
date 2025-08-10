@@ -3,7 +3,7 @@ import { supabase } from '../../supabase'
 import oneSignalService from '../../services/onesignalService'
 import './NotificationsDashboard.css'
 
-const NotificationsDashboard = () => {
+const NotificationsDashboard = ({ customerLevels }) => {
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(false)
   const [notification, setNotification] = useState({ show: false, message: '', type: '' })
@@ -35,6 +35,14 @@ const NotificationsDashboard = () => {
     loadData()
   }, [])
 
+  // Usa customerLevels passati da App.jsx invece di caricarli da customer_levels
+  useEffect(() => {
+    if (customerLevels && customerLevels.length > 0) {
+      setLevels(customerLevels)
+      console.log('📊 Livelli caricati per notifiche:', customerLevels)
+    }
+  }, [customerLevels])
+
   const loadData = async () => {
     setLoading(true)
     try {
@@ -57,14 +65,8 @@ const NotificationsDashboard = () => {
       console.log('🔍 Clienti filtrati (attivi + player_id):', customersData)
       setCustomers(customersData || [])
 
-      // Carica livelli clienti
-      const { data: levelsData } = await supabase
-        .from('customer_levels')
-        .select('*')
-        .eq('active', true)
-        .order('sort_order')
-      
-      setLevels(levelsData || [])
+      // I livelli vengono caricati tramite useEffect da customerLevels prop
+      // Non carichiamo più da customer_levels
 
       // Calcola statistiche
       const totalSubscribers = customersData?.length || 0
