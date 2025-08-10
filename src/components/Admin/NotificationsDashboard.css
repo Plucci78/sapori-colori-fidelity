@@ -49,6 +49,41 @@
   box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
 }
 
+/* OneSignal IDs Column */
+.onesignal-ids {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+}
+
+.onesignal-id {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.id-label {
+  font-weight: bold;
+  color: #6b7280;
+  font-size: 10px;
+}
+
+.id-value {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.no-ids {
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 11px;
+}
+
 .btn-verify-players:disabled {
   opacity: 0.6;
   cursor: not-allowed;

@@ -440,6 +440,7 @@ const NotificationsDashboard = () => {
                     <th>Punti</th>
                     <th>Livello</th>
                     <th>Notifiche</th>
+                    <th>OneSignal IDs</th>
                     <th>Registrato</th>
                   </tr>
                 </thead>
@@ -510,6 +511,25 @@ const NotificationsDashboard = () => {
                             <span className="status-text">
                               {isNotificationActive ? 'Attive' : 'Disattive'}
                             </span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="onesignal-ids">
+                            {customer.onesignal_player_id && (
+                              <div className="onesignal-id">
+                                <span className="id-label">👤 User:</span>
+                                <span className="id-value">{customer.onesignal_player_id.substring(0, 8)}...</span>
+                              </div>
+                            )}
+                            {customer.onesignal_subscription_id && (
+                              <div className="onesignal-id">
+                                <span className="id-label">📱 Sub:</span>
+                                <span className="id-value">{customer.onesignal_subscription_id.substring(0, 8)}...</span>
+                              </div>
+                            )}
+                            {!customer.onesignal_player_id && !customer.onesignal_subscription_id && (
+                              <span className="no-ids">Nessun ID</span>
+                            )}
                           </div>
                         </td>
                         <td>
