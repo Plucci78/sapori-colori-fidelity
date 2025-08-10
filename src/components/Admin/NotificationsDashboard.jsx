@@ -302,12 +302,15 @@ const NotificationsDashboard = ({ customerLevels }) => {
         return
       }
 
-      // Invia notifica tramite OneSignal
+      // Invia notifica tramite OneSignal con tracking completo
       const result = await oneSignalService.sendNotification({
         title: notificationForm.title,
         message: notificationForm.message,
         playerIds: playerIds,
-        url: notificationForm.url || undefined
+        url: notificationForm.url || undefined,
+        targetType: notificationForm.targetType,
+        targetValue: notificationForm.targetLevel || 'all',
+        sentBy: 'Dashboard Operator' // TODO: sostituire con utente loggato
       })
 
       if (result.success) {

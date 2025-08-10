@@ -1,4 +1,11 @@
-// API Route per inviare notifiche OneSignal (Vercel Serverless)
+// API Route per inviare notifiche OneSignal con storico completo
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  'https://jexkalekaofsfcusdfjh.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpleGthbGVrYW9mc2ZjdXNkZmpoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0ODYyNjEzNCwiZXhwIjoyMDY0MjAyMTM0fQ.43plaZecrTvbwkr7U7g2Ucogkd0VgKRUg9VkJ--7JCU'
+)
+
 export default async function handler(req, res) {
   // Solo metodo POST
   if (req.method !== 'POST') {
@@ -6,7 +13,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { title, message, playerIds, url } = req.body
+    const { title, message, playerIds, url, targetType, targetValue, sentBy } = req.body
 
     // Validazione
     if (!title || !message || !playerIds || !Array.isArray(playerIds)) {
@@ -53,6 +60,35 @@ export default async function handler(req, res) {
 
     if (response.ok && result.id) {
       console.log('✅ Notifica inviata con successo:', result.id)
+      
+      // 📊 SALVA NELLO STORICO PROFESSIONALE
+      try {
+        const { error: historyError } = await supabase
+          .from('notification_history')
+          .insert({
+            title,
+            message,
+            target_type: targetType || 'manual',
+            target_value: targetValue || null,
+            recipients_count: playerIds.length,
+            onesignal_notification_id: result.id,
+            subscription_ids: playerIds,
+            url: url || null,
+            sent_by: sentBy || 'Dashboard',
+            delivered_count: result.recipients || playerIds.length,
+            status: 'sent'
+          })
+
+        if (historyError) {
+          console.error('⚠️ Errore salvataggio storico:', historyError)
+          // Non bloccare la risposta, la notifica è stata inviata
+        } else {
+          console.log('📊 Notifica salvata nello storico')
+        }
+      } catch (historyErr) {
+        console.error('⚠️ Errore storico:', historyErr)
+      }
+      
       return res.status(200).json({
         success: true,
         notificationId: result.id,
