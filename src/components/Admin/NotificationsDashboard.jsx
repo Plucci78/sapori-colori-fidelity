@@ -339,39 +339,6 @@ const NotificationsDashboard = () => {
         <h1>📱 Dashboard Notifiche Push</h1>
         <p>Gestisci e invia notifiche ai tuoi clienti tramite OneSignal</p>
         
-        <div className="header-actions">
-          <button
-            className="btn-verify-players"
-            onClick={verifyPlayerIds}
-            disabled={loading}
-          >
-            {loading ? '🔍 Verificando...' : '🔧 Verifica Player ID'}
-          </button>
-          
-          <button
-            className="btn-fix-player-id"
-            onClick={() => fixPlayerId()}
-            disabled={loading}
-          >
-            📱 Fix iPhone Player ID
-          </button>
-
-          <button
-            className="btn-check-link"
-            onClick={checkCustomerLink}
-            disabled={loading}
-          >
-            🔗 Verifica Collegamento
-          </button>
-
-          <button
-            className="btn-sync-ids"
-            onClick={syncOneSignalIds}
-            disabled={loading}
-          >
-            🔄 Sincronizza OneSignal IDs
-          </button>
-        </div>
       </div>
 
       {/* Statistiche */}
