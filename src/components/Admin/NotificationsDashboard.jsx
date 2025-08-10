@@ -31,10 +31,28 @@ const NotificationsDashboard = ({ customerLevels }) => {
   })
 
   const [levels, setLevels] = useState([])
+  const [notificationHistory, setNotificationHistory] = useState([])
 
   useEffect(() => {
     loadData()
+    loadNotificationHistory()
   }, [])
+
+  const loadNotificationHistory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('notification_history')
+        .select('*')
+        .order('sent_at', { ascending: false })
+        .limit(20)
+
+      if (data && !error) {
+        setNotificationHistory(data)
+      }
+    } catch (error) {
+      console.error('Errore caricamento storico:', error)
+    }
+  }
 
   // Carica livelli direttamente come gli altri componenti
   const loadLevels = async () => {
@@ -315,6 +333,9 @@ const NotificationsDashboard = ({ customerLevels }) => {
 
       if (result.success) {
         showNotification(`✅ Notifica inviata a ${playerIds.length} clienti`)
+        
+        // Ricarica storico per mostrare la nuova notifica
+        loadNotificationHistory()
         
         // Reset form
         setNotificationForm({
@@ -712,6 +733,72 @@ const NotificationsDashboard = ({ customerLevels }) => {
             {loading ? '📤 Invio in corso...' : '🚀 Invia Notifica'}
           </button>
         </div>
+      </div>
+
+      {/* Sezione Storico Notifiche */}
+      <div className="notification-history-card">
+        <h2>📊 Storico Notifiche Inviate</h2>
+        
+        {notificationHistory.length > 0 ? (
+          <div className="history-table-container">
+            <table className="history-table">
+              <thead>
+                <tr>
+                  <th>Data/Ora</th>
+                  <th>Titolo</th>
+                  <th>Destinatari</th>
+                  <th>Target</th>
+                  <th>Stato</th>
+                  <th>Analytics</th>
+                </tr>
+              </thead>
+              <tbody>
+                {notificationHistory.map(notification => (
+                  <tr key={notification.id}>
+                    <td>
+                      <div className="datetime-cell">
+                        <div className="date">{new Date(notification.sent_at).toLocaleDateString('it-IT')}</div>
+                        <div className="time">{new Date(notification.sent_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</div>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="notification-details">
+                        <div className="notification-title">{notification.title}</div>
+                        <div className="notification-preview">{notification.message.substring(0, 50)}...</div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="recipients-count">{notification.recipients_count}</span>
+                    </td>
+                    <td>
+                      <div className="target-info">
+                        <span className="target-type">{notification.target_type === 'all' ? '🌐 Tutti' : notification.target_type === 'level' ? `🏆 ${notification.target_value}` : '🎯 Selezionati'}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${notification.status}`}>
+                        {notification.status === 'sent' ? '✅ Inviata' : notification.status === 'failed' ? '❌ Errore' : '⏳ In corso'}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="analytics-mini">
+                        <div className="stat-mini">📤 {notification.delivered_count || 0}</div>
+                        <div className="stat-mini">👁️ {notification.opened_count || 0}</div>
+                        <div className="stat-mini">👆 {notification.clicked_count || 0}</div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="no-history">
+            <div className="no-history-icon">📊</div>
+            <h3>Nessuna notifica inviata</h3>
+            <p>Quando invierai delle notifiche, appariranno qui con le statistiche complete</p>
+          </div>
+        )}
       </div>
 
       {loading && (
