@@ -38,6 +38,14 @@ const NotificationsDashboard = ({ customerLevels }) => {
     loadNotificationHistory()
   }, [])
 
+  // Usa i customerLevels passati come prop dal componente App principale
+  useEffect(() => {
+    if (customerLevels && customerLevels.length > 0) {
+      console.log('📊 Usando customerLevels da App:', customerLevels)
+      setLevels(customerLevels)
+    }
+  }, [customerLevels])
+
   const loadNotificationHistory = async () => {
     try {
       const { data, error } = await supabase
@@ -54,31 +62,6 @@ const NotificationsDashboard = ({ customerLevels }) => {
     }
   }
 
-  // Carica livelli direttamente come gli altri componenti
-  const loadLevels = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('customer_levels')
-        .select('*')
-        .order('min_gems')
-      
-      console.log('🔍 DEBUG Livelli from DB:', { data, error })
-      
-      if (data && !error) {
-        setLevels(data)
-        console.log('📊 Livelli caricati per notifiche:', data)
-        console.log('📊 Numero livelli caricati:', data.length)
-      } else {
-        console.error('❌ Errore caricamento livelli:', error)
-      }
-    } catch (error) {
-      console.error('❌ Catch errore caricamento livelli:', error)
-    }
-  }
-
-  useEffect(() => {
-    loadLevels()
-  }, [])
 
   const loadData = async () => {
     setLoading(true)
