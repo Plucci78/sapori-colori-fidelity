@@ -157,10 +157,11 @@ class OneSignalService {
             }
           }
 
-          // Login utente con External ID per v16
+          // Login utente con External ID (Customer ID) per collegamento con database
           if (customerData.id) {
-            console.log('🔑 Login utente con External ID:', customerData.id)
+            console.log('🔑 Login utente con Customer ID come External ID:', customerData.id)
             await OneSignal.login(customerData.id.toString())
+            console.log('✅ OneSignal External ID impostato:', customerData.id)
           }
 
           // Attende che OneSignal generi il Subscription ID (Player ID) con API v16
@@ -292,17 +293,35 @@ class OneSignalService {
             return
           }
 
-          // Imposta i tag utente per personalizzazione con API v16
+          // Imposta tag avanzati per segmentazione marketing potente
           if (subscriptionId) {
-            await OneSignal.User.addTags({
+            const tags = {
+              // Info base cliente
               customer_name: customerData.name,
               customer_email: customerData.email || '',
               customer_phone: customerData.phone || '',
+              customer_id: customerData.id,
+              
+              // Dati loyalty avanzati  
               customer_points: customerData.points?.toString() || '0',
+              current_level: customerData.current_level || 'Bronzo',
+              wallet_balance: customerData.wallet_balance?.toString() || '0',
+              referral_count: customerData.referral_count?.toString() || '0',
+              
+              // Segmentazione per livelli esistenti
+              is_platinum: customerData.current_level === 'Platinum' ? 'true' : 'false',
+              is_gold: customerData.current_level === 'Oro' ? 'true' : 'false',
+              is_silver: customerData.current_level === 'Argento' ? 'true' : 'false',
+              registration_month: new Date(customerData.created_at || new Date()).toISOString().substring(0, 7),
+              
+              // Info tecniche
               subscription_date: new Date().toISOString(),
-              platform: this.getPlatform()
-            })
-            console.log('✅ Tag utente impostati')
+              platform: this.getPlatform(),
+              last_sync: new Date().toISOString()
+            }
+            
+            await OneSignal.User.addTags(tags)
+            console.log('✅ Tag avanzati impostati per segmentazione:', Object.keys(tags).length, 'tags')
 
             // 🔄 SINCRONIZZAZIONE AUTOMATICA: Aggiorna entrambi gli ID OneSignal nel database
             try {
