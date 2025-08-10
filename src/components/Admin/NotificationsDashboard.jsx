@@ -62,12 +62,17 @@ const NotificationsDashboard = ({ customerLevels }) => {
         .select('*')
         .order('min_gems')
       
+      console.log('🔍 DEBUG Livelli from DB:', { data, error })
+      
       if (data && !error) {
         setLevels(data)
         console.log('📊 Livelli caricati per notifiche:', data)
+        console.log('📊 Numero livelli caricati:', data.length)
+      } else {
+        console.error('❌ Errore caricamento livelli:', error)
       }
     } catch (error) {
-      console.error('Errore caricamento livelli:', error)
+      console.error('❌ Catch errore caricamento livelli:', error)
     }
   }
 
@@ -95,6 +100,14 @@ const NotificationsDashboard = ({ customerLevels }) => {
         .order('created_at', { ascending: false })
       
       console.log('🔍 Clienti filtrati (attivi + player_id):', customersData)
+      
+      // Debug current_level dei clienti
+      console.log('🔍 DEBUG Livelli clienti:', customersData?.map(c => ({ 
+        name: c.name, 
+        current_level: c.current_level,
+        points: c.points
+      })))
+      
       setCustomers(customersData || [])
 
       // I livelli vengono caricati tramite useEffect da customerLevels prop
@@ -456,6 +469,15 @@ const NotificationsDashboard = ({ customerLevels }) => {
                     const gender = customer.gender?.toLowerCase()
                     const isNotificationActive = !!customer.onesignal_subscription_id
                     const customerLevel = levels.find(l => l.name === customer.current_level)
+                    
+                    // Debug del match livello
+                    if (!customerLevel && customer.current_level) {
+                      console.log('🔍 DEBUG Level mismatch:', { 
+                        customerLevel: customer.current_level,
+                        availableLevels: levels.map(l => l.name),
+                        customerName: customer.name
+                      })
+                    }
                     
                     return (
                       <tr key={customer.id}>
