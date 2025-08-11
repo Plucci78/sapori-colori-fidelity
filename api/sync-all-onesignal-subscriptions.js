@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { gunzipSync } from 'zlib'
+import { inflate } from 'pako'
 
 const supabase = createClient(
   'https://jexkalekaofsfcusdfjh.supabase.co',
@@ -68,9 +68,9 @@ export default async function handler(req, res) {
     const gzippedBuffer = Buffer.from(await csvResponse.arrayBuffer())
     console.log(`📱 File .gz scaricato: ${gzippedBuffer.length} bytes`)
     
-    // Decomprimi il file .gz
-    const csvBuffer = gunzipSync(gzippedBuffer)
-    const csvText = csvBuffer.toString('utf-8')
+    // Decomprimi il file .gz usando pako
+    const decompressedData = inflate(gzippedBuffer)
+    const csvText = new TextDecoder().decode(decompressedData)
     console.log(`📱 CSV decompresso: ${csvText.length} caratteri`)
     
     // Parse CSV (primo parsing semplice per vedere struttura)
