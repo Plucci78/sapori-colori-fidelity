@@ -74,15 +74,14 @@ const NotificationsDashboard = ({ customerLevels }) => {
       console.log('🔍 TUTTI i clienti nel database:', allCustomers)
       console.log('🔍 Clienti con player_id:', allCustomers?.filter(c => c.onesignal_player_id))
       
-      // Carica clienti attivi con OneSignal ID (User ID o Subscription ID)
+      // Carica TUTTI i clienti attivi (con e senza OneSignal ID)
       const { data: customersData } = await supabase
         .from('customers')
         .select('*')
         .eq('is_active', true)
-        .or('onesignal_player_id.not.is.null,onesignal_subscription_id.not.is.null')
         .order('created_at', { ascending: false })
       
-      console.log('🔍 Clienti filtrati (attivi + player_id):', customersData)
+      console.log('🔍 TUTTI i clienti attivi caricati:', customersData)
       
       // Debug current_level dei clienti
       console.log('🔍 DEBUG Livelli clienti:', customersData?.map(c => ({ 
@@ -99,6 +98,7 @@ const NotificationsDashboard = ({ customerLevels }) => {
       // Calcola statistiche
       const totalSubscribers = customersData?.length || 0
       const activeSubscribers = customersData?.filter(c => c.onesignal_subscription_id)?.length || 0
+      const subscribersWithNotifications = customersData?.filter(c => c.onesignal_player_id || c.onesignal_subscription_id)?.length || 0
       
       setStats({
         totalSubscribers,
@@ -431,6 +431,10 @@ const NotificationsDashboard = ({ customerLevels }) => {
               <div className="summary-item">
                 <span className="summary-icon">🔔</span>
                 <span className="summary-text">Con notifiche: <strong>{customers.filter(c => c.onesignal_subscription_id).length}</strong></span>
+              </div>
+              <div className="summary-item">
+                <span className="summary-icon">🔕</span>
+                <span className="summary-text">Senza notifiche: <strong>{customers.filter(c => !c.onesignal_subscription_id).length}</strong></span>
               </div>
             </div>
 
