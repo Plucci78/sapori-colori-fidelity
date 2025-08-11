@@ -51,11 +51,27 @@ export default async function handler(req, res) {
       })
     })
     
+    console.log('📱 OneSignal CSV Export Response Status:', exportResponse.status)
+    console.log('📱 OneSignal CSV Export Response Headers:', Object.fromEntries(exportResponse.headers.entries()))
+    
     if (!exportResponse.ok) {
-      throw new Error(`OneSignal CSV Export error: ${exportResponse.status} - ${await exportResponse.text()}`)
+      const errorText = await exportResponse.text()
+      console.error('📱 OneSignal CSV Export Error Response:', errorText)
+      throw new Error(`OneSignal CSV Export error: ${exportResponse.status} - ${errorText}`)
     }
     
-    const exportData = await exportResponse.json()
+    // Controlla il content-type prima di fare .json()
+    const contentType = exportResponse.headers.get('content-type')
+    console.log('📱 Response Content-Type:', contentType)
+    
+    let exportData
+    if (contentType && contentType.includes('application/json')) {
+      exportData = await exportResponse.json()
+    } else {
+      const responseText = await exportResponse.text()
+      console.log('📱 Non-JSON Response:', responseText.substring(0, 200))
+      throw new Error(`OneSignal API returned non-JSON response: ${contentType}`)
+    }
     console.log('📱 OneSignal CSV export URL:', exportData.csv_file_url)
     
     // Scarica il file .gz compresso
@@ -87,108 +103,119 @@ export default async function handler(req, res) {
     console.log('📱 Colonna ID:', idIndex >= 0 ? headers[idIndex] : 'Non trovata')
     console.log('📱 Colonna External ID:', externalIdIndex >= 0 ? headers[externalIdIndex] : 'Non trovata')
     
-    // Per debug, mostra le prime 3 righe
-    const sampleRows = lines.slice(1, 4).map(line => {
+    // Parsa tutte le righe del CSV in oggetti strutturati
+    const subscriptions = lines.slice(1).map(line => {
       const values = line.split(',').map(v => v.replace(/"/g, ''))
-      const row = {}
+      const subscription = {}
       headers.forEach((header, index) => {
-        row[header] = values[index] || ''
+        subscription[header] = values[index] || ''
       })
-      return row
+      return subscription
     })
     
-    res.json({
-      success: true,
-      message: `CSV processato con successo: ${lines.length - 1} subscription`,
-      headers,
-      sampleRows,
-      totalRows: lines.length - 1,
-      debug: true
-    })
+    console.log(`📱 Processate ${subscriptions.length} subscription da OneSignal CSV`)
+    
+    // Per debug, mostra le prime 3 righe
+    const sampleRows = subscriptions.slice(0, 3)
     
     let synced = 0
     let notFound = 0
     let errors = 0
     let foundSubscriptions = []
+    let savedToTable = 0
     
-    // 3. Per ogni cliente, cerca il corrispondente subscription OneSignal
-    for (const customer of customers) {
+    // 3. Per ogni subscription, cerca il cliente corrispondente e salva nella tabella
+    for (const subscription of subscriptions) {
       try {
-        // Cerca per External ID (dovrebbe essere il customer.id)
-        let matchingSubscription = subscriptionsData.subscriptions?.find(sub => 
-          sub.external_id === customer.id ||
-          sub.external_user_id === customer.id
-        )
-        
-        // Se non trovato per ID, prova per tags nome/email
-        if (!matchingSubscription) {
-          matchingSubscription = subscriptionsData.subscriptions?.find(sub => 
-            sub.tags?.customer_name === customer.name ||
-            sub.tags?.customer_email === customer.email ||
-            (sub.tags && Object.values(sub.tags).includes(customer.name))
-          )
+        // Salva nella tabella onesignal_subscriptions
+        const subscriptionData = {
+          subscription_id: subscription.id || subscription.subscription_id,
+          onesignal_user_id: subscription.onesignal_id || subscription.user_id,
+          external_user_id: subscription.external_user_id || subscription.external_id,
+          device_type: subscription.device_type,
+          device_model: subscription.device_model,
+          device_os: subscription.device_os,
+          app_version: subscription.app_version,
+          country: subscription.country,
+          timezone_id: subscription.timezone_id,
+          language: subscription.language,
+          notification_types: subscription.notification_types ? parseInt(subscription.notification_types) : null,
+          first_session: subscription.first_session ? new Date(subscription.first_session) : null,
+          last_session: subscription.last_session ? new Date(subscription.last_session) : null,
+          created_at: subscription.created_at ? new Date(subscription.created_at) : null,
+          is_active: subscription.invalid_identifier !== 'true'
         }
         
-        if (matchingSubscription) {
-          foundSubscriptions.push({
-            customer: customer.name,
-            subscriptionId: matchingSubscription.id,
-            external_id: matchingSubscription.external_id || matchingSubscription.external_user_id,
-            tags: matchingSubscription.tags
-          })
-          
-          // Aggiorna il database solo se i dati sono diversi
-          const needsUpdate = customer.onesignal_subscription_id !== matchingSubscription.id
-          
-          if (needsUpdate) {
-            const updateData = {
-              onesignal_subscription_id: matchingSubscription.id
-            }
+        // Trova customer collegato per external_user_id
+        if (subscription.external_user_id) {
+          const matchingCustomer = customers.find(c => c.id === subscription.external_user_id)
+          if (matchingCustomer) {
+            subscriptionData.customer_id = matchingCustomer.id
             
-            // Se c'è anche OneSignal User ID nei tags, aggiornalo
-            if (matchingSubscription.onesignal_user_id) {
-              updateData.onesignal_player_id = matchingSubscription.onesignal_user_id
-            }
-            
+            // Aggiorna anche il customer con subscription_id
             const { error: updateError } = await supabase
               .from('customers')
-              .update(updateData)
-              .eq('id', customer.id)
+              .update({ 
+                onesignal_subscription_id: subscription.id || subscription.subscription_id,
+                onesignal_player_id: subscription.onesignal_id || subscription.user_id
+              })
+              .eq('id', matchingCustomer.id)
             
-            if (updateError) {
-              console.error(`❌ Errore aggiornamento ${customer.name}:`, updateError)
-              errors++
-            } else {
-              console.log(`✅ Sincronizzato ${customer.name}: ${matchingSubscription.id}`)
+            if (!updateError) {
+              foundSubscriptions.push({
+                customer: matchingCustomer.name,
+                subscriptionId: subscription.id || subscription.subscription_id,
+                external_id: subscription.external_user_id,
+                linked: true
+              })
               synced++
+            } else {
+              console.error(`❌ Errore update customer ${matchingCustomer.name}:`, updateError)
+              errors++
             }
-          } else {
-            console.log(`⚪ ${customer.name} già sincronizzato`)
           }
-        } else {
-          console.log(`❓ Nessuna subscription OneSignal trovata per ${customer.name}`)
-          notFound++
         }
-      } catch (customerError) {
-        console.error(`❌ Errore elaborazione ${customer.name}:`, customerError)
+        
+        // Salva subscription nella tabella dedicata
+        const { error: insertError } = await supabase
+          .from('onesignal_subscriptions')
+          .upsert(subscriptionData, { 
+            onConflict: 'subscription_id',
+            ignoreDuplicates: false 
+          })
+        
+        if (!insertError) {
+          savedToTable++
+        } else {
+          console.error(`❌ Errore salvataggio subscription:`, insertError)
+          errors++
+        }
+        
+      } catch (subscriptionError) {
+        console.error(`❌ Errore elaborazione subscription:`, subscriptionError)
         errors++
       }
     }
+    
+    // Conta clienti non trovati
+    notFound = customers.length - synced
     
     const results = {
       total: customers.length,
       synced,
       notFound,
       errors,
-      subscriptionsFound: subscriptionsData.subscriptions?.length || 0,
-      foundSubscriptions: foundSubscriptions.slice(0, 10) // Solo primi 10 per debug
+      subscriptionsFound: subscriptions.length,
+      savedToTable,
+      foundSubscriptions: foundSubscriptions.slice(0, 10), // Solo primi 10 per debug
+      sampleRows: sampleRows.slice(0, 3) // Per debug
     }
     
     console.log('📊 Risultati sincronizzazione completa:', results)
     
     res.json({
       success: true,
-      message: `Sincronizzazione completata: ${synced} aggiornati, ${notFound} non trovati, ${errors} errori`,
+      message: `Sincronizzazione completata: ${synced} clienti collegati, ${savedToTable} subscription salvate, ${notFound} non trovati, ${errors} errori`,
       ...results
     })
     
