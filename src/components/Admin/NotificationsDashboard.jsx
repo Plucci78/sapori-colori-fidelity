@@ -4,7 +4,11 @@ import oneSignalService from '../../services/onesignalService'
 import './NotificationsDashboard.css'
 
 const NotificationsDashboard = ({ customerLevels }) => {
-  console.log('🔍 NotificationsDashboard props:', { customerLevels })
+  console.log('🔍 NotificationsDashboard props ricevute:', { 
+    customerLevels, 
+    hasLevels: !!customerLevels, 
+    levelsCount: customerLevels?.length || 0 
+  })
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(false)
   const [notification, setNotification] = useState({ show: false, message: '', type: '' })
