@@ -73,12 +73,36 @@ export default async function handler(req, res) {
       console.log('📱 Non-JSON Response:', responseText.substring(0, 200))
       throw new Error(`OneSignal API returned non-JSON response: ${contentType}`)
     }
+    console.log('📱 OneSignal CSV export response:', exportData)
+    
+    if (!exportData.csv_file_url) {
+      throw new Error(`OneSignal non ha restituito CSV URL. Response: ${JSON.stringify(exportData)}`)
+    }
+    
     console.log('📱 OneSignal CSV export URL:', exportData.csv_file_url)
     
-    // Scarica il file .gz compresso
-    const csvResponse = await fetch(exportData.csv_file_url)
+    // Aspetta qualche secondo per dare tempo a OneSignal di generare il CSV
+    console.log('⏳ Aspettando generazione CSV OneSignal...')
+    await new Promise(resolve => setTimeout(resolve, 5000))
+    
+    // Scarica il file .gz compresso con retry
+    let csvResponse = await fetch(exportData.csv_file_url)
+    console.log('📱 CSV download response status:', csvResponse.status)
+    
     if (!csvResponse.ok) {
-      throw new Error(`Errore download CSV: ${csvResponse.status}`)
+      // Se ancora 404, aspetta di più
+      if (csvResponse.status === 404) {
+        console.log('⏳ CSV ancora in generazione, aspetto altri 10 secondi...')
+        await new Promise(resolve => setTimeout(resolve, 10000))
+        
+        // Riprova
+        csvResponse = await fetch(exportData.csv_file_url)
+        if (!csvResponse.ok) {
+          throw new Error(`CSV ancora non pronto dopo 15 secondi. Status: ${csvResponse.status}`)
+        }
+      } else {
+        throw new Error(`Errore download CSV: ${csvResponse.status}`)
+      }
     }
     
     // Scarica come Buffer per la decompressione
