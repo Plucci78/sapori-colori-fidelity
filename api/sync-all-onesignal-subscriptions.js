@@ -18,6 +18,7 @@ export default async function handler(req, res) {
   }
   
   try {
+    console.log('🔄 Avvio API sync-all-onesignal-subscriptions...')
     console.log('🔄 Avvio sincronizzazione OneSignal subscriptions...')
     
     // 1. Ottieni tutti i clienti dal database
@@ -221,8 +222,10 @@ export default async function handler(req, res) {
     
   } catch (error) {
     console.error('❌ Errore sincronizzazione OneSignal:', error)
+    console.error('❌ Stack trace completo:', error.stack)
     res.status(500).json({ 
       error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       success: false
     })
   }
