@@ -94,7 +94,7 @@ const NotificationsDashboard = ({ customerLevels }) => {
 
       // Calcola statistiche
       const totalSubscribers = customersData?.length || 0
-      const activeSubscribers = customersData?.filter(c => c.onesignal_subscription_id)?.length || 0
+      const activeSubscribers = customersData?.filter(c => c.onesignal_subscription_id || c.onesignal_player_id)?.length || 0
       const subscribersWithNotifications = customersData?.filter(c => c.onesignal_player_id || c.onesignal_subscription_id)?.length || 0
       
       setStats({
@@ -311,8 +311,8 @@ const NotificationsDashboard = ({ customerLevels }) => {
     setLoading(true)
     try {
       const playerIds = targetAudience
-        .filter(c => c.onesignal_subscription_id)
-        .map(c => c.onesignal_subscription_id)
+        .filter(c => c.onesignal_subscription_id || c.onesignal_player_id)
+        .map(c => c.onesignal_subscription_id || c.onesignal_player_id)
 
       if (playerIds.length === 0) {
         showNotification('❌ Nessun cliente ha le notifiche attive', 'error')
@@ -448,11 +448,11 @@ const NotificationsDashboard = ({ customerLevels }) => {
               </div>
               <div className="summary-item">
                 <span className="summary-icon">🔔</span>
-                <span className="summary-text">Con notifiche: <strong>{customers.filter(c => c.onesignal_subscription_id).length}</strong></span>
+                <span className="summary-text">Con notifiche: <strong>{customers.filter(c => c.onesignal_subscription_id || c.onesignal_player_id).length}</strong></span>
               </div>
               <div className="summary-item">
                 <span className="summary-icon">🔕</span>
-                <span className="summary-text">Senza notifiche: <strong>{customers.filter(c => !c.onesignal_subscription_id).length}</strong></span>
+                <span className="summary-text">Senza notifiche: <strong>{customers.filter(c => !c.onesignal_subscription_id && !c.onesignal_player_id).length}</strong></span>
               </div>
             </div>
 
@@ -472,7 +472,7 @@ const NotificationsDashboard = ({ customerLevels }) => {
                 <tbody>
                   {customers.map(customer => {
                     const gender = customer.gender?.toLowerCase()
-                    const isNotificationActive = !!customer.onesignal_subscription_id
+                    const isNotificationActive = !!(customer.onesignal_subscription_id || customer.onesignal_player_id)
                     // Usa calcolo dinamico invece di current_level dal database
                     const customerLevel = getLevelByPoints(customer.points || 0)
                     
@@ -713,7 +713,7 @@ const NotificationsDashboard = ({ customerLevels }) => {
           )}
 
           <div className="audience-preview">
-            <strong>📊 Anteprima invio:</strong> {targetAudience.filter(c => c.onesignal_subscription_id).length} clienti riceveranno la notifica
+            <strong>📊 Anteprima invio:</strong> {targetAudience.filter(c => c.onesignal_subscription_id || c.onesignal_player_id).length} clienti riceveranno la notifica
           </div>
         </div>
 
