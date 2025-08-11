@@ -39,7 +39,7 @@ export default async function handler(req, res) {
     const exportResponse = await fetch(`https://api.onesignal.com/players/csv_export?app_id=${ONESIGNAL_CONFIG.appId}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Key ${ONESIGNAL_CONFIG.restApiKey}`,
+        'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
