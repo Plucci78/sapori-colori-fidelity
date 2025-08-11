@@ -5,8 +5,11 @@ const supabase = createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpleGthbGVrYW9mc2ZjdXNkZmpoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0ODYyNjEzNCwiZXhwIjoyMDY0MjAyMTM0fQ.43plaZecrTvbwkr7U7g2Ucogkd0VgKRUg9VkJ--7JCU'
 )
 
-const ONESIGNAL_APP_ID = 'fec6e3b5-c8e9-4c96-ac42-84cac7f4b5ab'
-const ONESIGNAL_API_KEY = 'OTk5NmRmNDEtNTgzMS00ZjE5LWI4M2EtYjc4ODkwYWJjZGE5' // REST API Key
+// OneSignal API configuration (stesso di send-notification.js)
+const ONESIGNAL_CONFIG = {
+  appId: '61a2318f-68f7-4a79-8beb-203c58bf8763',
+  restApiKey: 'os_v2_app_mgrddd3i65fhtc7lea6frp4hmncfypt3q7mugmfh4hi67xyyoz3emmmkj5zd7hwbgt7qwkoxxyavzlux76q47oot2e5e6qieftmnf4a'
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -31,10 +34,10 @@ export default async function handler(req, res) {
     // 2. Ottieni tutti i players/subscriptions da OneSignal usando la nuova API
     console.log('📱 Recuperando subscriptions da OneSignal...')
     
-    const subscriptionsResponse = await fetch(`https://api.onesignal.com/apps/${ONESIGNAL_APP_ID}/subscriptions`, {
+    const subscriptionsResponse = await fetch(`https://api.onesignal.com/apps/${ONESIGNAL_CONFIG.appId}/subscriptions`, {
       method: 'GET',
       headers: {
-        'Authorization': `Basic ${ONESIGNAL_API_KEY}`,
+        'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`,
         'Content-Type': 'application/json'
       }
     })
@@ -48,10 +51,10 @@ export default async function handler(req, res) {
       
       // Fallback: prova la vecchia API players  
       console.log('🔄 Provando vecchia API players...')
-      const playersResponse = await fetch(`https://api.onesignal.com/apps/${ONESIGNAL_APP_ID}/players?limit=300`, {
+      const playersResponse = await fetch(`https://api.onesignal.com/apps/${ONESIGNAL_CONFIG.appId}/players?limit=300`, {
         method: 'GET',
         headers: {
-          'Authorization': `Basic ${ONESIGNAL_API_KEY}`,
+          'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`,
           'Content-Type': 'application/json'
         }
       })
