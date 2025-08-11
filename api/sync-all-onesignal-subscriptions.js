@@ -16,12 +16,11 @@ export default async function handler(req, res) {
   try {
     console.log('🔄 Avvio sincronizzazione OneSignal subscriptions...')
     
-    // Test semplice: restituisci solo i clienti per debug
+    // 1. Ottieni tutti i clienti dal database
     const { data: customers, error: customersError } = await supabase
       .from('customers')
       .select('id, name, email, onesignal_player_id, onesignal_subscription_id')
       .eq('is_active', true)
-      .limit(5) // Limita per debug
     
     if (customersError) {
       throw new Error(`Errore caricamento clienti: ${customersError.message}`)
@@ -29,16 +28,127 @@ export default async function handler(req, res) {
     
     console.log(`📊 Trovati ${customers.length} clienti attivi`)
     
-    // Per ora, restituisci solo i dati per debug
+    // 2. Ottieni tutti i players/subscriptions da OneSignal usando la nuova API
+    console.log('📱 Recuperando subscriptions da OneSignal...')
+    
+    const subscriptionsResponse = await fetch(`https://api.onesignal.com/apps/${ONESIGNAL_APP_ID}/subscriptions`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Basic ${ONESIGNAL_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    let subscriptionsData = []
+    if (subscriptionsResponse.ok) {
+      subscriptionsData = await subscriptionsResponse.json()
+      console.log(`📱 OneSignal ha ${subscriptionsData.subscriptions?.length || 0} subscriptions attive`)
+    } else {
+      console.log(`⚠️ Errore API OneSignal subscriptions: ${subscriptionsResponse.status}`)
+      
+      // Fallback: prova la vecchia API players  
+      console.log('🔄 Provando vecchia API players...')
+      const playersResponse = await fetch(`https://api.onesignal.com/apps/${ONESIGNAL_APP_ID}/players?limit=300`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${ONESIGNAL_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (playersResponse.ok) {
+        const playersData = await playersResponse.json()
+        console.log(`📱 OneSignal API players ha ${playersData.players?.length || 0} players`)
+        subscriptionsData = { subscriptions: playersData.players || [] }
+      } else {
+        throw new Error(`OneSignal API error: ${playersResponse.status} - ${await playersResponse.text()}`)
+      }
+    }
+    
+    let synced = 0
+    let notFound = 0
+    let errors = 0
+    let foundSubscriptions = []
+    
+    // 3. Per ogni cliente, cerca il corrispondente subscription OneSignal
+    for (const customer of customers) {
+      try {
+        // Cerca per External ID (dovrebbe essere il customer.id)
+        let matchingSubscription = subscriptionsData.subscriptions?.find(sub => 
+          sub.external_id === customer.id ||
+          sub.external_user_id === customer.id
+        )
+        
+        // Se non trovato per ID, prova per tags nome/email
+        if (!matchingSubscription) {
+          matchingSubscription = subscriptionsData.subscriptions?.find(sub => 
+            sub.tags?.customer_name === customer.name ||
+            sub.tags?.customer_email === customer.email ||
+            (sub.tags && Object.values(sub.tags).includes(customer.name))
+          )
+        }
+        
+        if (matchingSubscription) {
+          foundSubscriptions.push({
+            customer: customer.name,
+            subscriptionId: matchingSubscription.id,
+            external_id: matchingSubscription.external_id || matchingSubscription.external_user_id,
+            tags: matchingSubscription.tags
+          })
+          
+          // Aggiorna il database solo se i dati sono diversi
+          const needsUpdate = customer.onesignal_subscription_id !== matchingSubscription.id
+          
+          if (needsUpdate) {
+            const updateData = {
+              onesignal_subscription_id: matchingSubscription.id
+            }
+            
+            // Se c'è anche OneSignal User ID nei tags, aggiornalo
+            if (matchingSubscription.onesignal_user_id) {
+              updateData.onesignal_player_id = matchingSubscription.onesignal_user_id
+            }
+            
+            const { error: updateError } = await supabase
+              .from('customers')
+              .update(updateData)
+              .eq('id', customer.id)
+            
+            if (updateError) {
+              console.error(`❌ Errore aggiornamento ${customer.name}:`, updateError)
+              errors++
+            } else {
+              console.log(`✅ Sincronizzato ${customer.name}: ${matchingSubscription.id}`)
+              synced++
+            }
+          } else {
+            console.log(`⚪ ${customer.name} già sincronizzato`)
+          }
+        } else {
+          console.log(`❓ Nessuna subscription OneSignal trovata per ${customer.name}`)
+          notFound++
+        }
+      } catch (customerError) {
+        console.error(`❌ Errore elaborazione ${customer.name}:`, customerError)
+        errors++
+      }
+    }
+    
+    const results = {
+      total: customers.length,
+      synced,
+      notFound,
+      errors,
+      subscriptionsFound: subscriptionsData.subscriptions?.length || 0,
+      foundSubscriptions: foundSubscriptions.slice(0, 10) // Solo primi 10 per debug
+    }
+    
+    console.log('📊 Risultati sincronizzazione completa:', results)
+    
     res.json({
       success: true,
-      message: `Debug: caricati ${customers.length} clienti`,
-      customers: customers.map(c => ({
-        name: c.name,
-        hasSubscription: !!c.onesignal_subscription_id,
-        hasPlayerId: !!c.onesignal_player_id
-      })),
-      debug: true
+      message: `Sincronizzazione completata: ${synced} aggiornati, ${notFound} non trovati, ${errors} errori`,
+      ...results
     })
     
   } catch (error) {
