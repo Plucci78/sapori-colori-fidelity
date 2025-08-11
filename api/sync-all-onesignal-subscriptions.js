@@ -55,35 +55,16 @@ export default async function handler(req, res) {
     }
     
     const exportData = await exportResponse.json()
-    console.log('📱 OneSignal CSV export URL generato:', exportData.csv_file_url)
+    console.log('📱 OneSignal CSV export response:', exportData)
     
-    // Scarica e processa il CSV
-    const csvResponse = await fetch(exportData.csv_file_url)
-    if (!csvResponse.ok) {
-      throw new Error(`Errore download CSV: ${csvResponse.status}`)
-    }
-    
-    const csvText = await csvResponse.text()
-    console.log(`📱 CSV scaricato: ${csvText.length} caratteri`)
-    
-    // Parse CSV semplice (assumendo header nella prima riga)
-    const lines = csvText.trim().split('\n')
-    const headers = lines[0].split(',')
-    const subscriptions = []
-    
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',')
-      const subscription = {}
-      headers.forEach((header, index) => {
-        subscription[header.replace(/"/g, '')] = values[index]?.replace(/"/g, '')
-      })
-      subscriptions.push(subscription)
-    }
-    
-    console.log(`📱 Parsed ${subscriptions.length} subscriptions dal CSV`)
-    
-    // Usa subscriptions per compatibilità con il resto del codice
-    const subscriptionsData = { subscriptions }
+    // Per ora restituisci solo il risultato della chiamata API per debug
+    res.json({
+      success: true,
+      message: 'CSV Export API chiamata con successo',
+      exportData,
+      debug: true
+    })
+    return
     
     let synced = 0
     let notFound = 0
