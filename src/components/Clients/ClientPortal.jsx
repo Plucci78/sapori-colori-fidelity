@@ -118,8 +118,17 @@ const ClientPortal = ({ token }) => {
       localStorage.setItem('pwa_customer_id', customerData.id)
       localStorage.setItem('pwa_customer_data', JSON.stringify(customerData))
       
-      // 🔔 OneSignal: Registrazione disponibile tramite pulsante (non automatica)
-      console.log('ℹ️ OneSignal pronto - clicca "Attiva Notifiche" per registrarti')
+      // 🔔 COLLEGAMENTO ONESIGNAL: Collega il cliente alle notifiche push quando accede alla PWA
+      try {
+        if (window.OneSignal && customerData && customerData.id) {
+          console.log('🔔 Collegamento OneSignal per cliente loggato:', customerData.id)
+          await window.OneSignal.setExternalUserId(customerData.id)
+          console.log('✅ Cliente collegato a OneSignal con external_user_id:', customerData.id)
+        }
+      } catch (onesignalError) {
+        console.error('❌ Errore collegamento OneSignal:', onesignalError)
+        // Non bloccare il login per errori OneSignal
+      }
       
       // Forza ricarica del componente con il cliente trovato
       window.location.reload()
