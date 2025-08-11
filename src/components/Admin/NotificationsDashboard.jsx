@@ -262,12 +262,12 @@ const NotificationsDashboard = ({ customerLevels }) => {
     }
   }
 
-  const syncOneSignalIds = async () => {
+  const syncAllOneSignalSubscriptions = async () => {
     setLoading(true)
     try {
-      showNotification('🔄 Sincronizzando OneSignal IDs...', 'info')
+      showNotification('🔄 Sincronizzando subscription OneSignal da API...', 'info')
       
-      const response = await fetch('/api/sync-onesignal-ids', {
+      const response = await fetch('/api/sync-all-onesignal-subscriptions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -278,20 +278,19 @@ const NotificationsDashboard = ({ customerLevels }) => {
 
       if (result.success) {
         showNotification(
-          `✅ ${result.message}`
+          `✅ Sincronizzazione completata: ${result.synced} subscription aggiornate, ${result.notFound} non trovate`
         )
         
         // Ricarica i dati dopo la sincronizzazione
         await loadData()
         
-        // Mostra dettagli in console
-        console.log('🔄 Risultati sincronizzazione:', result.results)
+        console.log('🔄 Risultati sincronizzazione OneSignal:', result)
       } else {
         showNotification(`❌ Errore sincronizzazione: ${result.error}`, 'error')
       }
     } catch (error) {
-      console.error('Errore sincronizzazione OneSignal IDs:', error)
-      showNotification('❌ Errore durante la sincronizzazione OneSignal IDs', 'error')
+      console.error('Errore sincronizzazione OneSignal subscriptions:', error)
+      showNotification('❌ Errore durante la sincronizzazione OneSignal subscriptions', 'error')
     } finally {
       setLoading(false)
     }
@@ -385,6 +384,15 @@ const NotificationsDashboard = ({ customerLevels }) => {
         <h1>📱 Dashboard Notifiche Push</h1>
         <p>Gestisci e invia notifiche ai tuoi clienti tramite OneSignal</p>
         
+        <div className="header-actions">
+          <button
+            className="btn-sync-onesignal"
+            onClick={syncAllOneSignalSubscriptions}
+            disabled={loading}
+          >
+            🔄 Sincronizza Subscription OneSignal
+          </button>
+        </div>
       </div>
 
       {/* Statistiche */}
