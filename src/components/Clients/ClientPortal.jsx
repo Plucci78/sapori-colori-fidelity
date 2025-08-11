@@ -118,12 +118,20 @@ const ClientPortal = ({ token }) => {
       localStorage.setItem('pwa_customer_id', customerData.id)
       localStorage.setItem('pwa_customer_data', JSON.stringify(customerData))
       
-      // 🔔 COLLEGAMENTO ONESIGNAL: Collega il cliente alle notifiche push quando accede alla PWA
+      // 🔔 COLLEGAMENTO ONESIGNAL: Solo se il cliente ha accettato le notifiche
       try {
         if (window.OneSignal && customerData && customerData.id) {
-          console.log('🔔 Collegamento OneSignal per cliente loggato:', customerData.id)
-          await window.OneSignal.setExternalUserId(customerData.id)
-          console.log('✅ Cliente collegato a OneSignal con external_user_id:', customerData.id)
+          // Verifica se l'utente ha dato il permesso per le notifiche
+          const permission = await window.OneSignal.getNotificationPermission()
+          console.log('🔔 Stato permesso OneSignal:', permission)
+          
+          if (permission === 'granted') {
+            console.log('✅ Cliente ha accettato notifiche, collegamento OneSignal:', customerData.id)
+            await window.OneSignal.setExternalUserId(customerData.id)
+            console.log('✅ Cliente collegato a OneSignal con external_user_id:', customerData.id)
+          } else {
+            console.log('📵 Cliente non ha accettato le notifiche push - non collegato a OneSignal')
+          }
         }
       } catch (onesignalError) {
         console.error('❌ Errore collegamento OneSignal:', onesignalError)
