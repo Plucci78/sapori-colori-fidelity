@@ -44,16 +44,8 @@ const NotificationsDashboard = ({ customerLevels }) => {
 
   // Usa i customerLevels passati come prop dal componente App principale
   useEffect(() => {
-    console.log('📊 DEBUG customerLevels prop ricevuti:', customerLevels)
     if (customerLevels && customerLevels.length > 0) {
-      console.log('📊 Usando customerLevels da App:', customerLevels.map(l => ({ 
-        name: l.name, 
-        min_gems: l.min_gems, 
-        max_gems: l.max_gems 
-      })))
       setLevels(customerLevels)
-    } else {
-      console.log('❌ Nessun customerLevels ricevuto o array vuoto')
     }
   }, [customerLevels])
 
@@ -94,26 +86,6 @@ const NotificationsDashboard = ({ customerLevels }) => {
       
       console.log('🔍 TUTTI i clienti attivi caricati:', customersData)
       
-      // Debug specifico per Lucia Procope e OneSignal IDs
-      const lucia = customersData?.find(c => c.name.toLowerCase().includes('lucia'))
-      if (lucia) {
-        console.log('👩 DEBUG LUCIA PROCOPE:', {
-          name: lucia.name,
-          onesignal_player_id: lucia.onesignal_player_id,
-          onesignal_subscription_id: lucia.onesignal_subscription_id,
-          current_level: lucia.current_level,
-          points: lucia.points,
-          gender: lucia.gender
-        })
-      }
-      
-      // Debug current_level dei clienti
-      console.log('🔍 DEBUG Livelli clienti:', customersData?.map(c => ({ 
-        name: c.name, 
-        current_level: c.current_level,
-        points: c.points,
-        has_subscription: !!c.onesignal_subscription_id
-      })))
       
       setCustomers(customersData || [])
 
@@ -155,12 +127,25 @@ const NotificationsDashboard = ({ customerLevels }) => {
     }))
   }
 
+  // Calcola dinamicamente il livello in base ai punti (come fa CustomerView.jsx)
+  const getLevelByPoints = (points) => {
+    if (!levels || levels.length === 0) {
+      return { name: 'Nessun Livello', color: '#808080', emoji: '' }
+    }
+
+    const sortedLevels = [...levels].sort((a, b) => b.min_gems - a.min_gems)
+    const level = sortedLevels.find(l => points >= l.min_gems)
+
+    return level || { name: 'Base', color: '#808080', emoji: '' }
+  }
+
   const getTargetAudience = () => {
     switch (notificationForm.targetType) {
       case 'all':
         return customers
       case 'level':
-        return customers.filter(c => c.current_level === notificationForm.targetLevel)
+        // Usa il calcolo dinamico invece di c.current_level
+        return customers.filter(c => getLevelByPoints(c.points || 0).name === notificationForm.targetLevel)
       case 'individual':
         return customers.filter(c => notificationForm.targetCustomers.includes(c.id))
       default:
@@ -480,16 +465,8 @@ const NotificationsDashboard = ({ customerLevels }) => {
                   {customers.map(customer => {
                     const gender = customer.gender?.toLowerCase()
                     const isNotificationActive = !!customer.onesignal_subscription_id
-                    const customerLevel = levels.find(l => l.name === customer.current_level)
-                    
-                    // Debug del match livello
-                    if (!customerLevel && customer.current_level) {
-                      console.log('🔍 DEBUG Level mismatch:', { 
-                        customerLevel: customer.current_level,
-                        availableLevels: levels.map(l => l.name),
-                        customerName: customer.name
-                      })
-                    }
+                    // Usa calcolo dinamico invece di current_level dal database
+                    const customerLevel = getLevelByPoints(customer.points || 0)
                     
                     return (
                       <tr key={customer.id}>
@@ -692,7 +669,7 @@ const NotificationsDashboard = ({ customerLevels }) => {
                 <option value="">Scegli un livello...</option>
                 {levels.map(level => (
                   <option key={level.id} value={level.name}>
-                    {level.name} ({customers.filter(c => c.current_level === level.name).length} clienti)
+                    {level.name} ({customers.filter(c => getLevelByPoints(c.points || 0).name === level.name).length} clienti)
                   </option>
                 ))}
               </select>
