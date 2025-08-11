@@ -31,10 +31,10 @@ export default async function handler(req, res) {
     
     console.log(`📊 Trovati ${customers.length} clienti attivi`)
     
-    // 2. Ottieni tutti i players/subscriptions da OneSignal usando la nuova API
-    console.log('📱 Recuperando subscriptions da OneSignal...')
+    // 2. Ottieni tutti i players da OneSignal API
+    console.log('📱 Recuperando players da OneSignal...')
     
-    const subscriptionsResponse = await fetch(`https://api.onesignal.com/apps/${ONESIGNAL_CONFIG.appId}/subscriptions`, {
+    const playersResponse = await fetch(`https://api.onesignal.com/apps/${ONESIGNAL_CONFIG.appId}/players?limit=300`, {
       method: 'GET',
       headers: {
         'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`,
@@ -42,31 +42,15 @@ export default async function handler(req, res) {
       }
     })
     
-    let subscriptionsData = []
-    if (subscriptionsResponse.ok) {
-      subscriptionsData = await subscriptionsResponse.json()
-      console.log(`📱 OneSignal ha ${subscriptionsData.subscriptions?.length || 0} subscriptions attive`)
-    } else {
-      console.log(`⚠️ Errore API OneSignal subscriptions: ${subscriptionsResponse.status}`)
-      
-      // Fallback: prova la vecchia API players  
-      console.log('🔄 Provando vecchia API players...')
-      const playersResponse = await fetch(`https://api.onesignal.com/apps/${ONESIGNAL_CONFIG.appId}/players?limit=300`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      if (playersResponse.ok) {
-        const playersData = await playersResponse.json()
-        console.log(`📱 OneSignal API players ha ${playersData.players?.length || 0} players`)
-        subscriptionsData = { subscriptions: playersData.players || [] }
-      } else {
-        throw new Error(`OneSignal API error: ${playersResponse.status} - ${await playersResponse.text()}`)
-      }
+    if (!playersResponse.ok) {
+      throw new Error(`OneSignal API error: ${playersResponse.status} - ${await playersResponse.text()}`)
     }
+    
+    const playersData = await playersResponse.json()
+    console.log(`📱 OneSignal ha ${playersData.players?.length || 0} players attivi`)
+    
+    // Usa players come subscriptions per compatibilità
+    const subscriptionsData = { subscriptions: playersData.players || [] }
     
     let synced = 0
     let notFound = 0
