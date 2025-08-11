@@ -363,6 +363,20 @@ const RegistrationWizard = ({ onComplete, onCancel }) => {
         throw customerError
       }
 
+      // 🔔 COLLEGAMENTO ONESIGNAL: Imposta external_user_id subito dopo la registrazione
+      try {
+        if (window.OneSignal) {
+          console.log('🔔 Collegamento OneSignal per nuovo cliente:', customer.id)
+          await window.OneSignal.setExternalUserId(customer.id)
+          console.log('✅ Cliente collegato a OneSignal con external_user_id:', customer.id)
+        } else {
+          console.warn('⚠️ OneSignal non disponibile - cliente non collegato alle notifiche')
+        }
+      } catch (onesignalError) {
+        console.error('❌ Errore collegamento OneSignal:', onesignalError)
+        // Non bloccare la registrazione per errori OneSignal
+      }
+
       // 3. Salva consensi
       const consentPromises = Object.entries(formData.consents).map(async ([type, given]) => {
         return supabase.from('consent_records').insert([{
