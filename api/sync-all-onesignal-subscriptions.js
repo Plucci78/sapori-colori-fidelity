@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { gunzipSync } from 'zlib'
 
 const supabase = createClient(
   'https://jexkalekaofsfcusdfjh.supabase.co',
@@ -55,16 +56,55 @@ export default async function handler(req, res) {
     }
     
     const exportData = await exportResponse.json()
-    console.log('📱 OneSignal CSV export response:', exportData)
+    console.log('📱 OneSignal CSV export URL:', exportData.csv_file_url)
     
-    // Per ora restituisci solo il risultato della chiamata API per debug
+    // Scarica il file .gz compresso
+    const csvResponse = await fetch(exportData.csv_file_url)
+    if (!csvResponse.ok) {
+      throw new Error(`Errore download CSV: ${csvResponse.status}`)
+    }
+    
+    // Scarica come Buffer per la decompressione
+    const gzippedBuffer = Buffer.from(await csvResponse.arrayBuffer())
+    console.log(`📱 File .gz scaricato: ${gzippedBuffer.length} bytes`)
+    
+    // Decomprimi il file .gz
+    const csvBuffer = gunzipSync(gzippedBuffer)
+    const csvText = csvBuffer.toString('utf-8')
+    console.log(`📱 CSV decompresso: ${csvText.length} caratteri`)
+    
+    // Parse CSV (primo parsing semplice per vedere struttura)
+    const lines = csvText.trim().split('\n')
+    const headers = lines[0].split(',').map(h => h.replace(/"/g, ''))
+    
+    console.log('📱 CSV Headers:', headers)
+    console.log('📱 Numero righe CSV:', lines.length - 1)
+    
+    // Trova l'indice delle colonne che ci interessano
+    const idIndex = headers.findIndex(h => h.includes('id') || h.includes('subscription'))
+    const externalIdIndex = headers.findIndex(h => h.includes('external'))
+    
+    console.log('📱 Colonna ID:', idIndex >= 0 ? headers[idIndex] : 'Non trovata')
+    console.log('📱 Colonna External ID:', externalIdIndex >= 0 ? headers[externalIdIndex] : 'Non trovata')
+    
+    // Per debug, mostra le prime 3 righe
+    const sampleRows = lines.slice(1, 4).map(line => {
+      const values = line.split(',').map(v => v.replace(/"/g, ''))
+      const row = {}
+      headers.forEach((header, index) => {
+        row[header] = values[index] || ''
+      })
+      return row
+    })
+    
     res.json({
       success: true,
-      message: 'CSV Export API chiamata con successo',
-      exportData,
+      message: `CSV processato con successo: ${lines.length - 1} subscription`,
+      headers,
+      sampleRows,
+      totalRows: lines.length - 1,
       debug: true
     })
-    return
     
     let synced = 0
     let notFound = 0
