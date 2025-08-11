@@ -31,26 +31,59 @@ export default async function handler(req, res) {
     
     console.log(`📊 Trovati ${customers.length} clienti attivi`)
     
-    // 2. Ottieni tutti i players da OneSignal API
-    console.log('📱 Recuperando players da OneSignal...')
+    // 2. Ottieni tutti i subscription tramite CSV export API (endpoint corretto!)
+    console.log('📱 Recuperando subscriptions da OneSignal via CSV export...')
     
-    const playersResponse = await fetch(`https://api.onesignal.com/apps/${ONESIGNAL_CONFIG.appId}/players?limit=300`, {
-      method: 'GET',
+    const exportResponse = await fetch(`https://api.onesignal.com/players/csv_export?app_id=${ONESIGNAL_CONFIG.appId}`, {
+      method: 'POST',
       headers: {
-        'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`,
+        'Authorization': `Key ${ONESIGNAL_CONFIG.restApiKey}`,
         'Content-Type': 'application/json'
-      }
+      },
+      body: JSON.stringify({
+        extra_fields: [
+          'external_user_id',
+          'onesignal_id',
+          'country',
+          'timezone_id'
+        ]
+      })
     })
     
-    if (!playersResponse.ok) {
-      throw new Error(`OneSignal API error: ${playersResponse.status} - ${await playersResponse.text()}`)
+    if (!exportResponse.ok) {
+      throw new Error(`OneSignal CSV Export error: ${exportResponse.status} - ${await exportResponse.text()}`)
     }
     
-    const playersData = await playersResponse.json()
-    console.log(`📱 OneSignal ha ${playersData.players?.length || 0} players attivi`)
+    const exportData = await exportResponse.json()
+    console.log('📱 OneSignal CSV export URL generato:', exportData.csv_file_url)
     
-    // Usa players come subscriptions per compatibilità
-    const subscriptionsData = { subscriptions: playersData.players || [] }
+    // Scarica e processa il CSV
+    const csvResponse = await fetch(exportData.csv_file_url)
+    if (!csvResponse.ok) {
+      throw new Error(`Errore download CSV: ${csvResponse.status}`)
+    }
+    
+    const csvText = await csvResponse.text()
+    console.log(`📱 CSV scaricato: ${csvText.length} caratteri`)
+    
+    // Parse CSV semplice (assumendo header nella prima riga)
+    const lines = csvText.trim().split('\n')
+    const headers = lines[0].split(',')
+    const subscriptions = []
+    
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',')
+      const subscription = {}
+      headers.forEach((header, index) => {
+        subscription[header.replace(/"/g, '')] = values[index]?.replace(/"/g, '')
+      })
+      subscriptions.push(subscription)
+    }
+    
+    console.log(`📱 Parsed ${subscriptions.length} subscriptions dal CSV`)
+    
+    // Usa subscriptions per compatibilità con il resto del codice
+    const subscriptionsData = { subscriptions }
     
     let synced = 0
     let notFound = 0
