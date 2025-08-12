@@ -1,206 +1,142 @@
-// Force redeploy: 1
-import { useEffect, useRef, useState } from 'react';
-import Frame from 'react-frame-component';
-import grapesjs from 'grapesjs';
+import React, { useEffect, useState } from 'react';
+import StudioEditor from '@grapesjs/studio-sdk/react';
+import '@grapesjs/studio-sdk/style';
+import rendererReact from '@grapesjs/studio-sdk-plugins/dist/rendererReact';
 
-// Import dei plugin di GrapesJS
-import gjsPresetWebpage from 'grapesjs-preset-webpage';
-import gjsBlocksBasic from 'grapesjs-blocks-basic';
-import gjsPluginForms from 'grapesjs-plugin-forms';
+// Define your custom React components for GrapesJS blocks
+// These are simplified versions based on your original HTML content
+const SaporiHeader = ({ title, subtitle, logoSrc }) => (
+  <div style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 100%)', padding: '40px 20px', textAlign: 'center', color: '#8B4513' }}>
+    {logoSrc && <img src={logoSrc} alt="Sapori & Colori" style={{ height: '80px', marginBottom: '20px' }} />}
+    <h1 style={{ margin: '0', fontSize: '2.5em', fontWeight: 'bold' }}>{title}</h1>
+    <p style={{ margin: '10px 0 0 0', fontSize: '1.2em' }}>{subtitle}</p>
+  </div>
+);
+
+const PromoSection = ({ offer, description, buttonText, buttonLink }) => (
+  <div style={{ padding: '60px 20px', textAlign: 'center', background: '#f8f9fa' }}>
+    <h2 style={{ fontSize: '2.5em', color: '#D4AF37', marginBottom: '20px' }}>{offer}</h2>
+    <p style={{ fontSize: '1.3em', color: '#333', marginBottom: '30px' }}>{description}</p>
+    <div style={{ background: 'white', padding: '30px', borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', maxWidth: '400px', margin: '0 auto' }}>
+      <h3 style={{ color: '#8B4513', marginBottom: '15px' }}>Solo oggi!</h3>
+      <p style={{ fontSize: '1.1em', marginBottom: '25px' }}>Mostra questa pagina in negozio</p>
+      <a href={buttonLink} style={{ background: '#D4AF37', color: 'white', padding: '15px 30px', textDecoration: 'none', borderRadius: '25px', fontWeight: 'bold', display: 'inline-block' }}>{buttonText}</a>
+    </div>
+  </div>
+);
+
+const ContactCta = ({ phone, whatsapp, mapLink }) => (
+  <div style={{ background: '#8B4513', color: 'white', padding: '40px 20px', textAlign: 'center' }}>
+    <h3 style={{ marginBottom: '20px' }}>Contattaci Subito!</h3>
+    <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
+      <a href={`tel:${phone}`} style={{ background: '#D4AF37', color: 'white', padding: '12px 25px', textDecoration: 'none', borderRadius: '25px', fontWeight: 'bold' }}>📞 Chiama</a>
+      <a href={`https://wa.me/${whatsapp}`} style={{ background: '#25D366', color: 'white', padding: '12px 25px', textDecoration: 'none', borderRadius: '25px', fontWeight: 'bold' }}>💬 WhatsApp</a>
+      <a href={mapLink} style={{ background: '#4285F4', color: 'white', padding: '12px 25px', textDecoration: 'none', borderRadius: '25px', fontWeight: 'bold' }}>🗺️ Indicazioni</a>
+    </div>
+  </div>
+);
+
 
 const PageBuilder = () => {
-  // Il ref rimane lo stesso, ma ora lo useremo in modo più sicuro
-  const editorRef = useRef(null);
-  const [editor, setEditor] = useState(null);
+  // No need for editorRef, editor state, or complex useEffects for initialization
+  // StudioEditor handles its own lifecycle
 
-  // Le altre dichiarazioni di stato rimangono invariate
-  const [landingPages, setLandingPages] = useState([]);
-  const [currentPage, setCurrentPage] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+  // Define the React components GrapesJS will use
+  const reactRendererConfig = {
+    components: {
+      SaporiHeader: {
+        component: SaporiHeader,
+        props: () => [
+          { type: 'text', name: 'title', label: 'Titolo', value: 'Sapori & Colori' },
+          { type: 'text', name: 'subtitle', label: 'Sottotitolo', value: 'Il sapore autentico della tradizione' },
+          { type: 'text', name: 'logoSrc', label: 'URL Logo', value: 'https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png' },
+        ],
+      },
+      PromoSection: {
+        component: PromoSection,
+        props: () => [
+          { type: 'text', name: 'offer', label: 'Offerta', value: '🍕 OFFERTA SPECIALE!' },
+          { type: 'text', name: 'description', label: 'Descrizione', value: 'La tua pizza preferita con il 30% di sconto' },
+          { type: 'text', name: 'buttonText', label: 'Testo Bottone', value: '📞 Chiama Ora!' },
+          { type: 'text', name: 'buttonLink', label: 'Link Bottone', value: 'tel:+393926568550' },
+        ],
+      },
+      ContactCta: {
+        component: ContactCta,
+        props: () => [
+          { type: 'text', name: 'phone', label: 'Telefono', value: '+393926568550' },
+          { type: 'text', name: 'whatsapp', label: 'WhatsApp', value: '393926568550' },
+          { type: 'text', name: 'mapLink', label: 'Link Mappa', value: 'https://maps.google.com/?q=Via+Roma+123+Roma' },
+        ],
+      },
+    },
+  };
 
-  const frameHead = (
-    <>
-      <link
-        rel="stylesheet"
-        href="https://unpkg.com/grapesjs@0.21.10/dist/css/grapes.min.css" // Ho aggiornato a una versione stabile recente
-      />
-      <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet"
-      />
-      <style>{`
-        body {
-          margin: 0;
-          font-family: 'Inter', sans-serif;
-        }
-        /* Aggiunta per evitare il flash di contenuto non stilizzato */
-        .gjs-editor-cont {
-          opacity: 0;
-          transition: opacity 0.3s;
-        }
-        .gjs-editor-cont.gjs-loaded {
-          opacity: 1;
-        }
-      `}</style>
-    </>
-  );
-
-  // --- MODIFICA CHIAVE #1: Abbiamo rimosso il vecchio useEffect di inizializzazione ---
-  // Tutta la logica di inizializzazione è ora in questa funzione.
-  const initializeEditor = () => {
-    // Se l'editor è già inizializzato o il ref non è pronto, non fare nulla.
-    if (editor || !editorRef.current) {
-      return;
-    }
-
-    // Poiché questa funzione viene chiamata da contentDidMount,
-    // sappiamo che ownerDocument e tutti i selettori esisteranno.
-    const frameDocument = editorRef.current.ownerDocument;
-    const blocksContainer = frameDocument.querySelector('.blocks-container');
-    const panelSwitcher = frameDocument.querySelector('.panel__switcher');
-    const panelRight = frameDocument.querySelector('.panel__right');
-
-    console.log(' Inizializzazione GrapesJS Page Builder...');
-
-    try {
-      const grapesEditor = grapesjs.init({
-        container: editorRef.current,
-        height: '100%',
-        width: 'auto',
-        plugins: [gjsPresetWebpage, gjsBlocksBasic, gjsPluginForms],
-        pluginsOpts: {
-            [gjsPresetWebpage]: {
-              modalImportTitle: 'Importa Template',
-              modalImportLabel: 'Incolla qui il tuo HTML/CSS',
-              blocksBasicOpts: {
-                blocks: ['column1', 'column2', 'column3', 'text', 'link', 'image', 'video'],
-                flexGrid: true
-              }
-            },
-            [gjsBlocksBasic]: { flexGrid: true },
-            [gjsPluginForms]: {
-              blocks: ['form', 'input', 'textarea', 'select', 'button', 'label', 'checkbox', 'radio']
+  return (
+    <div style={{ height: '100vh', width: '100vw' }}> {/* Ensure the container has dimensions */}
+      <StudioEditor
+        options={{
+          // The React Renderer plugin
+          plugins: [
+            rendererReact.init(reactRendererConfig),
+            // Add blocks for your custom React components
+            (editor) => {
+              editor.Blocks.add('sapori-header', {
+                label: 'Header Sapori & Colori',
+                category: 'Sapori & Colori',
+                content: { type: 'SaporiHeader', props: { title: 'Sapori & Colori', subtitle: 'Il sapore autentico della tradizione', logoSrc: 'https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png' } },
+              });
+              editor.Blocks.add('promo-section', {
+                label: 'Sezione Promozione',
+                category: 'Sapori & Colori',
+                content: { type: 'PromoSection', props: { offer: '🍕 OFFERTA SPECIALE!', description: 'La tua pizza preferita con il 30% di sconto', buttonText: '📞 Chiama Ora!', buttonLink: 'tel:+393926568550' } },
+              });
+              editor.Blocks.add('contact-cta', {
+                label: 'Call to Action Contatti',
+                category: 'Sapori & Colori',
+                content: { type: 'ContactCta', props: { phone: '+393926568550', whatsapp: '393926568550', mapLink: 'https://maps.google.com/?q=Via+Roma+123+Roma' } },
+              });
             }
-        },
-        fromElement: false,
-        showOffsets: true,
-        noticeOnUnload: false,
-        canvas: {
-            styles: [
-              'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
-              'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css'
-            ],
-            scripts: []
-        },
-        storageManager: {
+          ],
+          // Initial project content using React components
+          project: {
+            type: 'react',
+            default: {
+              pages: [
+                {
+                  name: 'Pagina Iniziale',
+                  component: (
+                    <>
+                      <SaporiHeader title="Benvenuto nel Page Builder" subtitle="Crea le tue landing page con facilità" logoSrc="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" />
+                      <PromoSection offer="Offerta di Benvenuto!" description="Trascina i blocchi per iniziare a costruire!" buttonText="Scopri di più" buttonLink="#" />
+                    </>
+                  )
+                },
+              ]
+            }
+          },
+          // Other GrapesJS options (optional)
+          height: '100%',
+          width: '100%',
+          showOffsets: true,
+          noticeOnUnload: false,
+          storageManager: {
             type: 'local',
             autosave: true,
-            autoload: false, // Meglio disabilitare per il debug iniziale
+            autoload: true,
             stepsBeforeSave: 3
-        },
-        deviceManager: {
+          },
+          deviceManager: {
             devices: [
               { name: 'Desktop', width: '' },
               { name: 'Tablet', width: '768px', widthMedia: '992px' },
               { name: 'Mobile', width: '375px', widthMedia: '575px' }
             ]
-        },
-        blockManager: {
-          appendTo: blocksContainer,
-        },
-        layerManager: {
-          appendTo: panelRight,
-        },
-        styleManager: {
-          appendTo: panelRight,
-        },
-        traitManager: {
-          appendTo: panelRight,
-        },
-        panels: {
-          defaults: [{
-            id: 'panel-switcher',
-            el: panelSwitcher,
-            buttons: [
-              { id: 'show-layers', active: true, label: '️', command: 'show-layers', togglable: false, tooltip: 'Livelli' },
-              { id: 'show-style', label: '', command: 'show-styles', togglable: false, tooltip: 'Stili' },
-              { id: 'show-traits', label: '⚙️', command: 'show-traits', togglable: false, tooltip: 'Impostazioni' }
-            ]
-          }]
-        }
-      });
-      
-      // I comandi per mostrare i pannelli
-      grapesEditor.Commands.add('show-layers', {
-        run: editor => editor.runCommand('core:component-select'),
-        stop: editor => editor.stopCommand('core:component-select'),
-      });
-      grapesEditor.on('run:show-layers', () => {
-          grapesEditor.StyleManager.hide();
-          grapesEditor.TraitManager.hide();
-          grapesEditor.LayerManager.show();
-      });
-      grapesEditor.on('run:show-styles', () => {
-          grapesEditor.LayerManager.hide();
-          grapesEditor.TraitManager.hide();
-          grapesEditor.StyleManager.show();
-      });
-      grapesEditor.on('run:show-traits', () => {
-          grapesEditor.LayerManager.hide();
-          grapesEditor.StyleManager.hide();
-          grapesEditor.TraitManager.show();
-      });
-
-      // Carica il contenuto iniziale
-      grapesEditor.setComponents(`
-        <div class="container-fluid p-0">
-          <section style="background: linear-gradient(135deg, #D4AF37, #FFD700); padding: 60px 20px; text-align: center; color: #8B4513;">
-            <div class="container">
-              <img src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" alt="Sapori & Colori" style="height: 80px; margin-bottom: 20px;">
-              <h1 class="display-4 fw-bold mb-3">Page Builder Professionale</h1>
-              <p class="lead mb-4">Drag & Drop • Forms • Responsive • Bootstrap Ready</p>
-              <button class="btn btn-lg" style="background: #8B4513; color: white; border: none; border-radius: 25px; padding: 12px 30px;"> Inizia a Creare</button>
-            </div>
-          </section>
-        </div>
-      `);
-
-      // Imposta il pannello iniziale e aggiunge la classe per la transizione di opacità
-      grapesEditor.on('load', () => {
-        grapesEditor.runCommand('show-layers');
-        const editorContainer = grapesEditor.getContainer();
-        editorContainer.classList.add('gjs-loaded');
-      });
-
-      setEditor(grapesEditor);
-      console.log('✅ GrapesJS inizializzato con successo!');
-
-    } catch (error) {
-      console.error('❌ Errore durante l'inizializzazione di GrapesJS:', error);
-    }
-  };
-
-  // --- MODIFICA CHIAVE #2: useEffect per la pulizia ---
-  // Questo hook ora si occupa solo di distruggere l'istanza di GrapesJS quando il componente viene smontato.
-  useEffect(() => {
-    return () => {
-      if (editor) {
-        editor.destroy();
-      }
-    };
-  }, [editor]); // Dipende da 'editor' per sapere quando pulire
-
-  return (
-    // --- MODIFICA CHIAVE #3: Utilizzo di contentDidMount ---
-    <Frame
-      head={frameHead}
-      contentDidMount={initializeEditor} // <-- LA MODIFICA PIÙ IMPORTANTE!
-      style={{ width: '100%', height: '100vh', border: 'none' }}
-    >
-      <div ref={editorRef} style={{ height: '600px', width: '800px', border: '5px solid lime' }}></div>
-    </Frame>
+          },
+        }}
+      />
+    </div>
   );
-}
+};
 
 export default PageBuilder;
