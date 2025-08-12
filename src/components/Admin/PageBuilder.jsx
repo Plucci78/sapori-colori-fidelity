@@ -198,38 +198,7 @@ const PageBuilder = () => {
       contentDidMount={initializeEditor} // <-- LA MODIFICA PIÙ IMPORTANTE!
       style={{ width: '100%', height: '100vh', border: 'none' }}
     >
-      <div className="page-builder-container" style={{
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        fontFamily: 'Inter, sans-serif',
-        position: 'relative'
-      }}>
-
-        {/* Il resto del tuo JSX rimane identico */}
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
-          {/* Indicatore di caricamento finché l'editor non è pronto */}
-          {!editor && (
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgba(255, 255, 255, 0.8)', zIndex: 10000 }}>
-                <h3>Caricamento Page Builder...</h3>
-            </div>
-          )}
-          <div style={{ width: '250px', background: '#f5f5f5', borderRight: '1px solid #ddd', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '12px', borderBottom: '1px solid #ddd', background: '#fff' }}>
-              <h3 style={{ margin: '0', fontSize: '14px' }}> Blocchi</h3>
-            </div>
-            <div className="blocks-container" style={{ flex: 1, overflow: 'auto' }}></div>
-          </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
-            {/* Il nostro ref è qui. GrapesJS verrà montato in questo div. */}
-            <div ref={editorRef} style={{ height: '600px', width: '800px', border: '5px solid lime' }}></div>
-          </div>
-          <div style={{ width: '250px', background: '#f5f5f5', borderLeft: '1px solid #ddd', display: 'flex', flexDirection: 'column' }}>
-            <div className="panel__switcher" style={{ padding: '8px', borderBottom: '1px solid #ddd', background: '#fff' }}></div>
-            <div className="panel__right" style={{ flex: 1, overflow: 'auto' }}></div>
-          </div>
-        </div>
-      </div>
+      <div ref={editorRef} style={{ height: '600px', width: '800px', border: '5px solid lime' }}></div>
     </Frame>
   );
 }
