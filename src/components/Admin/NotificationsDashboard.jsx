@@ -689,7 +689,7 @@ const NotificationsDashboard = ({ customerLevels }) => {
               placeholder="https://esempio.com/immagine-promo.jpg"
             />
             <small className="field-hint">
-              📱 Immagine verrà mostrata nella notifica push. Dimensioni consigliate: 512x256px
+              📱 Solo HTTPS, no redirect, max 1MB. Dimensioni ottimali: 1024×512px (2:1). Formati: JPG, PNG, GIF
             </small>
             {notificationForm.imageUrl && (
               <div className="image-preview">

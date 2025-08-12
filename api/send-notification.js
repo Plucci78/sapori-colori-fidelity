@@ -41,12 +41,17 @@ export default async function handler(req, res) {
       notificationData.url = url
     }
 
-    // Aggiungi immagine rich se fornita
+    // Aggiungi immagine rich se fornita (OneSignal AI guidelines)
     if (imageUrl) {
-      notificationData.big_picture = imageUrl // Immagine large per Android
-      notificationData.ios_attachments = { "id1": imageUrl } // Immagine per iOS
-      notificationData.chrome_web_image = imageUrl // Immagine per Chrome/Web
-      console.log('🖼️ Aggiunta immagine rich alla notifica:', imageUrl)
+      // Verifica che sia HTTPS
+      if (imageUrl.startsWith('https://')) {
+        notificationData.big_picture = imageUrl // Android
+        notificationData.chrome_web_image = imageUrl // iOS Safari + Chrome Web (PRIMARIO!)
+        // Rimosso ios_attachments che non funziona per web push
+        console.log('🖼️ Aggiunta immagine rich HTTPS alla notifica:', imageUrl)
+      } else {
+        console.warn('⚠️ Immagine non HTTPS, saltata:', imageUrl)
+      }
     }
 
     // Chiamata API OneSignal v2 dal server
