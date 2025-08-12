@@ -139,15 +139,13 @@ const ClientPortal = ({ token }) => {
               // Aspetta un po' prima di settare i tag per dare tempo a OneSignal
               await new Promise(resolve => setTimeout(resolve, 2000))
               
-              // Aggiungiamo tag per identificare il cliente in OneSignal
+              // Aggiungiamo solo 2 tag (limite piano gratuito OneSignal)
               try {
                 await window.OneSignal.User.addTags({
                   customer_name: customerData.name || '',
-                  customer_email: customerData.email || '',
-                  customer_phone: customerData.phone || '',
                   customer_points: (customerData.points || 0).toString()
                 })
-                console.log('✅ Tag cliente aggiunti a OneSignal:', customerData.name)
+                console.log('✅ Tag cliente aggiunti a OneSignal (2 tag max):', customerData.name)
               } catch (tagError) {
                 console.error('⚠️ Errore aggiunta tag OneSignal:', tagError)
               }
