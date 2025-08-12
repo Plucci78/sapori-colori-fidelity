@@ -17,13 +17,17 @@ const PageBuilder = () => {
 
   useEffect(() => {
     console.log('🔍 UseEffect PageBuilder chiamato')
-    console.log('📍 editorRef.current:', editorRef.current)
-    console.log('📍 editor esistente:', editor)
     
-    if (!editorRef.current) {
-      console.log('❌ editorRef.current è null, aspetto...')
-      return
-    }
+    // Aspetta che il DOM sia completamente renderizzato
+    const initializeEditor = () => {
+      console.log('📍 editorRef.current:', editorRef.current)
+      console.log('📍 editor esistente:', editor)
+      
+      if (!editorRef.current) {
+        console.log('❌ editorRef.current è null, riprovo in 100ms...')
+        setTimeout(initializeEditor, 100)
+        return
+      }
     
     if (editor) {
       console.log('✅ Editor già esistente, skip')
@@ -242,6 +246,10 @@ const PageBuilder = () => {
         grapesEditor.destroy()
       }
     }
+    }
+    
+    // Inizia il processo di inizializzazione
+    initializeEditor()
   }, [])
 
   // Carica lista landing pages
