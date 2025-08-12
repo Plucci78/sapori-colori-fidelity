@@ -2,6 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import grapesjs from 'grapesjs'
 import 'grapesjs/dist/css/grapes.min.css'
 
+// Import key GrapesJS plugins  
+import gjsPresetWebpage from 'grapesjs-preset-webpage'
+import gjsBlocksBasic from 'grapesjs-blocks-basic'
+import gjsPluginForms from 'grapesjs-plugin-forms'
+
 const PageBuilder = () => {
   const editorRef = useRef(null)
   const [editor, setEditor] = useState(null)
@@ -66,14 +71,33 @@ const PageBuilder = () => {
       height: '100%',
       width: '100%',
       
-      // Configurazione responsive
+      // Plugins essenziali
+      plugins: [gjsPresetWebpage, gjsBlocksBasic, gjsPluginForms],
+      pluginsOpts: {
+        [gjsPresetWebpage]: {
+          modalImportTitle: 'Importa Template',
+          modalImportLabel: 'Incolla qui il tuo HTML/CSS',
+          blocksBasicOpts: {
+            blocks: ['column1', 'column2', 'column3', 'text', 'link', 'image', 'video'],
+            flexGrid: true
+          }
+        },
+        [gjsBlocksBasic]: { flexGrid: true },
+        [gjsPluginForms]: { 
+          blocks: ['form', 'input', 'textarea', 'select', 'button', 'label', 'checkbox', 'radio'] 
+        }
+      },
+      
+      // Configurazione avanzata
+      fromElement: false,
       showOffsets: true,
       noticeOnUnload: false,
       
-      // Canvas responsive 
+      // Canvas con Bootstrap
       canvas: {
         styles: [
-          'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
+          'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
+          'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css'
         ],
         scripts: []
       },
@@ -81,13 +105,35 @@ const PageBuilder = () => {
       // Configurazione Sapori & Colori
       projectName: 'Sapori & Colori Landing Pages',
       
-      // Contenuto iniziale di base
+      // Contenuto iniziale professionale
       components: `
-        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
-          <div style="text-align: center; padding: 40px 20px; background: #f8f9fa; border-radius: 10px; margin-bottom: 20px;">
-            <h1 style="color: #D4AF37; margin-bottom: 15px;">Benvenuto nel Page Builder</h1>
-            <p style="color: #666; font-size: 18px;">Trascina i blocchi dalla sidebar sinistra per iniziare a creare la tua landing page</p>
-          </div>
+        <div class="container-fluid p-0">
+          <section style="background: linear-gradient(135deg, #D4AF37, #FFD700); padding: 60px 20px; text-align: center; color: #8B4513;">
+            <div class="container">
+              <img src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" alt="Sapori & Colori" style="height: 80px; margin-bottom: 20px;">
+              <h1 class="display-4 fw-bold mb-3">Page Builder Professionale</h1>
+              <p class="lead mb-4">Drag & Drop • Forms • Responsive • Bootstrap Ready</p>
+              <button class="btn btn-lg" style="background: #8B4513; color: white; border: none; border-radius: 25px; padding: 12px 30px;">🚀 Inizia a Creare</button>
+            </div>
+          </section>
+          <section class="py-5">
+            <div class="container">
+              <div class="row">
+                <div class="col-md-4 text-center mb-4">
+                  <h3>📱 Responsive</h3>
+                  <p>Design perfetto su ogni dispositivo</p>
+                </div>
+                <div class="col-md-4 text-center mb-4">
+                  <h3>🎨 Drag & Drop</h3>
+                  <p>Interface intuitiva e veloce</p>
+                </div>
+                <div class="col-md-4 text-center mb-4">
+                  <h3>📋 Forms</h3>
+                  <p>Moduli di contatto avanzati</p>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       `,
       
@@ -99,26 +145,29 @@ const PageBuilder = () => {
         stepsBeforeSave: 3
       },
 
-      // Device responsive con resize automatico
+      // Device responsive avanzato
       deviceManager: {
         devices: [
           {
             name: 'Desktop',
             width: '',
             height: '',
-            widthMedia: '1200px'
+            widthMedia: '1200px',
+            priority: 1
           },
           {
             name: 'Tablet',
             width: '768px', 
             height: '',
-            widthMedia: '768px'
+            widthMedia: '768px',
+            priority: 2
           },
           {
-            name: 'Mobile',
-            width: '375px',
+            name: 'Mobile portrait',
+            width: '320px',
             height: '',
-            widthMedia: '320px'
+            widthMedia: '320px',
+            priority: 3
           }
         ]
       },
@@ -128,7 +177,7 @@ const PageBuilder = () => {
         appendTo: '.blocks-container'
       },
 
-      // Panels personalizzati
+      // Panels avanzati
       panels: {
         defaults: [
           {
@@ -137,48 +186,45 @@ const PageBuilder = () => {
             buttons: [
               {
                 id: 'show-layers',
-                label: 'Layers',
+                active: true,
+                label: '🏗️',
                 command: 'show-layers',
                 togglable: false,
-                className: 'fa fa-layer-group'
+                tooltip: 'Layers'
               },
               {
-                id: 'show-styles',
-                label: 'Styles', 
+                id: 'show-style',
+                label: '🎨',
                 command: 'show-styles',
                 togglable: false,
-                className: 'fa fa-paint-brush'
+                tooltip: 'Style Manager'
+              },
+              {
+                id: 'show-traits',
+                label: '⚙️',
+                command: 'show-traits',
+                togglable: false,
+                tooltip: 'Settings'
               }
-            ],
+            ]
           }
         ]
       },
 
     })
 
-    // Aggiungiamo i comandi mancanti per i panel con implementazione semplificata
+    // Comandi avanzati per gestione panel
     grapesEditor.Commands.add('show-layers', {
       run(editor) {
-        const lm = editor.LayerManager
         const panelEl = document.querySelector('.panel__right')
-        
         if (panelEl) {
-          // Pulisci il contenuto esistente
           panelEl.innerHTML = ''
-          
-          // Crea container per layers
           const layersContainer = document.createElement('div')
-          layersContainer.style.padding = '10px'
+          layersContainer.style.height = '100%'
+          layersContainer.style.overflow = 'auto'
           
-          const title = document.createElement('h4')
-          title.textContent = 'Layers'
-          title.style.margin = '0 0 10px 0'
-          title.style.color = '#333'
-          
-          layersContainer.appendChild(title)
-          
-          // Renderizza layer manager
-          lm.render(layersContainer)
+          // Renderizza layer manager nativo
+          editor.LayerManager.render(layersContainer)
           panelEl.appendChild(layersContainer)
         }
       }
@@ -186,94 +232,39 @@ const PageBuilder = () => {
 
     grapesEditor.Commands.add('show-styles', {
       run(editor) {
-        const sm = editor.StyleManager
         const panelEl = document.querySelector('.panel__right')
-        
         if (panelEl) {
-          // Pulisci il contenuto esistente
           panelEl.innerHTML = ''
-          
-          // Crea container per styles
           const stylesContainer = document.createElement('div')
-          stylesContainer.style.padding = '10px'
+          stylesContainer.style.height = '100%'
+          stylesContainer.style.overflow = 'auto'
           
-          const title = document.createElement('h4')
-          title.textContent = 'Styles'
-          title.style.margin = '0 0 10px 0'
-          title.style.color = '#333'
-          
-          stylesContainer.appendChild(title)
-          
-          // Renderizza style manager
-          sm.render(stylesContainer)
+          // Renderizza style manager nativo  
+          editor.StyleManager.render(stylesContainer)
           panelEl.appendChild(stylesContainer)
         }
       }
     })
 
-    // Aggiungi blocchi di base comuni
+    grapesEditor.Commands.add('show-traits', {
+      run(editor) {
+        const panelEl = document.querySelector('.panel__right')
+        if (panelEl) {
+          panelEl.innerHTML = ''
+          const traitsContainer = document.createElement('div')
+          traitsContainer.style.height = '100%'
+          traitsContainer.style.overflow = 'auto'
+          
+          // Renderizza trait manager nativo
+          editor.TraitManager.render(traitsContainer)
+          panelEl.appendChild(traitsContainer)
+        }
+      }
+    })
+
+    // Blocchi personalizzati Sapori & Colori
     const blockManager = grapesEditor.BlockManager
     
-    // Blocchi di base essenziali
-    blockManager.add('text', {
-      label: '📝 Testo',
-      content: '<div data-gjs-type="text">Inserisci il tuo testo qui</div>',
-      category: 'Basic'
-    })
-    
-    blockManager.add('image', {
-      label: '🖼️ Immagine',
-      content: { type: 'image' },
-      category: 'Basic'
-    })
-    
-    blockManager.add('video', {
-      label: '🎥 Video',
-      content: { type: 'video', src: 'img/video2.webm' },
-      category: 'Basic'
-    })
-    
-    blockManager.add('section', {
-      label: '📦 Sezione',
-      content: `
-        <section style="padding: 40px 20px; background: #f9f9f9;">
-          <div style="max-width: 1200px; margin: 0 auto;">
-            <h2>Titolo Sezione</h2>
-            <p>Contenuto della sezione...</p>
-          </div>
-        </section>
-      `,
-      category: 'Basic'
-    })
-    
-    blockManager.add('columns', {
-      label: '📊 2 Colonne',
-      content: `
-        <div style="display: flex; gap: 20px; padding: 20px;">
-          <div style="flex: 1; padding: 20px; background: #f5f5f5;">
-            <h3>Colonna 1</h3>
-            <p>Contenuto della prima colonna</p>
-          </div>
-          <div style="flex: 1; padding: 20px; background: #f5f5f5;">
-            <h3>Colonna 2</h3>
-            <p>Contenuto della seconda colonna</p>
-          </div>
-        </div>
-      `,
-      category: 'Layout'
-    })
-    
-    blockManager.add('button', {
-      label: '🔘 Bottone',
-      content: `
-        <a href="#" style="display: inline-block; padding: 12px 24px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
-          Clicca qui
-        </a>
-      `,
-      category: 'Basic'
-    })
-    
-    // Blocchi personalizzati Sapori & Colori
     blockManager.add('sapori-header', {
       label: '🏪 Header Sapori & Colori',
       content: `
