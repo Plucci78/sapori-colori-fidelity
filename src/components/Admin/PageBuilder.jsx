@@ -63,11 +63,20 @@ const PageBuilder = () => {
 
     const grapesEditor = grapesjs.init({
       container: editorRef.current,
-      height: '100vh',
+      height: '100%',
       width: '100%',
       
-      // Blocchi di base abilitati
+      // Configurazione responsive
       showOffsets: true,
+      noticeOnUnload: false,
+      
+      // Canvas responsive 
+      canvas: {
+        styles: [
+          'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
+        ],
+        scripts: []
+      },
       
       // Configurazione Sapori & Colori
       projectName: 'Sapori & Colori Landing Pages',
@@ -90,23 +99,26 @@ const PageBuilder = () => {
         stepsBeforeSave: 3
       },
 
-      // Device responsive
+      // Device responsive con resize automatico
       deviceManager: {
         devices: [
           {
             name: 'Desktop',
-            width: '1200px',
-            height: '800px'
+            width: '',
+            height: '',
+            widthMedia: '1200px'
           },
           {
             name: 'Tablet',
             width: '768px', 
-            height: '1024px'
+            height: '',
+            widthMedia: '768px'
           },
           {
             name: 'Mobile',
             width: '375px',
-            height: '667px'
+            height: '',
+            widthMedia: '320px'
           }
         ]
       },
@@ -142,13 +154,6 @@ const PageBuilder = () => {
         ]
       },
 
-      // Canvas settings
-      canvas: {
-        styles: [
-          'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
-        ],
-        scripts: []
-      }
     })
 
     // Aggiungiamo i comandi mancanti per i panel con implementazione semplificata
@@ -312,6 +317,15 @@ const PageBuilder = () => {
       category: 'Sapori & Colori'
     })
 
+    // Listener per il resize della finestra
+    const handleResize = () => {
+      if (grapesEditor) {
+        grapesEditor.refresh()
+      }
+    }
+    
+    window.addEventListener('resize', handleResize)
+
     // Inizializza il pannello layers di default
     setTimeout(() => {
       grapesEditor.runCommand('show-layers')
@@ -335,6 +349,7 @@ const PageBuilder = () => {
       if (grapesEditor) {
         grapesEditor.destroy()
       }
+      window.removeEventListener('resize', handleResize)
     }
       }
       
