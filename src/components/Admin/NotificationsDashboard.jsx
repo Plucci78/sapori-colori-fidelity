@@ -37,10 +37,12 @@ const NotificationsDashboard = ({ customerLevels }) => {
 
   const [levels, setLevels] = useState([])
   const [notificationHistory, setNotificationHistory] = useState([])
+  const [landingPages, setLandingPages] = useState([])
 
   useEffect(() => {
     loadData()
     loadNotificationHistory()
+    loadLandingPages()
   }, [])
 
   // Usa i customerLevels passati come prop dal componente App principale
@@ -63,6 +65,20 @@ const NotificationsDashboard = ({ customerLevels }) => {
       }
     } catch (error) {
       console.error('Errore caricamento storico:', error)
+    }
+  }
+
+  const loadLandingPages = async () => {
+    try {
+      const response = await fetch('/api/landing-pages')
+      const result = await response.json()
+      
+      if (result.success) {
+        setLandingPages(result.data.filter(page => page.is_published))
+        console.log('📋 Landing pages caricate per notifiche:', result.data.length)
+      }
+    } catch (error) {
+      console.error('❌ Errore caricamento landing pages:', error)
     }
   }
 
@@ -681,13 +697,61 @@ const NotificationsDashboard = ({ customerLevels }) => {
 
         <div className="form-row">
           <div className="form-group">
-            <label>URL di destinazione (opzionale)</label>
+            <label>🔗 URL di destinazione (opzionale)</label>
+            
+            {/* Dropdown Landing Pages */}
+            {landingPages.length > 0 && (
+              <div style={{ marginBottom: '10px' }}>
+                <label style={{ fontSize: '14px', color: '#666' }}>Seleziona una landing page creata:</label>
+                <select
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const selectedPage = landingPages.find(p => p.id === e.target.value)
+                      if (selectedPage) {
+                        const landingUrl = `${window.location.origin}/landing/${selectedPage.slug}`
+                        handleInputChange('url', landingUrl)
+                      }
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #ddd',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    background: '#f8f9fa'
+                  }}
+                >
+                  <option value="">🎯 Scegli landing page...</option>
+                  {landingPages.map(page => (
+                    <option key={page.id} value={page.id}>
+                      📄 {page.title} ({page.view_count || 0} visualizzazioni)
+                    </option>
+                  ))}
+                </select>
+                <small style={{ color: '#666', fontSize: '12px' }}>
+                  ✨ Le landing pages create con il Page Builder sono già ottimizzate per le notifiche push
+                </small>
+              </div>
+            )}
+            
+            {/* Input URL manuale */}
             <input
               type="url"
               value={notificationForm.url}
               onChange={(e) => handleInputChange('url', e.target.value)}
               placeholder="https://saporiecolori.net/promozioni"
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                fontSize: '14px'
+              }}
             />
+            <small style={{ color: '#666', fontSize: '12px' }}>
+              💡 Oppure inserisci un URL personalizzato
+            </small>
           </div>
         </div>
 

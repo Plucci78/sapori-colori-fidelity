@@ -6,6 +6,14 @@ const PageBuilder = () => {
   const editorRef = useRef(null)
   const [editor, setEditor] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [landingPages, setLandingPages] = useState([])
+  const [currentPage, setCurrentPage] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' })
+
+  useEffect(() => {
+    loadLandingPages()
+  }, [])
 
   useEffect(() => {
     if (!editorRef.current || editor) return
@@ -146,10 +154,55 @@ const PageBuilder = () => {
       }
     })
 
+    // Aggiungiamo i comandi mancanti per i panel
+    grapesEditor.Commands.add('show-layers', {
+      getRowEl(editor) { return editor.getContainer().closest('.editor-row') },
+      getLayersEl(row) { return row.querySelector('.layers-container') },
+      
+      run(editor, sender) {
+        const lm = editor.LayerManager
+        const layersEl = this.getLayersEl(this.getRowEl(editor))
+        
+        if (layersEl) {
+          layersEl.style.display = 'block'
+          lm.render(layersEl)
+        }
+      },
+      
+      stop(editor, sender) {
+        const layersEl = this.getLayersEl(this.getRowEl(editor))
+        if (layersEl) {
+          layersEl.style.display = 'none'
+        }
+      }
+    })
+
+    grapesEditor.Commands.add('show-styles', {
+      getRowEl(editor) { return editor.getContainer().closest('.editor-row') },
+      getStyleEl(row) { return row.querySelector('.styles-container') },
+      
+      run(editor, sender) {
+        const sm = editor.StyleManager
+        const styleEl = this.getStyleEl(this.getRowEl(editor))
+        
+        if (styleEl) {
+          styleEl.style.display = 'block'
+          sm.render(styleEl)
+        }
+      },
+      
+      stop(editor, sender) {
+        const styleEl = this.getStyleEl(this.getRowEl(editor))
+        if (styleEl) {
+          styleEl.style.display = 'none'
+        }
+      }
+    })
+
     setEditor(grapesEditor)
     setLoading(false)
 
-    console.log('✅ GrapesJS inizializzato con successo!')
+    console.log('✅ GrapesJS inizializzato con comandi personalizzati!')
 
     return () => {
       if (grapesEditor) {
@@ -158,8 +211,243 @@ const PageBuilder = () => {
     }
   }, [])
 
+  // Carica lista landing pages
+  const loadLandingPages = async () => {
+    try {
+      const response = await fetch('/api/landing-pages')
+      const result = await response.json()
+      
+      if (result.success) {
+        setLandingPages(result.data)
+        console.log('📋 Landing pages caricate:', result.count)
+      }
+    } catch (error) {
+      console.error('❌ Errore caricamento landing pages:', error)
+      showNotification('❌ Errore caricamento pagine', 'error')
+    }
+  }
+
+  // Salva landing page corrente
+  const saveLandingPage = async () => {
+    if (!editor) {
+      showNotification('❌ Editor non inizializzato', 'error')
+      return
+    }
+
+    const title = prompt('📝 Nome della landing page:', currentPage?.title || 'Nuova Landing Page')
+    if (!title) return
+
+    setSaving(true)
+    try {
+      const htmlContent = editor.getHtml()
+      const cssContent = editor.getCss()
+      const grapesData = editor.getProjectData()
+
+      const slug = generateSlug(title)
+      
+      const payload = {
+        title,
+        description: `Landing page creata con Page Builder - ${title}`,
+        slug,
+        html_content: htmlContent,
+        css_content: cssContent,
+        grapesjs_data: grapesData,
+        meta_title: title,
+        meta_description: `${title} - Sapori & Colori`,
+        is_published: true
+      }
+
+      let response
+      if (currentPage) {
+        // Aggiorna esistente
+        response = await fetch('/api/landing-pages', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...payload, id: currentPage.id })
+        })
+      } else {
+        // Crea nuovo
+        response = await fetch('/api/landing-pages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+      }
+
+      const result = await response.json()
+
+      if (result.success) {
+        setCurrentPage(result.data)
+        await loadLandingPages()
+        showNotification(`✅ Landing page ${currentPage ? 'aggiornata' : 'salvata'}: ${result.public_url}`)
+      } else {
+        showNotification(`❌ Errore: ${result.error}`, 'error')
+      }
+    } catch (error) {
+      console.error('❌ Errore salvataggio:', error)
+      showNotification('❌ Errore durante il salvataggio', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Carica landing page esistente
+  const loadLandingPage = async (page) => {
+    if (!editor) return
+
+    try {
+      if (page.grapesjs_data) {
+        editor.loadProjectData(page.grapesjs_data)
+      } else {
+        // Fallback: carica da HTML/CSS
+        editor.setComponents(page.html_content)
+        editor.setStyle(page.css_content)
+      }
+      
+      setCurrentPage(page)
+      showNotification(`📋 Caricata: ${page.title}`)
+    } catch (error) {
+      console.error('❌ Errore caricamento pagina:', error)
+      showNotification('❌ Errore caricamento pagina', 'error')
+    }
+  }
+
+  // Crea nuova landing page
+  const createNewPage = () => {
+    if (!editor) return
+    
+    editor.runCommand('core:canvas-clear')
+    setCurrentPage(null)
+    showNotification('📄 Nuova landing page creata')
+  }
+
+  // Utility functions
+  const generateSlug = (title) => {
+    return title
+      .toLowerCase()
+      .replace(/[àáâãäå]/g, 'a')
+      .replace(/[èéêë]/g, 'e')
+      .replace(/[ìíîï]/g, 'i')
+      .replace(/[òóôõö]/g, 'o')
+      .replace(/[ùúûü]/g, 'u')
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .substring(0, 50)
+  }
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({ show: true, message, type })
+    setTimeout(() => {
+      setNotification({ show: false, message: '', type: '' })
+    }, 4000)
+  }
+
   return (
     <div className="page-builder-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Notifiche */}
+      {notification.show && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: notification.type === 'error' ? '#ff6b6b' : '#51cf66',
+          color: 'white',
+          padding: '12px 20px',
+          borderRadius: '8px',
+          zIndex: 9999,
+          maxWidth: '400px'
+        }}>
+          {notification.message}
+        </div>
+      )}
+
+      {/* Toolbar */}
+      <div style={{ 
+        background: '#fff', 
+        borderBottom: '1px solid #ddd', 
+        padding: '10px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '15px',
+        flexWrap: 'wrap'
+      }}>
+        <h2 style={{ margin: '0', color: '#8B4513' }}>🎨 Page Builder</h2>
+        
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <button
+            onClick={createNewPage}
+            disabled={loading}
+            style={{
+              background: '#51cf66',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            📄 Nuova Pagina
+          </button>
+
+          <button
+            onClick={saveLandingPage}
+            disabled={loading || saving || !editor}
+            style={{
+              background: '#8B4513',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              opacity: (loading || saving || !editor) ? 0.5 : 1
+            }}
+          >
+            {saving ? '💾 Salvando...' : '💾 Salva'}
+          </button>
+
+          {currentPage && (
+            <span style={{ 
+              background: '#e3f2fd', 
+              color: '#1976d2', 
+              padding: '6px 12px', 
+              borderRadius: '4px',
+              fontSize: '14px'
+            }}>
+              📝 {currentPage.title}
+            </span>
+          )}
+        </div>
+
+        {/* Landing Pages List */}
+        {landingPages.length > 0 && (
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <label style={{ fontSize: '14px', color: '#666' }}>Carica esistente:</label>
+            <select
+              onChange={(e) => {
+                const page = landingPages.find(p => p.id === e.target.value)
+                if (page) loadLandingPage(page)
+              }}
+              style={{
+                padding: '6px 10px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '14px'
+              }}
+            >
+              <option value="">Seleziona pagina...</option>
+              {landingPages.map(page => (
+                <option key={page.id} value={page.id}>
+                  {page.title} ({page.is_published ? 'Pubblicata' : 'Bozza'})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
       {loading && (
         <div style={{ padding: '20px', textAlign: 'center' }}>
           <h3>🎨 Caricamento Page Builder...</h3>
@@ -167,7 +455,8 @@ const PageBuilder = () => {
         </div>
       )}
       
-      <div style={{ display: 'flex', height: '100vh' }}>
+      {!loading && (
+        <div style={{ display: 'flex', height: 'calc(100vh - 80px)' }}>
         {/* Sidebar blocchi */}
         <div style={{ width: '300px', background: '#f5f5f5', borderRight: '1px solid #ddd' }}>
           <div style={{ padding: '15px', borderBottom: '1px solid #ddd', background: '#fff' }}>
@@ -187,7 +476,8 @@ const PageBuilder = () => {
           <div className="panel__switcher" style={{ padding: '10px', borderBottom: '1px solid #ddd', background: '#fff' }}></div>
           <div className="panel__right" style={{ height: 'calc(100% - 60px)', overflow: 'auto' }}></div>
         </div>
-      </div>
+        </div>
+      )}
     </div>
   )
 }
