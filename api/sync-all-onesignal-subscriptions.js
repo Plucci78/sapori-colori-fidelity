@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { inflate } from 'pako'
+import Papa from 'papaparse'
 
 const supabase = createClient(
   'https://jexkalekaofsfcusdfjh.supabase.co',
@@ -114,12 +115,25 @@ export default async function handler(req, res) {
     const csvText = new TextDecoder().decode(decompressedData)
     console.log(`📱 CSV decompresso: ${csvText.length} caratteri`)
     
-    // Parse CSV (primo parsing semplice per vedere struttura)
-    const lines = csvText.trim().split('\n')
-    const headers = lines[0].split(',').map(h => h.replace(/"/g, ''))
+    // Parse CSV con Papa Parse per gestire correttamente virgole e virgolette
+    console.log('📱 Parsing CSV con Papa Parse...')
     
-    console.log('📱 CSV Headers:', headers)
-    console.log('📱 Numero righe CSV:', lines.length - 1)
+    const parseResult = Papa.parse(csvText, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (header) => header.trim().replace(/"/g, ''),
+      transform: (value) => value.trim()
+    })
+    
+    if (parseResult.errors.length > 0) {
+      console.error('⚠️ Errori parsing CSV:', parseResult.errors)
+    }
+    
+    const subscriptions = parseResult.data
+    const headers = parseResult.meta.fields || []
+    
+    console.log('📱 CSV Headers (Papa Parse):', headers)
+    console.log('📱 Numero righe CSV:', subscriptions.length)
     
     // Trova l'indice delle colonne che ci interessano
     const idIndex = headers.findIndex(h => h.includes('id') || h.includes('subscription'))
@@ -127,16 +141,6 @@ export default async function handler(req, res) {
     
     console.log('📱 Colonna ID:', idIndex >= 0 ? headers[idIndex] : 'Non trovata')
     console.log('📱 Colonna External ID:', externalIdIndex >= 0 ? headers[externalIdIndex] : 'Non trovata')
-    
-    // Parsa tutte le righe del CSV in oggetti strutturati
-    const subscriptions = lines.slice(1).map(line => {
-      const values = line.split(',').map(v => v.replace(/"/g, ''))
-      const subscription = {}
-      headers.forEach((header, index) => {
-        subscription[header] = values[index] || ''
-      })
-      return subscription
-    })
     
     console.log(`📱 Processate ${subscriptions.length} subscription da OneSignal CSV`)
     
