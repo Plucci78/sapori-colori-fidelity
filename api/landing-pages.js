@@ -1,4 +1,4 @@
-// API Route per gestire landing pages create con GrapesJS
+// API Route per gestire landing pages create con GrapesJS  
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(

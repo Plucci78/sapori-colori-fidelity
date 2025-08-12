@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "api": "node server.js",
+    "dev:all": "concurrently \"npm run api\" \"npm run dev\"",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -14,6 +16,8 @@
     "@supabase/supabase-js": "^2.52.0",
     "@tinymce/tinymce-react": "^6.2.1",
     "@zxing/library": "^0.21.3",
+    "concurrently": "^9.1.0",
+    "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "express": "^4.19.2",
     "grapesjs": "^0.22.9",
