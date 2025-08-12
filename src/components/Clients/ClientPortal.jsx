@@ -123,13 +123,13 @@ const ClientPortal = ({ token }) => {
       try {
         if (window.OneSignal && customerData && customerData.id) {
           console.log('🔔 DEBUG: OneSignal disponibile, controllo permessi...')
-          // Verifica se l'utente ha dato il permesso per le notifiche
-          const permission = await window.OneSignal.getNotificationPermission()
-          console.log('🔔 Stato permesso OneSignal:', permission)
+          // Verifica se l'utente ha dato il permesso per le notifiche (SDK v16)
+          const permission = await window.OneSignal.Notifications.permission
+          console.log('🔔 Stato permesso OneSignal v16:', permission)
           
           if (permission === 'granted') {
             console.log('✅ Cliente ha accettato notifiche, collegamento OneSignal SDK v16:', customerData.id)
-            await window.OneSignal.login(customerData.id)
+            await window.OneSignal.User.addAlias("external_id", customerData.id)
             console.log('✅ Cliente collegato a OneSignal v16 con login():', customerData.id)
           } else {
             console.log('📵 Cliente non ha accettato le notifiche push - non collegato a OneSignal')
