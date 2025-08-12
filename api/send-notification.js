@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { title, message, playerIds, url, targetType, targetValue, sentBy } = req.body
+    const { title, message, playerIds, url, imageUrl, targetType, targetValue, sentBy } = req.body
 
     // Validazione
     if (!title || !message || !playerIds || !Array.isArray(playerIds)) {
@@ -39,6 +39,14 @@ export default async function handler(req, res) {
     // Aggiungi URL se fornito
     if (url) {
       notificationData.url = url
+    }
+
+    // Aggiungi immagine rich se fornita
+    if (imageUrl) {
+      notificationData.big_picture = imageUrl // Immagine large per Android
+      notificationData.ios_attachments = { "id1": imageUrl } // Immagine per iOS
+      notificationData.chrome_web_image = imageUrl // Immagine per Chrome/Web
+      console.log('🖼️ Aggiunta immagine rich alla notifica:', imageUrl)
     }
 
     // Chiamata API OneSignal v2 dal server

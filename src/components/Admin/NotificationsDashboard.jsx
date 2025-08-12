@@ -21,6 +21,7 @@ const NotificationsDashboard = ({ customerLevels }) => {
     targetLevel: '',
     targetCustomers: [],
     url: '',
+    imageUrl: '', // Nuova: URL immagine per notifiche rich
     scheduleType: 'now', // 'now', 'scheduled'
     scheduledDate: '',
     scheduledTime: ''
@@ -361,12 +362,13 @@ const NotificationsDashboard = ({ customerLevels }) => {
         return
       }
 
-      // Invia notifica tramite OneSignal con tracking completo
+      // Invia notifica tramite OneSignal con tracking completo + immagine
       const result = await oneSignalService.sendNotification({
         title: notificationForm.title,
         message: notificationForm.message,
         playerIds: playerIds,
         url: notificationForm.url || undefined,
+        imageUrl: notificationForm.imageUrl || undefined, // Nuova: immagine rich
         targetType: notificationForm.targetType,
         targetValue: notificationForm.targetLevel || 'all',
         sentBy: 'Dashboard Operator' // TODO: sostituire con utente loggato
@@ -386,6 +388,7 @@ const NotificationsDashboard = ({ customerLevels }) => {
           targetLevel: '',
           targetCustomers: [],
           url: '',
+          imageUrl: '', // Reset anche immagine
           scheduleType: 'now',
           scheduledDate: '',
           scheduledTime: ''
@@ -673,6 +676,39 @@ const NotificationsDashboard = ({ customerLevels }) => {
               onChange={(e) => handleInputChange('url', e.target.value)}
               placeholder="https://saporiecolori.net/promozioni"
             />
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label>🖼️ Immagine notifica (opzionale)</label>
+            <input
+              type="url"
+              value={notificationForm.imageUrl}
+              onChange={(e) => handleInputChange('imageUrl', e.target.value)}
+              placeholder="https://esempio.com/immagine-promo.jpg"
+            />
+            <small className="field-hint">
+              📱 Immagine verrà mostrata nella notifica push. Dimensioni consigliate: 512x256px
+            </small>
+            {notificationForm.imageUrl && (
+              <div className="image-preview">
+                <img 
+                  src={notificationForm.imageUrl} 
+                  alt="Preview notifica"
+                  style={{
+                    maxWidth: '200px',
+                    maxHeight: '100px',
+                    marginTop: '10px',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px'
+                  }}
+                  onError={(e) => {
+                    e.target.style.display = 'none'
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
 

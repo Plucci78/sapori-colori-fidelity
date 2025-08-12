@@ -724,8 +724,8 @@ class OneSignalService {
     }
   }
 
-  // Invia notifica push tramite API route con tracking completo
-  async sendNotification({ title, message, playerIds, url, targetType, targetValue, sentBy }) {
+  // Invia notifica push tramite API route con tracking completo + immagini rich
+  async sendNotification({ title, message, playerIds, url, imageUrl, targetType, targetValue, sentBy }) {
     try {
       console.log(`📤 Invio notifica a ${playerIds.length} utenti:`, title)
 
@@ -740,6 +740,7 @@ class OneSignalService {
           message,
           playerIds,
           url,
+          imageUrl, // Nuova: supporto immagini rich
           targetType,
           targetValue,
           sentBy
