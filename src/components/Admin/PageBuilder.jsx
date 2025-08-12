@@ -236,7 +236,7 @@ const PageBuilder = () => {
             <div className="blocks-container" style={{ flex: 1, overflow: 'auto' }}></div>
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
-            <div ref={editorRef} style={{ flex: 1 }}></div>
+            <div ref={editorRef} style={{ flex: 1, border: '3px solid red' }}></div>
           </div>
           <div style={{ width: '250px', background: '#f5f5f5', borderLeft: '1px solid #ddd', display: 'flex', flexDirection: 'column' }}>
             <div className="panel__switcher" style={{ padding: '8px', borderBottom: '1px solid #ddd', background: '#fff' }}></div>
