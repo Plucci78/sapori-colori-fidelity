@@ -51,6 +51,7 @@ export default async function handler(req, res) {
 
     // Chiamata API OneSignal v2 dal server
     console.log('🔧 Invio notifica OneSignal v2:', { appId: ONESIGNAL_CONFIG.appId, subscriptionIds: playerIds })
+    console.log('📋 Payload completo OneSignal:', JSON.stringify(notificationData, null, 2))
     
     const response = await fetch('https://api.onesignal.com/notifications', {
       method: 'POST',
@@ -65,6 +66,7 @@ export default async function handler(req, res) {
     console.log('📡 OneSignal response status:', response.status)
 
     const result = await response.json()
+    console.log('📋 OneSignal response completa:', JSON.stringify(result, null, 2))
 
     if (response.ok && result.id) {
       console.log('✅ Notifica inviata con successo:', result.id)
