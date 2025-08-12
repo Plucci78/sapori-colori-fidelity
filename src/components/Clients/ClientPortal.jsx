@@ -136,9 +136,27 @@ const ClientPortal = ({ token }) => {
               console.log('✅ Cliente collegato a OneSignal v16 con OneSignal.login():', customerData.id)
               console.log('✅ External ID settato:', window.OneSignal.User.externalId)
               
-              // External ID è settato correttamente, questo è sufficiente per il sync
-              // I tag e alias hanno limitazioni nel piano gratuito OneSignal
-              console.log('✅ Collegamento OneSignal completato - External ID sufficiente per sincronizzazione')
+              // Aspettiamo un po' per dare tempo a OneSignal di processare il login
+              console.log('⏳ Aspettando 3 secondi prima di settare i tag...')
+              await new Promise(resolve => setTimeout(resolve, 3000))
+              
+              // Proviamo i tag (2 massimo per piano gratuito)
+              try {
+                const tags = {
+                  customer_name: customerData.name || '',
+                  customer_points: (customerData.points || 0).toString()
+                }
+                console.log('🏷️ Tentativo aggiunta tag:', tags)
+                await window.OneSignal.User.addTags(tags)
+                console.log('✅ Tag aggiunti con successo!')
+                
+                // Verifica che i tag siano stati settati
+                const currentTags = await window.OneSignal.User.getTags()
+                console.log('🔍 Tag attuali in OneSignal:', currentTags)
+              } catch (tagError) {
+                console.error('❌ ERRORE TAG dettagliato:', tagError)
+                console.error('❌ Stack trace:', tagError.stack)
+              }
               
               return true // Collegamento riuscito
             }
