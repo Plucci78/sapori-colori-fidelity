@@ -58,6 +58,8 @@ const PageBuilder = () => {
     }
     
     console.log('✅ GrapesJS importato correttamente')
+    console.log('📍 editorRef.current HTML:', editorRef.current.innerHTML)
+    console.log('📍 editorRef.current dimensioni:', editorRef.current.offsetWidth, 'x', editorRef.current.offsetHeight)
     
     try {
 
@@ -65,6 +67,9 @@ const PageBuilder = () => {
       container: editorRef.current,
       height: '100vh',
       width: '100%',
+      
+      // Blocchi di base abilitati
+      showOffsets: true,
       
       // Configurazione Sapori & Colori
       projectName: 'Sapori & Colori Landing Pages',
@@ -203,9 +208,69 @@ const PageBuilder = () => {
       }
     })
 
-    // Aggiungi blocchi personalizzati ai blocchi di default
+    // Aggiungi blocchi di base comuni
     const blockManager = grapesEditor.BlockManager
     
+    // Blocchi di base essenziali
+    blockManager.add('text', {
+      label: '📝 Testo',
+      content: '<div data-gjs-type="text">Inserisci il tuo testo qui</div>',
+      category: 'Basic'
+    })
+    
+    blockManager.add('image', {
+      label: '🖼️ Immagine',
+      content: { type: 'image' },
+      category: 'Basic'
+    })
+    
+    blockManager.add('video', {
+      label: '🎥 Video',
+      content: { type: 'video', src: 'img/video2.webm' },
+      category: 'Basic'
+    })
+    
+    blockManager.add('section', {
+      label: '📦 Sezione',
+      content: `
+        <section style="padding: 40px 20px; background: #f9f9f9;">
+          <div style="max-width: 1200px; margin: 0 auto;">
+            <h2>Titolo Sezione</h2>
+            <p>Contenuto della sezione...</p>
+          </div>
+        </section>
+      `,
+      category: 'Basic'
+    })
+    
+    blockManager.add('columns', {
+      label: '📊 2 Colonne',
+      content: `
+        <div style="display: flex; gap: 20px; padding: 20px;">
+          <div style="flex: 1; padding: 20px; background: #f5f5f5;">
+            <h3>Colonna 1</h3>
+            <p>Contenuto della prima colonna</p>
+          </div>
+          <div style="flex: 1; padding: 20px; background: #f5f5f5;">
+            <h3>Colonna 2</h3>
+            <p>Contenuto della seconda colonna</p>
+          </div>
+        </div>
+      `,
+      category: 'Layout'
+    })
+    
+    blockManager.add('button', {
+      label: '🔘 Bottone',
+      content: `
+        <a href="#" style="display: inline-block; padding: 12px 24px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+          Clicca qui
+        </a>
+      `,
+      category: 'Basic'
+    })
+    
+    // Blocchi personalizzati Sapori & Colori
     blockManager.add('sapori-header', {
       label: '🏪 Header Sapori & Colori',
       content: `
@@ -534,8 +599,11 @@ const PageBuilder = () => {
         </div>
 
         {/* Editor principale */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div ref={editorRef} style={{ flex: 1 }}></div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', border: '2px solid #ccc' }}>
+          <div style={{ padding: '10px', background: '#f0f0f0', borderBottom: '1px solid #ccc' }}>
+            <strong>📝 Area Editor GrapesJS</strong>
+          </div>
+          <div ref={editorRef} style={{ flex: 1, minHeight: '400px', background: '#ffffff' }}></div>
         </div>
 
         {/* Panel destro */}
