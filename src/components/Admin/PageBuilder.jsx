@@ -18,16 +18,30 @@ const PageBuilder = () => {
   useEffect(() => {
     console.log('🔍 UseEffect PageBuilder chiamato')
     
-    // Aspetta che il DOM sia completamente renderizzato
-    const initializeEditor = () => {
-      console.log('📍 editorRef.current:', editorRef.current)
-      console.log('📍 editor esistente:', editor)
+    // Prima mostra l'editor (rimuovi loading)
+    setLoading(false)
+    
+    // Poi aspetta un momento per l'inizializzazione
+    setTimeout(() => {
+      let attempts = 0
+      const maxAttempts = 50 // Max 5 secondi
       
-      if (!editorRef.current) {
-        console.log('❌ editorRef.current è null, riprovo in 100ms...')
-        setTimeout(initializeEditor, 100)
-        return
-      }
+      const initializeEditor = () => {
+        console.log('📍 editorRef.current:', editorRef.current)
+        console.log('📍 editor esistente:', editor)
+        console.log('🔢 Tentativo:', attempts + 1)
+        
+        attempts++
+        
+        if (!editorRef.current) {
+          if (attempts >= maxAttempts) {
+            console.error('❌ Timeout: editorRef non disponibile dopo 5 secondi')
+            return
+          }
+          console.log('❌ editorRef.current è null, riprovo in 100ms...')
+          setTimeout(initializeEditor, 100)
+          return
+        }
     
     if (editor) {
       console.log('✅ Editor già esistente, skip')
@@ -246,10 +260,11 @@ const PageBuilder = () => {
         grapesEditor.destroy()
       }
     }
-    }
-    
-    // Inizia il processo di inizializzazione
-    initializeEditor()
+      }
+      
+      // Inizia il processo di inizializzazione
+      initializeEditor()
+    }, 100) // Aspetta 100ms per il rendering
   }, [])
 
   // Carica lista landing pages
@@ -496,8 +511,8 @@ const PageBuilder = () => {
         </div>
       )}
       
-      {!loading && (
-        <div style={{ display: 'flex', height: 'calc(100vh - 80px)' }}>
+      {/* Editor sempre presente ma nascosto durante loading */}
+      <div style={{ display: loading ? 'none' : 'flex', height: 'calc(100vh - 80px)' }}>
         {/* Sidebar blocchi */}
         <div style={{ width: '300px', background: '#f5f5f5', borderRight: '1px solid #ddd' }}>
           <div style={{ padding: '15px', borderBottom: '1px solid #ddd', background: '#fff' }}>
@@ -517,8 +532,7 @@ const PageBuilder = () => {
           <div className="panel__switcher" style={{ padding: '10px', borderBottom: '1px solid #ddd', background: '#fff' }}></div>
           <div className="panel__right" style={{ height: 'calc(100% - 60px)', overflow: 'auto' }}></div>
         </div>
-        </div>
-      )}
+      </div>
     </div>
   )
 }
