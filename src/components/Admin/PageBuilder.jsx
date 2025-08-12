@@ -317,6 +317,8 @@ const PageBuilder = () => {
     // Inizializza il pannello layers di default
     setTimeout(() => {
       grapesEditor.runCommand('show-layers')
+      // Forza il refresh dell'editor per le dimensioni
+      grapesEditor.refresh()
     }, 100)
 
     setEditor(grapesEditor)
@@ -599,11 +601,24 @@ const PageBuilder = () => {
         </div>
 
         {/* Editor principale */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', border: '2px solid #ccc' }}>
+        <div style={{ 
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          background: '#fff', 
+          border: '2px solid #ccc',
+          minWidth: '400px'
+        }}>
           <div style={{ padding: '10px', background: '#f0f0f0', borderBottom: '1px solid #ccc' }}>
             <strong>📝 Area Editor GrapesJS</strong>
           </div>
-          <div ref={editorRef} style={{ flex: 1, minHeight: '400px', background: '#ffffff' }}></div>
+          <div ref={editorRef} style={{ 
+            flex: 1, 
+            minHeight: '400px', 
+            minWidth: '400px',
+            width: '100%',
+            background: '#ffffff' 
+          }}></div>
         </div>
 
         {/* Panel destro */}
