@@ -296,6 +296,42 @@ const NotificationsDashboard = ({ customerLevels }) => {
     }
   }
 
+  const resetOneSignalIds = async () => {
+    if (!confirm('⚠️ Sei sicuro di voler resettare tutti gli ID OneSignal? Questa azione cancellerà tutti i collegamenti OneSignal esistenti.')) {
+      return
+    }
+    
+    setLoading(true)
+    try {
+      showNotification('🧹 Resettando ID OneSignal dal database...', 'info')
+      
+      const response = await fetch('/api/reset-onesignal-ids', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        showNotification(result.message)
+        
+        // Ricarica i dati dopo il reset
+        await loadData()
+        
+        console.log('🧹 Risultati reset OneSignal IDs:', result)
+      } else {
+        showNotification(`❌ Errore reset: ${result.error}`, 'error')
+      }
+    } catch (error) {
+      console.error('Errore reset OneSignal IDs:', error)
+      showNotification('❌ Errore durante il reset OneSignal IDs', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const sendNotification = async () => {
     if (!notificationForm.title.trim() || !notificationForm.message.trim()) {
       showNotification('❌ Titolo e messaggio sono obbligatori', 'error')
@@ -391,6 +427,15 @@ const NotificationsDashboard = ({ customerLevels }) => {
             disabled={loading}
           >
             🔄 Sincronizza Subscription OneSignal
+          </button>
+          
+          <button
+            className="btn-reset-onesignal"
+            onClick={resetOneSignalIds}
+            disabled={loading}
+            style={{ marginLeft: '10px', backgroundColor: '#ff6b6b' }}
+          >
+            🧹 Reset OneSignal IDs
           </button>
         </div>
       </div>
