@@ -136,6 +136,15 @@ const ClientPortal = ({ token }) => {
               console.log('✅ Cliente collegato a OneSignal v16 con OneSignal.login():', customerData.id)
               console.log('✅ External ID settato:', window.OneSignal.User.externalId)
               
+              // Aggiungiamo tag per identificare il cliente in OneSignal
+              await window.OneSignal.User.addTags({
+                customer_name: customerData.name || '',
+                customer_email: customerData.email || '',
+                customer_phone: customerData.phone || '',
+                customer_points: (customerData.points || 0).toString()
+              })
+              console.log('✅ Tag cliente aggiunti a OneSignal:', customerData.name)
+              
               // Aggiungiamo anche addAlias per sicurezza
               await window.OneSignal.User.addAlias("customer_id", customerData.id)
               console.log('✅ Aggiunto anche alias customer_id:', customerData.id)
