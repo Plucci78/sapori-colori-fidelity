@@ -131,13 +131,9 @@ const ClientPortal = ({ token }) => {
             if (permission === 'granted' || permission === true) {
               console.log('✅ Cliente ha accettato notifiche, collegamento OneSignal SDK v16:', customerData.id)
               
-              // IMPORTANTE: User.login() setta l'external_user_id che serve per il CSV export
-              await window.OneSignal.User.login(customerData.id)
-              console.log('✅ Cliente collegato a OneSignal v16 con User.login():', customerData.id)
-              
-              // Opzionale: aggiungiamo anche addAlias per sicurezza  
+              // ROLLBACK: User.login() non funziona, torniamo a addAlias temporaneamente
               await window.OneSignal.User.addAlias("customer_id", customerData.id)
-              console.log('✅ Aggiunto anche alias customer_id:', customerData.id)
+              console.log('✅ Cliente collegato a OneSignal v16 con addAlias():', customerData.id)
               
               return true // Collegamento riuscito
             }
