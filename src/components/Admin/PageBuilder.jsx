@@ -16,7 +16,19 @@ const PageBuilder = () => {
   }, [])
 
   useEffect(() => {
-    if (!editorRef.current || editor) return
+    console.log('🔍 UseEffect PageBuilder chiamato')
+    console.log('📍 editorRef.current:', editorRef.current)
+    console.log('📍 editor esistente:', editor)
+    
+    if (!editorRef.current) {
+      console.log('❌ editorRef.current è null, aspetto...')
+      return
+    }
+    
+    if (editor) {
+      console.log('✅ Editor già esistente, skip')
+      return
+    }
 
     console.log('🎨 Inizializzazione GrapesJS Page Builder...')
     
@@ -26,6 +38,10 @@ const PageBuilder = () => {
       setLoading(false)
       return
     }
+    
+    console.log('✅ GrapesJS importato correttamente')
+    
+    try {
 
     const grapesEditor = grapesjs.init({
       container: editorRef.current,
@@ -214,6 +230,12 @@ const PageBuilder = () => {
 
     console.log('✅ GrapesJS inizializzato con comandi personalizzati!')
     console.log('📋 Editor pronto, caricamento landing pages...')
+
+    } catch (error) {
+      console.error('❌ Errore inizializzazione GrapesJS:', error)
+      setLoading(false)
+      return
+    }
 
     return () => {
       if (grapesEditor) {
