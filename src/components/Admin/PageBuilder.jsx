@@ -136,14 +136,31 @@ const PageBuilder = () => {
           }
         });
 
-        grapesEditor.Commands.add('show-layers', { run: (editor) => panelRight.innerHTML = '', stop: () => {}, ... });
-        grapesEditor.on('run:show-layers', () => editor.LayerManager.render(panelRight));
-
-        grapesEditor.Commands.add('show-styles', { run: (editor) => panelRight.innerHTML = '', stop: () => {}, ... });
-        grapesEditor.on('run:show-styles', () => editor.StyleManager.render(panelRight));
-
-        grapesEditor.Commands.add('show-traits', { run: (editor) => panelRight.innerHTML = '', stop: () => {}, ... });
-        grapesEditor.on('run:show-traits', () => editor.TraitManager.render(panelRight));
+        const commands = grapesEditor.Commands;
+        commands.add('show-layers', {
+          run(editor, sender) {
+            if (panelRight) {
+              panelRight.innerHTML = '';
+              editor.LayerManager.render(panelRight);
+            }
+          }
+        });
+        commands.add('show-styles', {
+          run(editor, sender) {
+            if (panelRight) {
+              panelRight.innerHTML = '';
+              editor.StyleManager.render(panelRight);
+            }
+          }
+        });
+        commands.add('show-traits', {
+          run(editor, sender) {
+            if (panelRight) {
+              panelRight.innerHTML = '';
+              editor.TraitManager.render(panelRight);
+            }
+          }
+        });
 
         const blockManager = grapesEditor.BlockManager;
         blockManager.add('sapori-header', { label: 'Header', content: `<div>...</div>`, category: 'Sapori & Colori' });
