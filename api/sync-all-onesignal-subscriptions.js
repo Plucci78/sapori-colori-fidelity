@@ -21,10 +21,10 @@ export default async function handler(req, res) {
     console.log('🔄 Avvio API sync-all-onesignal-subscriptions...')
     console.log('🔄 Avvio sincronizzazione OneSignal subscriptions...')
     
-    // 1. Ottieni tutti i clienti dal database
+    // 1. Ottieni tutti i clienti dal database con external_id per matching bidirezionale
     const { data: customers, error: customersError } = await supabase
       .from('customers')
-      .select('id, name, email, onesignal_player_id, onesignal_subscription_id')
+      .select('id, name, email, onesignal_player_id, onesignal_subscription_id, external_id')
       .eq('is_active', true)
     
     if (customersError) {
@@ -171,11 +171,21 @@ export default async function handler(req, res) {
           is_active: subscription.invalid_identifier !== 'true'
         }
         
-        // Trova customer collegato per external_user_id o customer_id
+        // Trova customer collegato per external_user_id, customer_id, o external_id nel database
         const customerId = subscription.external_user_id || subscription.customer_id
+        let matchingCustomer = null
+        
         if (customerId) {
-          const matchingCustomer = customers.find(c => c.id === customerId)
-          if (matchingCustomer) {
+          // Match 1: Cerca per ID diretto
+          matchingCustomer = customers.find(c => c.id === customerId)
+        }
+        
+        if (!matchingCustomer && subscription.external_user_id) {
+          // Match 2: Cerca per external_id salvato nel database
+          matchingCustomer = customers.find(c => c.external_id === subscription.external_user_id)
+        }
+        
+        if (matchingCustomer) {
             subscriptionData.customer_id = matchingCustomer.id
             
             // Aggiorna anche il customer con subscription_id

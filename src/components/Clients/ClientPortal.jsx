@@ -136,6 +136,22 @@ const ClientPortal = ({ token }) => {
               console.log('✅ Cliente collegato a OneSignal v16 con OneSignal.login():', customerData.id)
               console.log('✅ External ID settato:', window.OneSignal.User.externalId)
               
+              // Salva External ID nel database per il matching bidirezionale
+              try {
+                const { error: updateError } = await supabase
+                  .from('customers')
+                  .update({ external_id: customerData.id })
+                  .eq('id', customerData.id)
+                
+                if (updateError) {
+                  console.error('❌ Errore salvataggio External ID:', updateError)
+                } else {
+                  console.log('✅ External ID salvato nel database:', customerData.id)
+                }
+              } catch (dbError) {
+                console.error('❌ Errore database External ID:', dbError)
+              }
+              
               // OneSignal AI conferma: no delays needed, addTags() subito dopo login()
               try {
                 const tags = {
