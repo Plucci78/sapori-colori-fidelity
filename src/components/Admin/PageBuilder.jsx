@@ -76,6 +76,8 @@ const PageBuilder = () => {
     <div style={{ height: '100vh', width: '100vw' }}> {/* Ensure the container has dimensions */}
       <StudioEditor
         options={{
+          licenseKey: import.meta.env.VITE_GRAPESJS_LICENSE_KEY,
+          
           // The React Renderer plugin
           plugins: [
             rendererReact.init(reactRendererConfig),
