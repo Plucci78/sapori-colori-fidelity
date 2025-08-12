@@ -118,29 +118,52 @@ const ClientPortal = ({ token }) => {
       localStorage.setItem('pwa_customer_id', customerData.id)
       localStorage.setItem('pwa_customer_data', JSON.stringify(customerData))
       
-      // 🔔 COLLEGAMENTO ONESIGNAL: Posticipato dopo che OneSignal ha gestito i permessi
-      console.log('🔔 Login completato, collegamento OneSignal verrà fatto dopo i permessi')
+      // 🔔 COLLEGAMENTO ONESIGNAL: Listener per cambio permessi
+      console.log('🔔 Login completato, impostando listener OneSignal...')
       
-      // Aspetta che OneSignal completi la sua inizializzazione e richiesta permessi
-      setTimeout(async () => {
+      // Funzione per tentare collegamento
+      const tryConnectOneSignal = async () => {
         try {
           if (window.OneSignal && customerData && customerData.id) {
-            console.log('🔔 DEBUG: Controllo permessi OneSignal dopo inizializzazione...')
             const permission = await window.OneSignal.Notifications.permission
-            console.log('🔔 Stato permesso OneSignal finale:', permission)
+            console.log('🔔 Tentativo collegamento, permesso attuale:', permission)
             
             if (permission === 'granted') {
               console.log('✅ Cliente ha accettato notifiche, collegamento OneSignal SDK v16:', customerData.id)
               await window.OneSignal.User.addAlias("external_id", customerData.id)
               console.log('✅ Cliente collegato a OneSignal v16 con addAlias():', customerData.id)
-            } else {
-              console.log('📵 Cliente non ha accettato le notifiche push - non collegato a OneSignal')
+              return true // Collegamento riuscito
             }
           }
-        } catch (onesignalError) {
-          console.error('❌ Errore collegamento OneSignal:', onesignalError)
+        } catch (error) {
+          console.error('❌ Errore collegamento OneSignal:', error)
         }
-      }, 3000) // Aspetta 3 secondi che OneSignal completi
+        return false // Collegamento fallito
+      }
+      
+      // Prova subito
+      const immediateResult = await tryConnectOneSignal()
+      
+      // Se non è riuscito subito, prova ogni 2 secondi per max 10 volte
+      if (!immediateResult) {
+        console.log('🔔 Collegamento immediato fallito, attivando retry...')
+        let attempts = 0
+        const maxAttempts = 10
+        
+        const retryInterval = setInterval(async () => {
+          attempts++
+          console.log(`🔔 Retry collegamento OneSignal (${attempts}/${maxAttempts})...`)
+          
+          const success = await tryConnectOneSignal()
+          
+          if (success || attempts >= maxAttempts) {
+            clearInterval(retryInterval)
+            if (!success) {
+              console.log('📵 Collegamento OneSignal fallito dopo tutti i tentativi')
+            }
+          }
+        }, 2000) // Ogni 2 secondi
+      }
       
       // Invece di reload, imposta il login step per aggiornare l'UI
       setLoginStep('welcome')
