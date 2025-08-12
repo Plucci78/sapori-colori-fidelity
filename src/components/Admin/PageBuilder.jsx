@@ -69,6 +69,16 @@ const PageBuilder = () => {
       // Configurazione Sapori & Colori
       projectName: 'Sapori & Colori Landing Pages',
       
+      // Contenuto iniziale di base
+      components: `
+        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; padding: 40px 20px; background: #f8f9fa; border-radius: 10px; margin-bottom: 20px;">
+            <h1 style="color: #D4AF37; margin-bottom: 15px;">Benvenuto nel Page Builder</h1>
+            <p style="color: #666; font-size: 18px;">Trascina i blocchi dalla sidebar sinistra per iniziare a creare la tua landing page</p>
+          </div>
+        </div>
+      `,
+      
       // Storage per salvare le landing
       storageManager: {
         type: 'local',
@@ -98,54 +108,9 @@ const PageBuilder = () => {
         ]
       },
 
-      // Blocchi personalizzati Sapori & Colori
+      // Configurazione block manager 
       blockManager: {
-        appendTo: '.blocks-container',
-        blocks: [
-          {
-            id: 'sapori-header',
-            label: '🏪 Header Sapori & Colori',
-            content: `
-              <div style="background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%); padding: 40px 20px; text-align: center; color: #8B4513;">
-                <img src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" alt="Sapori & Colori" style="height: 80px; margin-bottom: 20px;">
-                <h1 style="margin: 0; font-size: 2.5em; font-weight: bold;">Sapori & Colori</h1>
-                <p style="margin: 10px 0 0 0; font-size: 1.2em;">Il sapore autentico della tradizione</p>
-              </div>
-            `,
-            category: 'Sapori & Colori'
-          },
-          {
-            id: 'promo-section',
-            label: '🎁 Sezione Promozione',
-            content: `
-              <div style="padding: 60px 20px; text-align: center; background: #f8f9fa;">
-                <h2 style="font-size: 2.5em; color: #D4AF37; margin-bottom: 20px;">🍕 OFFERTA SPECIALE!</h2>
-                <p style="font-size: 1.3em; color: #333; margin-bottom: 30px;">La tua pizza preferita con il 30% di sconto</p>
-                <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
-                  <h3 style="color: #8B4513; margin-bottom: 15px;">Solo oggi!</h3>
-                  <p style="font-size: 1.1em; margin-bottom: 25px;">Mostra questa pagina in negozio</p>
-                  <a href="tel:+393926568550" style="background: #D4AF37; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">📞 Chiama Ora!</a>
-                </div>
-              </div>
-            `,
-            category: 'Sapori & Colori'
-          },
-          {
-            id: 'contact-cta',
-            label: '📞 Call to Action Contatti',
-            content: `
-              <div style="background: #8B4513; color: white; padding: 40px 20px; text-align: center;">
-                <h3 style="margin-bottom: 20px;">Contattaci Subito!</h3>
-                <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
-                  <a href="tel:+393926568550" style="background: #D4AF37; color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold;">📞 Chiama</a>
-                  <a href="https://wa.me/393926568550" style="background: #25D366; color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold;">💬 WhatsApp</a>
-                  <a href="https://maps.google.com/?q=Via+Roma+123+Roma" style="background: #4285F4; color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold;">🗺️ Indicazioni</a>
-                </div>
-              </div>
-            `,
-            category: 'Sapori & Colori'
-          }
-        ]
+        appendTo: '.blocks-container'
       },
 
       // Panels personalizzati
@@ -236,6 +201,52 @@ const PageBuilder = () => {
           panelEl.appendChild(stylesContainer)
         }
       }
+    })
+
+    // Aggiungi blocchi personalizzati ai blocchi di default
+    const blockManager = grapesEditor.BlockManager
+    
+    blockManager.add('sapori-header', {
+      label: '🏪 Header Sapori & Colori',
+      content: `
+        <div style="background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%); padding: 40px 20px; text-align: center; color: #8B4513;">
+          <img src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" alt="Sapori & Colori" style="height: 80px; margin-bottom: 20px;">
+          <h1 style="margin: 0; font-size: 2.5em; font-weight: bold;">Sapori & Colori</h1>
+          <p style="margin: 10px 0 0 0; font-size: 1.2em;">Il sapore autentico della tradizione</p>
+        </div>
+      `,
+      category: 'Sapori & Colori'
+    })
+    
+    blockManager.add('promo-section', {
+      label: '🎁 Sezione Promozione',
+      content: `
+        <div style="padding: 60px 20px; text-align: center; background: #f8f9fa;">
+          <h2 style="font-size: 2.5em; color: #D4AF37; margin-bottom: 20px;">🍕 OFFERTA SPECIALE!</h2>
+          <p style="font-size: 1.3em; color: #333; margin-bottom: 30px;">La tua pizza preferita con il 30% di sconto</p>
+          <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
+            <h3 style="color: #8B4513; margin-bottom: 15px;">Solo oggi!</h3>
+            <p style="font-size: 1.1em; margin-bottom: 25px;">Mostra questa pagina in negozio</p>
+            <a href="tel:+393926568550" style="background: #D4AF37; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">📞 Chiama Ora!</a>
+          </div>
+        </div>
+      `,
+      category: 'Sapori & Colori'
+    })
+    
+    blockManager.add('contact-cta', {
+      label: '📞 Call to Action Contatti',
+      content: `
+        <div style="background: #8B4513; color: white; padding: 40px 20px; text-align: center;">
+          <h3 style="margin-bottom: 20px;">Contattaci Subito!</h3>
+          <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+            <a href="tel:+393926568550" style="background: #D4AF37; color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold;">📞 Chiama</a>
+            <a href="https://wa.me/393926568550" style="background: #25D366; color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold;">💬 WhatsApp</a>
+            <a href="https://maps.google.com/?q=Via+Roma+123+Roma" style="background: #4285F4; color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold;">🗺️ Indicazioni</a>
+          </div>
+        </div>
+      `,
+      category: 'Sapori & Colori'
     })
 
     // Inizializza il pannello layers di default
