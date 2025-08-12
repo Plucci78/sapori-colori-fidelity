@@ -362,6 +362,16 @@ const NotificationsDashboard = ({ customerLevels }) => {
         return
       }
 
+      // DEBUG: Log della notifica che stiamo inviando
+      console.log('📤 INVIO NOTIFICA:', {
+        title: notificationForm.title,
+        message: notificationForm.message,
+        playerIds: playerIds,
+        url: notificationForm.url || undefined,
+        imageUrl: notificationForm.imageUrl || undefined,
+        targetType: notificationForm.targetType
+      })
+
       // Invia notifica tramite OneSignal con tracking completo + immagine
       const result = await oneSignalService.sendNotification({
         title: notificationForm.title,
@@ -373,6 +383,8 @@ const NotificationsDashboard = ({ customerLevels }) => {
         targetValue: notificationForm.targetLevel || 'all',
         sentBy: 'Dashboard Operator' // TODO: sostituire con utente loggato
       })
+
+      console.log('📥 RISULTATO INVIO:', result)
 
       if (result.success) {
         showNotification(`✅ Notifica inviata a ${playerIds.length} clienti`)

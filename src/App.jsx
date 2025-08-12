@@ -38,6 +38,7 @@ import CouponManagement from './components/Coupons/CouponManagement'
 import GiftCardManagement from './components/GiftCards/GiftCardManagement'
 import WalletCashRegister from './components/Wallet/WalletCashRegister'
 import NotificationsDashboard from './components/Admin/NotificationsDashboard'
+import PageBuilder from './components/Admin/PageBuilder'
 import { generateClientToken, isValidToken } from './utils/tokenUtils'
 import nfcService from './services/nfcService'
 import { birthdayScheduler } from './services/birthdayScheduler'
@@ -866,6 +867,17 @@ const fixReferralData = async (customerId) => {
         </svg>
       ),
       description: 'Dashboard notifiche OneSignal',
+      permission: 'canSendEmails'
+    },
+    {
+      id: 'pagebuilder',
+      title: 'Page Builder',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      ),
+      description: 'Crea landing pages drag & drop',
       permission: 'canSendEmails'
     },
     {
@@ -2272,6 +2284,12 @@ for (const customer of recipients) {
         return (
           <ProtectedComponent permission="canSendEmails">
             <NotificationsDashboard customerLevels={customerLevels} />
+          </ProtectedComponent>
+        )
+      case 'pagebuilder':
+        return (
+          <ProtectedComponent permission="canSendEmails">
+            <PageBuilder />
           </ProtectedComponent>
         )
       case 'settings':
