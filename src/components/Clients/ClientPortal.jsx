@@ -131,9 +131,10 @@ const ClientPortal = ({ token }) => {
             if (permission === 'granted' || permission === true) {
               console.log('✅ Cliente ha accettato notifiche, collegamento OneSignal SDK v16:', customerData.id)
               
-              // CORRETTO: In SDK v16 si usa la proprietà externalId, non login()
-              window.OneSignal.User.externalId = customerData.id
-              console.log('✅ Cliente collegato a OneSignal v16 con externalId:', customerData.id)
+              // FINALMENTE CORRETTO: In SDK v16 si usa OneSignal.login() (non User.login()!)
+              await window.OneSignal.login(customerData.id)
+              console.log('✅ Cliente collegato a OneSignal v16 con OneSignal.login():', customerData.id)
+              console.log('✅ External ID settato:', window.OneSignal.User.externalId)
               
               // Aggiungiamo anche addAlias per sicurezza
               await window.OneSignal.User.addAlias("customer_id", customerData.id)
