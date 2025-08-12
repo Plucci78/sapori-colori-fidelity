@@ -140,8 +140,9 @@ const ClientPortal = ({ token }) => {
         // Non bloccare il login per errori OneSignal
       }
       
-      // Forza ricarica del componente con il cliente trovato
-      window.location.reload()
+      // Invece di reload, imposta il login step per aggiornare l'UI
+      setLoginStep('welcome')
+      // Il componente si aggiornerà automaticamente quando rileva customerData in localStorage
 
     } catch (err) {
       console.error('Errore login cliente:', err)
