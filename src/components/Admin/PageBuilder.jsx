@@ -19,6 +19,13 @@ const PageBuilder = () => {
     if (!editorRef.current || editor) return
 
     console.log('🎨 Inizializzazione GrapesJS Page Builder...')
+    
+    // Controllo se GrapesJS è caricato
+    if (!grapesjs) {
+      console.error('❌ GrapesJS non caricato!')
+      setLoading(false)
+      return
+    }
 
     const grapesEditor = grapesjs.init({
       container: editorRef.current,
@@ -206,6 +213,7 @@ const PageBuilder = () => {
     setLoading(false)
 
     console.log('✅ GrapesJS inizializzato con comandi personalizzati!')
+    console.log('📋 Editor pronto, caricamento landing pages...')
 
     return () => {
       if (grapesEditor) {
