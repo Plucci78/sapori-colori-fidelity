@@ -128,7 +128,7 @@ const ClientPortal = ({ token }) => {
             const permission = await window.OneSignal.Notifications.permission
             console.log('🔔 Tentativo collegamento, permesso attuale:', permission)
             
-            if (permission === 'granted') {
+            if (permission === 'granted' || permission === true) {
               console.log('✅ Cliente ha accettato notifiche, collegamento OneSignal SDK v16:', customerData.id)
               await window.OneSignal.User.addAlias("external_id", customerData.id)
               console.log('✅ Cliente collegato a OneSignal v16 con addAlias():', customerData.id)
