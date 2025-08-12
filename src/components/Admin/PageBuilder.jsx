@@ -222,7 +222,7 @@ const PageBuilder = () => {
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
             {/* Il nostro ref è qui. GrapesJS verrà montato in questo div. */}
-            <div ref={editorRef} style={{ flex: 1 }}></div>
+            <div ref={editorRef} style={{ height: '600px', width: '800px', border: '5px solid lime' }}></div>
           </div>
           <div style={{ width: '250px', background: '#f5f5f5', borderLeft: '1px solid #ddd', display: 'flex', flexDirection: 'column' }}>
             <div className="panel__switcher" style={{ padding: '8px', borderBottom: '1px solid #ddd', background: '#fff' }}></div>
