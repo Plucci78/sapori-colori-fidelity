@@ -111,34 +111,22 @@ const PageBuilder = () => {
       panels: {
         defaults: [
           {
-            id: 'layers',
-            el: '.panel__right',
-            resizable: {
-              maxDim: 350,
-              minDim: 200,
-              tc: 0,
-              cl: 1,
-              cr: 0,
-              bc: 0,
-            },
-          },
-          {
             id: 'panel-switcher',
             el: '.panel__switcher',
             buttons: [
               {
                 id: 'show-layers',
-                active: true,
                 label: 'Layers',
                 command: 'show-layers',
                 togglable: false,
+                className: 'fa fa-layer-group'
               },
               {
-                id: 'show-style',
-                active: true,
-                label: 'Styles',
+                id: 'show-styles',
+                label: 'Styles', 
                 command: 'show-styles',
                 togglable: false,
+                className: 'fa fa-paint-brush'
               }
             ],
           }
@@ -154,50 +142,65 @@ const PageBuilder = () => {
       }
     })
 
-    // Aggiungiamo i comandi mancanti per i panel
+    // Aggiungiamo i comandi mancanti per i panel con implementazione semplificata
     grapesEditor.Commands.add('show-layers', {
-      getRowEl(editor) { return editor.getContainer().closest('.editor-row') },
-      getLayersEl(row) { return row.querySelector('.layers-container') },
-      
-      run(editor, sender) {
+      run(editor) {
         const lm = editor.LayerManager
-        const layersEl = this.getLayersEl(this.getRowEl(editor))
+        const panelEl = document.querySelector('.panel__right')
         
-        if (layersEl) {
-          layersEl.style.display = 'block'
-          lm.render(layersEl)
-        }
-      },
-      
-      stop(editor, sender) {
-        const layersEl = this.getLayersEl(this.getRowEl(editor))
-        if (layersEl) {
-          layersEl.style.display = 'none'
+        if (panelEl) {
+          // Pulisci il contenuto esistente
+          panelEl.innerHTML = ''
+          
+          // Crea container per layers
+          const layersContainer = document.createElement('div')
+          layersContainer.style.padding = '10px'
+          
+          const title = document.createElement('h4')
+          title.textContent = 'Layers'
+          title.style.margin = '0 0 10px 0'
+          title.style.color = '#333'
+          
+          layersContainer.appendChild(title)
+          
+          // Renderizza layer manager
+          lm.render(layersContainer)
+          panelEl.appendChild(layersContainer)
         }
       }
     })
 
     grapesEditor.Commands.add('show-styles', {
-      getRowEl(editor) { return editor.getContainer().closest('.editor-row') },
-      getStyleEl(row) { return row.querySelector('.styles-container') },
-      
-      run(editor, sender) {
+      run(editor) {
         const sm = editor.StyleManager
-        const styleEl = this.getStyleEl(this.getRowEl(editor))
+        const panelEl = document.querySelector('.panel__right')
         
-        if (styleEl) {
-          styleEl.style.display = 'block'
-          sm.render(styleEl)
-        }
-      },
-      
-      stop(editor, sender) {
-        const styleEl = this.getStyleEl(this.getRowEl(editor))
-        if (styleEl) {
-          styleEl.style.display = 'none'
+        if (panelEl) {
+          // Pulisci il contenuto esistente
+          panelEl.innerHTML = ''
+          
+          // Crea container per styles
+          const stylesContainer = document.createElement('div')
+          stylesContainer.style.padding = '10px'
+          
+          const title = document.createElement('h4')
+          title.textContent = 'Styles'
+          title.style.margin = '0 0 10px 0'
+          title.style.color = '#333'
+          
+          stylesContainer.appendChild(title)
+          
+          // Renderizza style manager
+          sm.render(stylesContainer)
+          panelEl.appendChild(stylesContainer)
         }
       }
     })
+
+    // Inizializza il pannello layers di default
+    setTimeout(() => {
+      grapesEditor.runCommand('show-layers')
+    }, 100)
 
     setEditor(grapesEditor)
     setLoading(false)
