@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import grapesjs from 'grapesjs'
 import 'grapesjs/dist/css/grapes.min.css'
 
@@ -490,8 +490,29 @@ const PageBuilder = () => {
     }, 4000)
   }
 
+  const [showSidebar, setShowSidebar] = useState(false)
+  const [showPanel, setShowPanel] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   return (
-    <div className="page-builder-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="page-builder-container" style={{
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      fontFamily: 'Inter, sans-serif',
+      position: 'relative'
+    }}>
+
       {/* Notifiche */}
       {notification.show && (
         <div style={{
@@ -503,25 +524,75 @@ const PageBuilder = () => {
           padding: '12px 20px',
           borderRadius: '8px',
           zIndex: 9999,
-          maxWidth: '400px'
+          maxWidth: '90vw',
+          fontSize: '14px'
         }}>
           {notification.message}
         </div>
       )}
 
-      {/* Toolbar */}
+      {/* Mobile Toolbar */}
       <div style={{ 
         background: '#fff', 
         borderBottom: '1px solid #ddd', 
-        padding: '10px 20px',
+        padding: isMobile ? '8px' : '10px 15px',
         display: 'flex',
         alignItems: 'center',
-        gap: '15px',
-        flexWrap: 'wrap'
+        gap: isMobile ? '8px' : '15px',
+        flexWrap: 'wrap',
+        minHeight: isMobile ? '50px' : '60px',
+        position: 'relative',
+        zIndex: 1000
       }}>
-        <h2 style={{ margin: '0', color: '#8B4513' }}>🎨 Page Builder</h2>
+        {/* Mobile Menu Buttons */}
+        {isMobile && (
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => setShowSidebar(!showSidebar)}
+              style={{
+                background: showSidebar ? '#8B4513' : '#ddd',
+                color: showSidebar ? 'white' : '#333',
+                border: 'none',
+                padding: '6px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px'
+              }}
+            >
+              🧱
+            </button>
+            <button
+              onClick={() => setShowPanel(!showPanel)}
+              style={{
+                background: showPanel ? '#8B4513' : '#ddd',
+                color: showPanel ? 'white' : '#333',
+                border: 'none',
+                padding: '6px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px'
+              }}
+            >
+              ⚙️
+            </button>
+          </div>
+        )}
+
+        <h2 style={{ 
+          margin: '0', 
+          color: '#8B4513', 
+          fontSize: isMobile ? '14px' : '18px',
+          flex: isMobile ? 1 : 'initial'
+        }}>
+          {isMobile ? '🎨 Builder' : '🎨 Page Builder'}
+        </h2>
         
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <div style={{ 
+          display: 'flex', 
+          gap: isMobile ? '6px' : '8px', 
+          alignItems: 'center', 
+          flexWrap: 'wrap'
+        }}>
           <button
             onClick={createNewPage}
             disabled={loading}
@@ -529,13 +600,14 @@ const PageBuilder = () => {
               background: '#51cf66',
               color: 'white',
               border: 'none',
-              padding: '8px 16px',
+              padding: isMobile ? '4px 8px' : '6px 12px',
               borderRadius: '6px',
               cursor: 'pointer',
-              fontSize: '14px'
+              fontSize: isMobile ? '11px' : '13px',
+              whiteSpace: 'nowrap'
             }}
           >
-            📄 Nuova Pagina
+            {isMobile ? '📄' : '📄 Nuova'}
           </button>
 
           <button
@@ -545,93 +617,177 @@ const PageBuilder = () => {
               background: '#8B4513',
               color: 'white',
               border: 'none',
-              padding: '8px 16px',
+              padding: isMobile ? '4px 8px' : '6px 12px',
               borderRadius: '6px',
               cursor: 'pointer',
-              fontSize: '14px',
-              opacity: (loading || saving || !editor) ? 0.5 : 1
+              fontSize: isMobile ? '11px' : '13px',
+              opacity: (loading || saving || !editor) ? 0.5 : 1,
+              whiteSpace: 'nowrap'
             }}
           >
-            {saving ? '💾 Salvando...' : '💾 Salva'}
+            {saving ? (isMobile ? '💾' : '💾 Salva...') : (isMobile ? '💾' : '💾 Salva')}
           </button>
-
-          {currentPage && (
-            <span style={{ 
-              background: '#e3f2fd', 
-              color: '#1976d2', 
-              padding: '6px 12px', 
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}>
-              📝 {currentPage.title}
-            </span>
-          )}
         </div>
 
-        {/* Landing Pages List */}
-        {landingPages.length > 0 && (
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <label style={{ fontSize: '14px', color: '#666' }}>Carica esistente:</label>
+        {/* Landing Pages List - Hidden on mobile */}
+        {!isMobile && landingPages.length > 0 && (
+          <div style={{ 
+            marginLeft: 'auto', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px',
+            minWidth: '200px'
+          }}>
+            <label style={{ fontSize: '12px', color: '#666', whiteSpace: 'nowrap' }}>Carica:</label>
             <select
               onChange={(e) => {
                 const page = landingPages.find(p => p.id === e.target.value)
                 if (page) loadLandingPage(page)
               }}
               style={{
-                padding: '6px 10px',
+                padding: '4px 8px',
                 border: '1px solid #ddd',
                 borderRadius: '4px',
-                fontSize: '14px'
+                fontSize: '12px',
+                flex: 1,
+                minWidth: '120px'
               }}
             >
-              <option value="">Seleziona pagina...</option>
+              <option value="">Seleziona...</option>
               {landingPages.map(page => (
                 <option key={page.id} value={page.id}>
-                  {page.title} ({page.is_published ? 'Pubblicata' : 'Bozza'})
+                  {page.title.substring(0, 25)}{page.title.length > 25 ? '...' : ''}
                 </option>
               ))}
             </select>
           </div>
         )}
+
+        {/* Current page indicator */}
+        {currentPage && (
+          <span style={{ 
+            background: '#e3f2fd', 
+            color: '#1976d2', 
+            padding: isMobile ? '2px 6px' : '4px 8px', 
+            borderRadius: '4px',
+            fontSize: isMobile ? '10px' : '12px',
+            maxWidth: isMobile ? '100px' : '150px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            📝 {isMobile ? currentPage.title.substring(0, 8) + '...' : currentPage.title}
+          </span>
+        )}
       </div>
 
       {loading && (
-        <div style={{ padding: '20px', textAlign: 'center' }}>
-          <h3>🎨 Caricamento Page Builder...</h3>
-          <p>Preparazione degli strumenti di creazione...</p>
+        <div style={{ padding: '40px', textAlign: 'center', background: '#f9f9f9' }}>
+          <h3 style={{ color: '#8B4513', marginBottom: '10px' }}>🎨 Caricamento Page Builder...</h3>
+          <p style={{ color: '#666', fontSize: '14px' }}>Preparazione strumenti di creazione...</p>
         </div>
       )}
       
-      {/* Editor sempre presente ma nascosto durante loading */}
+      {/* Main Layout */}
       <div style={{ 
         display: loading ? 'none' : 'flex', 
-        height: 'calc(100vh - 80px)',
-        maxHeight: 'calc(100vh - 80px)',
-        overflow: 'hidden'
+        flex: 1,
+        overflow: 'hidden',
+        position: 'relative'
       }}>
-        {/* Sidebar blocchi */}
-        <div style={{ 
-          width: '250px', 
-          minWidth: '250px',
-          background: '#f5f5f5', 
-          borderRight: '1px solid #ddd',
-          overflow: 'auto'
-        }}>
-          <div style={{ padding: '15px', borderBottom: '1px solid #ddd', background: '#fff' }}>
-            <h3 style={{ margin: '0', color: '#333', fontSize: '16px' }}>🧱 Blocchi</h3>
-            <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: '#666' }}>Trascina per aggiungere</p>
-          </div>
-          <div className="blocks-container" style={{ padding: '10px' }}></div>
-        </div>
+        {/* Mobile Sidebar Overlay */}
+        {isMobile && showSidebar && (
+          <>
+            <div 
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0,0,0,0.5)',
+                zIndex: 1001
+              }}
+              onClick={() => setShowSidebar(false)}
+            />
+            <div style={{
+              position: 'fixed',
+              top: isMobile ? '50px' : '60px',
+              left: 0,
+              bottom: 0,
+              width: '280px',
+              background: '#f5f5f5',
+              borderRight: '1px solid #ddd',
+              zIndex: 1002,
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              <div style={{ 
+                padding: '12px', 
+                borderBottom: '1px solid #ddd', 
+                background: '#fff',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <h3 style={{ margin: '0', color: '#333', fontSize: '14px' }}>🧱 Blocchi</h3>
+                <button
+                  onClick={() => setShowSidebar(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '16px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="blocks-container" style={{ 
+                padding: '8px',
+                flex: 1,
+                overflow: 'auto'
+              }}></div>
+            </div>
+          </>
+        )}
 
-        {/* Editor principale */}
+        {/* Desktop Sidebar */}
+        {!isMobile && (
+          <div style={{ 
+            width: '250px',
+            background: '#f5f5f5', 
+            borderRight: '1px solid #ddd',
+            overflow: 'auto',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <div style={{ 
+              padding: '12px', 
+              borderBottom: '1px solid #ddd', 
+              background: '#fff',
+              flexShrink: 0
+            }}>
+              <h3 style={{ margin: '0', color: '#333', fontSize: '14px' }}>🧱 Blocchi</h3>
+              <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#666' }}>Trascina per aggiungere</p>
+            </div>
+            <div className="blocks-container" style={{ 
+              padding: '8px',
+              flex: 1,
+              overflow: 'auto'
+            }}></div>
+          </div>
+        )}
+
+        {/* Editor Principale */}
         <div style={{ 
-          flex: 1, 
-          display: 'flex', 
-          flexDirection: 'column', 
+          flex: 1,
           background: '#fff',
-          minWidth: '600px',
-          overflow: 'hidden'
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          position: 'relative',
+          minWidth: 0
         }}>
           <div ref={editorRef} style={{ 
             flex: 1, 
@@ -642,24 +798,84 @@ const PageBuilder = () => {
           }}></div>
         </div>
 
-        {/* Panel destro */}
-        <div style={{ 
-          width: '250px', 
-          minWidth: '250px',
-          background: '#f5f5f5', 
-          borderLeft: '1px solid #ddd',
-          overflow: 'auto'
-        }}>
-          <div className="panel__switcher" style={{ 
-            padding: '10px', 
-            borderBottom: '1px solid #ddd', 
-            background: '#fff' 
-          }}></div>
-          <div className="panel__right" style={{ 
-            height: 'calc(100% - 50px)', 
-            overflow: 'auto' 
-          }}></div>
-        </div>
+        {/* Mobile Panel Overlay */}
+        {isMobile && showPanel && (
+          <>
+            <div 
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0,0,0,0.5)',
+                zIndex: 1001
+              }}
+              onClick={() => setShowPanel(false)}
+            />
+            <div style={{
+              position: 'fixed',
+              top: isMobile ? '50px' : '60px',
+              right: 0,
+              bottom: 0,
+              width: '280px',
+              background: '#f5f5f5',
+              borderLeft: '1px solid #ddd',
+              zIndex: 1002,
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              <div style={{ 
+                padding: '8px', 
+                borderBottom: '1px solid #ddd', 
+                background: '#fff',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div className="panel__switcher" style={{ flex: 1 }}></div>
+                <button
+                  onClick={() => setShowPanel(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '16px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="panel__right" style={{ 
+                flex: 1,
+                overflow: 'auto' 
+              }}></div>
+            </div>
+          </>
+        )}
+
+        {/* Desktop Panel */}
+        {!isMobile && (
+          <div style={{ 
+            width: '250px',
+            background: '#f5f5f5', 
+            borderLeft: '1px solid #ddd',
+            overflow: 'auto',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <div className="panel__switcher" style={{ 
+              padding: '8px', 
+              borderBottom: '1px solid #ddd', 
+              background: '#fff',
+              flexShrink: 0
+            }}></div>
+            <div className="panel__right" style={{ 
+              flex: 1,
+              overflow: 'auto' 
+            }}></div>
+          </div>
+        )}
       </div>
     </div>
   )
