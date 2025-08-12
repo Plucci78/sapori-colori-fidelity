@@ -171,9 +171,10 @@ export default async function handler(req, res) {
           is_active: subscription.invalid_identifier !== 'true'
         }
         
-        // Trova customer collegato per external_user_id
-        if (subscription.external_user_id) {
-          const matchingCustomer = customers.find(c => c.id === subscription.external_user_id)
+        // Trova customer collegato per external_user_id o customer_id
+        const customerId = subscription.external_user_id || subscription.customer_id
+        if (customerId) {
+          const matchingCustomer = customers.find(c => c.id === customerId)
           if (matchingCustomer) {
             subscriptionData.customer_id = matchingCustomer.id
             
@@ -190,7 +191,7 @@ export default async function handler(req, res) {
               foundSubscriptions.push({
                 customer: matchingCustomer.name,
                 subscriptionId: subscription.id || subscription.subscription_id,
-                external_id: subscription.external_user_id,
+                external_id: customerId,
                 linked: true
               })
               synced++

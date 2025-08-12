@@ -130,7 +130,7 @@ const ClientPortal = ({ token }) => {
             
             if (permission === 'granted' || permission === true) {
               console.log('✅ Cliente ha accettato notifiche, collegamento OneSignal SDK v16:', customerData.id)
-              await window.OneSignal.User.addAlias("external_id", customerData.id)
+              await window.OneSignal.User.addAlias("customer_id", customerData.id)
               console.log('✅ Cliente collegato a OneSignal v16 con addAlias():', customerData.id)
               return true // Collegamento riuscito
             }
