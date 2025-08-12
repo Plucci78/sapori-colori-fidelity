@@ -118,27 +118,29 @@ const ClientPortal = ({ token }) => {
       localStorage.setItem('pwa_customer_id', customerData.id)
       localStorage.setItem('pwa_customer_data', JSON.stringify(customerData))
       
-      // 🔔 COLLEGAMENTO ONESIGNAL: Solo se il cliente ha accettato le notifiche
-      console.log('🔔 DEBUG: Inizio collegamento OneSignal per cliente:', customerData.id)
-      try {
-        if (window.OneSignal && customerData && customerData.id) {
-          console.log('🔔 DEBUG: OneSignal disponibile, controllo permessi...')
-          // Verifica se l'utente ha dato il permesso per le notifiche (SDK v16)
-          const permission = await window.OneSignal.Notifications.permission
-          console.log('🔔 Stato permesso OneSignal v16:', permission)
-          
-          if (permission === 'granted') {
-            console.log('✅ Cliente ha accettato notifiche, collegamento OneSignal SDK v16:', customerData.id)
-            await window.OneSignal.User.addAlias("external_id", customerData.id)
-            console.log('✅ Cliente collegato a OneSignal v16 con login():', customerData.id)
-          } else {
-            console.log('📵 Cliente non ha accettato le notifiche push - non collegato a OneSignal')
+      // 🔔 COLLEGAMENTO ONESIGNAL: Posticipato dopo che OneSignal ha gestito i permessi
+      console.log('🔔 Login completato, collegamento OneSignal verrà fatto dopo i permessi')
+      
+      // Aspetta che OneSignal completi la sua inizializzazione e richiesta permessi
+      setTimeout(async () => {
+        try {
+          if (window.OneSignal && customerData && customerData.id) {
+            console.log('🔔 DEBUG: Controllo permessi OneSignal dopo inizializzazione...')
+            const permission = await window.OneSignal.Notifications.permission
+            console.log('🔔 Stato permesso OneSignal finale:', permission)
+            
+            if (permission === 'granted') {
+              console.log('✅ Cliente ha accettato notifiche, collegamento OneSignal SDK v16:', customerData.id)
+              await window.OneSignal.User.addAlias("external_id", customerData.id)
+              console.log('✅ Cliente collegato a OneSignal v16 con addAlias():', customerData.id)
+            } else {
+              console.log('📵 Cliente non ha accettato le notifiche push - non collegato a OneSignal')
+            }
           }
+        } catch (onesignalError) {
+          console.error('❌ Errore collegamento OneSignal:', onesignalError)
         }
-      } catch (onesignalError) {
-        console.error('❌ Errore collegamento OneSignal:', onesignalError)
-        // Non bloccare il login per errori OneSignal
-      }
+      }, 3000) // Aspetta 3 secondi che OneSignal completi
       
       // Invece di reload, imposta il login step per aggiornare l'UI
       setLoginStep('welcome')
