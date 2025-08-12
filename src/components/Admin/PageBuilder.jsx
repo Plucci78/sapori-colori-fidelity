@@ -58,8 +58,6 @@ const PageBuilder = () => {
     }
     
     console.log('✅ GrapesJS importato correttamente')
-    console.log('📍 editorRef.current HTML:', editorRef.current.innerHTML)
-    console.log('📍 editorRef.current dimensioni:', editorRef.current.offsetWidth, 'x', editorRef.current.offsetHeight)
     
     try {
 
@@ -590,14 +588,25 @@ const PageBuilder = () => {
       )}
       
       {/* Editor sempre presente ma nascosto durante loading */}
-      <div style={{ display: loading ? 'none' : 'flex', height: 'calc(100vh - 80px)' }}>
+      <div style={{ 
+        display: loading ? 'none' : 'flex', 
+        height: 'calc(100vh - 80px)',
+        maxHeight: 'calc(100vh - 80px)',
+        overflow: 'hidden'
+      }}>
         {/* Sidebar blocchi */}
-        <div style={{ width: '300px', background: '#f5f5f5', borderRight: '1px solid #ddd' }}>
+        <div style={{ 
+          width: '250px', 
+          minWidth: '250px',
+          background: '#f5f5f5', 
+          borderRight: '1px solid #ddd',
+          overflow: 'auto'
+        }}>
           <div style={{ padding: '15px', borderBottom: '1px solid #ddd', background: '#fff' }}>
-            <h3 style={{ margin: '0', color: '#333' }}>🧱 Blocchi</h3>
-            <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#666' }}>Trascina per aggiungere</p>
+            <h3 style={{ margin: '0', color: '#333', fontSize: '16px' }}>🧱 Blocchi</h3>
+            <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: '#666' }}>Trascina per aggiungere</p>
           </div>
-          <div className="blocks-container" style={{ padding: '15px' }}></div>
+          <div className="blocks-container" style={{ padding: '10px' }}></div>
         </div>
 
         {/* Editor principale */}
@@ -605,26 +614,36 @@ const PageBuilder = () => {
           flex: 1, 
           display: 'flex', 
           flexDirection: 'column', 
-          background: '#fff', 
-          border: '2px solid #ccc',
-          minWidth: '400px'
+          background: '#fff',
+          minWidth: '600px',
+          overflow: 'hidden'
         }}>
-          <div style={{ padding: '10px', background: '#f0f0f0', borderBottom: '1px solid #ccc' }}>
-            <strong>📝 Area Editor GrapesJS</strong>
-          </div>
           <div ref={editorRef} style={{ 
             flex: 1, 
-            minHeight: '400px', 
-            minWidth: '400px',
             width: '100%',
-            background: '#ffffff' 
+            height: '100%',
+            background: '#ffffff',
+            overflow: 'hidden'
           }}></div>
         </div>
 
         {/* Panel destro */}
-        <div style={{ width: '300px', background: '#f5f5f5', borderLeft: '1px solid #ddd' }}>
-          <div className="panel__switcher" style={{ padding: '10px', borderBottom: '1px solid #ddd', background: '#fff' }}></div>
-          <div className="panel__right" style={{ height: 'calc(100% - 60px)', overflow: 'auto' }}></div>
+        <div style={{ 
+          width: '250px', 
+          minWidth: '250px',
+          background: '#f5f5f5', 
+          borderLeft: '1px solid #ddd',
+          overflow: 'auto'
+        }}>
+          <div className="panel__switcher" style={{ 
+            padding: '10px', 
+            borderBottom: '1px solid #ddd', 
+            background: '#fff' 
+          }}></div>
+          <div className="panel__right" style={{ 
+            height: 'calc(100% - 50px)', 
+            overflow: 'auto' 
+          }}></div>
         </div>
       </div>
     </div>
