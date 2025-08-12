@@ -119,8 +119,10 @@ const ClientPortal = ({ token }) => {
       localStorage.setItem('pwa_customer_data', JSON.stringify(customerData))
       
       // 🔔 COLLEGAMENTO ONESIGNAL: Solo se il cliente ha accettato le notifiche
+      console.log('🔔 DEBUG: Inizio collegamento OneSignal per cliente:', customerData.id)
       try {
         if (window.OneSignal && customerData && customerData.id) {
+          console.log('🔔 DEBUG: OneSignal disponibile, controllo permessi...')
           // Verifica se l'utente ha dato il permesso per le notifiche
           const permission = await window.OneSignal.getNotificationPermission()
           console.log('🔔 Stato permesso OneSignal:', permission)
