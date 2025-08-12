@@ -186,29 +186,28 @@ export default async function handler(req, res) {
         }
         
         if (matchingCustomer) {
-            subscriptionData.customer_id = matchingCustomer.id
-            
-            // Aggiorna anche il customer con subscription_id
-            const { error: updateError } = await supabase
-              .from('customers')
-              .update({ 
-                onesignal_subscription_id: subscription.id || subscription.subscription_id,
-                onesignal_player_id: subscription.onesignal_id || subscription.user_id
-              })
-              .eq('id', matchingCustomer.id)
-            
-            if (!updateError) {
-              foundSubscriptions.push({
-                customer: matchingCustomer.name,
-                subscriptionId: subscription.id || subscription.subscription_id,
-                external_id: customerId,
-                linked: true
-              })
-              synced++
-            } else {
-              console.error(`❌ Errore update customer ${matchingCustomer.name}:`, updateError)
-              errors++
-            }
+          subscriptionData.customer_id = matchingCustomer.id
+          
+          // Aggiorna anche il customer con subscription_id
+          const { error: updateError } = await supabase
+            .from('customers')
+            .update({ 
+              onesignal_subscription_id: subscription.id || subscription.subscription_id,
+              onesignal_player_id: subscription.onesignal_id || subscription.user_id
+            })
+            .eq('id', matchingCustomer.id)
+          
+          if (!updateError) {
+            foundSubscriptions.push({
+              customer: matchingCustomer.name,
+              subscriptionId: subscription.id || subscription.subscription_id,
+              external_id: customerId,
+              linked: true
+            })
+            synced++
+          } else {
+            console.error(`❌ Errore update customer ${matchingCustomer.name}:`, updateError)
+            errors++
           }
         }
         
