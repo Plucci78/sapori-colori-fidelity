@@ -43,6 +43,78 @@ const ContactCta = ({ phone, whatsapp, mapLink }) => (
 
 
 const PageBuilder = () => {
+  // Publish state - NON tocchiamo l'editor!
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState(null);
+  const [editorInstance, setEditorInstance] = useState(null);
+
+  // Funzione di pubblicazione SICURA
+  const handlePublish = async () => {
+    if (!editorInstance) {
+      alert('Editor non disponibile. Attendi che si carichi.');
+      return;
+    }
+
+    setIsPublishing(true);
+    
+    try {
+      // Prendi HTML e CSS SENZA modificare l'editor
+      const html = editorInstance.getHtml();
+      const css = editorInstance.getCss();
+      const projectData = editorInstance.getProjectData();
+      
+      if (!html || html.trim() === '') {
+        alert('Nessun contenuto da pubblicare');
+        setIsPublishing(false);
+        return;
+      }
+
+      // Genera title e slug
+      const title = `Landing Page ${new Date().toLocaleDateString('it-IT')} ${new Date().toLocaleTimeString('it-IT')}`;
+      const slug = `landing-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      
+      // Chiama API esistente
+      const response = await fetch('http://localhost:3001/api/landing-pages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description: `Landing page creata il ${new Date().toLocaleDateString('it-IT')}`,
+          slug,
+          html_content: html,
+          css_content: css,
+          grapesjs_data: projectData,
+          meta_title: title,
+          meta_description: `Landing page per OneSignal - ${title}`,
+          is_published: true
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Errore pubblicazione');
+      }
+
+      const result = await response.json();
+      const fullUrl = `${window.location.origin}/api/landing/${result.data.slug}`;
+      
+      setPublishedUrl(fullUrl);
+      
+      // Copia negli appunti
+      navigator.clipboard.writeText(fullUrl).catch(() => {
+        console.warn('Impossibile copiare negli appunti');
+      });
+      
+      alert(`✅ PUBBLICATO!\n\nLink OneSignal:\n${fullUrl}\n\n🔗 Copiato negli appunti!`);
+      
+    } catch (error) {
+      console.error('Errore:', error);
+      alert(`❌ Errore: ${error.message}`);
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   // No need for editorRef, editor state, or complex useEffects for initialization
   // StudioEditor handles its own lifecycle
 
@@ -78,8 +150,59 @@ const PageBuilder = () => {
   };
 
   return (
-    <div style={{ height: '100vh', width: '100vw' }}> {/* Ensure the container has dimensions */}
+    <div style={{ position: 'relative', height: '100vh', width: '100vw' }}>
+      {/* BOTTONE SICURO - fuori dall'editor */}
+      <div style={{ 
+        position: 'absolute', 
+        top: '10px', 
+        right: '10px', 
+        zIndex: 10000,
+        display: 'flex',
+        gap: '10px',
+        alignItems: 'center'
+      }}>
+        <button
+          onClick={handlePublish}
+          disabled={isPublishing}
+          style={{
+            background: '#fdae4b',
+            color: 'white',
+            border: 'none',
+            padding: '12px 20px',
+            borderRadius: '6px',
+            fontWeight: 'bold',
+            cursor: isPublishing ? 'not-allowed' : 'pointer',
+            fontSize: '14px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            opacity: isPublishing ? 0.6 : 1
+          }}
+        >
+          {isPublishing ? '🔄 Pubblicando...' : '🚀 Pubblica per OneSignal'}
+        </button>
+        
+        {publishedUrl && (
+          <div style={{
+            background: '#28a745',
+            color: 'white',
+            padding: '8px 12px',
+            borderRadius: '4px',
+            fontSize: '12px',
+            maxWidth: '300px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            cursor: 'pointer'
+          }}
+          onClick={() => navigator.clipboard.writeText(publishedUrl)}
+          title="Clicca per copiare"
+          >
+            ✅ {publishedUrl}
+          </div>
+        )}
+      </div>
+
       <StudioEditor
+        onReady={(editor) => setEditorInstance(editor)}
         options={{
           licenseKey: import.meta.env.VITE_GRAPESJS_LICENSE_KEY,
           
