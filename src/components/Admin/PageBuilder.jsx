@@ -169,15 +169,16 @@ const PageBuilder = () => {
 
   return (
     <div style={{ position: 'relative', height: '100vh', width: '100vw' }}>
-      {/* BOTTONE SICURO - fuori dall'editor */}
+      {/* BOTTONE SICURO - in basso a destra */}
       <div style={{ 
         position: 'absolute', 
-        top: '10px', 
-        right: '10px', 
+        bottom: '20px', 
+        right: '20px', 
         zIndex: 10000,
         display: 'flex',
+        flexDirection: 'column',
         gap: '10px',
-        alignItems: 'center'
+        alignItems: 'flex-end'
       }}>
         <button
           onClick={handlePublish}
@@ -204,17 +205,18 @@ const PageBuilder = () => {
             color: 'white',
             padding: '8px 12px',
             borderRadius: '4px',
-            fontSize: '12px',
-            maxWidth: '300px',
+            fontSize: '11px',
+            maxWidth: '250px',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            textAlign: 'center'
           }}
           onClick={() => navigator.clipboard.writeText(publishedUrl)}
-          title="Clicca per copiare"
+          title="Clicca per copiare il link OneSignal"
           >
-            ✅ {publishedUrl}
+            ✅ Link OneSignal copiato
           </div>
         )}
       </div>
