@@ -9,12 +9,6 @@ const PageBuilder = () => {
   return (
     <div style={{ height: '100vh', width: '100%' }}>
       <StudioEditor
-        onLoad={(editor) => {
-          console.log('GrapesJS Editor loaded successfully!', editor);
-        }}
-        onError={(error) => {
-          console.error('GrapesJS Error:', error);
-        }}
         options={{
           licenseKey: import.meta.env.VITE_GRAPESJS_LICENSE_KEY,
         theme: 'light',
@@ -73,20 +67,7 @@ const PageBuilder = () => {
           autosaveIntervalMs: 10000
         },
         plugins: [
-          flexComponent.init({ }),
-          canvasFullSize.init({ }),
-          tableComponent.init({ }),
-          swiperComponent.init({ }),
-          iconifyComponent.init({ }),
-          accordionComponent.init({ }),
-          listPagesComponent.init({ }),
-          fsLightboxComponent.init({ }),
-          youtubeAssetProvider.init({ }),
-          lightGalleryComponent.init({ }),
-          rteProseMirror.init({ }),
-          canvasEmptyState.init({ }),
-          layoutSidebarButtons.init({ }),
-          canvasGridMode.init({ })
+          // Test con plugin base per vedere se il problema sono i plugin
         ]
         }}
       />
