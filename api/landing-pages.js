@@ -135,7 +135,7 @@ async function handlePost(req, res) {
     return res.status(201).json({ 
       success: true, 
       data,
-      public_url: `/api/public-landing/${data.slug}`
+      public_url: `/api/page/${data.slug}`
     })
     
   } catch (error) {
@@ -212,7 +212,7 @@ async function handlePut(req, res) {
     return res.status(200).json({ 
       success: true, 
       data,
-      public_url: `/api/public-landing/${data.slug}`
+      public_url: `/api/page/${data.slug}`
     })
     
   } catch (error) {
