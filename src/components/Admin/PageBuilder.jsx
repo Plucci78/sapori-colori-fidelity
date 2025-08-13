@@ -2,6 +2,12 @@ import React, { useEffect, useState } from 'react';
 import StudioEditor from '@grapesjs/studio-sdk/react';
 import '@grapesjs/studio-sdk/style';
 import rendererReact from '@grapesjs/studio-sdk-plugins/dist/rendererReact';
+import grapesjsPresetWebpage from 'grapesjs-preset-webpage';
+import grapesjsBlocksBasic from 'grapesjs-blocks-basic';
+import grapesjsPluginForms from 'grapesjs-plugin-forms';
+import grapesjsCustomCode from 'grapesjs-custom-code';
+import grapesjsPluginExport from 'grapesjs-plugin-export';
+import grapesjsTabs from 'grapesjs-tabs';
 
 // Define your custom React components for GrapesJS blocks
 // These are simplified versions based on your original HTML content
@@ -81,6 +87,12 @@ const PageBuilder = () => {
           // The React Renderer plugin
           plugins: [
             rendererReact.init(reactRendererConfig),
+            grapesjsPresetWebpage,
+            grapesjsBlocksBasic,
+            grapesjsPluginForms,
+            grapesjsCustomCode,
+            grapesjsPluginExport,
+            grapesjsTabs,
             // Add blocks for your custom React components
             (editor) => {
               editor.Blocks.add('sapori-header', {
