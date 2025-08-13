@@ -1,13 +1,22 @@
 import React from 'react';
 import StudioEditor from '@grapesjs/studio-sdk/react';
-import { flexComponent, canvasFullSize, rteProseMirror, tableComponent, swiperComponent, canvasEmptyState, iconifyComponent, accordionComponent, listPagesComponent, fsLightboxComponent, layoutSidebarButtons, youtubeAssetProvider, lightGalleryComponent } from '@grapesjs/studio-sdk-plugins';
+import { flexComponent, canvasFullSize, tableComponent, swiperComponent, iconifyComponent, accordionComponent, listPagesComponent, fsLightboxComponent, youtubeAssetProvider, lightGalleryComponent, rteProseMirror, canvasEmptyState, layoutSidebarButtons, canvasGridMode } from '@grapesjs/studio-sdk-plugins';
 import '@grapesjs/studio-sdk/style';
 
 const PageBuilder = () => {
+  console.log('PageBuilder rendering, license key:', import.meta.env.VITE_GRAPESJS_LICENSE_KEY ? 'PRESENTE' : 'MANCANTE');
+  
   return (
-    <StudioEditor
-      options={{
-        licenseKey: import.meta.env.VITE_GRAPESJS_LICENSE_KEY,
+    <div style={{ height: '100vh', width: '100%' }}>
+      <StudioEditor
+        onLoad={(editor) => {
+          console.log('GrapesJS Editor loaded successfully!', editor);
+        }}
+        onError={(error) => {
+          console.error('GrapesJS Error:', error);
+        }}
+        options={{
+          licenseKey: import.meta.env.VITE_GRAPESJS_LICENSE_KEY,
         theme: 'light',
         customTheme: {
           default: {
@@ -66,20 +75,22 @@ const PageBuilder = () => {
         plugins: [
           flexComponent.init({ }),
           canvasFullSize.init({ }),
-          rteProseMirror.init({ }),
           tableComponent.init({ }),
           swiperComponent.init({ }),
-          canvasEmptyState.init({ }),
           iconifyComponent.init({ }),
           accordionComponent.init({ }),
           listPagesComponent.init({ }),
           fsLightboxComponent.init({ }),
-          layoutSidebarButtons.init({ }),
           youtubeAssetProvider.init({ }),
-          lightGalleryComponent.init({ })
+          lightGalleryComponent.init({ }),
+          rteProseMirror.init({ }),
+          canvasEmptyState.init({ }),
+          layoutSidebarButtons.init({ }),
+          canvasGridMode.init({ })
         ]
-      }}
-    />
+        }}
+      />
+    </div>
   );
 };
 
