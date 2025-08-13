@@ -50,18 +50,36 @@ const PageBuilder = () => {
 
   // Funzione di pubblicazione SICURA
   const handlePublish = async () => {
-    if (!editorInstance) {
-      alert('Editor non disponibile. Attendi che si carichi.');
+    // Prova ad accedere all'editor tramite il DOM
+    const editorElement = document.querySelector('.gjs-editor');
+    if (!editorElement) {
+      alert('Editor non trovato. Attendi che si carichi completamente.');
       return;
     }
 
     setIsPublishing(true);
     
     try {
-      // Prendi HTML e CSS SENZA modificare l'editor
-      const html = editorInstance.getHtml();
-      const css = editorInstance.getCss();
-      const projectData = editorInstance.getProjectData();
+      // Prova diversi modi per accedere all'editor
+      let html = '';
+      let css = '';
+      let projectData = {};
+      
+      // Prova con l'API globale di GrapesJS
+      if (window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
+        const editor = window.grapesjs.editors[0];
+        html = editor.getHtml();
+        css = editor.getCss();
+        projectData = editor.getProjectData();
+      } else {
+        // Fallback: prendi il contenuto dal DOM
+        const canvas = document.querySelector('#gjs .gjs-cv-canvas');
+        if (canvas && canvas.contentDocument) {
+          html = canvas.contentDocument.body.innerHTML;
+        } else {
+          throw new Error('Impossibile accedere al contenuto dell\'editor');
+        }
+      }
       
       if (!html || html.trim() === '') {
         alert('Nessun contenuto da pubblicare');
@@ -202,7 +220,6 @@ const PageBuilder = () => {
       </div>
 
       <StudioEditor
-        onReady={(editor) => setEditorInstance(editor)}
         options={{
           licenseKey: import.meta.env.VITE_GRAPESJS_LICENSE_KEY,
           
