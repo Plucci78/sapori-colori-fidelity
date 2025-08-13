@@ -1,16 +1,12 @@
-import React from 'react';
 import StudioEditor from '@grapesjs/studio-sdk/react';
-import { flexComponent, canvasFullSize, tableComponent, swiperComponent, iconifyComponent, accordionComponent, listPagesComponent, fsLightboxComponent, youtubeAssetProvider, lightGalleryComponent, rteProseMirror, canvasEmptyState, layoutSidebarButtons, canvasGridMode } from '@grapesjs/studio-sdk-plugins';
+import { flexComponent, canvasFullSize, rteProseMirror, tableComponent, swiperComponent, canvasEmptyState, iconifyComponent, accordionComponent, listPagesComponent, fsLightboxComponent, layoutSidebarButtons, youtubeAssetProvider, lightGalleryComponent } from '@grapesjs/studio-sdk-plugins';
 import '@grapesjs/studio-sdk/style';
 
-const PageBuilder = () => {
-  console.log('PageBuilder rendering, license key:', import.meta.env.VITE_GRAPESJS_LICENSE_KEY ? 'PRESENTE' : 'MANCANTE');
-  
+export default function PageBuilder() {
   return (
-    <div style={{ height: '100vh', width: '100%' }}>
-      <StudioEditor
-        options={{
-          licenseKey: import.meta.env.VITE_GRAPESJS_LICENSE_KEY,
+    <StudioEditor
+      options={{
+        licenseKey: import.meta.env.VITE_GRAPESJS_LICENSE_KEY,
         theme: 'light',
         customTheme: {
           default: {
@@ -53,10 +49,12 @@ const PageBuilder = () => {
         },
         project: {
           type: 'web',
-          id: 'sapori-colori-project'
+          // TODO: replace with a unique id for your projects. e.g. an uuid
+          id: 'UNIQUE_PROJECT_ID'
         },
         identity: {
-          id: 'sapori-colori-user'
+          // TODO: replace with a unique id for your end users. e.g. an uuid
+          id: 'UNIQUE_END_USER_ID'
         },
         assets: {
           storageType: 'cloud'
@@ -67,12 +65,21 @@ const PageBuilder = () => {
           autosaveIntervalMs: 10000
         },
         plugins: [
-          // Test con plugin base per vedere se il problema sono i plugin
+          flexComponent.init({ /* Plugin options: https://app.grapesjs.com/docs-sdk/plugins/components/flex */ }),
+          canvasFullSize.init({ /* Plugin options: https://app.grapesjs.com/docs-sdk/plugins/canvas/full-size */ }),
+          rteProseMirror.init({ /* Plugin options: https://app.grapesjs.com/docs-sdk/plugins/rte/prosemirror */ }),
+          tableComponent.init({ /* Plugin options: https://app.grapesjs.com/docs-sdk/plugins/components/table */ }),
+          swiperComponent.init({ /* Plugin options: https://app.grapesjs.com/docs-sdk/plugins/components/swiper */ }),
+          canvasEmptyState.init({ /* Plugin options: https://app.grapesjs.com/docs-sdk/plugins/canvas/emptyState */ }),
+          iconifyComponent.init({ /* Plugin options: https://app.grapesjs.com/docs-sdk/plugins/components/iconify */ }),
+          accordionComponent.init({ /* Plugin options: https://app.grapesjs.com/docs-sdk/plugins/components/accordion */ }),
+          listPagesComponent.init({ /* Plugin options: https://app.grapesjs.com/docs-sdk/plugins/components/listPages */ }),
+          fsLightboxComponent.init({ /* Plugin options: https://app.grapesjs.com/docs-sdk/plugins/components/fslightbox */ }),
+          layoutSidebarButtons.init({ /* Plugin options: https://app.grapesjs.com/docs-sdk/plugins/layout/sidebar-buttons */ }),
+          youtubeAssetProvider.init({ /* Plugin options: https://app.grapesjs.com/docs-sdk/plugins/asset-providers/youtube-asset-provider */ }),
+          lightGalleryComponent.init({ /* Plugin options: https://app.grapesjs.com/docs-sdk/plugins/components/lightGallery */ })
         ]
-        }}
-      />
-    </div>
+      }}
+    />
   );
-};
-
-export default PageBuilder;
+}
