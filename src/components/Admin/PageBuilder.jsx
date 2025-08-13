@@ -6,7 +6,7 @@ export default function PageBuilder() {
   return (
     <StudioEditor
       options={{
-        licenseKey: import.meta.env.VITE_GRAPESJS_LICENSE_KEY,
+        licenseKey: '20dcb4e71c5e4edcb01cee40c282732d7e219020ae5646ac97298687dae3b19a',
         theme: 'light',
         customTheme: {
           default: {
