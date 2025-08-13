@@ -91,8 +91,12 @@ const PageBuilder = () => {
       const title = `Landing Page ${new Date().toLocaleDateString('it-IT')} ${new Date().toLocaleTimeString('it-IT')}`;
       const slug = `landing-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
       
-      // Chiama API esistente
-      const response = await fetch('http://localhost:3001/api/landing-pages', {
+      // Chiama API - usa URL dinamico per produzione/locale
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3001/api/landing-pages'
+        : '/api/landing-pages';
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
