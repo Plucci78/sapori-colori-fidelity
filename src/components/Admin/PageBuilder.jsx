@@ -428,14 +428,20 @@ const PageBuilder = ({ editingPage, onBackToDashboard }) => {
 
   return (
     <div style={{ position: 'relative', height: '100vh', width: '100vw' }}>
-      {/* BOTTONE BACK TO DASHBOARD - in alto a sinistra */}
-      {onBackToDashboard && (
-        <div style={{
-          position: 'absolute',
-          top: '20px',
-          left: '20px',
-          zIndex: 10000
-        }}>
+      {/* BOTTONI CONTROLLO - in basso a destra */}
+      <div style={{ 
+        position: 'absolute', 
+        bottom: '20px', 
+        right: '20px', 
+        zIndex: 10000,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        alignItems: 'flex-end'
+      }}>
+        
+        {/* Pulsante Dashboard */}
+        {onBackToDashboard && (
           <button
             onClick={onBackToDashboard}
             style={{
@@ -455,20 +461,7 @@ const PageBuilder = ({ editingPage, onBackToDashboard }) => {
           >
             ← Dashboard
           </button>
-        </div>
-      )}
-
-      {/* BOTTONI CONTROLLO - in basso a destra */}
-      <div style={{ 
-        position: 'absolute', 
-        bottom: '20px', 
-        right: '20px', 
-        zIndex: 10000,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        alignItems: 'flex-end'
-      }}>
+        )}
         
         {/* Info landing page corrente */}
         {currentLandingPage && (
