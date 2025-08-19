@@ -118,7 +118,7 @@ const PageBuilder = () => {
       }
 
       const result = await response.json();
-      const fullUrl = `${window.location.origin}/landing/${result.data.slug}`;
+      const fullUrl = `${window.location.origin}/api/show-page?slug=${result.data.slug}`;
       
       setPublishedUrl(fullUrl);
       
@@ -127,7 +127,7 @@ const PageBuilder = () => {
         console.warn('Impossibile copiare negli appunti');
       });
       
-      alert(`✅ PUBBLICATO!\n\nLink OneSignal:\n${fullUrl}\n\n🔗 Copiato negli appunti!`);
+      alert(`✅ PAGINA PUBBLICATA!\n\nLink pubblico:\n${fullUrl}\n\n🔗 Copiato negli appunti!\n\nPuoi usare questo link per condividere la pagina.`);
       
     } catch (error) {
       console.error('Errore:', error);
@@ -200,7 +200,7 @@ const PageBuilder = () => {
             opacity: isPublishing ? 0.6 : 1
           }}
         >
-          {isPublishing ? '🔄 Pubblicando...' : '🚀 Pubblica per OneSignal'}
+          {isPublishing ? '🔄 Pubblicando...' : '🚀 Pubblica Pagina'}
         </button>
         
         {publishedUrl && (
@@ -218,9 +218,9 @@ const PageBuilder = () => {
             textAlign: 'center'
           }}
           onClick={() => navigator.clipboard.writeText(publishedUrl)}
-          title="Clicca per copiare il link OneSignal"
+          title="Clicca per copiare il link"
           >
-            ✅ Link OneSignal copiato
+            ✅ Link copiato
           </div>
         )}
       </div>
