@@ -86,17 +86,56 @@ const ContactCta = ({ phone, whatsapp, mapLink }) => (
 );
 
 
-const PageBuilder = () => {
+const PageBuilder = ({ editingPage, onBackToDashboard }) => {
   // Publish state - NON tocchiamo l'editor!
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState(null);
   const [editorInstance, setEditorInstance] = useState(null);
   
   // NUOVO: Stato per tracciare landing page esistente
-  const [currentLandingPage, setCurrentLandingPage] = useState(null);
+  const [currentLandingPage, setCurrentLandingPage] = useState(editingPage || null);
   
   // Lazy load dei plugins
   const { plugins, loading: pluginsLoading } = useGrapesJSPlugins();
+
+  // Carica una landing page esistente nell'editor
+  const loadLandingPageIntoEditor = (pageData) => {
+    if (window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
+      const editor = window.grapesjs.editors[0];
+      
+      try {
+        // Carica i dati del progetto GrapesJS se disponibili
+        if (pageData.grapesjs_data && Object.keys(pageData.grapesjs_data).length > 0) {
+          editor.loadProjectData(pageData.grapesjs_data);
+          console.log('✅ Dati GrapesJS caricati nell\'editor');
+        } else if (pageData.html_content) {
+          // Fallback: carica solo HTML
+          editor.setComponents(pageData.html_content);
+          if (pageData.css_content) {
+            editor.setStyle(pageData.css_content);
+          }
+          console.log('✅ HTML/CSS caricati nell\'editor (fallback)');
+        }
+        
+        setCurrentLandingPage(pageData);
+        setPublishedUrl(`${window.location.origin}/api/landing?action=show&slug=${pageData.slug}`);
+        
+      } catch (error) {
+        console.error('Errore caricamento landing page:', error);
+        alert('Errore nel caricamento della landing page. Prova a ricaricare la pagina.');
+      }
+    }
+  };
+
+  // Effetto per caricare landing page passata come prop
+  useEffect(() => {
+    if (editingPage && plugins && window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
+      // Aspetta un attimo che l'editor sia completamente inizializzato
+      setTimeout(() => {
+        loadLandingPageIntoEditor(editingPage);
+      }, 1000);
+    }
+  }, [editingPage, plugins]);
 
   // Funzione di pubblicazione SICURA
   const handlePublish = async () => {
@@ -389,6 +428,36 @@ const PageBuilder = () => {
 
   return (
     <div style={{ position: 'relative', height: '100vh', width: '100vw' }}>
+      {/* BOTTONE BACK TO DASHBOARD - in alto a sinistra */}
+      {onBackToDashboard && (
+        <div style={{
+          position: 'absolute',
+          top: '20px',
+          left: '20px',
+          zIndex: 10000
+        }}>
+          <button
+            onClick={onBackToDashboard}
+            style={{
+              background: '#6c757d',
+              color: 'white',
+              border: 'none',
+              padding: '10px 16px',
+              borderRadius: '6px',
+              fontSize: '14px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            ← Dashboard
+          </button>
+        </div>
+      )}
+
       {/* BOTTONI CONTROLLO - in basso a destra */}
       <div style={{ 
         position: 'absolute', 

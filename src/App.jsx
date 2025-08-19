@@ -38,7 +38,7 @@ import CouponManagement from './components/Coupons/CouponManagement'
 import GiftCardManagement from './components/GiftCards/GiftCardManagement'
 import WalletCashRegister from './components/Wallet/WalletCashRegister'
 import NotificationsDashboard from './components/Admin/NotificationsDashboard'
-import PageBuilder from './components/Admin/PageBuilder'
+import LandingPagesManager from './components/Admin/LandingPagesManager'
 import { generateClientToken, isValidToken } from './utils/tokenUtils'
 import nfcService from './services/nfcService'
 import { birthdayScheduler } from './services/birthdayScheduler'
@@ -2287,8 +2287,8 @@ for (const customer of recipients) {
           </ProtectedComponent>
         )
       case 'pagebuilder':
-        // Debug: mostra sempre il PageBuilder per l'admin, senza controllo permessi
-        return <PageBuilder />
+        // Debug: mostra sempre il LandingPagesManager per l'admin, senza controllo permessi
+        return <LandingPagesManager />
       case 'settings':
         return (
           <ProtectedComponent permission="canViewSettings">
