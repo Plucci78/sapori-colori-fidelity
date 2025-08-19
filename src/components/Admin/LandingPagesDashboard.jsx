@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './LandingPagesDashboard.css';
 
 const LandingPagesDashboard = ({ onEditPage, onNewPage }) => {
   const [landingPages, setLandingPages] = useState([]);
@@ -104,15 +105,8 @@ const LandingPagesDashboard = ({ onEditPage, onNewPage }) => {
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '50vh',
-        flexDirection: 'column',
-        gap: '20px'
-      }}>
-        <div style={{ fontSize: '24px' }}>🔄</div>
+      <div className="landing-loading">
+        <div className="loading-icon">🔄</div>
         <div>Caricamento landing pages...</div>
       </div>
     );
@@ -120,25 +114,10 @@ const LandingPagesDashboard = ({ onEditPage, onNewPage }) => {
 
   if (error) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '50vh',
-        flexDirection: 'column',
-        gap: '20px',
-        color: '#dc3545'
-      }}>
-        <div style={{ fontSize: '24px' }}>❌</div>
+      <div className="landing-error">
+        <div className="error-icon">❌</div>
         <div>Errore: {error}</div>
-        <button onClick={loadLandingPages} style={{
-          background: '#007bff',
-          color: 'white',
-          border: 'none',
-          padding: '10px 20px',
-          borderRadius: '4px',
-          cursor: 'pointer'
-        }}>
+        <button onClick={loadLandingPages} className="landing-retry-btn">
           Riprova
         </button>
       </div>
@@ -146,253 +125,114 @@ const LandingPagesDashboard = ({ onEditPage, onNewPage }) => {
   }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="landing-dashboard">
       {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '30px',
-        borderBottom: '2px solid #eee',
-        paddingBottom: '20px'
-      }}>
-        <div>
-          <h1 style={{ margin: 0, color: '#333' }}>🚀 Landing Pages</h1>
-          <p style={{ margin: '5px 0 0 0', color: '#666' }}>
-            Gestisci tutte le tue landing pages create
-          </p>
+      <div className="landing-header">
+        <div className="landing-header-content">
+          <h1>🚀 Landing Pages</h1>
+          <p>Gestisci tutte le tue landing pages create</p>
         </div>
-        <button
-          onClick={onNewPage}
-          style={{
-            background: '#28a745',
-            color: 'white',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '6px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            fontSize: '14px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}
-        >
-          ✨ Crea Nuova
-        </button>
+        <div className="landing-header-actions">
+          <button onClick={onNewPage} className="landing-btn">
+            ✨ Crea Nuova
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '20px',
-        marginBottom: '30px'
-      }}>
-        <div style={{ 
-          background: '#f8f9fa', 
-          padding: '20px', 
-          borderRadius: '8px',
-          textAlign: 'center',
-          border: '1px solid #dee2e6'
-        }}>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#007bff' }}>
-            {landingPages.length}
-          </div>
-          <div style={{ color: '#666', fontSize: '14px' }}>Totale Pagine</div>
+      <div className="landing-stats-grid">
+        <div className="landing-stat-card">
+          <div className="landing-stat-value">{landingPages.length}</div>
+          <div className="landing-stat-label">Totale Pagine</div>
         </div>
-        <div style={{ 
-          background: '#f8f9fa', 
-          padding: '20px', 
-          borderRadius: '8px',
-          textAlign: 'center',
-          border: '1px solid #dee2e6'
-        }}>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#28a745' }}>
-            {landingPages.filter(p => p.is_published).length}
-          </div>
-          <div style={{ color: '#666', fontSize: '14px' }}>Pubblicate</div>
+        <div className="landing-stat-card">
+          <div className="landing-stat-value">{landingPages.filter(p => p.is_published).length}</div>
+          <div className="landing-stat-label">Pubblicate</div>
         </div>
-        <div style={{ 
-          background: '#f8f9fa', 
-          padding: '20px', 
-          borderRadius: '8px',
-          textAlign: 'center',
-          border: '1px solid #dee2e6'
-        }}>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ffc107' }}>
-            {landingPages.filter(p => !p.is_published).length}
-          </div>
-          <div style={{ color: '#666', fontSize: '14px' }}>Bozze</div>
+        <div className="landing-stat-card">
+          <div className="landing-stat-value">{landingPages.filter(p => !p.is_published).length}</div>
+          <div className="landing-stat-label">Bozze</div>
         </div>
-        <div style={{ 
-          background: '#f8f9fa', 
-          padding: '20px', 
-          borderRadius: '8px',
-          textAlign: 'center',
-          border: '1px solid #dee2e6'
-        }}>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#17a2b8' }}>
-            {landingPages.reduce((sum, p) => sum + (p.view_count || 0), 0)}
-          </div>
-          <div style={{ color: '#666', fontSize: '14px' }}>Visualizzazioni</div>
+        <div className="landing-stat-card">
+          <div className="landing-stat-value">{landingPages.reduce((sum, p) => sum + (p.view_count || 0), 0)}</div>
+          <div className="landing-stat-label">Visualizzazioni</div>
         </div>
       </div>
 
       {/* Lista Landing Pages */}
-      {landingPages.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '60px 20px',
-          color: '#666'
-        }}>
-          <div style={{ fontSize: '48px', marginBottom: '20px' }}>📝</div>
-          <h3>Nessuna landing page trovata</h3>
-          <p>Crea la tua prima landing page per iniziare!</p>
-          <button
-            onClick={onNewPage}
-            style={{
-              background: '#007bff',
-              color: 'white',
-              border: 'none',
-              padding: '12px 24px',
-              borderRadius: '6px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              marginTop: '20px'
-            }}
-          >
-            🚀 Crea Prima Landing Page
-          </button>
-        </div>
-      ) : (
-        <div style={{ 
-          display: 'grid', 
-          gap: '20px' 
-        }}>
-          {landingPages.map(page => (
-            <div
-              key={page.id}
-              style={{
-                background: 'white',
-                border: '1px solid #dee2e6',
-                borderRadius: '8px',
-                padding: '20px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                transition: 'transform 0.2s, box-shadow 0.2s'
-              }}
-              onMouseEnter={e => {
-                e.target.style.transform = 'translateY(-2px)';
-                e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-              }}
-              onMouseLeave={e => {
-                e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                    <h3 style={{ margin: 0, color: '#333' }}>{page.title}</h3>
-                    <span style={{
-                      background: page.is_published ? '#28a745' : '#ffc107',
-                      color: 'white',
-                      padding: '2px 8px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: 'bold'
-                    }}>
-                      {page.is_published ? '✅ Live' : '📝 Bozza'}
-                    </span>
-                  </div>
-                  
-                  <p style={{ margin: '0 0 10px 0', color: '#666', fontSize: '14px' }}>
-                    {page.description}
-                  </p>
-                  
-                  <div style={{ 
-                    display: 'flex', 
-                    gap: '20px', 
-                    fontSize: '12px', 
-                    color: '#999',
-                    marginBottom: '15px'
-                  }}>
-                    <span>📅 {new Date(page.created_at).toLocaleDateString('it-IT')}</span>
-                    <span>👁️ {page.view_count || 0} visualizzazioni</span>
-                    <span>🔗 {page.slug}</span>
-                  </div>
+      <div className="landing-pages-container">
+        {landingPages.length === 0 ? (
+          <div className="landing-empty-state">
+            <div className="empty-icon">📝</div>
+            <h3>Nessuna landing page trovata</h3>
+            <p>Crea la tua prima landing page per iniziare!</p>
+            <button onClick={onNewPage} className="landing-btn">
+              🚀 Crea Prima Landing Page
+            </button>
+          </div>
+        ) : (
+          <div className="landing-pages-list">
+            {landingPages.map(page => (
+              <div key={page.id} className="landing-page-card">
+                <div className="landing-page-header">
+                  <div className="landing-page-title-section">
+                    <div className="landing-page-title">
+                      <h3>{page.title}</h3>
+                      <span className={`landing-status-badge ${page.is_published ? 'published' : 'draft'}`}>
+                        {page.is_published ? '✅ Live' : '📝 Bozza'}
+                      </span>
+                    </div>
+                    
+                    <p className="landing-page-description">
+                      {page.description}
+                    </p>
+                    
+                    <div className="landing-page-meta">
+                      <span>📅 {new Date(page.created_at).toLocaleDateString('it-IT')}</span>
+                      <span>👁️ {page.view_count || 0} visualizzazioni</span>
+                      <span>🔗 {page.slug}</span>
+                    </div>
 
-                  {page.is_published && (
-                    <div style={{ marginBottom: '15px' }}>
+                    {page.is_published && (
                       <a
                         href={`/api/landing?action=show&slug=${page.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{
-                          color: '#007bff',
-                          textDecoration: 'none',
-                          fontSize: '14px',
-                          fontWeight: 'bold'
-                        }}
+                        className="landing-page-link"
                       >
                         🌐 Visualizza Pagina →
                       </a>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginLeft: '20px' }}>
-                  <button
-                    onClick={() => onEditPage(page)}
-                    style={{
-                      background: '#007bff',
-                      color: 'white',
-                      border: 'none',
-                      padding: '8px 16px',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    ✏️ Modifica
-                  </button>
-                  
-                  <button
-                    onClick={() => duplicateLandingPage(page)}
-                    style={{
-                      background: '#6c757d',
-                      color: 'white',
-                      border: 'none',
-                      padding: '8px 16px',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    📋 Duplica
-                  </button>
-                  
-                  <button
-                    onClick={() => deleteLandingPage(page.id, page.title)}
-                    style={{
-                      background: '#dc3545',
-                      color: 'white',
-                      border: 'none',
-                      padding: '8px 16px',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    🗑️ Elimina
-                  </button>
+                  <div className="landing-page-actions">
+                    <button
+                      onClick={() => onEditPage(page)}
+                      className="landing-action-btn edit"
+                    >
+                      ✏️ Modifica
+                    </button>
+                    
+                    <button
+                      onClick={() => duplicateLandingPage(page)}
+                      className="landing-action-btn duplicate"
+                    >
+                      📋 Duplica
+                    </button>
+                    
+                    <button
+                      onClick={() => deleteLandingPage(page.id, page.title)}
+                      className="landing-action-btn delete"
+                    >
+                      🗑️ Elimina
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
