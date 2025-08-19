@@ -28,7 +28,10 @@ const LandingPagesDashboard = ({ onEditPage, onNewPage }) => {
 
   // Elimina landing page
   const deleteLandingPage = async (id, title) => {
+    console.log('🗑️ Tentativo eliminazione:', { id, title });
+    
     if (!confirm(`Vuoi eliminare "${title}"?\nQuesta azione non è reversibile.`)) {
+      console.log('❌ Eliminazione annullata dall\'utente');
       return;
     }
 
@@ -37,12 +40,25 @@ const LandingPagesDashboard = ({ onEditPage, onNewPage }) => {
         ? `http://localhost:3001/api/landing?id=${id}`
         : `/api/landing?id=${id}`;
       
+      console.log('🔥 Chiamata DELETE a:', apiUrl);
+      
       const response = await fetch(apiUrl, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Errore eliminazione');
+      
+      console.log('📡 Risposta DELETE:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Errore sconosciuto' }));
+        console.error('❌ Errore API:', errorData);
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('✅ Eliminazione riuscita:', result);
       
       alert('Landing page eliminata con successo!');
       loadLandingPages(); // Ricarica la lista
     } catch (err) {
+      console.error('❌ Errore eliminazione:', err);
       alert(`Errore: ${err.message}`);
     }
   };
