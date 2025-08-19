@@ -1,12 +1,56 @@
-import React, { useEffect, useState } from 'react';
-import StudioEditor from '@grapesjs/studio-sdk/react';
-import '@grapesjs/studio-sdk/style';
-import rendererReact from '@grapesjs/studio-sdk-plugins/dist/rendererReact';
-import grapesjsBlocksBasic from 'grapesjs-blocks-basic';
-import grapesjsPluginForms from 'grapesjs-plugin-forms';
-import grapesjsCustomCode from 'grapesjs-custom-code';
-import grapesjsPluginExport from 'grapesjs-plugin-export';
-import grapesjsTabs from 'grapesjs-tabs';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
+
+// LAZY LOAD componenti pesanti - caricati solo quando necessari
+const StudioEditor = lazy(() => import('@grapesjs/studio-sdk/react'));
+
+// Hook per lazy loading di GrapesJS plugins
+const useGrapesJSPlugins = () => {
+  const [plugins, setPlugins] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const loadPlugins = async () => {
+      try {
+        // Carica CSS di GrapesJS
+        await import('@grapesjs/studio-sdk/style');
+        
+        // Carica tutti i plugin in parallelo
+        const [
+          rendererReact,
+          grapesjsBlocksBasic,
+          grapesjsPluginForms,
+          grapesjsCustomCode,
+          grapesjsPluginExport,
+          grapesjsTabs
+        ] = await Promise.all([
+          import('@grapesjs/studio-sdk-plugins/dist/rendererReact'),
+          import('grapesjs-blocks-basic'),
+          import('grapesjs-plugin-forms'),
+          import('grapesjs-custom-code'),
+          import('grapesjs-plugin-export'),
+          import('grapesjs-tabs')
+        ]);
+        
+        setPlugins({
+          rendererReact: rendererReact.default,
+          grapesjsBlocksBasic: grapesjsBlocksBasic.default,
+          grapesjsPluginForms: grapesjsPluginForms.default,
+          grapesjsCustomCode: grapesjsCustomCode.default,
+          grapesjsPluginExport: grapesjsPluginExport.default,
+          grapesjsTabs: grapesjsTabs.default
+        });
+      } catch (error) {
+        console.error('Errore caricamento plugins GrapesJS:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadPlugins();
+  }, []);
+  
+  return { plugins, loading };
+};
 
 // Define your custom React components for GrapesJS blocks
 // These are simplified versions based on your original HTML content
@@ -47,6 +91,9 @@ const PageBuilder = () => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState(null);
   const [editorInstance, setEditorInstance] = useState(null);
+  
+  // Lazy load dei plugins
+  const { plugins, loading: pluginsLoading } = useGrapesJSPlugins();
 
   // Funzione di pubblicazione SICURA
   const handlePublish = async () => {
@@ -268,6 +315,40 @@ const PageBuilder = () => {
     },
   };
 
+  // Loading state mentre i plugins si caricano
+  if (pluginsLoading || !plugins) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        flexDirection: 'column',
+        gap: '20px'
+      }}>
+        <div style={{ 
+          fontSize: '24px',
+          animation: 'spin 2s linear infinite',
+          display: 'inline-block'
+        }}>
+          🔄
+        </div>
+        <div style={{ fontSize: '18px', color: '#666' }}>
+          Caricamento Page Builder...
+        </div>
+        <div style={{ fontSize: '14px', color: '#999' }}>
+          Caricamento GrapesJS e plugins
+        </div>
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
     <div style={{ position: 'relative', height: '100vh', width: '100vw' }}>
       {/* BOTTONE SICURO - in basso a destra */}
@@ -322,74 +403,87 @@ const PageBuilder = () => {
         )}
       </div>
 
-      <StudioEditor
-        options={{
-          licenseKey: import.meta.env.VITE_GRAPESJS_LICENSE_KEY,
-          
-          // The React Renderer plugin
-          plugins: [
-            rendererReact.init(reactRendererConfig),
-            grapesjsBlocksBasic,
-            grapesjsPluginForms,
-            grapesjsCustomCode,
-            grapesjsPluginExport,
-            grapesjsTabs,
-            // Add blocks for your custom React components
-            (editor) => {
-              editor.Blocks.add('sapori-header', {
-                label: 'Header Sapori & Colori',
-                category: 'Sapori & Colori',
-                content: { type: 'SaporiHeader', props: { title: 'Sapori & Colori', subtitle: 'Il sapore autentico della tradizione', logoSrc: 'https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png' } },
-              });
-              editor.Blocks.add('promo-section', {
-                label: 'Sezione Promozione',
-                category: 'Sapori & Colori',
-                content: { type: 'PromoSection', props: { offer: '🍕 OFFERTA SPECIALE!', description: 'La tua pizza preferita con il 30% di sconto', buttonText: '📞 Chiama Ora!', buttonLink: 'tel:+393926568550' } },
-              });
-              editor.Blocks.add('contact-cta', {
-                label: 'Call to Action Contatti',
-                category: 'Sapori & Colori',
-                content: { type: 'ContactCta', props: { phone: '+393926568550', whatsapp: '393926568550', mapLink: 'https://maps.google.com/?q=Via+Roma+123+Roma' } },
-              });
-            }
-          ],
-          // Initial project content using React components
-          project: {
-            type: 'react',
-            default: {
-              pages: [
-                {
-                  name: 'Pagina Iniziale',
-                  component: (
-                    <>
-                      <SaporiHeader title="Benvenuto nel Page Builder" subtitle="Crea le tue landing page con facilità" logoSrc="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" />
-                      <PromoSection offer="Offerta di Benvenuto!" description="Trascina i blocchi per iniziare a costruire!" buttonText="Scopri di più" buttonLink="#" />
-                    </>
-                  )
-                },
+      <Suspense fallback={
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100vh',
+          fontSize: '18px',
+          color: '#666'
+        }}>
+          Inizializzazione editor...
+        </div>
+      }>
+        <StudioEditor
+          options={{
+            licenseKey: import.meta.env.VITE_GRAPESJS_LICENSE_KEY,
+            
+            // The React Renderer plugin
+            plugins: [
+              plugins.rendererReact.init(reactRendererConfig),
+              plugins.grapesjsBlocksBasic,
+              plugins.grapesjsPluginForms,
+              plugins.grapesjsCustomCode,
+              plugins.grapesjsPluginExport,
+              plugins.grapesjsTabs,
+              // Add blocks for your custom React components
+              (editor) => {
+                editor.Blocks.add('sapori-header', {
+                  label: 'Header Sapori & Colori',
+                  category: 'Sapori & Colori',
+                  content: { type: 'SaporiHeader', props: { title: 'Sapori & Colori', subtitle: 'Il sapore autentico della tradizione', logoSrc: 'https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png' } },
+                });
+                editor.Blocks.add('promo-section', {
+                  label: 'Sezione Promozione',
+                  category: 'Sapori & Colori',
+                  content: { type: 'PromoSection', props: { offer: '🍕 OFFERTA SPECIALE!', description: 'La tua pizza preferita con il 30% di sconto', buttonText: '📞 Chiama Ora!', buttonLink: 'tel:+393926568550' } },
+                });
+                editor.Blocks.add('contact-cta', {
+                  label: 'Call to Action Contatti',
+                  category: 'Sapori & Colori',
+                  content: { type: 'ContactCta', props: { phone: '+393926568550', whatsapp: '393926568550', mapLink: 'https://maps.google.com/?q=Via+Roma+123+Roma' } },
+                });
+              }
+            ],
+            // Initial project content using React components
+            project: {
+              type: 'react',
+              default: {
+                pages: [
+                  {
+                    name: 'Pagina Iniziale',
+                    component: (
+                      <>
+                        <SaporiHeader title="Benvenuto nel Page Builder" subtitle="Crea le tue landing page con facilità" logoSrc="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" />
+                        <PromoSection offer="Offerta di Benvenuto!" description="Trascina i blocchi per iniziare a costruire!" buttonText="Scopri di più" buttonLink="#" />
+                      </>
+                    )
+                  },
+                ]
+              }
+            },
+            // Other GrapesJS options (optional)
+            height: '100%',
+            width: '100%',
+            showOffsets: true,
+            noticeOnUnload: false,
+            storageManager: {
+              type: 'local',
+              autosave: true,
+              autoload: true,
+              stepsBeforeSave: 3
+            },
+            deviceManager: {
+              devices: [
+                { name: 'Desktop', width: '' },
+                { name: 'Tablet', width: '768px', widthMedia: '992px' },
+                { name: 'Mobile', width: '375px', widthMedia: '575px' }
               ]
-            }
-          },
-          // Other GrapesJS options (optional)
-          height: '100%',
-          width: '100%',
-          showOffsets: true,
-          noticeOnUnload: false,
-          storageManager: {
-            type: 'local',
-            autosave: true,
-            autoload: true,
-            stepsBeforeSave: 3
-          },
-          deviceManager: {
-            devices: [
-              { name: 'Desktop', width: '' },
-              { name: 'Tablet', width: '768px', widthMedia: '992px' },
-              { name: 'Mobile', width: '375px', widthMedia: '575px' }
-            ]
-          },
-        }}
-      />
+            },
+          }}
+        />
+      </Suspense>
     </div>
   );
 };
