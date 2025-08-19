@@ -65,20 +65,28 @@ const PageBuilder = () => {
       let css = '';
       let projectData = {};
       
-      // Prova con l'API globale di GrapesJS
+      // PRIORITÀ: Estrai HTML renderizzato dal DOM della canvas
+      const canvas = document.querySelector('#gjs .gjs-cv-canvas');
+      if (canvas && canvas.contentDocument && canvas.contentDocument.body) {
+        html = canvas.contentDocument.body.innerHTML;
+        console.log('✅ HTML estratto dal canvas DOM:', html.substring(0, 200) + '...');
+      }
+      
+      // Fallback: usa API GrapesJS per CSS e project data
       if (window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
         const editor = window.grapesjs.editors[0];
-        html = editor.getHtml();
         css = editor.getCss();
         projectData = editor.getProjectData();
-      } else {
-        // Fallback: prendi il contenuto dal DOM
-        const canvas = document.querySelector('#gjs .gjs-cv-canvas');
-        if (canvas && canvas.contentDocument) {
-          html = canvas.contentDocument.body.innerHTML;
-        } else {
-          throw new Error('Impossibile accedere al contenuto dell\'editor');
+        
+        // Se non abbiamo HTML dal canvas, prova con l'API (meno affidabile con React)
+        if (!html) {
+          html = editor.getHtml();
+          console.log('⚠️ HTML estratto da API (potrebbe essere incompleto):', html.substring(0, 200) + '...');
         }
+      }
+      
+      if (!html) {
+        throw new Error('Impossibile accedere al contenuto dell\'editor');
       }
       
       if (!html || html.trim() === '') {
