@@ -39,6 +39,7 @@ import GiftCardManagement from './components/GiftCards/GiftCardManagement'
 import WalletCashRegister from './components/Wallet/WalletCashRegister'
 import NotificationsDashboard from './components/Admin/NotificationsDashboard'
 import PageBuilder from './components/Admin/PageBuilder'
+import LandingPageViewer from './components/LandingPageViewer'
 import { generateClientToken, isValidToken } from './utils/tokenUtils'
 import nfcService from './services/nfcService'
 import { birthdayScheduler } from './services/birthdayScheduler'
@@ -2409,7 +2410,17 @@ for (const customer of recipients) {
 
       {/* MAIN CONTENT */}
       <div className="main-content">
-        {renderContent()}
+        {(() => {
+          // Controllo per landing page viewer
+          const path = window.location.pathname;
+          if (path.startsWith('/landing/')) {
+            const slug = path.replace('/landing/', '');
+            return <LandingPageViewer slug={slug} />;
+          }
+          
+          // Normale contenuto dell'app
+          return renderContent();
+        })()}
       </div>
     </div>
   )

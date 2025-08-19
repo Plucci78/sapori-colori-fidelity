@@ -118,7 +118,7 @@ const PageBuilder = () => {
       }
 
       const result = await response.json();
-      const fullUrl = `${window.location.origin}/api/show-page?slug=${result.data.slug}`;
+      const fullUrl = `${window.location.origin}/landing/${result.data.slug}`;
       
       setPublishedUrl(fullUrl);
       
