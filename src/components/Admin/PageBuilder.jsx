@@ -92,6 +92,9 @@ const PageBuilder = () => {
   const [publishedUrl, setPublishedUrl] = useState(null);
   const [editorInstance, setEditorInstance] = useState(null);
   
+  // NUOVO: Stato per tracciare landing page esistente
+  const [currentLandingPage, setCurrentLandingPage] = useState(null);
+  
   // Lazy load dei plugins
   const { plugins, loading: pluginsLoading } = useGrapesJSPlugins();
 
@@ -231,19 +234,39 @@ const PageBuilder = () => {
         return;
       }
 
-      // Genera title e slug
-      const title = `Landing Page ${new Date().toLocaleDateString('it-IT')} ${new Date().toLocaleTimeString('it-IT')}`;
-      const slug = `landing-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      // Determina se è un aggiornamento o una nuova creazione
+      const isUpdate = currentLandingPage && currentLandingPage.id;
       
-      // Chiama API - usa URL dinamico per produzione/locale
-      const apiUrl = window.location.hostname === 'localhost' 
-        ? 'http://localhost:3001/api/landing'
-        : '/api/landing';
+      let title, slug, apiUrl, requestBody, method;
       
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      if (isUpdate) {
+        // AGGIORNAMENTO: Mantieni titolo e slug esistenti
+        title = currentLandingPage.title;
+        slug = currentLandingPage.slug;
+        method = 'PUT';
+        apiUrl = window.location.hostname === 'localhost' 
+          ? 'http://localhost:3001/api/landing'
+          : '/api/landing';
+        
+        requestBody = {
+          id: currentLandingPage.id,
+          html_content: html,
+          css_content: css,
+          grapesjs_data: projectData,
+          is_published: true
+        };
+        
+        console.log(`🔄 Aggiornamento landing page esistente: ${slug}`);
+      } else {
+        // NUOVA CREAZIONE: Genera nuovi titolo e slug
+        title = `Landing Page ${new Date().toLocaleDateString('it-IT')} ${new Date().toLocaleTimeString('it-IT')}`;
+        slug = `landing-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+        method = 'POST';
+        apiUrl = window.location.hostname === 'localhost' 
+          ? 'http://localhost:3001/api/landing'
+          : '/api/landing';
+        
+        requestBody = {
           title,
           description: `Landing page creata il ${new Date().toLocaleDateString('it-IT')}`,
           slug,
@@ -253,7 +276,15 @@ const PageBuilder = () => {
           meta_title: title,
           meta_description: `Landing page per OneSignal - ${title}`,
           is_published: true
-        })
+        };
+        
+        console.log(`✨ Creazione nuova landing page: ${slug}`);
+      }
+      
+      const response = await fetch(apiUrl, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
@@ -264,6 +295,8 @@ const PageBuilder = () => {
       const result = await response.json();
       const fullUrl = `${window.location.origin}/api/landing?action=show&slug=${result.data.slug}`;
       
+      // Aggiorna lo stato della landing page corrente
+      setCurrentLandingPage(result.data);
       setPublishedUrl(fullUrl);
       
       // Copia negli appunti
@@ -271,7 +304,12 @@ const PageBuilder = () => {
         console.warn('Impossibile copiare negli appunti');
       });
       
-      alert(`✅ PAGINA PUBBLICATA!\n\nLink pubblico:\n${fullUrl}\n\n🔗 Copiato negli appunti!\n\nPuoi usare questo link per condividere la pagina.`);
+      const actionText = isUpdate ? 'AGGIORNATA' : 'PUBBLICATA';
+      const successMessage = isUpdate 
+        ? `✅ PAGINA ${actionText}!\n\nLe modifiche sono state salvate al link esistente:\n${fullUrl}\n\n🔗 Copiato negli appunti!`
+        : `✅ PAGINA ${actionText}!\n\nLink pubblico:\n${fullUrl}\n\n🔗 Copiato negli appunti!\n\nPuoi usare questo link per condividere la pagina.`;
+      
+      alert(successMessage);
       
     } catch (error) {
       console.error('Errore:', error);
@@ -351,7 +389,7 @@ const PageBuilder = () => {
 
   return (
     <div style={{ position: 'relative', height: '100vh', width: '100vw' }}>
-      {/* BOTTONE SICURO - in basso a destra */}
+      {/* BOTTONI CONTROLLO - in basso a destra */}
       <div style={{ 
         position: 'absolute', 
         bottom: '20px', 
@@ -362,11 +400,28 @@ const PageBuilder = () => {
         gap: '10px',
         alignItems: 'flex-end'
       }}>
+        
+        {/* Info landing page corrente */}
+        {currentLandingPage && (
+          <div style={{
+            background: '#17a2b8',
+            color: 'white',
+            padding: '8px 12px',
+            borderRadius: '4px',
+            fontSize: '11px',
+            maxWidth: '250px',
+            textAlign: 'center'
+          }}>
+            📝 Editing: {currentLandingPage.slug.split('-')[1]}
+          </div>
+        )}
+        
+        {/* Bottone principale */}
         <button
           onClick={handlePublish}
           disabled={isPublishing}
           style={{
-            background: '#fdae4b',
+            background: currentLandingPage ? '#28a745' : '#fdae4b',
             color: 'white',
             border: 'none',
             padding: '12px 20px',
@@ -378,9 +433,43 @@ const PageBuilder = () => {
             opacity: isPublishing ? 0.6 : 1
           }}
         >
-          {isPublishing ? '🔄 Pubblicando...' : '🚀 Pubblica Pagina'}
+          {isPublishing 
+            ? '🔄 Salvando...' 
+            : currentLandingPage 
+              ? '💾 Aggiorna Pagina' 
+              : '🚀 Pubblica Nuova'
+          }
         </button>
         
+        {/* Pulsante nuova sessione */}
+        {currentLandingPage && (
+          <button
+            onClick={() => {
+              if (confirm('Vuoi iniziare una nuova landing page? Le modifiche non salvate verranno perse.')) {
+                setCurrentLandingPage(null);
+                setPublishedUrl(null);
+                // Opzionalmente, resetta l'editor
+                if (window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
+                  const editor = window.grapesjs.editors[0];
+                  editor.runCommand('core:canvas-clear');
+                }
+              }
+            }}
+            style={{
+              background: '#6c757d',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              cursor: 'pointer'
+            }}
+          >
+            ✨ Nuova Pagina
+          </button>
+        )}
+        
+        {/* Link copiato */}
         {publishedUrl && (
           <div style={{
             background: '#28a745',
@@ -398,7 +487,7 @@ const PageBuilder = () => {
           onClick={() => navigator.clipboard.writeText(publishedUrl)}
           title="Clicca per copiare il link"
           >
-            ✅ Link copiato
+            🔗 Copia Link
           </div>
         )}
       </div>
