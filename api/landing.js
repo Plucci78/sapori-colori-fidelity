@@ -1,4 +1,4 @@
-// API Route per gestire landing pages create con GrapesJS  
+// API Route unificata per tutte le operazioni sulle landing pages
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -7,9 +7,21 @@ const supabase = createClient(
 )
 
 export default async function handler(req, res) {
+  const { action, slug } = req.query
   const { method } = req
   
   try {
+    // Route per mostrare landing page pubblica
+    if (action === 'show' || slug) {
+      return await handleShowPage(req, res)
+    }
+    
+    // Route per tracciare click
+    if (action === 'track') {
+      return await handleTrackClick(req, res)
+    }
+    
+    // Route CRUD standard per landing pages
     switch (method) {
       case 'GET':
         return await handleGet(req, res)
@@ -23,13 +35,132 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' })
     }
   } catch (error) {
-    console.error('❌ Errore API landing pages:', error)
+    console.error('❌ Errore API landing:', error)
     return res.status(500).json({ 
       error: 'Errore server',
       details: error.message 
     })
   }
 }
+
+// ===================================
+// SHOW PAGE (ex /api/show-page.js)
+// ===================================
+async function handleShowPage(req, res) {
+  const { slug } = req.query
+  
+  // Solo GET supportato
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
+  
+  if (!slug) {
+    return res.status(400).json({ error: 'Slug obbligatorio' })
+  }
+  
+  try {
+    // Carica landing page dal database
+    const { data: landingPage, error } = await supabase
+      .from('landing_pages')
+      .select('*')
+      .eq('slug', slug)
+      .eq('is_published', true)
+      .eq('is_active', true)
+      .single()
+    
+    if (error || !landingPage) {
+      console.log('❌ Landing page non trovata:', slug)
+      return res.status(404).json({ error: 'Landing page non trovata' })
+    }
+    
+    // Incrementa view count
+    try {
+      await supabase
+        .from('landing_pages')
+        .update({ 
+          view_count: (landingPage.view_count || 0) + 1 
+        })
+        .eq('id', landingPage.id)
+    } catch (viewError) {
+      console.warn('⚠️ Errore incremento view count:', viewError)
+    }
+    
+    // Genera HTML completo della landing page
+    const fullHtml = generateLandingPageHtml(landingPage)
+    
+    // Imposta headers per HTML
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, max-age=300')
+    
+    return res.status(200).send(fullHtml)
+    
+  } catch (error) {
+    console.error('❌ Errore caricamento landing page:', error)
+    return res.status(500).json({ 
+      error: 'Errore server',
+      details: error.message 
+    })
+  }
+}
+
+// ===================================
+// TRACK CLICK (ex /api/landing-pages/track-click.js)
+// ===================================
+async function handleTrackClick(req, res) {
+  // Solo POST supportato
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
+  
+  try {
+    const { landingPageId, elementText, elementHref } = req.body
+    
+    if (!landingPageId) {
+      return res.status(400).json({ error: 'Landing page ID richiesto' })
+    }
+    
+    // Incrementa click count nella landing page
+    const { error: updateError } = await supabase
+      .from('landing_pages')
+      .update({ 
+        click_count: supabase.raw('click_count + 1')
+      })
+      .eq('id', landingPageId)
+    
+    if (updateError) {
+      console.error('❌ Errore incremento click count:', updateError)
+    }
+    
+    // Log del click per analytics avanzate (opzionale)
+    try {
+      await supabase
+        .from('landing_page_clicks')
+        .insert({
+          landing_page_id: landingPageId,
+          element_text: elementText?.substring(0, 100),
+          element_href: elementHref?.substring(0, 500),
+          clicked_at: new Date().toISOString(),
+          user_agent: req.headers['user-agent']?.substring(0, 500),
+          ip_address: req.headers['x-forwarded-for'] || req.connection.remoteAddress
+        })
+    } catch (logError) {
+      console.warn('⚠️ Errore log click (non critico):', logError)
+    }
+    
+    return res.status(200).json({ success: true })
+    
+  } catch (error) {
+    console.error('❌ Errore track click:', error)
+    return res.status(500).json({ 
+      error: 'Errore server',
+      details: error.message 
+    })
+  }
+}
+
+// ===================================
+// CRUD OPERATIONS (ex /api/landing-pages.js)
+// ===================================
 
 // GET: Lista tutte le landing pages o una specifica
 async function handleGet(req, res) {
@@ -135,7 +266,7 @@ async function handlePost(req, res) {
     return res.status(201).json({ 
       success: true, 
       data,
-      public_url: `/api/show-page?slug=${data.slug}`
+      public_url: `/api/landing?action=show&slug=${data.slug}`
     })
     
   } catch (error) {
@@ -212,7 +343,7 @@ async function handlePut(req, res) {
     return res.status(200).json({ 
       success: true, 
       data,
-      public_url: `/api/show-page?slug=${data.slug}`
+      public_url: `/api/landing?action=show&slug=${data.slug}`
     })
     
   } catch (error) {
@@ -256,6 +387,65 @@ async function handleDelete(req, res) {
     console.error('❌ Errore DELETE landing page:', error)
     return res.status(500).json({ error: error.message })
   }
+}
+
+// ===================================
+// UTILITY FUNCTIONS
+// ===================================
+
+function generateLandingPageHtml(landingPage) {
+  return `<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${landingPage.meta_title || landingPage.title}</title>
+  <meta name="description" content="${landingPage.meta_description || landingPage.description || ''}">
+  
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="${landingPage.meta_title || landingPage.title}">
+  <meta property="og:description" content="${landingPage.meta_description || landingPage.description || ''}">
+  <meta property="og:image" content="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png">
+  
+  <!-- CSS -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: #fff;
+    }
+    
+    /* CSS della landing page */
+    ${landingPage.css_content || ''}
+  </style>
+</head>
+<body>
+  <!-- Landing Page Content -->
+  ${landingPage.html_content}
+  
+  <!-- OneSignal -->
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(function(OneSignal) {
+      OneSignal.init({
+        appId: "61a2318f-68f7-4a79-8beb-203c58bf8763",
+        notifyButton: { enable: false }
+      });
+      
+      OneSignal.User.addTag("landing_page_visited", "${landingPage.slug}");
+    });
+  </script>
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+</body>
+</html>`
 }
 
 // Utility: Genera slug da titolo

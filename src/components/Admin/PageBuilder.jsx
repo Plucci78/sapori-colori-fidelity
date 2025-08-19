@@ -93,8 +93,8 @@ const PageBuilder = () => {
       
       // Chiama API - usa URL dinamico per produzione/locale
       const apiUrl = window.location.hostname === 'localhost' 
-        ? 'http://localhost:3001/api/landing-pages'
-        : '/api/landing-pages';
+        ? 'http://localhost:3001/api/landing'
+        : '/api/landing';
       
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -118,7 +118,7 @@ const PageBuilder = () => {
       }
 
       const result = await response.json();
-      const fullUrl = `${window.location.origin}/api/show-page?slug=${result.data.slug}`;
+      const fullUrl = `${window.location.origin}/api/landing?action=show&slug=${result.data.slug}`;
       
       setPublishedUrl(fullUrl);
       
