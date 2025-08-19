@@ -65,23 +65,112 @@ const PageBuilder = () => {
       let css = '';
       let projectData = {};
       
-      // PRIORITÀ: Estrai HTML renderizzato dal DOM della canvas
-      const canvas = document.querySelector('#gjs .gjs-cv-canvas');
-      if (canvas && canvas.contentDocument && canvas.contentDocument.body) {
-        html = canvas.contentDocument.body.innerHTML;
-        console.log('✅ HTML estratto dal canvas DOM:', html.substring(0, 200) + '...');
-      }
-      
-      // Fallback: usa API GrapesJS per CSS e project data
+      // METODO MIGLIORATO: Estrai HTML dai React components di GrapesJS
       if (window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
         const editor = window.grapesjs.editors[0];
         css = editor.getCss();
         projectData = editor.getProjectData();
         
-        // Se non abbiamo HTML dal canvas, prova con l'API (meno affidabile con React)
-        if (!html) {
-          html = editor.getHtml();
-          console.log('⚠️ HTML estratto da API (potrebbe essere incompleto):', html.substring(0, 200) + '...');
+        // Per React components, usa getHtml() che gestisce meglio i componenti
+        html = editor.getHtml();
+        console.log('✅ HTML estratto da GrapesJS API:', html.substring(0, 200) + '...');
+        
+        // Se l'HTML è ancora vuoto, prova ad accedere ai componenti direttamente
+        if (!html || html.trim().length < 50) {
+          try {
+            const wrapper = editor.getWrapper();
+            const components = wrapper.find('*');
+            
+            // Costruisci HTML dai componenti React
+            const reactHtml = components.map(comp => {
+              const view = comp.getView();
+              if (view && view.el) {
+                return view.el.outerHTML;
+              }
+              return '';
+            }).join('');
+            
+            if (reactHtml && reactHtml.length > 50) {
+              html = reactHtml;
+              console.log('✅ HTML estratto dai componenti React:', html.substring(0, 200) + '...');
+            }
+          } catch (reactError) {
+            console.warn('⚠️ Errore estrazione componenti React:', reactError);
+          }
+        }
+      }
+      
+      // Fallback: prova canvas DOM come ultima risorsa
+      // Metodo alternativo: converti i React components in HTML statico
+      if (!html || html.trim().length < 50) {
+        try {
+          if (window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
+            const editor = window.grapesjs.editors[0];
+            const wrapper = editor.getWrapper();
+            
+            // Renderizza manualmente i componenti React come HTML
+            const renderComponent = (component) => {
+              const type = component.get('type');
+              const props = component.get('props') || {};
+              
+              switch (type) {
+                case 'SaporiHeader':
+                  return `
+                    <div style="background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%); padding: 40px 20px; text-align: center; color: #8B4513;">
+                      ${props.logoSrc ? `<img src="${props.logoSrc}" alt="Sapori & Colori" style="height: 80px; margin-bottom: 20px;" />` : ''}
+                      <h1 style="margin: 0; font-size: 2.5em; font-weight: bold;">${props.title || 'Sapori & Colori'}</h1>
+                      <p style="margin: 10px 0 0 0; font-size: 1.2em;">${props.subtitle || 'Il sapore autentico della tradizione'}</p>
+                    </div>`;
+                
+                case 'PromoSection':
+                  return `
+                    <div style="padding: 60px 20px; text-align: center; background: #f8f9fa;">
+                      <h2 style="font-size: 2.5em; color: #D4AF37; margin-bottom: 20px;">${props.offer || '🍕 OFFERTA SPECIALE!'}</h2>
+                      <p style="font-size: 1.3em; color: #333; margin-bottom: 30px;">${props.description || 'La tua pizza preferita con il 30% di sconto'}</p>
+                      <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
+                        <h3 style="color: #8B4513; margin-bottom: 15px;">Solo oggi!</h3>
+                        <p style="font-size: 1.1em; margin-bottom: 25px;">Mostra questa pagina in negozio</p>
+                        <a href="${props.buttonLink || '#'}" style="background: #D4AF37; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">${props.buttonText || '📞 Chiama Ora!'}</a>
+                      </div>
+                    </div>`;
+                
+                case 'ContactCta':
+                  return `
+                    <div style="background: #8B4513; color: white; padding: 40px 20px; text-align: center;">
+                      <h3 style="margin-bottom: 20px;">Contattaci Subito!</h3>
+                      <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+                        <a href="tel:${props.phone || '+393926568550'}" style="background: #D4AF37; color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold;">📞 Chiama</a>
+                        <a href="https://wa.me/${props.whatsapp || '393926568550'}" style="background: #25D366; color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold;">💬 WhatsApp</a>
+                        <a href="${props.mapLink || '#'}" style="background: #4285F4; color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold;">🗺️ Indicazioni</a>
+                      </div>
+                    </div>`;
+                
+                default:
+                  // Per componenti standard, usa il contenuto esistente
+                  const view = component.getView();
+                  return view && view.el ? view.el.outerHTML : '';
+              }
+            };
+            
+            const components = wrapper.find('*');
+            const staticHtml = components.map(renderComponent).join('');
+            
+            if (staticHtml && staticHtml.length > 50) {
+              html = staticHtml;
+              console.log('✅ HTML convertito da React components:', html.substring(0, 200) + '...');
+            }
+          }
+        } catch (conversionError) {
+          console.warn('⚠️ Errore conversione React components:', conversionError);
+        }
+      }
+      
+      // Ultimo fallback: canvas DOM
+      if (!html || html.trim().length < 50) {
+        const canvas = document.querySelector('#gjs .gjs-cv-canvas');
+        if (canvas && canvas.contentDocument && canvas.contentDocument.body) {
+          html = canvas.contentDocument.body.innerHTML;
+          console.log('🔄 HTML estratto dal canvas DOM (ultimo fallback):', html.substring(0, 200) + '...');
         }
       }
       
