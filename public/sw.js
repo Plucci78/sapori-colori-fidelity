@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sapori-colori-v3';
+const CACHE_NAME = 'sapori-colori-v4';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -44,24 +44,38 @@ self.addEventListener('fetch', function(event) {
     return; // Passa tutto al network
   }
   
-  // Solo per richieste GET e non per API calls
-  if (event.request.method !== 'GET' || 
-      event.request.url.includes('/api/') ||
-      event.request.url.includes('/_vite/') ||
-      event.request.url.includes('.hot-update.')) {
+  // DISABILITA COMPLETAMENTE CACHE PER TUTTE LE API CALLS
+  if (event.request.url.includes('/api/')) {
+    console.log('🚫 SW: Ignoring API call:', event.request.url);
+    return; // Non intercettare mai le API calls
+  }
+  
+  // DISABILITA CACHE PER RICHIESTE NON-GET (POST, PUT, DELETE, etc.)
+  if (event.request.method !== 'GET') {
+    console.log('🚫 SW: Ignoring non-GET request:', event.request.method, event.request.url);
     return;
   }
   
-  // Strategy: Cache First per assets statici, Network First per tutto il resto
+  // DISABILITA CACHE PER VITE DEV FILES
+  if (event.request.url.includes('/_vite/') ||
+      event.request.url.includes('.hot-update.') ||
+      event.request.url.includes('/@vite/') ||
+      event.request.url.includes('/@id/')) {
+    return;
+  }
+  
+  // SOLO per assets statici veramente statici
   const url = new URL(event.request.url);
   const isStaticAsset = /\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/.test(url.pathname);
   
-  if (isStaticAsset) {
-    // Cache First per assets
+  // SOLO cache per assets che sappiamo essere statici
+  if (isStaticAsset && !url.pathname.includes('index') && !url.pathname.includes('main')) {
+    console.log('📦 SW: Caching static asset:', url.pathname);
     event.respondWith(
       caches.match(event.request)
         .then(function(response) {
           if (response) {
+            console.log('💾 SW: Serving from cache:', url.pathname);
             return response;
           }
           return fetch(event.request)
@@ -78,20 +92,12 @@ self.addEventListener('fetch', function(event) {
         })
     );
   } else {
-    // Network First per HTML e altro
+    // PER TUTTO IL RESTO: SEMPRE NETWORK FIRST, NO CACHE
+    console.log('🌐 SW: Network first for:', url.pathname);
     event.respondWith(
       fetch(event.request)
-        .then(function(response) {
-          if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME)
-              .then(function(cache) {
-                cache.put(event.request, responseClone);
-              });
-          }
-          return response;
-        })
         .catch(function() {
+          // Solo se il network fallisce completamente, prova cache
           return caches.match(event.request);
         })
     );
