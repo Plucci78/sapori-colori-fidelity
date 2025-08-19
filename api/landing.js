@@ -394,6 +394,31 @@ async function handleDelete(req, res) {
 // ===================================
 
 function generateLandingPageHtml(landingPage) {
+  // Controlla se l'HTML content è vuoto o troppo corto
+  const hasValidContent = landingPage.html_content && landingPage.html_content.trim().length > 50;
+  
+  // Genera HTML di fallback per landing pages con contenuto vuoto
+  const fallbackContent = `
+    <div style="background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%); padding: 40px 20px; text-align: center; color: #8B4513; min-height: 100vh; display: flex; flex-direction: column; justify-content: center;">
+      <img src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" alt="Sapori & Colori" style="height: 80px; margin-bottom: 20px;" />
+      <h1 style="margin: 0; font-size: 2.5em; font-weight: bold; margin-bottom: 20px;">${landingPage.title || 'Sapori & Colori'}</h1>
+      <p style="margin: 10px 0 0 0; font-size: 1.2em; margin-bottom: 40px;">${landingPage.description || 'Landing page in costruzione'}</p>
+      
+      <div style="background: rgba(255,255,255,0.9); padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto;">
+        <h3 style="color: #8B4513; margin-bottom: 15px;">🚧 Contenuto in aggiornamento</h3>
+        <p style="font-size: 1.1em; margin-bottom: 25px; color: #666;">Questa landing page è stata creata ma il contenuto non è ancora disponibile.</p>
+        
+        <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-top: 20px;">
+          <a href="tel:+393926568550" style="background: #D4AF37; color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold;">📞 Chiamaci</a>
+          <a href="https://wa.me/393926568550" style="background: #25D366; color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold;">💬 WhatsApp</a>
+        </div>
+      </div>
+      
+      <div style="margin-top: 40px; font-size: 0.9em; opacity: 0.8;">
+        <p>📧 Creato il: ${new Date(landingPage.created_at).toLocaleDateString('it-IT')}</p>
+      </div>
+    </div>`;
+  
   return `<!DOCTYPE html>
 <html lang="it">
 <head>
@@ -429,7 +454,7 @@ function generateLandingPageHtml(landingPage) {
 </head>
 <body>
   <!-- Landing Page Content -->
-  ${landingPage.html_content}
+  ${hasValidContent ? landingPage.html_content : fallbackContent}
   
   <!-- OneSignal -->
   <script>
