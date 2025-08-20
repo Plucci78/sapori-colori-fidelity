@@ -495,30 +495,151 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
   if (pluginsLoading || !plugins) {
     return (
       <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
         height: '100vh',
+        background: 'linear-gradient(135deg, #8B4513 0%, #D4AF37 50%, #FFD700 100%)',
+        display: 'flex', 
         flexDirection: 'column',
-        gap: '20px'
+        justifyContent: 'center', 
+        alignItems: 'center',
+        position: 'relative',
+        overflow: 'hidden'
       }}>
-        <div style={{ 
-          fontSize: '24px',
-          animation: 'spin 2s linear infinite',
-          display: 'inline-block'
+        {/* Background Pattern */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          opacity: 0.1,
+          backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.3"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+          backgroundSize: '60px 60px'
+        }} />
+        
+        {/* Main Content */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '20px',
+          padding: '60px 40px',
+          boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
+          textAlign: 'center',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          maxWidth: '500px',
+          width: '90%'
         }}>
-          🔄
+          {/* Logo */}
+          <div style={{ marginBottom: '30px' }}>
+            <img 
+              src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" 
+              alt="Sapori & Colori" 
+              style={{ 
+                height: '80px', 
+                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))' 
+              }} 
+            />
+          </div>
+          
+          {/* Title */}
+          <h1 style={{
+            color: '#8B4513',
+            fontSize: '2.2em',
+            fontWeight: '800',
+            margin: '0 0 10px 0',
+            textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            Page Builder
+          </h1>
+          
+          <p style={{
+            color: '#666',
+            fontSize: '1.1em',
+            margin: '0 0 40px 0',
+            opacity: 0.8
+          }}>
+            Preparazione dell'ambiente di creazione
+          </p>
+          
+          {/* Loading Animation */}
+          <div style={{
+            position: 'relative',
+            width: '60px',
+            height: '60px',
+            margin: '0 auto 30px auto'
+          }}>
+            <div style={{
+              position: 'absolute',
+              width: '60px',
+              height: '60px',
+              border: '4px solid #E5E5E5',
+              borderTop: '4px solid #D4AF37',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              fontSize: '24px'
+            }}>
+              🎨
+            </div>
+          </div>
+          
+          {/* Progress Steps */}
+          <div style={{ textAlign: 'left', maxWidth: '300px', margin: '0 auto' }}>
+            <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ 
+                width: '8px', 
+                height: '8px', 
+                borderRadius: '50%', 
+                background: '#4CAF50' 
+              }} />
+              <span style={{ fontSize: '14px', color: '#4CAF50' }}>✓ Caricamento librerie</span>
+            </div>
+            <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ 
+                width: '8px', 
+                height: '8px', 
+                borderRadius: '50%', 
+                background: '#D4AF37',
+                animation: 'pulse 1.5s ease-in-out infinite alternate' 
+              }} />
+              <span style={{ fontSize: '14px', color: '#666' }}>Inizializzazione plugins...</span>
+            </div>
+            <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ 
+                width: '8px', 
+                height: '8px', 
+                borderRadius: '50%', 
+                background: '#E5E5E5' 
+              }} />
+              <span style={{ fontSize: '14px', color: '#999' }}>Preparazione editor</span>
+            </div>
+          </div>
         </div>
-        <div style={{ fontSize: '18px', color: '#666' }}>
-          Caricamento Page Builder...
+        
+        {/* Footer */}
+        <div style={{
+          position: 'absolute',
+          bottom: '30px',
+          color: 'rgba(255, 255, 255, 0.8)',
+          fontSize: '14px',
+          textAlign: 'center'
+        }}>
+          <div style={{ marginBottom: '5px' }}>💡 Powered by GrapesJS Studio</div>
+          <div>Sapori & Colori - Landing Page Builder</div>
         </div>
-        <div style={{ fontSize: '14px', color: '#999' }}>
-          Caricamento GrapesJS e plugins
-        </div>
+        
         <style>{`
           @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
+          }
+          @keyframes pulse {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0.5; transform: scale(1.2); }
           }
         `}</style>
       </div>
@@ -675,14 +796,37 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
 
       <Suspense fallback={
         <div style={{ 
+          height: '100vh',
+          background: 'linear-gradient(135deg, #8B4513 0%, #D4AF37 50%, #FFD700 100%)',
           display: 'flex', 
           justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '100vh',
-          fontSize: '18px',
-          color: '#666'
+          alignItems: 'center',
         }}>
-          Inizializzazione editor...
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '20px',
+            padding: '40px',
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
+            textAlign: 'center',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            <div style={{
+              width: '50px',
+              height: '50px',
+              border: '4px solid #E5E5E5',
+              borderTop: '4px solid #D4AF37',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 20px auto'
+            }} />
+            <div style={{ fontSize: '18px', color: '#8B4513', fontWeight: '600' }}>
+              Inizializzazione editor...
+            </div>
+            <div style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>
+              Un momento, stiamo caricando l'interfaccia
+            </div>
+          </div>
         </div>
       }>
         <StudioEditor
