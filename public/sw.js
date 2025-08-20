@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sapori-colori-v4';
+const CACHE_NAME = 'sapori-colori-v5-no-admin';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -9,6 +9,7 @@ const urlsToCache = [
 const isDevelopment = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
 self.addEventListener('install', function(event) {
+  console.log('🔄 SW: Installing new version v5 - no admin cache');
   // Skip waiting per aggiornamenti immediati
   self.skipWaiting();
   
@@ -48,6 +49,14 @@ self.addEventListener('fetch', function(event) {
   if (event.request.url.includes('/api/')) {
     console.log('🚫 SW: Ignoring API call:', event.request.url);
     return; // Non intercettare mai le API calls
+  }
+  
+  // DISABILITA CACHE PER PAGINE ADMIN/PAGEBUILDER
+  if (event.request.url.includes('admin') || 
+      event.request.url.includes('pagebuilder') || 
+      event.request.url.includes('landing')) {
+    console.log('🚫 SW: Ignoring admin page:', event.request.url);
+    return; // Non intercettare pagine admin
   }
   
   // DISABILITA CACHE PER RICHIESTE NON-GET (POST, PUT, DELETE, etc.)
