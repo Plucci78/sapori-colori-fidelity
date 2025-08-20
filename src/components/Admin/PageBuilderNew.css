@@ -20,12 +20,13 @@
 .gjs-block {
   background: white;
   border: 1px solid #ddd;
-  border-radius: 4px;
-  margin: 5px 0;
-  padding: 10px;
+  border-radius: 3px;
+  margin: 3px 0;
+  padding: 8px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-size: 12px;
 }
 
 .gjs-block:hover {
@@ -34,35 +35,120 @@
 }
 
 .gjs-block-label {
-  font-size: 11px;
+  font-size: 10px;
   color: #666;
-  margin-top: 5px;
+  margin-top: 3px;
 }
 
 /* Pannello layer */
 .gjs-layers-cs {
-  background: #f8f9fa;
-  border-left: 1px solid #ddd;
-  height: 100vh;
-  overflow-y: auto;
+  background: #f8f9fa !important;
+  border-left: 1px solid #ddd !important;
+  height: 100vh !important;
+  overflow-y: auto !important;
+  padding: 8px !important;
+  width: 100% !important;
+}
+
+.gjs-layers-c {
+  width: 100% !important;
 }
 
 /* Pannello stili */
 .gjs-styles-cs {
-  background: #f8f9fa;
-  border-left: 1px solid #ddd;
-  height: 100vh;
-  overflow-y: auto;
-  padding: 10px;
+  background: #f8f9fa !important;
+  border-left: 1px solid #ddd !important;
+  height: 100vh !important;
+  overflow-y: auto !important;
+  padding: 10px !important;
+  width: 100% !important;
+}
+
+.gjs-styles-c {
+  width: 100% !important;
 }
 
 /* Pannello traits */
 .gjs-traits-cs {
-  background: #f8f9fa;
-  border-left: 1px solid #ddd;
-  height: 100vh;
-  overflow-y: auto;
-  padding: 10px;
+  background: #f8f9fa !important;
+  border-left: 1px solid #ddd !important;
+  height: 100vh !important;
+  overflow-y: auto !important;
+  padding: 10px !important;
+  width: 100% !important;
+}
+
+/* Contenitore traits */
+.gjs-traits-c {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Singolo trait */
+.gjs-trait {
+  margin-bottom: 10px !important;
+  width: 100% !important;
+}
+
+.gjs-trait .gjs-trait-label {
+  display: block !important;
+  font-weight: 500 !important;
+  color: #495057 !important;
+  margin-bottom: 3px !important;
+  font-size: 11px !important;
+}
+
+.gjs-trait .gjs-trait-field {
+  width: 100% !important;
+  padding: 6px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 3px !important;
+  font-size: 12px !important;
+  background: #fff !important;
+}
+
+/* Toolbar elementi (menu cancellazione, etc.) */
+.gjs-toolbar-el {
+  position: absolute !important;
+  background: rgba(0, 0, 0, 0.85) !important;
+  border-radius: 4px !important;
+  padding: 4px !important;
+  display: flex !important;
+  gap: 2px !important;
+  z-index: 1000 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+}
+
+.gjs-toolbar-item {
+  background: #f8f9fa !important;
+  color: #495057 !important;
+  border: none !important;
+  padding: 6px 8px !important;
+  border-radius: 3px !important;
+  cursor: pointer !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  min-width: auto !important;
+}
+
+.gjs-toolbar-item:hover {
+  background: #007bff !important;
+  color: white !important;
+  transform: scale(1.05) !important;
+}
+
+.gjs-toolbar-item.gjs-toolbar-item--delete {
+  background: #dc3545 !important;
+  color: white !important;
+}
+
+.gjs-toolbar-item.gjs-toolbar-item--delete:hover {
+  background: #c82333 !important;
+  transform: scale(1.1) !important;
 }
 
 /* Toolbar */
@@ -119,15 +205,15 @@
   background: #fff !important;
   border: 1px solid #ddd !important;
   color: #495057 !important;
-  padding: 8px 16px !important;
+  padding: 6px 12px !important;
   margin: 0 !important;
-  border-radius: 4px !important;
-  font-size: 12px !important;
+  border-radius: 3px !important;
+  font-size: 11px !important;
   font-weight: 500 !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
   text-align: center !important;
-  min-width: 80px !important;
+  min-width: 65px !important;
 }
 
 .gjs-pn-btn:hover {
@@ -263,7 +349,7 @@
 /* Layout grid */
 .gjs-editor-wrapper {
   display: grid;
-  grid-template-columns: 280px 1fr 320px;
+  grid-template-columns: 280px 1fr 350px;
   grid-template-rows: 60px 1fr;
   height: 100vh;
   max-width: 100vw;
@@ -314,15 +400,20 @@
 .gjs-panels-wrapper {
   background: #f8f9fa;
   border-left: 1px solid #ddd;
-  overflow-y: auto;
-  min-width: 300px;
-  max-width: 350px;
+  overflow: hidden;
+  min-width: 320px;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
 }
 
 .panel__right {
   width: 100%;
   height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0;
+  margin: 0;
 }
 
 /* Font Awesome fallback */
@@ -519,26 +610,42 @@
 }
 
 /* Responsive Media Queries */
+@media (max-width: 1600px) {
+  .gjs-editor-wrapper {
+    grid-template-columns: 260px 1fr 330px;
+  }
+}
+
 @media (max-width: 1400px) {
   .gjs-editor-wrapper {
-    grid-template-columns: 250px 1fr 280px;
+    grid-template-columns: 240px 1fr 300px;
+  }
+  
+  .gjs-panels-wrapper {
+    min-width: 280px;
+    max-width: 320px;
   }
 }
 
 @media (max-width: 1200px) {
   .gjs-editor-wrapper {
-    grid-template-columns: 220px 1fr 260px;
+    grid-template-columns: 220px 1fr 280px;
   }
   
   .gjs-panels-wrapper {
-    min-width: 250px;
-    max-width: 280px;
+    min-width: 260px;
+    max-width: 300px;
   }
 }
 
 @media (max-width: 1000px) {
   .gjs-editor-wrapper {
-    grid-template-columns: 200px 1fr 240px;
+    grid-template-columns: 200px 1fr 250px;
+  }
+  
+  .gjs-panels-wrapper {
+    min-width: 230px;
+    max-width: 270px;
   }
   
   .panel__switcher .gjs-pn-btn {

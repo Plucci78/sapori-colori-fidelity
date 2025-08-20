@@ -37,4 +37,4 @@ CREATE POLICY "Admin lettura click analytics" ON landing_page_clicks
 -- Commenti
 COMMENT ON TABLE landing_page_clicks IS 'Analytics dettagliate dei click sulle landing pages';
 COMMENT ON COLUMN landing_page_clicks.element_text IS 'Testo dell elemento cliccato';
-COMMENT ON COLUMN landing_page_clicks.element_href IS 'URL dell elemento cliccato se link';
+ClOMMENT ON COLUMN landing_page_clicks.element_href IS 'URL dell elemento cliccato se link';
