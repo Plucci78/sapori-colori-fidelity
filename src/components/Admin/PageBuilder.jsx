@@ -213,19 +213,26 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
   // Effetto per caricare contenuti dopo l'inizializzazione di GrapesJS
   useEffect(() => {
     if (plugins && window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
-      setTimeout(() => {
+      // Carica immediatamente senza timeout per template senza dati GrapesJS
+      const loadContent = () => {
         if (editingPage) {
           // Modifica landing page esistente (se non caricata già tramite project)
           if (!editingPage.grapesjs_data) {
+            console.log('🔄 Caricamento landing page esistente senza dati GrapesJS');
             loadLandingPageIntoEditor(editingPage);
           }
         } else if (selectedTemplate) {
           // Nuovo da template (se non caricato già tramite project) 
           if (!selectedTemplate.grapesjs_data) {
+            console.log('🔄 Caricamento template senza dati GrapesJS:', selectedTemplate.name);
             loadTemplateIntoEditor(selectedTemplate);
           }
         }
-      }, 1000);
+      };
+
+      // Prova immediatamente e con un piccolo timeout come fallback
+      loadContent();
+      setTimeout(loadContent, 500);
     }
   }, [editingPage, selectedTemplate, plugins]);
 
@@ -723,20 +730,7 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
               
               // Se abbiamo un template ma senza dati GrapesJS, inizia vuoto (verrà caricato dal useEffect)
               if (selectedTemplate) {
-                return {
-                  type: 'react',
-                  default: {
-                    pages: [{
-                      name: 'Caricamento Template...',
-                      component: (
-                        <div style={{ padding: '50px', textAlign: 'center', color: '#666' }}>
-                          <div style={{ fontSize: '2rem', marginBottom: '20px' }}>⏳</div>
-                          <p>Caricamento template "{selectedTemplate.name}"...</p>
-                        </div>
-                      )
-                    }]
-                  }
-                };
+                return undefined; // Nessun progetto iniziale, GrapesJS inizia completamente vuoto
               }
               
               // Altrimenti usa il progetto di benvenuto
