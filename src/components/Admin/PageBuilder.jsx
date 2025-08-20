@@ -728,10 +728,12 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
                   default: {
                     pages: [{
                       name: 'Caricamento Template...',
-                      component: <div style={{ padding: '50px', textAlign: 'center', color: '#666' }}>
-                        <div style={{ fontSize: '2rem', marginBottom: '20px' }}>⏳</div>
-                        <p>Caricamento template "{selectedTemplate.name}"...</p>
-                      </div>
+                      component: (
+                        <div style={{ padding: '50px', textAlign: 'center', color: '#666' }}>
+                          <div style={{ fontSize: '2rem', marginBottom: '20px' }}>⏳</div>
+                          <p>Caricamento template "{selectedTemplate.name}"...</p>
+                        </div>
+                      )
                     }]
                   }
                 };
