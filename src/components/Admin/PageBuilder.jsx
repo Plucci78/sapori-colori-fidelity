@@ -207,18 +207,15 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
     }
   };
 
-  // Effetto per caricare landing page o template
+  // Effetto per caricare template senza dati GrapesJS (solo HTML/CSS)
   useEffect(() => {
     if (plugins && window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
       setTimeout(() => {
-        if (editingPage) {
-          // Modifica landing page esistente
-          loadLandingPageIntoEditor(editingPage);
-        } else if (selectedTemplate) {
-          // Nuovo da template
+        // Carica template che hanno solo HTML/CSS ma non dati GrapesJS
+        if (selectedTemplate && !selectedTemplate.grapesjs_data && selectedTemplate.html_content) {
           loadTemplateIntoEditor(selectedTemplate);
         }
-        // Se né editingPage né selectedTemplate, inizia con pagina vuota
+        // Per landing page esistenti, il caricamento avviene già tramite project
       }, 1000);
     }
   }, [editingPage, selectedTemplate, plugins]);
@@ -703,23 +700,55 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
                 });
               }
             ],
-            // Initial project content - solo se non c'è template o landing page da caricare
-            project: (!editingPage && !selectedTemplate) ? {
-              type: 'react',
-              default: {
-                pages: [
-                  {
-                    name: 'Pagina Iniziale',
-                    component: (
-                      <>
-                        <SaporiHeader title="Benvenuto nel Page Builder" subtitle="Crea le tue landing page con facilità" logoSrc="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" />
-                        <PromoSection offer="Offerta di Benvenuto!" description="Trascina i blocchi per iniziare a costruire!" buttonText="Scopri di più" buttonLink="#" />
-                      </>
-                    )
-                  },
-                ]
+            // Initial project content
+            project: (() => {
+              // Se stiamo modificando una landing page esistente, carica i suoi dati
+              if (editingPage && editingPage.grapesjs_data) {
+                return editingPage.grapesjs_data;
               }
-            } : undefined,
+              
+              // Se abbiamo un template selezionato, usa quello
+              if (selectedTemplate) {
+                if (selectedTemplate.grapesjs_data) {
+                  return selectedTemplate.grapesjs_data;
+                } else {
+                  // Se il template non ha dati GrapesJS, crea un progetto base con HTML/CSS
+                  return {
+                    type: 'react',
+                    default: {
+                      pages: [{
+                        name: 'Pagina da Template',
+                        component: (
+                          <div 
+                            dangerouslySetInnerHTML={{ 
+                              __html: selectedTemplate.html_content || '<div>Template content</div>' 
+                            }}
+                          />
+                        )
+                      }]
+                    }
+                  };
+                }
+              }
+              
+              // Altrimenti usa il progetto di benvenuto
+              return {
+                type: 'react',
+                default: {
+                  pages: [
+                    {
+                      name: 'Pagina Iniziale',
+                      component: (
+                        <>
+                          <SaporiHeader title="Benvenuto nel Page Builder" subtitle="Crea le tue landing page con facilità" logoSrc="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" />
+                          <PromoSection offer="Offerta di Benvenuto!" description="Trascina i blocchi per iniziare a costruire!" buttonText="Scopri di più" buttonLink="#" />
+                        </>
+                      )
+                    },
+                  ]
+                }
+              };
+            })(),
             // Other GrapesJS options (optional)
             height: '100%',
             width: '100%',
