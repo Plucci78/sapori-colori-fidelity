@@ -30,6 +30,10 @@ const PageBuilderNew = ({ editingPage, selectedTemplate, onBackToDashboard }) =>
     if (editorRef.current && !editor) {
       console.log('🚀 Inizializzazione GrapesJS Open Source...');
       
+      // Forza indicazione che stiamo usando il NUOVO PageBuilder
+      document.title = 'NUOVO PageBuilder - Sapori & Colori';
+      console.log('✅ NUOVO PageBuilder caricato!');
+      
       const editorInstance = grapesjs.init({
         container: editorRef.current,
         height: '100vh',
@@ -234,6 +238,58 @@ const PageBuilderNew = ({ editingPage, selectedTemplate, onBackToDashboard }) =>
         // UI Settings
         panels: {
           defaults: [{
+            id: 'panel-top',
+            el: '.panel__top',
+            buttons: [{
+              id: 'visibility',
+              active: true,
+              className: 'btn-toggle-borders',
+              label: '<i class="fa fa-clone"></i>',
+              command: 'sw-visibility',
+              context: 'sw-visibility',
+              attributes: { title: 'Visualizza bordi' }
+            }, {
+              id: 'export',
+              className: 'btn-open-export',
+              label: '<i class="fa fa-code"></i>',
+              command: 'export-template',
+              context: 'export-template',
+              attributes: { title: 'Visualizza codice' }
+            }, {
+              id: 'show-json',
+              className: 'btn-show-json',
+              label: '<i class="fa fa-download"></i>',
+              context: 'show-json',
+              command(editor) {
+                editor.Modal.setTitle('Componenti JSON')
+                  .setContent(`<textarea style="width:100%; height: 250px;">
+                    ${JSON.stringify(editor.getComponents())}
+                  </textarea>`)
+                  .open();
+              },
+              attributes: { title: 'Mostra JSON' }
+            }]
+          }, {
+            id: 'panel-devices',
+            el: '.panel__devices',
+            buttons: [{
+              id: 'device-desktop',
+              label: '<i class="fa fa-desktop"></i>',
+              command: 'set-device-desktop',
+              active: true,
+              attributes: { title: 'Desktop' }
+            }, {
+              id: 'device-tablet',
+              label: '<i class="fa fa-tablet"></i>',
+              command: 'set-device-tablet',
+              attributes: { title: 'Tablet' }
+            }, {
+              id: 'device-mobile',
+              label: '<i class="fa fa-mobile"></i>',
+              command: 'set-device-mobile',
+              attributes: { title: 'Mobile' }
+            }]
+          }, {
             id: 'layers',
             el: '.panel__right',
             resizable: {
@@ -359,6 +415,17 @@ const PageBuilderNew = ({ editingPage, selectedTemplate, onBackToDashboard }) =>
             }
           ]
         }
+      });
+
+      // Aggiungi comandi personalizzati
+      editorInstance.Commands.add('set-device-desktop', {
+        run: editor => editor.setDevice('Desktop')
+      });
+      editorInstance.Commands.add('set-device-tablet', {
+        run: editor => editor.setDevice('Tablet')
+      });
+      editorInstance.Commands.add('set-device-mobile', {
+        run: editor => editor.setDevice('Mobile')
       });
 
       setEditor(editorInstance);
@@ -564,6 +631,21 @@ const PageBuilderNew = ({ editingPage, selectedTemplate, onBackToDashboard }) =>
 
   return (
     <div className={`gjs-editor-wrapper theme-${currentTheme}`} style={{ position: 'relative', height: '100vh', width: '100vw' }}>
+      {/* Indicatore che il nuovo PageBuilder è caricato */}
+      <div style={{
+        position: 'absolute',
+        top: '5px',
+        left: '5px',
+        background: 'green',
+        color: 'white',
+        padding: '4px 8px',
+        fontSize: '10px',
+        borderRadius: '3px',
+        zIndex: 10001
+      }}>
+        NEW BUILDER ✓
+      </div>
+      
       {/* Selettore Temi */}
       <div className="theme-selector">
         <div 
@@ -585,6 +667,8 @@ const PageBuilderNew = ({ editingPage, selectedTemplate, onBackToDashboard }) =>
       
       {/* Toolbar Container */}
       <div className="gjs-toolbar-wrapper">
+        <div className="panel__top"></div>
+        <div className="panel__devices"></div>
         <div className="panel__switcher"></div>
       </div>
       
