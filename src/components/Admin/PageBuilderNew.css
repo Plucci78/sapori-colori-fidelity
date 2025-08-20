@@ -82,6 +82,51 @@
 .gjs-traits-c {
   width: 100% !important;
   max-width: none !important;
+  min-width: 100% !important;
+}
+
+/* FORZA LARGHEZZA COMPLETA per tutti gli elementi interni */
+.gjs-traits-cs * {
+  max-width: none !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.gjs-styles-cs * {
+  max-width: none !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.gjs-layers-cs * {
+  max-width: none !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Forza larghezza per elementi specifici che potrebbero essere tagliati */
+.gjs-sm-property,
+.gjs-sm-field,
+.gjs-trait-field,
+.gjs-trait-input,
+.gjs-trait-select,
+.gjs-sm-input,
+.gjs-sm-select,
+.gjs-field {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Contenitori che potrebbero limitare la larghezza */
+.gjs-sm-properties,
+.gjs-sm-sector,
+.gjs-trait,
+.gjs-layer {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
 }
 
 /* Singolo trait */
@@ -408,12 +453,24 @@
 }
 
 .panel__right {
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 0;
-  margin: 0;
+  width: 100% !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-width: 100% !important;
+  max-width: none !important;
+}
+
+/* FORZA TUTTI I FIGLI del panel right */
+.panel__right * {
+  max-width: none !important;
+  box-sizing: border-box !important;
+}
+
+.panel__right > * {
+  width: 100% !important;
 }
 
 /* Font Awesome fallback */
