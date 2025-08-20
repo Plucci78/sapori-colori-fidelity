@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sapori-colori-v5-no-admin';
+const CACHE_NAME = 'sapori-colori-v6-fix-admin';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -9,7 +9,7 @@ const urlsToCache = [
 const isDevelopment = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
 self.addEventListener('install', function(event) {
-  console.log('🔄 SW: Installing new version v5 - no admin cache');
+  console.log('🔄 SW: Installing new version v6 - fix admin cache');
   // Skip waiting per aggiornamenti immediati
   self.skipWaiting();
   
@@ -51,12 +51,20 @@ self.addEventListener('fetch', function(event) {
     return; // Non intercettare mai le API calls
   }
   
-  // DISABILITA CACHE PER PAGINE ADMIN/PAGEBUILDER
-  if (event.request.url.includes('admin') || 
-      event.request.url.includes('pagebuilder') || 
-      event.request.url.includes('landing')) {
+  // DISABILITA CACHE PER PAGINE ADMIN/PAGEBUILDER - ELENCO COMPLETO
+  const adminPaths = [
+    'admin', 'pagebuilder', 'landing', 'dashboard', 
+    'settings', 'users', 'analytics', 'templates',
+    'components/Admin', 'LandingPages', 'PageBuilder'
+  ];
+  
+  const isAdminPage = adminPaths.some(path => 
+    event.request.url.toLowerCase().includes(path.toLowerCase())
+  );
+  
+  if (isAdminPage) {
     console.log('🚫 SW: Ignoring admin page:', event.request.url);
-    return; // Non intercettare pagine admin
+    return fetch(event.request); // Passa direttamente al network
   }
   
   // DISABILITA CACHE PER RICHIESTE NON-GET (POST, PUT, DELETE, etc.)
@@ -65,12 +73,17 @@ self.addEventListener('fetch', function(event) {
     return;
   }
   
-  // DISABILITA CACHE PER VITE DEV FILES
+  // DISABILITA CACHE PER VITE DEV FILES E FILE DINAMICI
   if (event.request.url.includes('/_vite/') ||
       event.request.url.includes('.hot-update.') ||
       event.request.url.includes('/@vite/') ||
-      event.request.url.includes('/@id/')) {
-    return;
+      event.request.url.includes('/@id/') ||
+      event.request.url.includes('PageBuilderNew') ||
+      event.request.url.includes('.jsx') ||
+      event.request.url.includes('.css?') ||
+      event.request.url.includes('?t=')) {
+    console.log('🚫 SW: Ignoring dev/dynamic file:', event.request.url);
+    return fetch(event.request); // Passa al network
   }
   
   // SOLO per assets statici veramente statici
