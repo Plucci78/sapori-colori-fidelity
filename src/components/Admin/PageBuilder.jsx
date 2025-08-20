@@ -86,7 +86,7 @@ const ContactCta = ({ phone, whatsapp, mapLink }) => (
 );
 
 
-const PageBuilder = ({ editingPage, onBackToDashboard }) => {
+const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
   // Publish state - NON tocchiamo l'editor!
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState(null);
@@ -94,6 +94,9 @@ const PageBuilder = ({ editingPage, onBackToDashboard }) => {
   
   // NUOVO: Stato per tracciare landing page esistente
   const [currentLandingPage, setCurrentLandingPage] = useState(editingPage || null);
+  
+  // Stato per salvataggio template
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   
   // Lazy load dei plugins
   const { plugins, loading: pluginsLoading } = useGrapesJSPlugins();
@@ -127,15 +130,90 @@ const PageBuilder = ({ editingPage, onBackToDashboard }) => {
     }
   };
 
-  // Effetto per caricare landing page passata come prop
+  // Carica template selezionato nell'editor
+  const loadTemplateIntoEditor = (template) => {
+    if (window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
+      const editor = window.grapesjs.editors[0];
+      
+      try {
+        if (template.html_content) {
+          editor.setComponents(template.html_content);
+        }
+        if (template.css_content) {
+          editor.setStyle(template.css_content);
+        }
+        if (template.grapesjs_data && Object.keys(template.grapesjs_data).length > 0) {
+          editor.loadProjectData(template.grapesjs_data);
+        }
+        
+        console.log('✅ Template caricato nell\'editor:', template.name);
+      } catch (error) {
+        console.error('Errore caricamento template:', error);
+        alert('Errore nel caricamento del template. Prova a ricaricare la pagina.');
+      }
+    }
+  };
+
+  // Salva come template
+  const handleSaveAsTemplate = async () => {
+    if (!currentLandingPage || !currentLandingPage.id) {
+      alert('Devi prima pubblicare la landing page prima di salvarla come template');
+      return;
+    }
+
+    const templateName = prompt('Nome del template:', `Template da ${currentLandingPage.title}`);
+    if (!templateName) return;
+
+    const templateDescription = prompt('Descrizione del template (opzionale):', '');
+
+    setIsSavingTemplate(true);
+
+    try {
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3001/api/landing?action=save-template'
+        : '/api/landing?action=save-template';
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          landing_page_id: currentLandingPage.id,
+          template_name: templateName,
+          template_description: templateDescription
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Errore salvataggio template');
+      }
+
+      const result = await response.json();
+      alert(`✅ Template "${templateName}" salvato con successo!\n\nPotrai riutilizzarlo creando nuove landing pages.`);
+
+    } catch (error) {
+      console.error('Errore salvataggio template:', error);
+      alert(`❌ Errore: ${error.message}`);
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  };
+
+  // Effetto per caricare landing page o template
   useEffect(() => {
-    if (editingPage && plugins && window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
-      // Aspetta un attimo che l'editor sia completamente inizializzato
+    if (plugins && window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
       setTimeout(() => {
-        loadLandingPageIntoEditor(editingPage);
+        if (editingPage) {
+          // Modifica landing page esistente
+          loadLandingPageIntoEditor(editingPage);
+        } else if (selectedTemplate) {
+          // Nuovo da template
+          loadTemplateIntoEditor(selectedTemplate);
+        }
+        // Se né editingPage né selectedTemplate, inizia con pagina vuota
       }, 1000);
     }
-  }, [editingPage, plugins]);
+  }, [editingPage, selectedTemplate, plugins]);
 
   // Funzione di pubblicazione SICURA
   const handlePublish = async () => {
@@ -503,6 +581,26 @@ const PageBuilder = ({ editingPage, onBackToDashboard }) => {
           }
         </button>
         
+        {/* Pulsante salva come template */}
+        {currentLandingPage && (
+          <button
+            onClick={handleSaveAsTemplate}
+            disabled={isSavingTemplate}
+            style={{
+              background: '#17a2b8',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              cursor: isSavingTemplate ? 'not-allowed' : 'pointer',
+              opacity: isSavingTemplate ? 0.6 : 1
+            }}
+          >
+            {isSavingTemplate ? '💾 Salvando...' : '📋 Salva come Template'}
+          </button>
+        )}
+
         {/* Pulsante nuova sessione */}
         {currentLandingPage && (
           <button

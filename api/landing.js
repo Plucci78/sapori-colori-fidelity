@@ -21,6 +21,16 @@ export default async function handler(req, res) {
       return await handleTrackClick(req, res)
     }
     
+    // Route per template
+    if (action === 'templates') {
+      return await handleTemplates(req, res)
+    }
+    
+    // Route per creare template da landing esistente
+    if (action === 'save-template') {
+      return await handleSaveAsTemplate(req, res)
+    }
+    
     // Route CRUD standard per landing pages
     switch (method) {
       case 'GET':
@@ -471,6 +481,284 @@ function generateLandingPageHtml(landingPage) {
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 </body>
 </html>`
+}
+
+// ===================================
+// TEMPLATE FUNCTIONS
+// ===================================
+
+// GET templates (predefiniti + salvati dall'utente)
+async function handleTemplates(req, res) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
+  
+  try {
+    // Carica template salvati dall'utente
+    const { data: userTemplates, error } = await supabase
+      .from('landing_page_templates')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('❌ Errore caricamento template utente:', error)
+    }
+    
+    // Template predefiniti
+    const predefinedTemplates = getPredefinedTemplates()
+    
+    // Combina template predefiniti + utente
+    const allTemplates = [
+      ...predefinedTemplates,
+      ...(userTemplates || []).map(t => ({
+        ...t,
+        type: 'user',
+        preview_image: t.preview_image || '/placeholder-template.png'
+      }))
+    ]
+    
+    return res.status(200).json({
+      success: true,
+      data: allTemplates
+    })
+    
+  } catch (error) {
+    console.error('❌ Errore GET templates:', error)
+    return res.status(500).json({ error: error.message })
+  }
+}
+
+// POST salva landing page come template
+async function handleSaveAsTemplate(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
+  
+  const { landing_page_id, template_name, template_description } = req.body
+  
+  if (!landing_page_id || !template_name) {
+    return res.status(400).json({ 
+      error: 'landing_page_id e template_name sono obbligatori' 
+    })
+  }
+  
+  try {
+    // Carica la landing page originale
+    const { data: landingPage, error: landingError } = await supabase
+      .from('landing_pages')
+      .select('*')
+      .eq('id', landing_page_id)
+      .single()
+    
+    if (landingError || !landingPage) {
+      return res.status(404).json({ error: 'Landing page non trovata' })
+    }
+    
+    // Crea il template
+    const { data: template, error: templateError } = await supabase
+      .from('landing_page_templates')
+      .insert({
+        name: template_name,
+        description: template_description || `Template creato da: ${landingPage.title}`,
+        html_content: landingPage.html_content,
+        css_content: landingPage.css_content,
+        grapesjs_data: landingPage.grapesjs_data,
+        category: 'custom',
+        is_active: true,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single()
+    
+    if (templateError) {
+      console.error('❌ Errore creazione template:', templateError)
+      return res.status(400).json({ error: templateError.message })
+    }
+    
+    console.log('✅ Template creato:', template.id, '-', template.name)
+    
+    return res.status(201).json({
+      success: true,
+      data: template,
+      message: 'Template salvato con successo!'
+    })
+    
+  } catch (error) {
+    console.error('❌ Errore save template:', error)
+    return res.status(500).json({ error: error.message })
+  }
+}
+
+// Template predefiniti
+function getPredefinedTemplates() {
+  return [
+    {
+      id: 'template-restaurant',
+      name: 'Ristorante Classico',
+      description: 'Template per ristoranti con menu e prenotazioni',
+      category: 'ristorante',
+      type: 'predefined',
+      preview_image: '/templates/restaurant-preview.png',
+      html_content: `
+        <div style="background: linear-gradient(135deg, #8B4513 0%, #D4AF37 100%); padding: 60px 20px; text-align: center; color: white;">
+          <img src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" alt="Logo" style="height: 100px; margin-bottom: 30px;" />
+          <h1 style="font-size: 3em; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">Sapori & Colori</h1>
+          <p style="font-size: 1.5em; margin: 20px 0;">Il sapore autentico della tradizione italiana</p>
+        </div>
+        
+        <div style="padding: 80px 20px; background: #f8f9fa;">
+          <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
+            <h2 style="font-size: 2.5em; color: #8B4513; margin-bottom: 40px;">La Nostra Cucina</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; margin: 60px 0;">
+              
+              <div style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1);">
+                <div style="font-size: 3em; margin-bottom: 20px;">🍝</div>
+                <h3 style="color: #8B4513; margin-bottom: 15px;">Pasta Fresca</h3>
+                <p style="color: #666; line-height: 1.6;">Pasta fatta in casa ogni giorno con ingredienti di prima qualità</p>
+              </div>
+              
+              <div style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1);">
+                <div style="font-size: 3em; margin-bottom: 20px;">🍕</div>
+                <h3 style="color: #8B4513; margin-bottom: 15px;">Pizza Napoletana</h3>
+                <p style="color: #666; line-height: 1.6;">Cotta nel forno a legna secondo la tradizione napoletana</p>
+              </div>
+              
+              <div style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1);">
+                <div style="font-size: 3em; margin-bottom: 20px;">🥩</div>
+                <h3 style="color: #8B4513; margin-bottom: 15px;">Carne alla Griglia</h3>
+                <p style="color: #666; line-height: 1.6;">Carni selezionate e grigliate alla perfezione</p>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+        
+        <div style="background: #8B4513; color: white; padding: 60px 20px; text-align: center;">
+          <h2 style="margin-bottom: 30px;">Prenota il Tuo Tavolo</h2>
+          <p style="font-size: 1.2em; margin-bottom: 40px;">Chiamaci o scrivici su WhatsApp per prenotare</p>
+          <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap;">
+            <a href="tel:+393926568550" style="background: #D4AF37; color: white; padding: 20px 40px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 1.1em;">📞 Chiama Ora</a>
+            <a href="https://wa.me/393926568550" style="background: #25D366; color: white; padding: 20px 40px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 1.1em;">💬 WhatsApp</a>
+          </div>
+        </div>`,
+      css_content: `
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Georgia', serif; line-height: 1.6; }
+        @media (max-width: 768px) {
+          h1 { font-size: 2em !important; }
+          h2 { font-size: 1.8em !important; }
+          .grid { grid-template-columns: 1fr !important; }
+        }`
+    },
+    
+    {
+      id: 'template-promo',
+      name: 'Offerta Speciale',
+      description: 'Template per promozioni e offerte limitate',
+      category: 'promozione',
+      type: 'predefined',
+      preview_image: '/templates/promo-preview.png',
+      html_content: `
+        <div style="background: linear-gradient(45deg, #FF6B35 0%, #F7931E 100%); padding: 40px 20px; text-align: center; color: white; position: relative; overflow: hidden;">
+          <div style="position: absolute; top: -50px; right: -50px; background: rgba(255,255,255,0.1); width: 200px; height: 200px; border-radius: 50%; animation: pulse 2s infinite;"></div>
+          <h1 style="font-size: 3.5em; margin: 0; text-shadow: 3px 3px 6px rgba(0,0,0,0.3);">🔥 OFFERTA LIMITATA!</h1>
+          <p style="font-size: 1.8em; margin: 20px 0;">Solo per oggi - Non perdere questa occasione!</p>
+        </div>
+        
+        <div style="padding: 80px 20px; background: white; text-align: center;">
+          <div style="max-width: 800px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #FF6B35, #F7931E); color: white; padding: 60px 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); margin-bottom: 50px;">
+              <div style="font-size: 5em; margin-bottom: 20px;">50%</div>
+              <h2 style="font-size: 2.5em; margin-bottom: 20px;">DI SCONTO</h2>
+              <p style="font-size: 1.3em; opacity: 0.9;">Su tutti i prodotti selezionati</p>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 40px; border-radius: 15px; margin-bottom: 40px;">
+              <h3 style="color: #333; margin-bottom: 20px; font-size: 1.8em;">⏰ Offerta valida fino a mezzanotte!</h3>
+              <p style="color: #666; font-size: 1.2em;">Mostra questa pagina in negozio per ottenere lo sconto</p>
+            </div>
+            
+            <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+              <a href="tel:+393926568550" style="background: #FF6B35; color: white; padding: 20px 40px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 1.2em; box-shadow: 0 5px 15px rgba(255,107,53,0.4);">📞 Chiama Subito</a>
+              <a href="https://wa.me/393926568550" style="background: #25D366; color: white; padding: 20px 40px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 1.2em; box-shadow: 0 5px 15px rgba(37,211,102,0.4);">💬 WhatsApp</a>
+            </div>
+          </div>
+        </div>`,
+      css_content: `
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        @keyframes pulse {
+          0% { transform: scale(1); opacity: 0.3; }
+          50% { transform: scale(1.1); opacity: 0.1; }
+          100% { transform: scale(1); opacity: 0.3; }
+        }`
+    },
+    
+    {
+      id: 'template-event',
+      name: 'Evento Speciale',
+      description: 'Template per eventi, feste e celebrazioni',
+      category: 'evento',
+      type: 'predefined',
+      preview_image: '/templates/event-preview.png',
+      html_content: `
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 80px 20px; text-align: center; color: white;">
+          <h1 style="font-size: 3.5em; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">🎉 EVENTO SPECIALE</h1>
+          <p style="font-size: 1.8em; margin: 30px 0;">Una serata indimenticabile ti aspetta</p>
+          <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 15px; display: inline-block; margin-top: 20px;">
+            <p style="font-size: 1.3em; margin: 0;">📅 Sabato 25 Gennaio 2025 - ore 20:00</p>
+          </div>
+        </div>
+        
+        <div style="padding: 80px 20px; background: white;">
+          <div style="max-width: 1000px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 60px;">
+              <h2 style="font-size: 2.5em; color: #667eea; margin-bottom: 20px;">Cosa Ti Aspetta</h2>
+              <p style="font-size: 1.2em; color: #666; max-width: 600px; margin: 0 auto;">Una serata magica con musica, buon cibo e divertimento assicurato per tutti</p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; margin: 60px 0;">
+              
+              <div style="text-align: center; padding: 30px;">
+                <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2em;">🎵</div>
+                <h3 style="color: #333; margin-bottom: 15px;">Musica Live</h3>
+                <p style="color: #666;">Band dal vivo con i migliori successi</p>
+              </div>
+              
+              <div style="text-align: center; padding: 30px;">
+                <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2em;">🍽️</div>
+                <h3 style="color: #333; margin-bottom: 15px;">Cena Gourmet</h3>
+                <p style="color: #666;">Menu speciale preparato dai nostri chef</p>
+              </div>
+              
+              <div style="text-align: center; padding: 30px;">
+                <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2em;">🎊</div>
+                <h3 style="color: #333; margin-bottom: 15px;">Intrattenimento</h3>
+                <p style="color: #666;">Sorprese e animazione per tutta la serata</p>
+              </div>
+              
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 50px; border-radius: 20px; text-align: center; margin-top: 60px;">
+              <h3 style="font-size: 2em; margin-bottom: 20px;">Prenota Subito!</h3>
+              <p style="font-size: 1.2em; margin-bottom: 30px;">Posti limitati - Non perdere l'occasione</p>
+              <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+                <a href="tel:+393926568550" style="background: white; color: #667eea; padding: 15px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 1.1em;">📞 Prenota Ora</a>
+                <a href="https://wa.me/393926568550" style="background: #25D366; color: white; padding: 15px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 1.1em;">💬 WhatsApp</a>
+              </div>
+            </div>
+          </div>
+        </div>`,
+      css_content: `
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; }
+        @media (max-width: 768px) {
+          h1 { font-size: 2.5em !important; }
+          h2 { font-size: 2em !important; }
+        }`
+    }
+  ]
 }
 
 // Utility: Genera slug da titolo
