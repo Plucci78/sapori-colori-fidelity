@@ -2097,8 +2097,22 @@ for (const customer of recipients) {
             className="loading-logo"
           />
           <h2>Sapori & Colori</h2>
-          <div className="loading-spinner">⏳</div>
-          <p>Caricamento sistema...</p>
+          <p style={{ color: '#D4AF37', fontSize: '1.1em', margin: '0 0 30px 0', fontWeight: '600' }}>
+            Sistema di Fidelizzazione
+          </p>
+          <div className="loading-spinner"></div>
+          <p>Inizializzazione in corso...</p>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            gap: '8px', 
+            marginTop: '20px',
+            fontSize: '12px',
+            color: '#999'
+          }}>
+            <span>🔐</span>
+            <span>Autenticazione sicura</span>
+          </div>
         </div>
       </div>
     )
