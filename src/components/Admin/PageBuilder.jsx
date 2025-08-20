@@ -165,13 +165,39 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
           if (template.css_content) {
             console.log('🎨 Impostando CSS...');
             editor.setStyle(template.css_content);
-            console.log('✅ CSS template caricato:', template.name);
+            console.log('✅ CSS template caricato:', template.name, 'CSS length:', template.css_content.length);
+          } else {
+            console.log('⚠️ Template non ha CSS separato, usando stili inline HTML');
           }
+          
+          // Forza il rendering del canvas per applicare gli stili
+          setTimeout(() => {
+            editor.Canvas.getCanvasView().updateCanvasEl();
+            console.log('🔄 Canvas aggiornato per applicare stili');
+          }, 200);
         }
         
         // Forza refresh dell'editor
         console.log('🔄 Forzando refresh dell\'editor...');
         editor.refresh();
+        
+        // Debug finale - verifica cosa è stato caricato
+        setTimeout(() => {
+          const currentHTML = editor.getHtml();
+          const currentCSS = editor.getCss();
+          console.log('🔍 DEBUG FINALE - HTML caricato:', currentHTML.length, 'chars');
+          console.log('🔍 DEBUG FINALE - CSS caricato:', currentCSS.length, 'chars');
+          console.log('🔍 DEBUG FINALE - CSS content:', currentCSS);
+          
+          if (currentCSS.length === 0) {
+            console.log('⚠️ PROBLEMA: CSS non applicato! Tentativo di ricaricamento...');
+            if (template.css_content) {
+              editor.setStyle(template.css_content);
+              editor.refresh();
+              console.log('🔄 Riapplicato CSS template');
+            }
+          }
+        }, 1000);
         
         console.log('✅ Template caricato completamente:', template.name);
       } catch (error) {
