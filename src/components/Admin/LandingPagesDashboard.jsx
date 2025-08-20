@@ -15,9 +15,14 @@ const LandingPagesDashboard = ({ onEditPage, onNewPage }) => {
         : '/api/landing';
       
       const response = await fetch(apiUrl);
-      if (!response.ok) throw new Error('Errore caricamento landing pages');
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('❌ Response error:', response.status, errorData);
+        throw new Error(`HTTP ${response.status}: ${errorData}`);
+      }
       
       const data = await response.json();
+      console.log('✅ API Response:', data);
       setLandingPages(data.data || []);
     } catch (err) {
       setError(err.message);
