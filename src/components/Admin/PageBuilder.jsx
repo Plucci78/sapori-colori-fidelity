@@ -141,17 +141,20 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
         editor.setStyle('');
         
         // Poi carica il template
-        if (template.html_content) {
-          editor.setComponents(template.html_content);
-          console.log('✅ HTML template caricato');
-        }
-        if (template.css_content) {
-          editor.setStyle(template.css_content);
-          console.log('✅ CSS template caricato');
-        }
         if (template.grapesjs_data && Object.keys(template.grapesjs_data).length > 0) {
+          // Prima priorità: dati GrapesJS completi
           editor.loadProjectData(template.grapesjs_data);
-          console.log('✅ Dati GrapesJS template caricati');
+          console.log('✅ Dati GrapesJS template caricati:', template.name);
+        } else {
+          // Seconda priorità: HTML/CSS separati
+          if (template.html_content) {
+            editor.setComponents(template.html_content);
+            console.log('✅ HTML template caricato:', template.name, template.html_content.length, 'chars');
+          }
+          if (template.css_content) {
+            editor.setStyle(template.css_content);
+            console.log('✅ CSS template caricato:', template.name);
+          }
         }
         
         console.log('✅ Template caricato completamente:', template.name);
@@ -207,15 +210,21 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
     }
   };
 
-  // Effetto per caricare template senza dati GrapesJS (solo HTML/CSS)
+  // Effetto per caricare contenuti dopo l'inizializzazione di GrapesJS
   useEffect(() => {
     if (plugins && window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
       setTimeout(() => {
-        // Carica template che hanno solo HTML/CSS ma non dati GrapesJS
-        if (selectedTemplate && !selectedTemplate.grapesjs_data && selectedTemplate.html_content) {
-          loadTemplateIntoEditor(selectedTemplate);
+        if (editingPage) {
+          // Modifica landing page esistente (se non caricata già tramite project)
+          if (!editingPage.grapesjs_data) {
+            loadLandingPageIntoEditor(editingPage);
+          }
+        } else if (selectedTemplate) {
+          // Nuovo da template (se non caricato già tramite project) 
+          if (!selectedTemplate.grapesjs_data) {
+            loadTemplateIntoEditor(selectedTemplate);
+          }
         }
-        // Per landing page esistenti, il caricamento avviene già tramite project
       }, 1000);
     }
   }, [editingPage, selectedTemplate, plugins]);
@@ -707,28 +716,9 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
                 return editingPage.grapesjs_data;
               }
               
-              // Se abbiamo un template selezionato, usa quello
-              if (selectedTemplate) {
-                if (selectedTemplate.grapesjs_data) {
-                  return selectedTemplate.grapesjs_data;
-                } else {
-                  // Se il template non ha dati GrapesJS, crea un progetto base con HTML/CSS
-                  return {
-                    type: 'react',
-                    default: {
-                      pages: [{
-                        name: 'Pagina da Template',
-                        component: (
-                          <div 
-                            dangerouslySetInnerHTML={{ 
-                              __html: selectedTemplate.html_content || '<div>Template content</div>' 
-                            }}
-                          />
-                        )
-                      }]
-                    }
-                  };
-                }
+              // Se abbiamo un template selezionato con dati GrapesJS completi, usa quello
+              if (selectedTemplate && selectedTemplate.grapesjs_data) {
+                return selectedTemplate.grapesjs_data;
               }
               
               // Altrimenti usa il progetto di benvenuto
