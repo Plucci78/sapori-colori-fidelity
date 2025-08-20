@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PageBuilderNew from './PageBuilderNew';
+import PageBuilderStudio from './PageBuilderStudio';
 import LandingPagesDashboard from './LandingPagesDashboard';
 import TemplateSelector from './TemplateSelector';
 
@@ -52,7 +52,7 @@ const LandingPagesManager = () => {
       )}
       
       {currentView === 'builder' && (
-        <PageBuilderNew 
+        <PageBuilderStudio 
           editingPage={editingPage}
           selectedTemplate={selectedTemplate}
           onBackToDashboard={goToDashboard}
