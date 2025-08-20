@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import grapesjs from 'grapesjs';
 import 'grapesjs/dist/css/grapes.min.css';
+import './PageBuilderNew.css';
 
 // Plugin imports
 import presetWebpage from 'grapesjs-preset-webpage';
@@ -23,6 +24,7 @@ const PageBuilderNew = ({ editingPage, selectedTemplate, onBackToDashboard }) =>
   const [publishedUrl, setPublishedUrl] = useState(null);
   const [currentLandingPage, setCurrentLandingPage] = useState(editingPage || null);
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState('light');
 
   useEffect(() => {
     if (editorRef.current && !editor) {
@@ -545,8 +547,62 @@ const PageBuilderNew = ({ editingPage, selectedTemplate, onBackToDashboard }) =>
     }
   };
 
+  // Cambia tema
+  const changeTheme = (theme) => {
+    setCurrentTheme(theme);
+    // Salva preferenza tema nel localStorage
+    localStorage.setItem('grapes-theme', theme);
+  };
+
+  // Carica tema salvato all'avvio
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('grapes-theme');
+    if (savedTheme && ['light', 'dark', 'professional'].includes(savedTheme)) {
+      setCurrentTheme(savedTheme);
+    }
+  }, []);
+
   return (
-    <div style={{ position: 'relative', height: '100vh', width: '100vw' }}>
+    <div className={`gjs-editor-wrapper theme-${currentTheme}`} style={{ position: 'relative', height: '100vh', width: '100vw' }}>
+      {/* Selettore Temi */}
+      <div className="theme-selector">
+        <div 
+          className={`theme-btn light ${currentTheme === 'light' ? 'active' : ''}`}
+          onClick={() => changeTheme('light')}
+          title="Tema Chiaro"
+        />
+        <div 
+          className={`theme-btn dark ${currentTheme === 'dark' ? 'active' : ''}`}
+          onClick={() => changeTheme('dark')}
+          title="Tema Scuro"
+        />
+        <div 
+          className={`theme-btn professional ${currentTheme === 'professional' ? 'active' : ''}`}
+          onClick={() => changeTheme('professional')}
+          title="Tema Professionale"
+        />
+      </div>
+      
+      {/* Toolbar Container */}
+      <div className="gjs-toolbar-wrapper">
+        <div className="panel__switcher"></div>
+      </div>
+      
+      {/* Blocks Panel */}
+      <div className="gjs-blocks-wrapper">
+        <div className="blocks-container"></div>
+      </div>
+      
+      {/* Canvas Container */}
+      <div className="gjs-canvas-wrapper">
+        <div ref={editorRef} style={{ height: '100%', width: '100%' }} />
+      </div>
+      
+      {/* Right Panel */}
+      <div className="gjs-panels-wrapper">
+        <div className="panel__right"></div>
+      </div>
+
       {/* Control Buttons */}
       <div style={{ 
         position: 'absolute', 
@@ -662,8 +718,6 @@ const PageBuilderNew = ({ editingPage, selectedTemplate, onBackToDashboard }) =>
         )}
       </div>
 
-      {/* GrapesJS Editor Container */}
-      <div ref={editorRef} style={{ height: '100vh', width: '100%' }} />
     </div>
   );
 };
