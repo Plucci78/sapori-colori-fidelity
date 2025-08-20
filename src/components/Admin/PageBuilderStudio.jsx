@@ -9,6 +9,7 @@ const PageBuilderStudio = ({ editingPage, selectedTemplate, onBackToDashboard })
   const [currentLandingPage, setCurrentLandingPage] = useState(editingPage || null);
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [currentTheme, setCurrentTheme] = useState('light');
+  const [editorReady, setEditorReady] = useState(false);
   const editorRef = useRef(null);
 
   // Carica tema salvato
@@ -18,6 +19,54 @@ const PageBuilderStudio = ({ editingPage, selectedTemplate, onBackToDashboard })
       setCurrentTheme(savedTheme);
     }
   }, []);
+
+  // Carica template o landing page quando l'editor è pronto
+  useEffect(() => {
+    if (!editorReady || !editorRef.current) return;
+
+    const editor = editorRef.current;
+    
+    if (editingPage) {
+      console.log('📝 Caricamento landing page esistente:', editingPage.title);
+      if (editingPage.html_content) {
+        editor.setComponents && editor.setComponents(editingPage.html_content);
+      }
+      if (editingPage.css_content) {
+        editor.setStyle && editor.setStyle(editingPage.css_content);
+      }
+      setPublishedUrl(`${window.location.origin}/api/landing?action=show&slug=${editingPage.slug}`);
+    } else if (selectedTemplate) {
+      console.log('🎨 Caricamento template:', selectedTemplate.name);
+      if (selectedTemplate.html_content) {
+        editor.setComponents && editor.setComponents(selectedTemplate.html_content);
+      }
+      if (selectedTemplate.css_content) {
+        editor.setStyle && editor.setStyle(selectedTemplate.css_content);
+      }
+    } else {
+      console.log('🆕 Nuova landing page');
+      // Contenuto di default per nuove pagine
+      const defaultContent = `
+        <div style="background: linear-gradient(135deg, #fdae4b 0%, #d98a36 100%); padding: 60px 20px; text-align: center; color: white;">
+          <img src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png" alt="Sapori & Colori" style="height: 80px; margin-bottom: 20px;" />
+          <h1 style="font-size: 2.5em; margin: 0; margin-bottom: 20px;">Benvenuto nel Studio SDK</h1>
+          <p style="font-size: 1.2em; margin: 0;">Trascina i componenti per iniziare a costruire la tua landing page</p>
+        </div>
+        <div style="padding: 50px 20px; text-align: center;">
+          <h2>Inizia a Costruire</h2>
+          <p>Usa i componenti nella sidebar per aggiungere contenuti</p>
+        </div>
+      `;
+      editor.setComponents && editor.setComponents(defaultContent);
+    }
+  }, [editorReady, editingPage, selectedTemplate]);
+
+  // Handler quando l'editor è pronto
+  const handleEditorReady = (editor) => {
+    console.log('✅ Studio SDK Editor pronto!');
+    editorRef.current = editor;
+    setEditorReady(true);
+  };
 
   // Cambia tema
   const changeTheme = (theme) => {
@@ -333,7 +382,7 @@ const PageBuilderStudio = ({ editingPage, selectedTemplate, onBackToDashboard })
 
       {/* IL TUO CODICE GRAPESJS STUDIO SDK ORIGINALE */}
       <StudioEditor
-        ref={editorRef}
+        onReady={handleEditorReady}
         options={{
           licenseKey: '20dcb4e71c5e4edcb01cee40c282732d7e219020ae5646ac97298687dae3b19a',
           theme: currentTheme,
