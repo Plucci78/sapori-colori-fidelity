@@ -132,36 +132,54 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
 
   // Carica template selezionato nell'editor
   const loadTemplateIntoEditor = (template) => {
+    console.log('🔧 loadTemplateIntoEditor chiamata con:', template.name);
+    console.log('🔧 Editor disponibile:', !!(window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0));
+    
     if (window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
       const editor = window.grapesjs.editors[0];
+      console.log('🔧 Editor ottenuto:', !!editor);
       
       try {
         // Prima pulisci l'editor
+        console.log('🧹 Pulizia editor...');
         editor.setComponents('');
         editor.setStyle('');
         
         // Poi carica il template
         if (template.grapesjs_data && Object.keys(template.grapesjs_data).length > 0) {
           // Prima priorità: dati GrapesJS completi
+          console.log('📋 Caricamento dati GrapesJS completi...');
           editor.loadProjectData(template.grapesjs_data);
           console.log('✅ Dati GrapesJS template caricati:', template.name);
         } else {
           // Seconda priorità: HTML/CSS separati
+          console.log('🎨 Caricamento HTML/CSS separati...');
+          console.log('📄 HTML length:', template.html_content?.length || 0);
+          console.log('🎨 CSS length:', template.css_content?.length || 0);
+          
           if (template.html_content) {
+            console.log('📄 Impostando componenti HTML...');
             editor.setComponents(template.html_content);
             console.log('✅ HTML template caricato:', template.name, template.html_content.length, 'chars');
           }
           if (template.css_content) {
+            console.log('🎨 Impostando CSS...');
             editor.setStyle(template.css_content);
             console.log('✅ CSS template caricato:', template.name);
           }
         }
         
+        // Forza refresh dell'editor
+        console.log('🔄 Forzando refresh dell\'editor...');
+        editor.refresh();
+        
         console.log('✅ Template caricato completamente:', template.name);
       } catch (error) {
-        console.error('Errore caricamento template:', error);
+        console.error('❌ Errore caricamento template:', error);
         alert('Errore nel caricamento del template. Prova a ricaricare la pagina.');
       }
+    } else {
+      console.error('❌ Editor GrapesJS non disponibile!');
     }
   };
 
@@ -212,27 +230,41 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
 
   // Effetto per caricare contenuti dopo l'inizializzazione di GrapesJS
   useEffect(() => {
+    console.log('🎯 useEffect triggered - plugins:', !!plugins, 'editingPage:', !!editingPage, 'selectedTemplate:', !!selectedTemplate);
+    console.log('🎯 selectedTemplate data:', selectedTemplate);
+    
     if (plugins && window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
       // Carica immediatamente senza timeout per template senza dati GrapesJS
       const loadContent = () => {
+        console.log('🔄 loadContent called');
         if (editingPage) {
           // Modifica landing page esistente (se non caricata già tramite project)
           if (!editingPage.grapesjs_data) {
-            console.log('🔄 Caricamento landing page esistente senza dati GrapesJS');
+            console.log('📝 Caricamento landing page esistente senza dati GrapesJS');
             loadLandingPageIntoEditor(editingPage);
+          } else {
+            console.log('📝 Landing page ha già dati GrapesJS, saltando caricamento useEffect');
           }
         } else if (selectedTemplate) {
           // Nuovo da template (se non caricato già tramite project) 
+          console.log('🎨 Template ricevuto:', selectedTemplate.name, 'ha grapesjs_data:', !!selectedTemplate.grapesjs_data);
           if (!selectedTemplate.grapesjs_data) {
-            console.log('🔄 Caricamento template senza dati GrapesJS:', selectedTemplate.name);
+            console.log('🎨 Caricamento template senza dati GrapesJS:', selectedTemplate.name);
             loadTemplateIntoEditor(selectedTemplate);
+          } else {
+            console.log('🎨 Template ha già dati GrapesJS, saltando caricamento useEffect');
           }
+        } else {
+          console.log('❌ Nessun template o editingPage da caricare');
         }
       };
 
       // Prova immediatamente e con un piccolo timeout come fallback
       loadContent();
       setTimeout(loadContent, 500);
+      setTimeout(loadContent, 1500); // Timeout più lungo come ultimo tentativo
+    } else {
+      console.log('❌ Plugins non disponibili o editor non inizializzato');
     }
   }, [editingPage, selectedTemplate, plugins]);
 
