@@ -233,38 +233,56 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
     console.log('🎯 useEffect triggered - plugins:', !!plugins, 'editingPage:', !!editingPage, 'selectedTemplate:', !!selectedTemplate);
     console.log('🎯 selectedTemplate data:', selectedTemplate);
     
-    if (plugins && window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
-      // Carica immediatamente senza timeout per template senza dati GrapesJS
-      const loadContent = () => {
-        console.log('🔄 loadContent called');
-        if (editingPage) {
-          // Modifica landing page esistente (se non caricata già tramite project)
-          if (!editingPage.grapesjs_data) {
-            console.log('📝 Caricamento landing page esistente senza dati GrapesJS');
-            loadLandingPageIntoEditor(editingPage);
-          } else {
-            console.log('📝 Landing page ha già dati GrapesJS, saltando caricamento useEffect');
-          }
-        } else if (selectedTemplate) {
-          // Nuovo da template (se non caricato già tramite project) 
-          console.log('🎨 Template ricevuto:', selectedTemplate.name, 'ha grapesjs_data:', !!selectedTemplate.grapesjs_data);
-          if (!selectedTemplate.grapesjs_data) {
-            console.log('🎨 Caricamento template senza dati GrapesJS:', selectedTemplate.name);
-            loadTemplateIntoEditor(selectedTemplate);
-          } else {
-            console.log('🎨 Template ha già dati GrapesJS, saltando caricamento useEffect');
-          }
+    if (plugins) {
+      // Funzione per aspettare che l'editor sia completamente inizializzato
+      const waitForEditor = (attempt = 1, maxAttempts = 10) => {
+        console.log(`⏳ Tentativo ${attempt}/${maxAttempts} - controllo editor...`);
+        
+        if (window.grapesjs && window.grapesjs.editors && window.grapesjs.editors.length > 0) {
+          const editor = window.grapesjs.editors[0];
+          console.log('✅ Editor trovato, controllo inizializzazione...');
+          
+          // Aspetta che l'editor sia completamente inizializzato
+          setTimeout(() => {
+            const loadContent = () => {
+              console.log('🔄 loadContent called');
+              if (editingPage) {
+                // Modifica landing page esistente (se non caricata già tramite project)
+                if (!editingPage.grapesjs_data) {
+                  console.log('📝 Caricamento landing page esistente senza dati GrapesJS');
+                  loadLandingPageIntoEditor(editingPage);
+                } else {
+                  console.log('📝 Landing page ha già dati GrapesJS, saltando caricamento useEffect');
+                }
+              } else if (selectedTemplate) {
+                // Nuovo da template (se non caricato già tramite project) 
+                console.log('🎨 Template ricevuto:', selectedTemplate.name, 'ha grapesjs_data:', !!selectedTemplate.grapesjs_data);
+                if (!selectedTemplate.grapesjs_data) {
+                  console.log('🎨 Caricamento template senza dati GrapesJS:', selectedTemplate.name);
+                  loadTemplateIntoEditor(selectedTemplate);
+                } else {
+                  console.log('🎨 Template ha già dati GrapesJS, saltando caricamento useEffect');
+                }
+              } else {
+                console.log('❌ Nessun template o editingPage da caricare');
+              }
+            };
+            
+            loadContent();
+          }, 500 + (attempt * 300)); // Timeout crescente per ogni tentativo
+          
+        } else if (attempt < maxAttempts) {
+          console.log(`⏳ Editor non ancora disponibile, riprovo tra ${attempt * 500}ms...`);
+          setTimeout(() => waitForEditor(attempt + 1, maxAttempts), attempt * 500);
         } else {
-          console.log('❌ Nessun template o editingPage da caricare');
+          console.log('❌ Editor non disponibile dopo tutti i tentativi');
         }
       };
-
-      // Prova immediatamente e con un piccolo timeout come fallback
-      loadContent();
-      setTimeout(loadContent, 500);
-      setTimeout(loadContent, 1500); // Timeout più lungo come ultimo tentativo
+      
+      // Inizia il processo di attesa
+      waitForEditor();
     } else {
-      console.log('❌ Plugins non disponibili o editor non inizializzato');
+      console.log('❌ Plugins non ancora disponibili');
     }
   }, [editingPage, selectedTemplate, plugins]);
 
