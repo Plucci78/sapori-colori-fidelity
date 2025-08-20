@@ -4,10 +4,17 @@ import 'grapesjs/dist/css/grapes.min.css';
 
 // Plugin imports
 import presetWebpage from 'grapesjs-preset-webpage';
+import presetNewsletter from 'grapesjs-preset-newsletter';
 import blocksBasic from 'grapesjs-blocks-basic';
 import pluginForms from 'grapesjs-plugin-forms';
 import styleBg from 'grapesjs-style-bg';
 import pluginExport from 'grapesjs-plugin-export';
+import pluginCountdown from 'grapesjs-component-countdown';
+import pluginTabs from 'grapesjs-tabs';
+import pluginCustomCode from 'grapesjs-custom-code';
+import pluginTouch from 'grapesjs-touch';
+import pluginParser from 'grapesjs-parser-postcss';
+import pluginTyped from 'grapesjs-typed';
 
 const PageBuilderNew = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
   const editorRef = useRef(null);
@@ -25,14 +32,25 @@ const PageBuilderNew = ({ editingPage, selectedTemplate, onBackToDashboard }) =>
         container: editorRef.current,
         height: '100vh',
         width: '100%',
+        fromElement: false,
+        showOffsets: true,
+        showBorders: true,
+        showGrid: true,
         
-        // Plugin configuration
+        // Plugin configuration - TUTTI I PLUGIN!
         plugins: [
           presetWebpage,
+          presetNewsletter,
           blocksBasic,
           pluginForms,
           styleBg,
           pluginExport,
+          pluginCountdown,
+          pluginTabs,
+          pluginCustomCode,
+          pluginTouch,
+          pluginParser,
+          pluginTyped,
         ],
         
         pluginsOpts: {
@@ -158,6 +176,36 @@ const PageBuilderNew = ({ editingPage, selectedTemplate, onBackToDashboard }) =>
             preHtml: '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Landing Page</title><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>',
             postHtml: '</body></html>',
             inlineCss: true,
+          },
+          [pluginCountdown]: {
+            startTime: '2024-12-31',
+            endText: 'Offerta scaduta!',
+            dateInputType: 'date',
+            defaultStyle: true,
+          },
+          [pluginTabs]: {},
+          [pluginCustomCode]: {},
+          [pluginTouch]: {},
+          [pluginParser]: {},
+          [pluginTyped]: {
+            block: {
+              category: 'Extra',
+              content: {
+                type: 'typed',
+                'type-speed': 40,
+                strings: [
+                  'Testo animato 1',
+                  'Testo animato 2',
+                  'Testo animato 3'
+                ],
+              }
+            }
+          },
+          [presetNewsletter]: {
+            modalLabelImport: 'Incolla il tuo HTML qui',
+            modalLabelExport: 'Copia il codice qui sotto',
+            codeViewerTheme: 'material',
+            tableBasicHtml: `<table style="width:100%; font-family: Arial, sans-serif;"><tr><td style="padding:10px;">Contenuto tabella</td></tr></table>`,
           }
         },
         
@@ -236,7 +284,7 @@ const PageBuilderNew = ({ editingPage, selectedTemplate, onBackToDashboard }) =>
           }]
         },
         
-        // Block manager
+        // Block manager con molti blocchi
         blockManager: {
           appendTo: '.blocks-container',
           blocks: [
@@ -244,7 +292,7 @@ const PageBuilderNew = ({ editingPage, selectedTemplate, onBackToDashboard }) =>
               id: 'section',
               label: '<i class="fa fa-square-o"></i><div>Sezione</div>',
               attributes: { class: 'gjs-block-section' },
-              content: '<section style="padding: 50px 20px; margin: 10px 0;"><h1>Nuova Sezione</h1><p>Inserisci qui il tuo contenuto</p></section>'
+              content: '<section style="padding: 50px 20px; margin: 10px 0; background: #f8f9fa;"><h1>Nuova Sezione</h1><p>Inserisci qui il tuo contenuto</p></section>'
             },
             {
               id: 'text',
@@ -257,6 +305,55 @@ const PageBuilderNew = ({ editingPage, selectedTemplate, onBackToDashboard }) =>
               select: true,
               content: { type: 'image' },
               activate: true,
+            },
+            {
+              id: 'hero-section',
+              label: '<i class="fa fa-star"></i><div>Hero</div>',
+              category: 'Sezioni',
+              content: `
+                <section style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 100px 20px; text-align: center;">
+                  <h1 style="font-size: 3em; margin-bottom: 20px;">Il Tuo Titolo Qui</h1>
+                  <p style="font-size: 1.2em; margin-bottom: 30px;">Sottotitolo o descrizione del tuo servizio</p>
+                  <a href="#" style="background: #ff6b6b; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">Call to Action</a>
+                </section>
+              `
+            },
+            {
+              id: 'cta-button',
+              label: '<i class="fa fa-hand-pointer-o"></i><div>CTA</div>',
+              category: 'Elementi',
+              content: '<a href="#" style="background: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Clicca Qui</a>'
+            },
+            {
+              id: 'testimonial',
+              label: '<i class="fa fa-quote-left"></i><div>Testimonianza</div>',
+              category: 'Sezioni',
+              content: `
+                <section style="background: #f8f9fa; padding: 60px 20px; text-align: center;">
+                  <div style="max-width: 600px; margin: 0 auto;">
+                    <p style="font-size: 1.2em; font-style: italic; margin-bottom: 20px;">"Questa è una testimonianza fantastica del nostro cliente soddisfatto che racconta la sua esperienza positiva."</p>
+                    <h4>Nome Cliente</h4>
+                    <p>Azienda o Ruolo</p>
+                  </div>
+                </section>
+              `
+            },
+            {
+              id: 'pricing-card',
+              label: '<i class="fa fa-credit-card"></i><div>Pricing</div>',
+              category: 'Sezioni',
+              content: `
+                <div style="background: white; border: 1px solid #dee2e6; border-radius: 10px; padding: 30px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 300px; margin: 20px auto;">
+                  <h3>Piano Base</h3>
+                  <div style="font-size: 2em; color: #007bff; margin: 20px 0;">€29/mese</div>
+                  <ul style="list-style: none; padding: 0; margin: 20px 0;">
+                    <li>✓ Caratteristica 1</li>
+                    <li>✓ Caratteristica 2</li>
+                    <li>✓ Caratteristica 3</li>
+                  </ul>
+                  <a href="#" style="background: #007bff; color: white; padding: 10px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">Scegli Piano</a>
+                </div>
+              `
             }
           ]
         }
