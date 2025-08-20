@@ -136,17 +136,25 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
       const editor = window.grapesjs.editors[0];
       
       try {
+        // Prima pulisci l'editor
+        editor.setComponents('');
+        editor.setStyle('');
+        
+        // Poi carica il template
         if (template.html_content) {
           editor.setComponents(template.html_content);
+          console.log('✅ HTML template caricato');
         }
         if (template.css_content) {
           editor.setStyle(template.css_content);
+          console.log('✅ CSS template caricato');
         }
         if (template.grapesjs_data && Object.keys(template.grapesjs_data).length > 0) {
           editor.loadProjectData(template.grapesjs_data);
+          console.log('✅ Dati GrapesJS template caricati');
         }
         
-        console.log('✅ Template caricato nell\'editor:', template.name);
+        console.log('✅ Template caricato completamente:', template.name);
       } catch (error) {
         console.error('Errore caricamento template:', error);
         alert('Errore nel caricamento del template. Prova a ricaricare la pagina.');
@@ -695,8 +703,8 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
                 });
               }
             ],
-            // Initial project content using React components
-            project: {
+            // Initial project content - solo se non c'è template o landing page da caricare
+            project: (!editingPage && !selectedTemplate) ? {
               type: 'react',
               default: {
                 pages: [
@@ -711,7 +719,7 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
                   },
                 ]
               }
-            },
+            } : undefined,
             // Other GrapesJS options (optional)
             height: '100%',
             width: '100%',
