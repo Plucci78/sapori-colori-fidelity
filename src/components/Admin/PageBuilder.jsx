@@ -721,6 +721,22 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
                 return selectedTemplate.grapesjs_data;
               }
               
+              // Se abbiamo un template ma senza dati GrapesJS, inizia vuoto (verrà caricato dal useEffect)
+              if (selectedTemplate) {
+                return {
+                  type: 'react',
+                  default: {
+                    pages: [{
+                      name: 'Caricamento Template...',
+                      component: <div style={{ padding: '50px', textAlign: 'center', color: '#666' }}>
+                        <div style={{ fontSize: '2rem', marginBottom: '20px' }}>⏳</div>
+                        <p>Caricamento template "{selectedTemplate.name}"...</p>
+                      </div>
+                    }]
+                  }
+                };
+              }
+              
               // Altrimenti usa il progetto di benvenuto
               return {
                 type: 'react',
