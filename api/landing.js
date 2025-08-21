@@ -760,7 +760,7 @@ async function handleSaveAsTemplate(req, res) {
       
       // Genera thumbnail per template fallback in background
       if (landingPage.html_content && landingPage.html_content.trim()) {
-        generateThumbnailForLandingPage(`template_${templatePage.id}`, landingPage.html_content, landingPage.css_content)
+        generateThumbnailForLandingPage(templatePage.slug, landingPage.html_content, landingPage.css_content)
           .then(async (thumbnailUrl) => {
             await supabase
               .from('landing_pages')
