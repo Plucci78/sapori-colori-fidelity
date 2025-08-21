@@ -481,19 +481,51 @@ const PageBuilderStudio = ({ editingPage, selectedTemplate, onBackToDashboard })
               autosaveIntervalMs: 10000
             },
             plugins: [
-              flexComponent.init({}),
+              // Plugin essenziali caricati subito (non danno errori)
               canvasFullSize.init({}),
-              rteProseMirror.init({}),
-              tableComponent.init({}),
-              swiperComponent.init({}),
               canvasEmptyState.init({}),
+              
+              // Plugin di base che funzionano sempre
+              flexComponent.init({}),
+              tableComponent.init({}),
               iconifyComponent.init({}),
-              accordionComponent.init({}),
-              listPagesComponent.init({}),
-              fsLightboxComponent.init({}),
-              layoutSidebarButtons.init({}),
-              youtubeAssetProvider.init({}),
-              lightGalleryComponent.init({})
+              
+              // Plugin con inizializzazione ritardata per evitare errori
+              (editor) => {
+                // Aspetta che l'editor sia completamente inizializzato
+                const initDelayedPlugins = () => {
+                  try {
+                    // Verifica che l'editor sia pronto
+                    if (!editor || !editor.Commands || !editor.RichTextEditor) {
+                      console.log('🔄 Editor non ancora pronto, riprovo tra 500ms...');
+                      setTimeout(initDelayedPlugins, 500);
+                      return;
+                    }
+                    
+                    console.log('✅ Editor pronto, inizializzo plugin ritardati...');
+                    
+                    // Inizializza plugin che causavano errori
+                    rteProseMirror.init({})(editor);
+                    swiperComponent.init({})(editor);
+                    accordionComponent.init({})(editor);
+                    listPagesComponent.init({})(editor);
+                    fsLightboxComponent.init({})(editor);
+                    layoutSidebarButtons.init({})(editor);
+                    youtubeAssetProvider.init({})(editor);
+                    lightGalleryComponent.init({})(editor);
+                    
+                    console.log('🎉 Tutti i plugin inizializzati con successo!');
+                    
+                  } catch (error) {
+                    console.warn('⚠️ Errore inizializzazione plugin ritardati:', error);
+                    // Riprova dopo un altro delay se fallisce
+                    setTimeout(initDelayedPlugins, 1000);
+                  }
+                };
+                
+                // Inizia il processo di inizializzazione ritardato
+                setTimeout(initDelayedPlugins, 100);
+              }
             ]
           }}
         />
