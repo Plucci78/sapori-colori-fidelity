@@ -6,15 +6,24 @@ const supabase = createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpleGthbGVrYW9mc2ZjdXNkZmpoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0ODYyNjEzNCwiZXhwIjoyMDY0MjAyMTM0fQ.43plaZecrTvbwkr7U7g2Ucogkd0VgKRUg9VkJ--7JCU'
 )
 
-// Funzione per generare thumbnail automaticamente (temporaneamente disabilitata per Vercel)
-async function generateThumbnailForLandingPage(landingPageId, htmlContent, cssContent) {
+// Funzione per generare thumbnail URL usando servizio screenshot esterno
+async function generateThumbnailForLandingPage(pageSlug, htmlContent, cssContent) {
   try {
-    console.log(`📸 Thumbnail generation temporaneamente disabilitato per ${landingPageId}`);
-    // TODO: Implementare servizio esterno per screenshot o usare Vercel Edge Functions
-    return '/placeholder-thumbnail.svg'; // Fallback temporaneo
+    console.log(`📸 Generando screenshot per landing page ${pageSlug}...`);
+    
+    // URL della landing page da screenshot
+    const landingPageUrl = `https://sapori-colori-fidelity.vercel.app/api/landing?action=show&slug=${pageSlug}`;
+    
+    // Usa il servizio screenshot gratuito Thum.io
+    const screenshotUrl = `https://image.thum.io/get/width/400/crop/300/noanimate/${encodeURIComponent(landingPageUrl)}`;
+    
+    console.log(`✅ Screenshot URL generato: ${screenshotUrl}`);
+    console.log(`🔗 Landing page URL: ${landingPageUrl}`);
+    
+    return screenshotUrl;
     
   } catch (error) {
-    console.warn(`⚠️ Fallback placeholder per thumbnail ${landingPageId}:`, error.message);
+    console.warn(`⚠️ Fallback placeholder per thumbnail ${pageSlug}:`, error.message);
     return '/placeholder-thumbnail.svg'; // Fallback
   }
 }
@@ -289,7 +298,7 @@ async function handlePost(req, res) {
     
     // Genera thumbnail in background (non bloccante)
     if (html_content && html_content.trim()) {
-      generateThumbnailForLandingPage(data.id, html_content, css_content)
+      generateThumbnailForLandingPage(data.slug, html_content, css_content)
         .then(async (thumbnailUrl) => {
           // Aggiorna record con thumbnail URL
           await supabase
@@ -383,7 +392,7 @@ async function handlePut(req, res) {
     // Rigenera thumbnail se il contenuto HTML/CSS è cambiato
     if (html_content !== undefined || css_content !== undefined) {
       if (data.html_content && data.html_content.trim()) {
-        generateThumbnailForLandingPage(data.id, data.html_content, data.css_content)
+        generateThumbnailForLandingPage(data.slug, data.html_content, data.css_content)
           .then(async (thumbnailUrl) => {
             // Aggiorna record con nuovo thumbnail URL
             await supabase
