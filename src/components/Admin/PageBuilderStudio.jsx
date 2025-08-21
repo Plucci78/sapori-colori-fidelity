@@ -169,6 +169,21 @@ const PageBuilderStudio = ({ editingPage, selectedTemplate, onBackToDashboard })
       return;
     }
 
+    // Verifica che la landing page abbia contenuto
+    if (!editorRef.current) {
+      alert('Editor non inizializzato. Riprova tra qualche secondo.');
+      return;
+    }
+
+    const editor = editorRef.current;
+    const currentHtml = editor.getHtml ? editor.getHtml() : '';
+    const currentCss = editor.getCss ? editor.getCss() : '';
+
+    if (!currentHtml || currentHtml.trim().length < 50) {
+      alert('La landing page deve avere del contenuto prima di essere salvata come template');
+      return;
+    }
+
     const templateName = prompt('Nome del template:', `Template da ${currentLandingPage.title}`);
     if (!templateName) return;
 
@@ -179,8 +194,11 @@ const PageBuilderStudio = ({ editingPage, selectedTemplate, onBackToDashboard })
     try {
       console.log('📝 Inizio salvataggio template:', {
         landing_page_id: currentLandingPage.id,
+        landing_page_id_type: typeof currentLandingPage.id,
         template_name: templateName,
-        template_description: templateDescription
+        template_name_type: typeof templateName,
+        template_description: templateDescription,
+        currentLandingPage_full: currentLandingPage
       });
 
       const apiUrl = window.location.hostname === 'localhost' 

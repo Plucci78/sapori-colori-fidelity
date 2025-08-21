@@ -629,10 +629,8 @@ async function handleSaveAsTemplate(req, res) {
           grapesjs_data: landingPage.grapesjs_data,
           meta_title: `Template: ${template_name}`,
           meta_description: template_description || `Template per landing pages`,
-          is_published: false, // I template non sono pubblicati
-          is_active: true,
-          is_template: true, // Flag speciale per identificare i template
-          template_category: 'custom',
+          is_published: false, // I template non sono pubblicati - campo esistente
+          is_active: true,     // Campo esistente
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
