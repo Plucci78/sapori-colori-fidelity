@@ -1,30 +1,17 @@
 // API Route unificata per tutte le operazioni sulle landing pages
 import { createClient } from '@supabase/supabase-js'
-const screenshotGenerator = require('../utils/screenshotGenerator.js')
 
 const supabase = createClient(
   'https://jexkalekaofsfcusdfjh.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpleGthbGVrYW9mc2ZjdXNkZmpoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0ODYyNjEzNCwiZXhwIjoyMDY0MjAyMTM0fQ.43plaZecrTvbwkr7U7g2Ucogkd0VgKRUg9VkJ--7JCU'
 )
 
-// Funzione per generare thumbnail automaticamente
+// Funzione per generare thumbnail automaticamente (temporaneamente disabilitata per Vercel)
 async function generateThumbnailForLandingPage(landingPageId, htmlContent, cssContent) {
   try {
-    console.log(`📸 Generando thumbnail per landing page ${landingPageId}...`);
-    
-    const thumbnail = await screenshotGenerator.createLandingPageThumbnail(
-      landingPageId, 
-      htmlContent, 
-      cssContent,
-      {
-        width: 400,
-        height: 300,
-        quality: 80
-      }
-    );
-    
-    console.log(`✅ Thumbnail generato: ${thumbnail.publicPath}`);
-    return thumbnail.publicPath;
+    console.log(`📸 Thumbnail generation temporaneamente disabilitato per ${landingPageId}`);
+    // TODO: Implementare servizio esterno per screenshot o usare Vercel Edge Functions
+    return '/placeholder-thumbnail.jpg'; // Fallback temporaneo
     
   } catch (error) {
     console.warn(`⚠️ Fallback placeholder per thumbnail ${landingPageId}:`, error.message);
