@@ -207,256 +207,253 @@ const PageBuilderStudio = ({ editingPage, selectedTemplate, onBackToDashboard })
   };
 
   return (
-    <div style={{ position: 'relative', height: '100vh', width: '100vw' }}>
-      {/* Indicatore Studio SDK */}
+    <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column' }}>
+      {/* MINI HEADER INTEGRATO */}
       <div style={{
-        position: 'absolute',
-        top: '5px',
-        left: '5px',
-        background: '#fdae4b',
-        color: 'black',
-        padding: '4px 8px',
-        fontSize: '10px',
-        borderRadius: '3px',
-        zIndex: 10001,
-        fontWeight: 'bold'
-      }}>
-        STUDIO SDK ⚡
-      </div>
-
-      {/* Selettore Temi */}
-      <div style={{
-        position: 'absolute',
-        top: '10px',
-        right: '10px',
-        zIndex: 9999,
+        height: '50px',
+        background: 'linear-gradient(135deg, #fdae4b 0%, #d98a36 100%)',
         display: 'flex',
-        gap: '5px',
-        background: 'rgba(255,255,255,0.9)',
-        padding: '8px',
-        borderRadius: '6px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-      }}>
-        <div 
-          style={{
-            width: '24px',
-            height: '24px',
-            border: currentTheme === 'light' ? '3px solid #fdae4b' : '2px solid #ddd',
-            borderRadius: '50%',
-            cursor: 'pointer',
-            background: 'linear-gradient(135deg, #fff 0%, #f8f9fa 100%)',
-            transform: currentTheme === 'light' ? 'scale(1.1)' : 'scale(1)'
-          }}
-          onClick={() => changeTheme('light')}
-          title="Tema Chiaro"
-        />
-        <div 
-          style={{
-            width: '24px',
-            height: '24px',
-            border: currentTheme === 'dark' ? '3px solid #fdae4b' : '2px solid #ddd',
-            borderRadius: '50%',
-            cursor: 'pointer',
-            background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
-            transform: currentTheme === 'dark' ? 'scale(1.1)' : 'scale(1)'
-          }}
-          onClick={() => changeTheme('dark')}
-          title="Tema Scuro"
-        />
-      </div>
-
-      {/* Control Buttons */}
-      <div style={{ 
-        position: 'absolute', 
-        bottom: '20px', 
-        right: '20px', 
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 20px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         zIndex: 10000,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        alignItems: 'flex-end'
+        color: 'white'
       }}>
         
-        {/* Dashboard Button */}
-        {onBackToDashboard && (
+        {/* PULSANTI SINISTRA */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ 
+            background: 'rgba(255,255,255,0.2)', 
+            padding: '4px 8px', 
+            borderRadius: '4px', 
+            fontSize: '11px',
+            fontWeight: 'bold'
+          }}>
+            STUDIO SDK ⚡
+          </span>
+          
+          {/* Dashboard Button */}
+          {onBackToDashboard && (
+            <button
+              onClick={onBackToDashboard}
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                color: 'white',
+                border: '1px solid rgba(255,255,255,0.3)',
+                padding: '6px 12px',
+                borderRadius: '4px',
+                fontSize: '12px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.25)'}
+              onMouseOut={(e) => e.target.style.background = 'rgba(255,255,255,0.15)'}
+            >
+              🏠 Dashboard
+            </button>
+          )}
+          
+          {/* Publish Button */}
           <button
-            onClick={onBackToDashboard}
+            onClick={handlePublish}
+            disabled={isPublishing}
             style={{
-              background: '#6c757d',
+              background: currentLandingPage ? '#28a745' : 'rgba(255,255,255,0.15)',
               color: 'white',
-              border: 'none',
-              padding: '10px 16px',
-              borderRadius: '6px',
-              fontSize: '14px',
-              cursor: 'pointer',
+              border: '1px solid rgba(255,255,255,0.3)',
+              padding: '6px 12px',
+              borderRadius: '4px',
               fontWeight: 'bold',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              cursor: isPublishing ? 'not-allowed' : 'pointer',
+              fontSize: '12px',
+              opacity: isPublishing ? 0.6 : 1,
+              transition: 'all 0.2s ease'
             }}
           >
-            ← Dashboard
+            {isPublishing 
+              ? '🔄 Salvando...' 
+              : currentLandingPage 
+                ? '💾 Aggiorna' 
+                : '🚀 Pubblica'
+            }
           </button>
-        )}
-        
-        {/* Current page info */}
-        {currentLandingPage && (
-          <div style={{
-            background: '#17a2b8',
-            color: 'white',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            fontSize: '11px',
-            maxWidth: '250px',
-            textAlign: 'center'
-          }}>
-            📝 Editing: {currentLandingPage.slug.split('-')[1]}
-          </div>
-        )}
-        
-        {/* Publish Button */}
-        <button
-          onClick={handlePublish}
-          disabled={isPublishing}
-          style={{
-            background: currentLandingPage ? '#28a745' : '#fdae4b',
-            color: 'white',
-            border: 'none',
-            padding: '12px 20px',
-            borderRadius: '6px',
-            fontWeight: 'bold',
-            cursor: isPublishing ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-            opacity: isPublishing ? 0.6 : 1
-          }}
-        >
-          {isPublishing 
-            ? '🔄 Salvando...' 
-            : currentLandingPage 
-              ? '💾 Aggiorna Pagina' 
-              : '🚀 Pubblica Nuova'
-          }
-        </button>
-        
-        {/* Save as Template Button */}
-        {currentLandingPage && (
-          <button
-            onClick={handleSaveAsTemplate}
-            disabled={isSavingTemplate}
-            style={{
-              background: '#17a2b8',
-              color: 'white',
-              border: 'none',
-              padding: '8px 16px',
+          
+          {/* Save as Template Button */}
+          {currentLandingPage && (
+            <button
+              onClick={handleSaveAsTemplate}
+              disabled={isSavingTemplate}
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                color: 'white',
+                border: '1px solid rgba(255,255,255,0.3)',
+                padding: '6px 12px',
+                borderRadius: '4px',
+                fontSize: '12px',
+                cursor: isSavingTemplate ? 'not-allowed' : 'pointer',
+                opacity: isSavingTemplate ? 0.6 : 1,
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {isSavingTemplate ? '💾 Salvando...' : '📋 Template'}
+            </button>
+          )}
+        </div>
+
+        {/* INFO CENTRO */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          {/* Current page info */}
+          {currentLandingPage && (
+            <div style={{
+              background: 'rgba(255,255,255,0.2)',
+              padding: '4px 12px',
               borderRadius: '4px',
               fontSize: '12px',
-              cursor: isSavingTemplate ? 'not-allowed' : 'pointer',
-              opacity: isSavingTemplate ? 0.6 : 1
-            }}
-          >
-            {isSavingTemplate ? '💾 Salvando...' : '📋 Salva come Template'}
-          </button>
-        )}
-
-        {/* Published URL */}
-        {publishedUrl && (
-          <div style={{
-            background: '#28a745',
-            color: 'white',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            fontSize: '11px',
-            maxWidth: '250px',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            cursor: 'pointer',
-            textAlign: 'center'
-          }}
-          onClick={() => navigator.clipboard.writeText(publishedUrl)}
-          title="Clicca per copiare il link"
-          >
-            🔗 Copia Link
+              fontWeight: 'bold'
+            }}>
+              📝 {currentLandingPage.title || currentLandingPage.slug.split('-')[1]}
+            </div>
+          )}
+          
+          {/* Published URL */}
+          {publishedUrl && (
+            <button
+              onClick={() => navigator.clipboard.writeText(publishedUrl)}
+              title="Clicca per copiare il link"
+              style={{
+                background: '#28a745',
+                color: 'white',
+                border: 'none',
+                padding: '4px 12px',
+                borderRadius: '4px',
+                fontSize: '12px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              🔗 Copia Link
+            </button>
+          )}
+        </div>
+        
+        {/* CONTROLLI DESTRA */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Selettore Temi */}
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <div 
+              style={{
+                width: '20px',
+                height: '20px',
+                border: currentTheme === 'light' ? '2px solid white' : '1px solid rgba(255,255,255,0.5)',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                background: 'linear-gradient(135deg, #fff 0%, #f8f9fa 100%)',
+                transform: currentTheme === 'light' ? 'scale(1.1)' : 'scale(1)',
+                transition: 'all 0.2s ease'
+              }}
+              onClick={() => changeTheme('light')}
+              title="Tema Chiaro"
+            />
+            <div 
+              style={{
+                width: '20px',
+                height: '20px',
+                border: currentTheme === 'dark' ? '2px solid white' : '1px solid rgba(255,255,255,0.5)',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+                transform: currentTheme === 'dark' ? 'scale(1.1)' : 'scale(1)',
+                transition: 'all 0.2s ease'
+              }}
+              onClick={() => changeTheme('dark')}
+              title="Tema Scuro"
+            />
           </div>
-        )}
+        </div>
       </div>
 
-      {/* IL TUO CODICE GRAPESJS STUDIO SDK ORIGINALE */}
-      <StudioEditor
-        onReady={handleEditorReady}
-        options={{
-          licenseKey: '20dcb4e71c5e4edcb01cee40c282732d7e219020ae5646ac97298687dae3b19a',
-          theme: currentTheme,
-          customTheme: {
-            default: {
-              colors: {
-                global: {
-                  background1: "rgba(35, 30, 25, 1)",
-                  background2: "rgba(30, 25, 20, 1)",
-                  background3: "rgba(25, 20, 15, 1)",
-                  backgroundHover: "rgba(50, 40, 30, 1)",
-                  text: "rgba(220, 200, 180, 1)",
-                  border: "rgba(80, 60, 40, 1)",
-                  focus: "rgba(230, 150, 80, 0.8)",
-                  placeholder: "rgba(170, 150, 130, 1)"
-                },
-                primary: {
-                  background1: "#fdae4b",
-                  background3: "#d98a36",
-                  backgroundHover: "#ffb85c",
-                  text: "rgba(0, 0, 0, 1)"
-                },
-                component: {
-                  background1: "rgba(120, 70, 40, 1)",
-                  background2: "rgba(100, 60, 30, 1)",
-                  background3: "rgba(80, 50, 25, 1)",
-                  text: "rgba(220, 200, 180, 1)"
-                },
-                selector: {
-                  background1: "rgba(190, 110, 40, 1)",
-                  background2: "rgba(220, 140, 60, 1)",
-                  text: "rgba(255, 255, 255, 1)"
-                },
-                symbol: {
-                  background1: "#fdae4b",
-                  background2: "#e09341",
-                  background3: "#b87430",
-                  text: "rgba(255, 255, 255, 1)"
+      {/* EDITOR AREA - Occupa il resto dello spazio */}
+      <div style={{ height: 'calc(100vh - 50px)', width: '100%' }}>
+        <StudioEditor
+          onReady={handleEditorReady}
+          options={{
+            licenseKey: '20dcb4e71c5e4edcb01cee40c282732d7e219020ae5646ac97298687dae3b19a',
+            theme: currentTheme,
+            customTheme: {
+              default: {
+                colors: {
+                  global: {
+                    background1: "rgba(35, 30, 25, 1)",
+                    background2: "rgba(30, 25, 20, 1)",
+                    background3: "rgba(25, 20, 15, 1)",
+                    backgroundHover: "rgba(50, 40, 30, 1)",
+                    text: "rgba(220, 200, 180, 1)",
+                    border: "rgba(80, 60, 40, 1)",
+                    focus: "rgba(230, 150, 80, 0.8)",
+                    placeholder: "rgba(170, 150, 130, 1)"
+                  },
+                  primary: {
+                    background1: "#fdae4b",
+                    background3: "#d98a36",
+                    backgroundHover: "#ffb85c",
+                    text: "rgba(0, 0, 0, 1)"
+                  },
+                  component: {
+                    background1: "rgba(120, 70, 40, 1)",
+                    background2: "rgba(100, 60, 30, 1)",
+                    background3: "rgba(80, 50, 25, 1)",
+                    text: "rgba(220, 200, 180, 1)"
+                  },
+                  selector: {
+                    background1: "rgba(190, 110, 40, 1)",
+                    background2: "rgba(220, 140, 60, 1)",
+                    text: "rgba(255, 255, 255, 1)"
+                  },
+                  symbol: {
+                    background1: "#fdae4b",
+                    background2: "#e09341",
+                    background3: "#b87430",
+                    text: "rgba(255, 255, 255, 1)"
+                  }
                 }
               }
-            }
-          },
-          project: {
-            type: 'web',
-            id: currentLandingPage?.id || `project-${Date.now()}`
-          },
-          identity: {
-            id: 'user-sapori-colori'
-          },
-          assets: {
-            storageType: 'cloud'
-          },
-          storage: {
-            type: 'cloud',
-            autosaveChanges: 100,
-            autosaveIntervalMs: 10000
-          },
-          plugins: [
-            flexComponent.init({}),
-            canvasFullSize.init({}),
-            rteProseMirror.init({}),
-            tableComponent.init({}),
-            swiperComponent.init({}),
-            canvasEmptyState.init({}),
-            iconifyComponent.init({}),
-            accordionComponent.init({}),
-            listPagesComponent.init({}),
-            fsLightboxComponent.init({}),
-            layoutSidebarButtons.init({}),
-            youtubeAssetProvider.init({}),
-            lightGalleryComponent.init({})
-          ]
-        }}
-      />
+            },
+            project: {
+              type: 'web',
+              id: currentLandingPage?.id || `project-${Date.now()}`
+            },
+            identity: {
+              id: 'user-sapori-colori'
+            },
+            assets: {
+              storageType: 'cloud'
+            },
+            storage: {
+              type: 'cloud',
+              autosaveChanges: 100,
+              autosaveIntervalMs: 10000
+            },
+            plugins: [
+              flexComponent.init({}),
+              canvasFullSize.init({}),
+              rteProseMirror.init({}),
+              tableComponent.init({}),
+              swiperComponent.init({}),
+              canvasEmptyState.init({}),
+              iconifyComponent.init({}),
+              accordionComponent.init({}),
+              listPagesComponent.init({}),
+              fsLightboxComponent.init({}),
+              layoutSidebarButtons.init({}),
+              youtubeAssetProvider.init({}),
+              lightGalleryComponent.init({})
+            ]
+          }}
+        />
+      </div>
     </div>
   );
 };
