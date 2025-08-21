@@ -182,10 +182,10 @@ const LandingPagesDashboard = ({ onEditPage, onNewPage }) => {
                 {/* Thumbnail Preview */}
                 <div className="landing-page-thumbnail">
                   <img 
-                    src={page.thumbnail_url || '/placeholder-thumbnail.jpg'} 
+                    src={page.thumbnail_url || '/placeholder-thumbnail.svg'} 
                     alt={`Preview of ${page.title}`}
                     onError={(e) => {
-                      e.target.src = '/placeholder-thumbnail.jpg';
+                      e.target.src = '/placeholder-thumbnail.svg';
                     }}
                   />
                   <div className="thumbnail-overlay">

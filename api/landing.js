@@ -11,11 +11,11 @@ async function generateThumbnailForLandingPage(landingPageId, htmlContent, cssCo
   try {
     console.log(`📸 Thumbnail generation temporaneamente disabilitato per ${landingPageId}`);
     // TODO: Implementare servizio esterno per screenshot o usare Vercel Edge Functions
-    return '/placeholder-thumbnail.jpg'; // Fallback temporaneo
+    return '/placeholder-thumbnail.svg'; // Fallback temporaneo
     
   } catch (error) {
     console.warn(`⚠️ Fallback placeholder per thumbnail ${landingPageId}:`, error.message);
-    return '/placeholder-thumbnail.jpg'; // Fallback
+    return '/placeholder-thumbnail.svg'; // Fallback
   }
 }
 
@@ -275,7 +275,7 @@ async function handlePost(req, res) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         view_count: 0,
-        thumbnail_url: '/placeholder-thumbnail.jpg' // Placeholder iniziale
+        thumbnail_url: '/placeholder-thumbnail.svg' // Placeholder iniziale
       })
       .select()
       .single()
@@ -673,7 +673,7 @@ async function handleSaveAsTemplate(req, res) {
           category: 'custom',
           is_active: true,
           created_at: new Date().toISOString(),
-          thumbnail_url: '/placeholder-thumbnail.jpg' // Placeholder iniziale
+          thumbnail_url: '/placeholder-thumbnail.svg' // Placeholder iniziale
         })
         .select()
         .single()
@@ -729,7 +729,7 @@ async function handleSaveAsTemplate(req, res) {
           is_active: true,     // Campo esistente
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          thumbnail_url: '/placeholder-thumbnail.jpg' // Placeholder iniziale
+          thumbnail_url: '/placeholder-thumbnail.svg' // Placeholder iniziale
         })
         .select()
         .single()
