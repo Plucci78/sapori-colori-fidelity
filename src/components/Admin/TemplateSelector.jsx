@@ -128,7 +128,22 @@ const TemplateSelector = ({ onSelectTemplate, onClose }) => {
               onClick={() => onSelectTemplate(template)}
             >
               <div className="template-preview">
-                <div className="preview-content">
+                {template.preview_image && template.preview_image !== '/placeholder-template.png' ? (
+                  <img 
+                    src={template.preview_image} 
+                    alt={`Preview of ${template.name}`}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextElementSibling.style.display = 'block';
+                    }}
+                  />
+                ) : null}
+                <div 
+                  className="preview-content" 
+                  style={{ 
+                    display: template.preview_image && template.preview_image !== '/placeholder-template.png' ? 'none' : 'block' 
+                  }}
+                >
                   <div className="mini-preview" dangerouslySetInnerHTML={{ 
                     __html: template.html_content?.substring(0, 200) + '...' 
                   }} />

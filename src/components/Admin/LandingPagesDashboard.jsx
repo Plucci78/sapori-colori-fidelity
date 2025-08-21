@@ -179,6 +179,26 @@ const LandingPagesDashboard = ({ onEditPage, onNewPage }) => {
           <div className="landing-pages-list">
             {landingPages.map(page => (
               <div key={page.id} className="landing-page-card">
+                {/* Thumbnail Preview */}
+                <div className="landing-page-thumbnail">
+                  <img 
+                    src={page.thumbnail_url || '/placeholder-thumbnail.jpg'} 
+                    alt={`Preview of ${page.title}`}
+                    onError={(e) => {
+                      e.target.src = '/placeholder-thumbnail.jpg';
+                    }}
+                  />
+                  <div className="thumbnail-overlay">
+                    <button 
+                      onClick={() => onEditPage(page)}
+                      className="preview-btn"
+                      title="Modifica Landing Page"
+                    >
+                      ✏️ Modifica
+                    </button>
+                  </div>
+                </div>
+                
                 <div className="landing-page-header">
                   <div className="landing-page-title-section">
                     <div className="landing-page-title">

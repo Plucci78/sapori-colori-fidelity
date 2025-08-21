@@ -1,10 +1,36 @@
 // API Route unificata per tutte le operazioni sulle landing pages
 import { createClient } from '@supabase/supabase-js'
+const screenshotGenerator = require('../utils/screenshotGenerator.js')
 
 const supabase = createClient(
   'https://jexkalekaofsfcusdfjh.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpleGthbGVrYW9mc2ZjdXNkZmpoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0ODYyNjEzNCwiZXhwIjoyMDY0MjAyMTM0fQ.43plaZecrTvbwkr7U7g2Ucogkd0VgKRUg9VkJ--7JCU'
 )
+
+// Funzione per generare thumbnail automaticamente
+async function generateThumbnailForLandingPage(landingPageId, htmlContent, cssContent) {
+  try {
+    console.log(`📸 Generando thumbnail per landing page ${landingPageId}...`);
+    
+    const thumbnail = await screenshotGenerator.createLandingPageThumbnail(
+      landingPageId, 
+      htmlContent, 
+      cssContent,
+      {
+        width: 400,
+        height: 300,
+        quality: 80
+      }
+    );
+    
+    console.log(`✅ Thumbnail generato: ${thumbnail.publicPath}`);
+    return thumbnail.publicPath;
+    
+  } catch (error) {
+    console.warn(`⚠️ Fallback placeholder per thumbnail ${landingPageId}:`, error.message);
+    return '/placeholder-thumbnail.jpg'; // Fallback
+  }
+}
 
 export default async function handler(req, res) {
   const { action, slug } = req.query
@@ -261,7 +287,8 @@ async function handlePost(req, res) {
         is_active: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        view_count: 0
+        view_count: 0,
+        thumbnail_url: '/placeholder-thumbnail.jpg' // Placeholder iniziale
       })
       .select()
       .single()
@@ -272,6 +299,22 @@ async function handlePost(req, res) {
     }
     
     console.log('✅ Landing page creata:', data.id, '-', data.slug)
+    
+    // Genera thumbnail in background (non bloccante)
+    if (html_content && html_content.trim()) {
+      generateThumbnailForLandingPage(data.id, html_content, css_content)
+        .then(async (thumbnailUrl) => {
+          // Aggiorna record con thumbnail URL
+          await supabase
+            .from('landing_pages')
+            .update({ thumbnail_url: thumbnailUrl })
+            .eq('id', data.id);
+          console.log(`✅ Thumbnail aggiornato per landing page ${data.id}: ${thumbnailUrl}`);
+        })
+        .catch(error => {
+          console.warn(`⚠️ Errore aggiornamento thumbnail ${data.id}:`, error);
+        });
+    }
     
     return res.status(201).json({ 
       success: true, 
@@ -349,6 +392,24 @@ async function handlePut(req, res) {
     }
     
     console.log('✅ Landing page aggiornata:', data.id, '-', data.slug)
+    
+    // Rigenera thumbnail se il contenuto HTML/CSS è cambiato
+    if (html_content !== undefined || css_content !== undefined) {
+      if (data.html_content && data.html_content.trim()) {
+        generateThumbnailForLandingPage(data.id, data.html_content, data.css_content)
+          .then(async (thumbnailUrl) => {
+            // Aggiorna record con nuovo thumbnail URL
+            await supabase
+              .from('landing_pages')
+              .update({ thumbnail_url: thumbnailUrl })
+              .eq('id', data.id);
+            console.log(`✅ Thumbnail rigenerato per landing page ${data.id}: ${thumbnailUrl}`);
+          })
+          .catch(error => {
+            console.warn(`⚠️ Errore rigenerazione thumbnail ${data.id}:`, error);
+          });
+      }
+    }
     
     return res.status(200).json({ 
       success: true, 
@@ -494,7 +555,7 @@ async function handleTemplates(req, res) {
   }
   
   try {
-    // Carica template salvati dall'utente
+    // Carica template salvati dall'utente (tabella dedicata)
     const { data: userTemplates, error } = await supabase
       .from('landing_page_templates')
       .select('*')
@@ -502,19 +563,51 @@ async function handleTemplates(req, res) {
       .order('created_at', { ascending: false })
     
     if (error) {
-      console.error('❌ Errore caricamento template utente:', error)
+      console.warn('⚠️ Tabella template dedicata non disponibile:', error.message)
     }
+
+    // Carica anche template salvati come landing pages (fallback)
+    const { data: landingPageTemplates, error: landingError } = await supabase
+      .from('landing_pages')
+      .select('*')
+      .ilike('title', '[TEMPLATE]%') // Cerca titoli che iniziano con [TEMPLATE]
+      .eq('is_active', true)
+      // Rimuovi il filtro is_published per permettere template anche se pubblicati
+      .order('created_at', { ascending: false })
+    
+    if (landingError) {
+      console.warn('⚠️ Errore caricamento template da landing pages:', landingError.message)
+    }
+
+    console.log('📋 Template trovati:', {
+      dedicatedTable: userTemplates?.length || 0,
+      fromLandingPages: landingPageTemplates?.length || 0
+    });
     
     // Template predefiniti
     const predefinedTemplates = getPredefinedTemplates()
     
-    // Combina template predefiniti + utente
+    // Combina tutti i template
     const allTemplates = [
       ...predefinedTemplates,
+      // Template da tabella dedicata
       ...(userTemplates || []).map(t => ({
         ...t,
         type: 'user',
-        preview_image: t.preview_image || '/placeholder-template.png'
+        preview_image: t.thumbnail_url || t.preview_image || '/placeholder-template.png'
+      })),
+      // Template da landing pages (fallback)
+      ...(landingPageTemplates || []).map(t => ({
+        id: t.id,
+        name: t.title.replace('[TEMPLATE] ', ''), // Rimuovi prefisso dal nome
+        description: t.description,
+        html_content: t.html_content,
+        css_content: t.css_content,
+        grapesjs_data: t.grapesjs_data,
+        category: 'custom',
+        type: 'user',
+        created_at: t.created_at,
+        preview_image: t.thumbnail_url || '/placeholder-template.png'
       }))
     ]
     
@@ -592,7 +685,8 @@ async function handleSaveAsTemplate(req, res) {
           grapesjs_data: landingPage.grapesjs_data,
           category: 'custom',
           is_active: true,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          thumbnail_url: '/placeholder-thumbnail.jpg' // Placeholder iniziale
         })
         .select()
         .single()
@@ -602,6 +696,21 @@ async function handleSaveAsTemplate(req, res) {
       }
       
       console.log('✅ Template creato in tabella dedicata:', template.id, '-', template.name);
+      
+      // Genera thumbnail per template in background
+      if (landingPage.html_content && landingPage.html_content.trim()) {
+        generateThumbnailForLandingPage(`template_${template.id}`, landingPage.html_content, landingPage.css_content)
+          .then(async (thumbnailUrl) => {
+            await supabase
+              .from('landing_page_templates')
+              .update({ thumbnail_url: thumbnailUrl })
+              .eq('id', template.id);
+            console.log(`✅ Thumbnail template aggiornato ${template.id}: ${thumbnailUrl}`);
+          })
+          .catch(error => {
+            console.warn(`⚠️ Errore thumbnail template ${template.id}:`, error);
+          });
+      }
       
       return res.status(201).json({
         success: true,
@@ -632,7 +741,8 @@ async function handleSaveAsTemplate(req, res) {
           is_published: false, // I template non sono pubblicati - campo esistente
           is_active: true,     // Campo esistente
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          thumbnail_url: '/placeholder-thumbnail.jpg' // Placeholder iniziale
         })
         .select()
         .single()
@@ -646,6 +756,21 @@ async function handleSaveAsTemplate(req, res) {
       }
       
       console.log('✅ Template salvato come landing page:', templatePage.id, '-', templatePage.title);
+      
+      // Genera thumbnail per template fallback in background
+      if (landingPage.html_content && landingPage.html_content.trim()) {
+        generateThumbnailForLandingPage(`template_${templatePage.id}`, landingPage.html_content, landingPage.css_content)
+          .then(async (thumbnailUrl) => {
+            await supabase
+              .from('landing_pages')
+              .update({ thumbnail_url: thumbnailUrl })
+              .eq('id', templatePage.id);
+            console.log(`✅ Thumbnail template fallback aggiornato ${templatePage.id}: ${thumbnailUrl}`);
+          })
+          .catch(error => {
+            console.warn(`⚠️ Errore thumbnail template fallback ${templatePage.id}:`, error);
+          });
+      }
       
       return res.status(201).json({
         success: true,

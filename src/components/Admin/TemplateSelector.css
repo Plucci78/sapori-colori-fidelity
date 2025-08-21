@@ -179,6 +179,17 @@
   background: #f8f9fa;
 }
 
+.template-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.template-card:hover .template-preview img {
+  transform: scale(1.05);
+}
+
 .preview-content {
   height: 100%;
   transform: scale(0.3);

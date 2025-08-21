@@ -1,0 +1,15 @@
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fdae4b"/>
+      <stop offset="100%" stop-color="#d98a36"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)" opacity="0.1"/>
+  <rect x="50" y="50" width="300" height="200" rx="12" fill="white" opacity="0.8"/>
+  <circle cx="120" cy="120" r="15" fill="#fdae4b"/>
+  <rect x="80" y="160" width="160" height="8" rx="4" fill="#fdae4b" opacity="0.6"/>
+  <rect x="80" y="180" width="120" height="6" rx="3" fill="#d98a36" opacity="0.4"/>
+  <rect x="80" y="200" width="200" height="6" rx="3" fill="#d98a36" opacity="0.4"/>
+  <text x="200" y="270" text-anchor="middle" fill="#8B4513" font-family="Arial" font-size="14" font-weight="600">🖼️ Anteprima in Generazione</text>
+</svg>
