@@ -1451,14 +1451,20 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
             <div className="summary-card">
               <div className="summary-icon male">👨</div>
               <div className="summary-content">
-                <div className="summary-number">{customers.filter(c => c.gender === 'M' || c.gender === 'male').length}</div>
+                <div className="summary-number">{customers.filter(c => {
+                  const gender = (c.gender || '').toLowerCase()
+                  return gender === 'm' || gender === 'male'
+                }).length}</div>
                 <div className="summary-label">Maschi</div>
               </div>
             </div>
             <div className="summary-card">
               <div className="summary-icon female">👩</div>
               <div className="summary-content">
-                <div className="summary-number">{customers.filter(c => c.gender === 'F' || c.gender === 'female').length}</div>
+                <div className="summary-number">{customers.filter(c => {
+                  const gender = (c.gender || '').toLowerCase()
+                  return gender === 'f' || gender === 'female'
+                }).length}</div>
                 <div className="summary-label">Femmine</div>
               </div>
             </div>

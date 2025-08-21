@@ -37,12 +37,19 @@ const EditCustomerModal = ({
 
   useEffect(() => {
     if (customer && isOpen) {
+      const mappedGender = mapGenderFromDB(customer.gender)
+      
+      // DEBUG: Vediamo cosa sta succedendo con il gender mapping
+      console.log('🔍 DEBUG EDIT CUSTOMER MODAL:')
+      console.log('- Customer gender from DB:', customer.gender)
+      console.log('- Mapped gender for form:', mappedGender)
+      
       setFormData({
         name: customer.name || '',
         email: customer.email || '',
         phone: customer.phone || '',
         birth_date: customer.birth_date || '',
-        gender: mapGenderFromDB(customer.gender),
+        gender: mappedGender,
         notes: customer.notes || ''
       })
       setErrors({})
@@ -84,10 +91,17 @@ const EditCustomerModal = ({
     
     try {
       // Mappa gender dal form al formato DB prima di salvare
+      const mappedGenderForDB = mapGenderToDB(formData.gender)
       const dataToSave = {
         ...formData,
-        gender: mapGenderToDB(formData.gender)
+        gender: mappedGenderForDB
       }
+      
+      // DEBUG: Vediamo cosa stiamo salvando
+      console.log('💾 DEBUG SAVING CUSTOMER:')
+      console.log('- Form gender value:', formData.gender)
+      console.log('- Mapped gender for DB:', mappedGenderForDB)
+      console.log('- Data to save:', dataToSave)
       
       await onSave(customer.id, dataToSave)
       showNotification('Dati cliente aggiornati con successo', 'success')

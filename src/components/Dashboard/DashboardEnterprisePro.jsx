@@ -158,14 +158,25 @@ const DashboardEnterprisePro = () => {
       })?.length || 0
       
       // Calcola contatori genere reali
+      console.log('🔍 DEBUG GENDER DATA:')
+      customers?.forEach((customer, i) => {
+        if (i < 5) { // Solo primi 5 per debug
+          console.log(`- Cliente ${customer.name}: gender="${customer.gender}"`)
+        }
+      })
+      
       const maleCount = customers?.filter(customer => {
         const gender = (customer.gender || '').toLowerCase()
-        return gender === 'm' || gender === 'male'
+        const isMale = gender === 'm' || gender === 'male'
+        if (isMale) console.log(`✓ Maschio trovato: ${customer.name} (${customer.gender})`)
+        return isMale
       })?.length || 0
       
       const femaleCount = customers?.filter(customer => {
         const gender = (customer.gender || '').toLowerCase() 
-        return gender === 'f' || gender === 'female'
+        const isFemale = gender === 'f' || gender === 'female'
+        if (isFemale) console.log(`✓ Femmina trovata: ${customer.name} (${customer.gender})`)
+        return isFemale
       })?.length || 0
       
       // DEBUG: Vediamo che dati abbiamo veramente
