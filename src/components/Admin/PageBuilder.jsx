@@ -912,27 +912,54 @@ const PageBuilder = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
             // The React Renderer plugin
             plugins: [
               plugins.rendererReact.init(reactRendererConfig),
-              plugins.grapesjsBlocksBasic,
-              plugins.grapesjsPluginForms,
-              plugins.grapesjsCustomCode,
-              plugins.grapesjsPluginExport,
-              plugins.grapesjsTabs,
+              // Plugin con safe guard per evitare errori di timing
+              (editor) => {
+                // Inizializza plugin solo quando l'editor è completamente caricato
+                editor.on('load', () => {
+                  try {
+                    if (plugins.grapesjsBlocksBasic) plugins.grapesjsBlocksBasic(editor);
+                  } catch (e) { console.warn('Plugin blocks-basic error:', e); }
+                  
+                  try {
+                    if (plugins.grapesjsPluginForms) plugins.grapesjsPluginForms(editor);
+                  } catch (e) { console.warn('Plugin forms error:', e); }
+                  
+                  try {
+                    if (plugins.grapesjsCustomCode) plugins.grapesjsCustomCode(editor);
+                  } catch (e) { console.warn('Plugin custom-code error:', e); }
+                  
+                  try {
+                    if (plugins.grapesjsPluginExport) plugins.grapesjsPluginExport(editor);
+                  } catch (e) { console.warn('Plugin export error:', e); }
+                  
+                  try {
+                    if (plugins.grapesjsTabs) plugins.grapesjsTabs(editor);
+                  } catch (e) { console.warn('Plugin tabs error:', e); }
+                });
+              },
               // Add blocks for your custom React components
               (editor) => {
-                editor.Blocks.add('sapori-header', {
-                  label: 'Header Sapori & Colori',
-                  category: 'Sapori & Colori',
-                  content: { type: 'SaporiHeader', props: { title: 'Sapori & Colori', subtitle: 'Il sapore autentico della tradizione', logoSrc: 'https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png' } },
-                });
-                editor.Blocks.add('promo-section', {
-                  label: 'Sezione Promozione',
-                  category: 'Sapori & Colori',
-                  content: { type: 'PromoSection', props: { offer: '🍕 OFFERTA SPECIALE!', description: 'La tua pizza preferita con il 30% di sconto', buttonText: '📞 Chiama Ora!', buttonLink: 'tel:+393926568550' } },
-                });
-                editor.Blocks.add('contact-cta', {
-                  label: 'Call to Action Contatti',
-                  category: 'Sapori & Colori',
-                  content: { type: 'ContactCta', props: { phone: '+393926568550', whatsapp: '393926568550', mapLink: 'https://maps.google.com/?q=Via+Roma+123+Roma' } },
+                editor.on('load', () => {
+                  // Aggiungi blocchi personalizzati solo dopo il caricamento
+                  try {
+                    editor.Blocks.add('sapori-header', {
+                      label: 'Header Sapori & Colori',
+                      category: 'Sapori & Colori',
+                      content: { type: 'SaporiHeader', props: { title: 'Sapori & Colori', subtitle: 'Il sapore autentico della tradizione', logoSrc: 'https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png' } },
+                    });
+                    editor.Blocks.add('promo-section', {
+                      label: 'Sezione Promozione',
+                      category: 'Sapori & Colori',
+                      content: { type: 'PromoSection', props: { offer: '🍕 OFFERTA SPECIALE!', description: 'La tua pizza preferita con il 30% di sconto', buttonText: '📞 Chiama Ora!', buttonLink: 'tel:+393926568550' } },
+                    });
+                    editor.Blocks.add('contact-cta', {
+                      label: 'Call to Action Contatti',
+                      category: 'Sapori & Colori',
+                      content: { type: 'ContactCta', props: { phone: '+393926568550', whatsapp: '393926568550', mapLink: 'https://maps.google.com/?q=Via+Roma+123+Roma' } },
+                    });
+                  } catch (e) {
+                    console.warn('Errore aggiunta blocchi personalizzati:', e);
+                  }
                 });
               }
             ],
