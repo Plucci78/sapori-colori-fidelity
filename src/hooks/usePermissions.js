@@ -244,7 +244,7 @@ export const usePermissions = () => {
     
     // User info
     userRole: profile?.role || null,
-    userName: profile?.full_name || 'Unknown User',
+    userName: profile?.full_name || user?.email?.split('@')[0] || user?.email || 'Utente',
     userEmail: profile?.email || '',
     
     // Module access shortcuts

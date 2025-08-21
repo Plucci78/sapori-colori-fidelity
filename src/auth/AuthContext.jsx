@@ -208,7 +208,7 @@ export const AuthProvider = ({ children }) => {
     isManager: profile?.role === 'manager',
     isOperator: profile?.role === 'operator',
     userRole: profile?.role || null,
-    userName: profile?.full_name || user?.email || 'Unknown User'
+    userName: profile?.full_name || user?.email?.split('@')[0] || user?.email || 'Utente'
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

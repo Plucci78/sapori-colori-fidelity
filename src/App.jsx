@@ -2179,7 +2179,11 @@ for (const customer of recipients) {
       <div className="login-page">
         <LoginForm
           onSuccess={() => {
-            showNotification(`🎉 Benvenuto ${userName}!`, 'success')
+            // Aspetta un momento per il caricamento del profilo
+            setTimeout(() => {
+              const displayName = profile?.full_name || user?.email?.split('@')[0] || user?.email || 'Utente'
+              showNotification(`🎉 Benvenuto ${displayName}!`, 'success')
+            }, 500)
             setActiveView('dashboard') // Reset al dashboard
           }}
         />
