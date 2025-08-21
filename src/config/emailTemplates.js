@@ -72,7 +72,7 @@ export const emailTemplates = [
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background: #2d3748;">
           <tr>
             <td style="padding: 25px; text-align: center;">
-              <p style="color: #a0aec0; margin: 0; font-size: 14px;">📍 Via Example 123, Roma • 📞 06 1234567</p>
+              <p style="color: #a0aec0; margin: 0; font-size: 14px;">📍 Via Bagaladi 9, 00132 Roma • 📞 0639911640</p>
               <p style="color: #718096; margin: 8px 0 0 0; font-size: 12px;">Ti aspettiamo per la tua prima visita!</p>
             </td>
           </tr>
@@ -191,7 +191,7 @@ export const emailTemplates = [
           <tr>
             <td style="padding: 25px; text-align: center;">
               <p style="color: #a0aec0; margin: 0; font-size: 14px;">Grazie per essere parte della famiglia Sapori & Colori</p>
-              <p style="color: #718096; margin: 8px 0 0 0; font-size: 12px;">📍 Via Example 123, Roma • 📞 06 1234567</p>
+              <p style="color: #718096; margin: 8px 0 0 0; font-size: 12px;">📍 Via Bagaladi 9, 00132 Roma • 📞 0639911640</p>
             </td>
           </tr>
         </table>

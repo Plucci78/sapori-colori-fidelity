@@ -494,7 +494,7 @@ const RegistrationWizard = ({ onComplete, onCancel }) => {
             <li>✨ <strong>Offerte speciali riservate ai membri</strong></li>
           </ul>
         </div>
-        <p style="color: #999; font-size: 14px; text-align: center;">Ti aspettiamo per la tua prima visita!<br>Via Example 123, Roma • Tel: 06 1234567</p>
+        <p style="color: #999; font-size: 14px; text-align: center;">Ti aspettiamo per la tua prima visita!<br>Via Bagaladi 9, 00132 Roma • Tel: 0639911640 • saporiecolori.net</p>
       </div>
     </div>`
   }
