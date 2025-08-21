@@ -17214,3 +17214,56 @@ button.btn-brand-secondary:hover {
     left: 16px;
   }
 }
+
+/* ====================================
+   SIDEBAR MINIMIZZATA - STILE VS CODE
+   ==================================== */
+
+/* Sidebar minimizzata */
+.sidebar.minimized {
+  width: 70px !important;
+  transition: width 0.3s ease;
+}
+
+.sidebar.minimized .nav-item {
+  padding: 12px 8px;
+  justify-content: center;
+  min-height: 50px;
+}
+
+.sidebar.minimized .nav-icon {
+  margin-right: 0;
+  font-size: 1.1em;
+}
+
+.sidebar.minimized .nav-content {
+  display: none;
+}
+
+/* Tooltip per icone quando minimizzata */
+.sidebar.minimized .nav-item {
+  position: relative;
+}
+
+.sidebar.minimized .nav-item:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 75px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+/* Aggiusta main content quando sidebar è minimizzata */
+.sidebar.minimized ~ .main-content {
+  margin-left: 70px;
+  transition: margin-left 0.3s ease;
+}

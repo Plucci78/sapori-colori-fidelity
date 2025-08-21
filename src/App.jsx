@@ -70,6 +70,31 @@ function AppContent() {
   // STATI ESISTENTI (INVARIATI)
   // ===================================
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  
+  // Stato per sidebar minimizzabile (SSR-safe)
+  const [sidebarMinimized, setSidebarMinimized] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        return JSON.parse(localStorage.getItem('sidebarMinimized') || 'false')
+      }
+      return false
+    } catch (error) {
+      console.warn('Errore caricamento sidebarMinimized da localStorage:', error)
+      return false
+    }
+  })
+
+  // Salva preferenza sidebar quando cambia
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('sidebarMinimized', JSON.stringify(sidebarMinimized))
+      } catch (error) {
+        console.warn('Errore salvataggio sidebarMinimized in localStorage:', error)
+      }
+    }
+  }, [sidebarMinimized])
+
   const [allCustomers, setAllCustomers] = useState([])
   const [customers, setCustomers] = useState([])
 
@@ -891,6 +916,36 @@ const fixReferralData = async (customerId) => {
       ),
       description: 'Configurazione sistema',
       permission: 'canViewSettings'
+    },
+    {
+      id: 'sidebar-toggle',
+      title: sidebarMinimized ? 'Espandi Menu' : 'Riduci Menu',
+      icon: sidebarMinimized ? (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      ) : (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      ),
+      description: sidebarMinimized ? 'Mostra menu completo' : 'Nascondi testi menu',
+      permission: null,
+      isToggle: true,
+      onClick: () => setSidebarMinimized(!sidebarMinimized)
+    },
+    {
+      id: 'logout',
+      title: 'Logout',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+      ),
+      description: `Esci come ${userName}`,
+      permission: null,
+      isToggle: true,
+      onClick: handleLogout
     }
   ]
 
@@ -2341,23 +2396,7 @@ for (const customer of recipients) {
         setNotifications={setNotifications}
       />
 
-      {/* ===================================
-          AUTH HEADER (AGGIUNTO)
-          =================================== */}
-      <div className="auth-header">
-        <div className="auth-user-info">
-          <div className="user-avatar">
-            {userName.charAt(0).toUpperCase()}
-          </div>
-          <div className="user-details">
-            <span className="user-name">{userName}</span>
-            <span className="user-role">{userRole?.toUpperCase()}</span>
-          </div>
-        </div>
-        <button className="logout-btn" onClick={handleLogout}>
-          🚪 Logout
-        </button>
-      </div>
+      {/* AUTH HEADER RIMOSSO - Logout ora nel menu sidebar */}
 
       {/* HAMBURGER BUTTON - SOLO MOBILE */}
       <button
@@ -2369,16 +2408,18 @@ for (const customer of recipients) {
       </button>
 
       {/* SIDEBAR MENU CON PROTEZIONI AUTH (AGGIORNATO) */}
-      <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-        <div className="sidebar-header">
-          <img
-            src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png"
-            alt="Sapori e Colori Logo"
-            className="sidebar-logo"
-          />
-          <h2>Sapori & Colori</h2>
-          <p>Sistema GEMME</p>
-        </div>
+      <div className={`sidebar ${sidebarOpen ? 'open' : ''} ${sidebarMinimized ? 'minimized' : ''}`}>
+        {!sidebarMinimized && (
+          <div className="sidebar-header">
+            <img
+              src="https://saporiecolori.net/wp-content/uploads/2024/07/saporiecolorilogo2.png"
+              alt="Sapori e Colori Logo"
+              className="sidebar-logo"
+            />
+            <h2>Sapori & Colori</h2>
+            <p>Sistema GEMME</p>
+          </div>
+        )}
 
         <nav className="sidebar-nav">
           {menuItems.map((item) => {
@@ -2391,7 +2432,14 @@ for (const customer of recipients) {
               <button
                 key={item.id}
                 className={`nav-item ${activeView === item.id ? 'active' : ''}`}
+                data-tooltip={item.title}
                 onClick={() => {
+                  // Gestisci toggle items (es: sidebar-toggle)
+                  if (item.isToggle && item.onClick) {
+                    item.onClick()
+                    return
+                  }
+                  
                   // Reset cliente selezionato quando si cambia vista
                   if (activeView === 'customer' && item.id !== 'customer' && selectedCustomer) {
                     setSelectedCustomer(null)
@@ -2411,10 +2459,12 @@ for (const customer of recipients) {
                 }}
               >
                 <span className="nav-icon">{item.icon}</span>
-                <div className="nav-content">
-                  <span className="nav-title">{item.title}</span>
-                  <span className="nav-description">{item.description}</span>
-                </div>
+                {!sidebarMinimized && (
+                  <div className="nav-content">
+                    <span className="nav-title">{item.title}</span>
+                    <span className="nav-description">{item.description}</span>
+                  </div>
+                )}
               </button>
             )
           })}
