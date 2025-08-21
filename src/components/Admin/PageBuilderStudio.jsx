@@ -481,19 +481,63 @@ const PageBuilderStudio = ({ editingPage, selectedTemplate, onBackToDashboard })
               autosaveIntervalMs: 10000
             },
             plugins: [
-              flexComponent.init({}),
-              canvasFullSize.init({}),
-              rteProseMirror.init({}),
-              tableComponent.init({}),
-              swiperComponent.init({}),
-              canvasEmptyState.init({}),
-              iconifyComponent.init({}),
-              accordionComponent.init({}),
-              listPagesComponent.init({}),
-              fsLightboxComponent.init({}),
-              layoutSidebarButtons.init({}),
-              youtubeAssetProvider.init({}),
-              lightGalleryComponent.init({})
+              // Plugin con safe guard per evitare errori di timing
+              (editor) => {
+                // Inizializza plugin solo quando l'editor è completamente caricato
+                editor.on('load', () => {
+                  try {
+                    if (flexComponent) flexComponent.init({})(editor);
+                  } catch (e) { console.warn('Plugin flex-component error:', e); }
+                  
+                  try {
+                    if (canvasFullSize) canvasFullSize.init({})(editor);
+                  } catch (e) { console.warn('Plugin canvas-full-size error:', e); }
+                  
+                  try {
+                    if (rteProseMirror) rteProseMirror.init({})(editor);
+                  } catch (e) { console.warn('Plugin rte-prosemirror error:', e); }
+                  
+                  try {
+                    if (tableComponent) tableComponent.init({})(editor);
+                  } catch (e) { console.warn('Plugin table-component error:', e); }
+                  
+                  try {
+                    if (swiperComponent) swiperComponent.init({})(editor);
+                  } catch (e) { console.warn('Plugin swiper-component error:', e); }
+                  
+                  try {
+                    if (canvasEmptyState) canvasEmptyState.init({})(editor);
+                  } catch (e) { console.warn('Plugin canvas-empty-state error:', e); }
+                  
+                  try {
+                    if (iconifyComponent) iconifyComponent.init({})(editor);
+                  } catch (e) { console.warn('Plugin iconify-component error:', e); }
+                  
+                  try {
+                    if (accordionComponent) accordionComponent.init({})(editor);
+                  } catch (e) { console.warn('Plugin accordion-component error:', e); }
+                  
+                  try {
+                    if (listPagesComponent) listPagesComponent.init({})(editor);
+                  } catch (e) { console.warn('Plugin list-pages-component error:', e); }
+                  
+                  try {
+                    if (fsLightboxComponent) fsLightboxComponent.init({})(editor);
+                  } catch (e) { console.warn('Plugin fs-lightbox-component error:', e); }
+                  
+                  try {
+                    if (layoutSidebarButtons) layoutSidebarButtons.init({})(editor);
+                  } catch (e) { console.warn('Plugin layout-sidebar-buttons error:', e); }
+                  
+                  try {
+                    if (youtubeAssetProvider) youtubeAssetProvider.init({})(editor);
+                  } catch (e) { console.warn('Plugin youtube-asset-provider error:', e); }
+                  
+                  try {
+                    if (lightGalleryComponent) lightGalleryComponent.init({})(editor);
+                  } catch (e) { console.warn('Plugin light-gallery-component error:', e); }
+                });
+              }
             ]
           }}
         />
