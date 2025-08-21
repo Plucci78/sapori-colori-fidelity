@@ -53,6 +53,11 @@ export default async function handler(req, res) {
       return await handleSaveAsTemplate(req, res)
     }
     
+    // Route per rigenerare tutte le thumbnail
+    if (action === 'regenerate-thumbnails') {
+      return await handleRegenerateThumbnails(req, res)
+    }
+    
     // Route CRUD standard per landing pages
     switch (method) {
       case 'GET':
@@ -963,6 +968,63 @@ function getPredefinedTemplates() {
         }`
     }
   ]
+}
+
+// Rigenera thumbnail per tutte le landing pages esistenti
+async function handleRegenerateThumbnails(req, res) {
+  try {
+    console.log('🔄 Rigenerazione thumbnail per tutte le landing pages...');
+    
+    // Carica tutte le landing pages pubblicate
+    const { data: landingPages, error } = await supabase
+      .from('landing_pages')
+      .select('*')
+      .eq('is_active', true)
+      .eq('is_published', true)
+      .not('html_content', 'is', null);
+      
+    if (error) {
+      throw new Error(error.message);
+    }
+    
+    console.log(`📋 Trovate ${landingPages.length} landing pages da processare`);
+    
+    let updated = 0;
+    
+    // Rigenera thumbnail per ogni landing page
+    for (const page of landingPages) {
+      try {
+        const thumbnailUrl = await generateThumbnailForLandingPage(
+          page.slug, 
+          page.html_content, 
+          page.css_content
+        );
+        
+        // Aggiorna il database
+        await supabase
+          .from('landing_pages')
+          .update({ thumbnail_url: thumbnailUrl })
+          .eq('id', page.id);
+          
+        console.log(`✅ Thumbnail aggiornato per ${page.title}: ${thumbnailUrl}`);
+        updated++;
+        
+      } catch (error) {
+        console.warn(`⚠️ Errore thumbnail per ${page.title}:`, error.message);
+      }
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: `Regenerate ${updated}/${landingPages.length} thumbnail`,
+      updated,
+      total: landingPages.length
+    });
+    
+  } catch (error) {
+    console.error('❌ Errore rigenerazione thumbnail:', error);
+    return res.status(500).json({ error: error.message });
+  }
 }
 
 // Utility: Genera slug da titolo
