@@ -16,8 +16,24 @@ const EditCustomerModal = ({
     gender: '',
     notes: ''
   })
-  const [loading, setSaving] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState({})
+
+  // Funzione per mappare valori gender dal DB al form
+  const mapGenderFromDB = (dbGender) => {
+    if (!dbGender) return ''
+    const gender = dbGender.toLowerCase()
+    if (gender === 'm' || gender === 'male') return 'male'
+    if (gender === 'f' || gender === 'female') return 'female'
+    return gender // Fallback per altri valori
+  }
+
+  // Funzione per mappare valori gender dal form al DB
+  const mapGenderToDB = (formGender) => {
+    if (formGender === 'male') return 'M'
+    if (formGender === 'female') return 'F'
+    return formGender // Fallback
+  }
 
   useEffect(() => {
     if (customer && isOpen) {
@@ -26,7 +42,7 @@ const EditCustomerModal = ({
         email: customer.email || '',
         phone: customer.phone || '',
         birth_date: customer.birth_date || '',
-        gender: customer.gender || '',
+        gender: mapGenderFromDB(customer.gender),
         notes: customer.notes || ''
       })
       setErrors({})
@@ -64,17 +80,23 @@ const EditCustomerModal = ({
       return
     }
     
-    setSaving(true)
+    setLoading(true)
     
     try {
-      await onSave(customer.id, formData)
+      // Mappa gender dal form al formato DB prima di salvare
+      const dataToSave = {
+        ...formData,
+        gender: mapGenderToDB(formData.gender)
+      }
+      
+      await onSave(customer.id, dataToSave)
       showNotification('Dati cliente aggiornati con successo', 'success')
       onClose()
     } catch (error) {
       console.error('Errore salvataggio cliente:', error)
       showNotification('Errore nel salvataggio dei dati', 'error')
     } finally {
-      setSaving(false)
+      setLoading(false)
     }
   }
 

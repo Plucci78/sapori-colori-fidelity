@@ -98,6 +98,7 @@ const Icons = {
 const DashboardEnterprisePro = () => {
   const [dashboardData, setDashboardData] = useState({
     totalCustomers: 0,
+    todayNewCustomers: 0,
     maleCustomers: 0,
     femaleCustomers: 0,
     todayRevenue: 0,
@@ -126,8 +127,8 @@ const DashboardEnterprisePro = () => {
         { data: walletData },
         { data: allTransactions }
       ] = await Promise.all([
-        // Tutti i clienti
-        supabase.from('customers').select('id, name, points, created_at'),
+        // Tutti i clienti (incluso gender per statistiche)
+        supabase.from('customers').select('id, name, points, created_at, gender'),
         
         // Transazioni di oggi
         supabase
@@ -145,18 +146,38 @@ const DashboardEnterprisePro = () => {
         supabase.from('transactions').select('created_at, amount, customer_id')
       ])
 
+      // Processa dati reali
+      const totalCustomers = customers?.length || 0
+      
+      // Calcola clienti iscritti oggi
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const todayNewCustomers = customers?.filter(customer => {
+        const customerDate = new Date(customer.created_at)
+        return customerDate >= today
+      })?.length || 0
+      
+      // Calcola contatori genere reali
+      const maleCount = customers?.filter(customer => {
+        const gender = (customer.gender || '').toLowerCase()
+        return gender === 'm' || gender === 'male'
+      })?.length || 0
+      
+      const femaleCount = customers?.filter(customer => {
+        const gender = (customer.gender || '').toLowerCase() 
+        return gender === 'f' || gender === 'female'
+      })?.length || 0
+      
       // DEBUG: Vediamo che dati abbiamo veramente
       console.log('🔍 DEBUG DATI DASHBOARD:')
       console.log('- Clienti totali:', customers?.length || 0)
       console.log('- Transazioni oggi:', todayTransactions?.length || 0)
       console.log('- Wallet attivi:', walletData?.length || 0)
       console.log('- Tutte transazioni:', allTransactions?.length || 0)
-      
-      // Processa dati reali
-      const totalCustomers = customers?.length || 0
-      // Rimuovo simulazione genere - non abbiamo questi dati reali
-      const maleCount = 0
-      const femaleCount = 0
+      console.log('- Clienti oggi (filtrati):', todayNewCustomers)
+      console.log('- Data oggi:', today.toISOString())
+      console.log('- Clienti maschi:', maleCount)
+      console.log('- Clienti femmine:', femaleCount)
       
       const todayRev = todayTransactions?.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0) || 0
       const walletSum = walletData?.reduce((sum, w) => sum + (parseFloat(w.wallet_balance) || 0), 0) || 0
@@ -178,8 +199,9 @@ const DashboardEnterprisePro = () => {
 
       setDashboardData({
         totalCustomers: totalCustomers,
-        maleCustomers: 0,
-        femaleCustomers: 0,
+        todayNewCustomers: todayNewCustomers,
+        maleCustomers: maleCount,
+        femaleCustomers: femaleCount,
         todayRevenue: todayRev,
         walletActive: walletSum,
         hourlyData: hourlyHeatMap,
@@ -610,7 +632,7 @@ const DashboardEnterprisePro = () => {
         <div className="widget-card demographics-card">
           <div className="widget-header">
             <Icons.Users />
-            <h3>CLIENTI OGGI: {dashboardData.totalCustomers} TOTALI</h3>
+            <h3>CLIENTI OGGI: {dashboardData.todayNewCustomers} | TOTALI: {dashboardData.totalCustomers}</h3>
           </div>
           {renderGenderIcons(dashboardData.maleCustomers, dashboardData.femaleCustomers)}
           <div className="spending-summary">
