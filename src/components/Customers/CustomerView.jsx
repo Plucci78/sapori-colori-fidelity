@@ -140,6 +140,7 @@ function CustomerView({
           email: formData.email,
           phone: formData.phone,
           birth_date: formData.birth_date,
+          gender: formData.gender,
           notes: formData.notes
         })
         .eq('id', customerId)
