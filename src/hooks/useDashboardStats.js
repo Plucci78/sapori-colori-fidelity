@@ -72,6 +72,15 @@ export const useDashboardStats = () => {
       // Estimate today's emails (welcome emails + birthday emails)
       const estimatedTodayEmails = Math.floor(todayNewCustomers * 1.2) // New customer emails + some birthday emails
 
+      // DEBUG: Log per capire cosa sta succedendo
+      console.log('📊 Dashboard Stats DEBUG:', {
+        totalCustomers,
+        todayNewCustomers,
+        todayStart: todayStart.toISOString(),
+        giftCardStats,
+        monthlyGrowth
+      })
+
       setStats({
         totalCustomers: totalCustomers || 0,
         totalGemmes,
