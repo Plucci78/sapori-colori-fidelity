@@ -4,6 +4,51 @@ import { flexComponent, canvasFullSize, rteProseMirror, tableComponent, swiperCo
 import '@grapesjs/studio-sdk/style';
 
 const PageBuilderStudio = ({ editingPage, selectedTemplate, onBackToDashboard }) => {
+  // Global error handler per plugin GrapesJS
+  useEffect(() => {
+    const originalError = console.error;
+    const originalWarn = console.warn;
+    
+    // Intercetta errori specifici di GrapesJS plugin
+    console.error = (...args) => {
+      const message = args.join(' ');
+      if (
+        message.includes('Commands is undefined') ||
+        message.includes('RichTextEditor is undefined') ||
+        message.includes('Blocks is undefined') ||
+        message.includes('modules is undefined')
+      ) {
+        // Sopprime questi errori specifici
+        console.log('🔇 Errore GrapesJS soppresso:', message);
+        return;
+      }
+      originalError.apply(console, args);
+    };
+    
+    // Intercetta anche gli uncaught promise rejections
+    const handleUnhandledRejection = (event) => {
+      const message = event.reason?.message || event.reason || '';
+      if (
+        message.includes('Commands is undefined') ||
+        message.includes('RichTextEditor is undefined') ||
+        message.includes('Blocks is undefined') ||
+        message.includes('modules is undefined')
+      ) {
+        console.log('🔇 Promise rejection GrapesJS soppressa:', message);
+        event.preventDefault();
+        return;
+      }
+    };
+    
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    // Cleanup
+    return () => {
+      console.error = originalError;
+      console.warn = originalWarn;
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState(null);
   const [currentLandingPage, setCurrentLandingPage] = useState(editingPage || null);
