@@ -537,6 +537,12 @@ async function handleSaveAsTemplate(req, res) {
   
   const { landing_page_id, template_name, template_description } = req.body
   
+  console.log('🔍 Save template request:', {
+    landing_page_id,
+    template_name,
+    template_description
+  });
+  
   if (!landing_page_id || !template_name) {
     return res.status(400).json({ 
       error: 'landing_page_id e template_name sono obbligatori' 
@@ -545,48 +551,127 @@ async function handleSaveAsTemplate(req, res) {
   
   try {
     // Carica la landing page originale
+    console.log('📖 Caricamento landing page originale:', landing_page_id);
     const { data: landingPage, error: landingError } = await supabase
       .from('landing_pages')
       .select('*')
       .eq('id', landing_page_id)
       .single()
     
-    if (landingError || !landingPage) {
+    if (landingError) {
+      console.error('❌ Errore caricamento landing page:', landingError);
+      return res.status(404).json({ 
+        error: 'Landing page non trovata', 
+        details: landingError.message 
+      })
+    }
+    
+    if (!landingPage) {
+      console.error('❌ Landing page non esistente');
       return res.status(404).json({ error: 'Landing page non trovata' })
     }
     
-    // Crea il template
-    const { data: template, error: templateError } = await supabase
-      .from('landing_page_templates')
-      .insert({
-        name: template_name,
-        description: template_description || `Template creato da: ${landingPage.title}`,
-        html_content: landingPage.html_content,
-        css_content: landingPage.css_content,
-        grapesjs_data: landingPage.grapesjs_data,
-        category: 'custom',
-        is_active: true,
-        created_at: new Date().toISOString()
+    console.log('✅ Landing page caricata:', {
+      id: landingPage.id,
+      title: landingPage.title,
+      hasHtml: !!landingPage.html_content,
+      hasCss: !!landingPage.css_content
+    });
+
+    // Prova prima a creare la tabella templates se non esiste, altrimenti usa approccio alternativo
+    try {
+      // Crea il template nella tabella dedicata
+      console.log('💾 Tentativo creazione template in tabella dedicata...');
+      const { data: template, error: templateError } = await supabase
+        .from('landing_page_templates')
+        .insert({
+          name: template_name,
+          description: template_description || `Template creato da: ${landingPage.title}`,
+          html_content: landingPage.html_content,
+          css_content: landingPage.css_content,
+          grapesjs_data: landingPage.grapesjs_data,
+          category: 'custom',
+          is_active: true,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single()
+      
+      if (templateError) {
+        throw templateError;
+      }
+      
+      console.log('✅ Template creato in tabella dedicata:', template.id, '-', template.name);
+      
+      return res.status(201).json({
+        success: true,
+        data: template,
+        message: 'Template salvato con successo!',
+        type: 'dedicated_table'
       })
-      .select()
-      .single()
-    
-    if (templateError) {
-      console.error('❌ Errore creazione template:', templateError)
-      return res.status(400).json({ error: templateError.message })
+      
+    } catch (templateTableError) {
+      console.warn('⚠️ Tabella templates non disponibile, uso approccio alternativo:', templateTableError.message);
+      
+      // Approccio alternativo: salva come landing page con flag template
+      console.log('💾 Salvataggio come landing page template...');
+      
+      const templateSlug = `template-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+      
+      const { data: templatePage, error: templatePageError } = await supabase
+        .from('landing_pages')
+        .insert({
+          title: `[TEMPLATE] ${template_name}`,
+          description: template_description || `Template creato da: ${landingPage.title}`,
+          slug: templateSlug,
+          html_content: landingPage.html_content,
+          css_content: landingPage.css_content,
+          grapesjs_data: landingPage.grapesjs_data,
+          meta_title: `Template: ${template_name}`,
+          meta_description: template_description || `Template per landing pages`,
+          is_published: false, // I template non sono pubblicati
+          is_active: true,
+          is_template: true, // Flag speciale per identificare i template
+          template_category: 'custom',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single()
+      
+      if (templatePageError) {
+        console.error('❌ Errore creazione template alternativo:', templatePageError);
+        return res.status(400).json({ 
+          error: 'Errore salvataggio template', 
+          details: templatePageError.message 
+        })
+      }
+      
+      console.log('✅ Template salvato come landing page:', templatePage.id, '-', templatePage.title);
+      
+      return res.status(201).json({
+        success: true,
+        data: {
+          id: templatePage.id,
+          name: template_name,
+          description: template_description,
+          html_content: templatePage.html_content,
+          css_content: templatePage.css_content,
+          category: 'custom',
+          type: 'user',
+          created_at: templatePage.created_at
+        },
+        message: 'Template salvato con successo!',
+        type: 'landing_page_fallback'
+      })
     }
     
-    console.log('✅ Template creato:', template.id, '-', template.name)
-    
-    return res.status(201).json({
-      success: true,
-      data: template,
-      message: 'Template salvato con successo!'
-    })
-    
   } catch (error) {
-    console.error('❌ Errore save template:', error)
-    return res.status(500).json({ error: error.message })
+    console.error('❌ Errore generale save template:', error);
+    return res.status(500).json({ 
+      error: 'Errore server durante salvataggio template',
+      details: error.message 
+    })
   }
 }
 

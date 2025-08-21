@@ -177,9 +177,17 @@ const PageBuilderStudio = ({ editingPage, selectedTemplate, onBackToDashboard })
     setIsSavingTemplate(true);
 
     try {
+      console.log('📝 Inizio salvataggio template:', {
+        landing_page_id: currentLandingPage.id,
+        template_name: templateName,
+        template_description: templateDescription
+      });
+
       const apiUrl = window.location.hostname === 'localhost' 
         ? 'http://localhost:3001/api/landing?action=save-template'
         : '/api/landing?action=save-template';
+
+      console.log('🌐 Chiamata API:', apiUrl);
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -191,16 +199,34 @@ const PageBuilderStudio = ({ editingPage, selectedTemplate, onBackToDashboard })
         })
       });
 
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Errore salvataggio template');
+        const errorText = await response.text();
+        console.error('❌ Response error text:', errorText);
+        
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (parseError) {
+          console.error('❌ Errore parsing JSON response:', parseError);
+          throw new Error(`HTTP ${response.status}: ${errorText || 'Errore sconosciuto'}`);
+        }
+        
+        console.error('❌ Error data:', errorData);
+        throw new Error(errorData.error || errorData.message || 'Errore salvataggio template');
       }
 
+      const result = await response.json();
+      console.log('✅ Template salvato con successo:', result);
+      
       alert(`✅ Template "${templateName}" salvato con successo!`);
 
     } catch (error) {
-      console.error('Errore salvataggio template:', error);
-      alert(`❌ Errore: ${error.message}`);
+      console.error('❌ Errore completo salvataggio template:', error);
+      console.error('❌ Error stack:', error.stack);
+      alert(`❌ Errore: ${error.message || 'Errore sconosciuto durante il salvataggio'}`);
     } finally {
       setIsSavingTemplate(false);
     }
