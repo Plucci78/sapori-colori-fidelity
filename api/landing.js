@@ -14,8 +14,20 @@ async function generateThumbnailForLandingPage(pageSlug, htmlContent, cssContent
     // URL della landing page da screenshot
     const landingPageUrl = `https://sapori-colori-fidelity.vercel.app/api/landing?action=show&slug=${pageSlug}`;
     
-    // Usa il servizio screenshot gratuito Thum.io
-    const screenshotUrl = `https://image.thum.io/get/width/400/crop/300/noanimate/${encodeURIComponent(landingPageUrl)}`;
+    // Prova servizi screenshot alternativi
+    const screenshotServices = [
+      // 1. Screenshot Machine (più affidabile)
+      `https://api.screenshotmachine.com/?key=demo&url=${encodeURIComponent(landingPageUrl)}&dimension=400x300&format=jpg`,
+      
+      // 2. HTMLCSStoImage (backup)
+      `https://htmlcsstoimage.com/demo_images/image.png?url=${encodeURIComponent(landingPageUrl)}&width=400&height=300`,
+      
+      // 3. Fallback: genera un'immagine placeholder con il titolo
+      generatePlaceholderImage(pageSlug)
+    ];
+    
+    // Usa il primo servizio disponibile
+    const screenshotUrl = screenshotServices[0];
     
     console.log(`✅ Screenshot URL generato: ${screenshotUrl}`);
     console.log(`🔗 Landing page URL: ${landingPageUrl}`);
@@ -26,6 +38,13 @@ async function generateThumbnailForLandingPage(pageSlug, htmlContent, cssContent
     console.warn(`⚠️ Fallback placeholder per thumbnail ${pageSlug}:`, error.message);
     return '/placeholder-thumbnail.svg'; // Fallback
   }
+}
+
+// Genera placeholder personalizzato con titolo
+function generatePlaceholderImage(pageSlug) {
+  // Usa un servizio che genera immagini placeholder con testo
+  const text = encodeURIComponent(`Landing: ${pageSlug}`);
+  return `https://via.placeholder.com/400x300/8B4513/FFFFFF?text=${text}`;
 }
 
 export default async function handler(req, res) {
