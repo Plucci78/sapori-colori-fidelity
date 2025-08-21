@@ -30,6 +30,7 @@ export const AuthProvider = ({ children }) => {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [initialized, setInitialized] = useState(false)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
 
   // Inizializza auth all'avvio
   useEffect(() => {
@@ -38,26 +39,28 @@ export const AuthProvider = ({ children }) => {
     initializeAuth()
   }, []) // Rimuovi dipendenza per evitare loop
 
-  // Listen to auth changes SENZA LOOP
+  // Listen to auth changes SENZA LOOP - FIXED
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session?.user?.email)
       
-      if (event === 'SIGNED_IN' && session?.user && !profile) {
-        // Solo se non abbiamo già un profilo
-        await loadUserProfile(session.user)
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Evita doppie chiamate
+        if (!isLoadingProfile) {
+          setUser(session.user)
+          await loadUserProfile(session.user)
+        }
       } else if (event === 'SIGNED_OUT') {
         setUser(null)
         setProfile(null)
+        setLoading(false)
       }
-      
-      setLoading(false)
     })
 
     return () => {
       subscription?.unsubscribe()
     }
-  }, [profile]) // Dipende dal profile per evitare loop
+  }, []) // NESSUNA DIPENDENZA - risolve il loop!
 
   // Inizializza auth session esistente
   const initializeAuth = async () => {
@@ -92,6 +95,7 @@ export const AuthProvider = ({ children }) => {
   // Carica profilo utente SEMPLIFICATO
   const loadUserProfile = async (authUser) => {
     try {
+      setIsLoadingProfile(true)
       console.log('Loading profile for user:', authUser.id)
       
       const { data, error } = await supabase
@@ -120,12 +124,14 @@ export const AuthProvider = ({ children }) => {
         if (createError) {
           console.error('Error creating profile:', createError)
           setLoading(false)
+          setIsLoadingProfile(false)
           return
         }
 
         setProfile(newProfile)
         setUser(authUser)
         setLoading(false)
+        setIsLoadingProfile(false)
         return
       }
 
@@ -143,6 +149,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Load profile error:', error)
       setLoading(false)
+    } finally {
+      setIsLoadingProfile(false)
     }
   }
 
