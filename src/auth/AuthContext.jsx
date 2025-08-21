@@ -2,7 +2,7 @@
 // SAPORI & COLORI - AUTH CONTEXT SEMPLIFICATO
 // ===================================
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase } from '../supabase'
 
 // Context creation
@@ -31,6 +31,10 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [initialized, setInitialized] = useState(false)
   const [isLoadingProfile, setIsLoadingProfile] = useState(false)
+  
+  // Ref per evitare loop - SOLUZIONE DRASTICA
+  const processingAuthRef = useRef(false)
+  const currentUserIdRef = useRef(null)
 
   // Inizializza auth all'avvio - ONCE ONLY
   useEffect(() => {
@@ -43,35 +47,43 @@ export const AuthProvider = ({ children }) => {
     initializeAuth()
   }, []) // NESSUNA DIPENDENZA - solo al mount
 
-  // Listen to auth changes - VERSIONE SEMPLIFICATA ANTI-LOOP
+  // Listen to auth changes - VERSIONE ULTRA PROTETTA
   useEffect(() => {
-    let isProcessingAuth = false
-    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email)
+      console.log('🔔 Auth event:', event, session?.user?.email)
       
-      // Evita doppia elaborazione simultanea
-      if (isProcessingAuth) {
-        console.log('⚠️ Skipping auth change - already processing')
+      // Blocca elaborazioni multiple
+      if (processingAuthRef.current) {
+        console.log('⚠️ Auth processing blocked - already in progress')
         return
       }
       
-      isProcessingAuth = true
+      // Evita processi per lo stesso utente
+      if (session?.user?.id && currentUserIdRef.current === session.user.id && event === 'SIGNED_IN') {
+        console.log('⚠️ Auth processing blocked - same user already processed')
+        return
+      }
+      
+      processingAuthRef.current = true
       
       try {
         if (event === 'SIGNED_IN' && session?.user) {
+          console.log('✅ Processing SIGNED_IN for:', session.user.email)
+          currentUserIdRef.current = session.user.id
           setUser(session.user)
           await loadUserProfile(session.user)
         } else if (event === 'SIGNED_OUT') {
+          console.log('✅ Processing SIGNED_OUT')
+          currentUserIdRef.current = null
           setUser(null)
           setProfile(null)
           setLoading(false)
         }
       } catch (error) {
-        console.error('Error in auth state change:', error)
+        console.error('❌ Error in auth state change:', error)
         setLoading(false)
       } finally {
-        isProcessingAuth = false
+        processingAuthRef.current = false
       }
     })
 
@@ -80,33 +92,42 @@ export const AuthProvider = ({ children }) => {
     }
   }, []) // NESSUNA DIPENDENZA
 
-  // Inizializza auth session esistente
+  // Inizializza auth session esistente - PROTETTO
   const initializeAuth = async () => {
+    if (processingAuthRef.current) {
+      console.log('⚠️ InitializeAuth blocked - auth processing in progress')
+      return
+    }
+    
     try {
-      console.log('Initializing auth...')
+      processingAuthRef.current = true
+      console.log('🚀 Initializing auth...')
       setLoading(true)
       
       const { data: { session }, error } = await supabase.auth.getSession()
       
       if (error) {
-        console.error('Error getting session:', error)
+        console.error('❌ Error getting session:', error)
         setLoading(false)
         return
       }
 
       if (session?.user) {
-        console.log('Found existing session for:', session.user.email)
+        console.log('✅ Found existing session for:', session.user.email)
+        currentUserIdRef.current = session.user.id
         setUser(session.user)
         await loadUserProfile(session.user)
       } else {
-        console.log('No existing session')
+        console.log('ℹ️ No existing session')
         setLoading(false)
       }
       
       setInitialized(true)
     } catch (error) {
-      console.error('Initialize auth error:', error)
+      console.error('❌ Initialize auth error:', error)
       setLoading(false)
+    } finally {
+      processingAuthRef.current = false
     }
   }
 
