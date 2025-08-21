@@ -14,20 +14,8 @@ async function generateThumbnailForLandingPage(pageSlug, htmlContent, cssContent
     // URL della landing page da screenshot
     const landingPageUrl = `https://sapori-colori-fidelity.vercel.app/api/landing?action=show&slug=${pageSlug}`;
     
-    // Prova servizi screenshot alternativi
-    const screenshotServices = [
-      // 1. Screenshot Machine (più affidabile)
-      `https://api.screenshotmachine.com/?key=demo&url=${encodeURIComponent(landingPageUrl)}&dimension=400x300&format=jpg`,
-      
-      // 2. HTMLCSStoImage (backup)
-      `https://htmlcsstoimage.com/demo_images/image.png?url=${encodeURIComponent(landingPageUrl)}&width=400&height=300`,
-      
-      // 3. Fallback: genera un'immagine placeholder con il titolo
-      generatePlaceholderImage(pageSlug)
-    ];
-    
-    // Usa il primo servizio disponibile
-    const screenshotUrl = screenshotServices[0];
+    // Usa Screenshot Machine con chiave API valida
+    const screenshotUrl = `https://api.screenshotmachine.com/?key=f7dbfa&url=${encodeURIComponent(landingPageUrl)}&dimension=400x300&format=jpg`;
     
     console.log(`✅ Screenshot URL generato: ${screenshotUrl}`);
     console.log(`🔗 Landing page URL: ${landingPageUrl}`);
