@@ -136,13 +136,25 @@ export default async function handler(req, res) {
     // 3. Stampa scontrino
     console.log(`🖨️ Stampando scontrino SumUp...`);
     
-    const printResponse = await fetch(`${PRINTER_URL}/print/sumup-receipt`, {
+    const printResponse = await fetch(`${PRINTER_URL}/print/receipt`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'ngrok-skip-browser-warning': 'true'
       },
-      body: JSON.stringify({ receipt: receiptData }),
+      body: JSON.stringify({
+        orderId: receiptData.transactionCode,
+        total: receiptData.amount,
+        operator: "Sistema SumUp",
+        customer: "Cliente SumUp", 
+        paymentMethod: `${receiptData.cardType} ${receiptData.entryMode}`,
+        items: [{
+          name: "SumUp Transaction",
+          quantity: 1,
+          price: receiptData.amount
+        }],
+        notes: `Transaction ID: ${receiptData.transactionCode}, Card: ${receiptData.cardType}, Entry: ${receiptData.entryMode}, Status: APPROVED`
+      }),
       timeout: 15000
     });
 
