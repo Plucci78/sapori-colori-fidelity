@@ -1,8 +1,76 @@
-// API per cercare transazioni SumUp e stampare scontrini
+// API unificata per transazioni SumUp: lista (GET) e stampa (POST)
 export default async function handler(req, res) {
   const SUMUP_API_KEY = 'sup_sk_NaX6p2WD4w1mq7di7mLuSBibEvZ2ckxtx';
   const PRINTER_URL = 'https://sacred-eagle-similarly.ngrok-free.app';
 
+  // GET - Lista transazioni SumUp
+  if (req.method === 'GET') {
+    const { action, limit = 20 } = req.query;
+
+    if (action === 'list') {
+      try {
+        console.log(`📋 Recuperando lista transazioni SumUp (limit: ${limit})...`);
+        
+        const response = await fetch(`https://api.sumup.com/v0.1/me/transactions/history?order=descending&limit=${limit}`, {
+          headers: {
+            'Authorization': `Bearer ${SUMUP_API_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Errore SumUp API:', response.status, errorText);
+          return res.status(response.status).json({ 
+            error: 'Errore connessione SumUp',
+            details: errorText 
+          });
+        }
+
+        const data = await response.json();
+        const transactions = data.items || [];
+        
+        // Filtra solo transazioni SUCCESS e formatta per UI
+        const formattedTransactions = transactions
+          .filter(t => t.status === 'SUCCESSFUL')
+          .map(t => ({
+            id: t.transaction_code,
+            code: t.transaction_code,
+            amount: parseFloat(t.amount).toFixed(2),
+            currency: t.currency,
+            cardType: t.card_type,
+            entryMode: t.entry_mode,
+            timestamp: t.timestamp,
+            date: new Date(t.timestamp).toLocaleDateString('it-IT'),
+            time: new Date(t.timestamp).toLocaleTimeString('it-IT', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            }),
+            status: t.status,
+            canPrint: true
+          }));
+
+        console.log(`✅ ${formattedTransactions.length} transazioni recuperate`);
+
+        return res.status(200).json({
+          success: true,
+          count: formattedTransactions.length,
+          transactions: formattedTransactions
+        });
+
+      } catch (error) {
+        console.error('Errore API SumUp lista:', error);
+        return res.status(500).json({ 
+          error: 'Errore interno',
+          message: error.message 
+        });
+      }
+    } else {
+      return res.status(400).json({ error: 'Parametro action richiesto per GET' });
+    }
+  }
+
+  // POST - Stampa scontrino (codice esistente)
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
