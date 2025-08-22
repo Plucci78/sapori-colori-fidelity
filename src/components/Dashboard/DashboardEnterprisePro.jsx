@@ -280,16 +280,13 @@ const DashboardEnterprisePro = () => {
     // Alert per clienti con molti punti (opportunità)
     const highPointsCustomers = customers?.filter(c => c.points > 100) || []
     if (highPointsCustomers.length > 0) {
-      const customerNames = highPointsCustomers
-        .map(c => `${c.name} (${c.points} punti)`)
-        .join(', ')
-      
       alerts.push({
         type: 'opportunity',
         title: `${highPointsCustomers.length} clienti con molti punti`,
-        description: customerNames,
+        description: highPointsCustomers.map(c => `${c.name} (${c.points} punti)`),
         action: 'Proponi utilizzo punti',
-        icon: 'Opportunity'
+        icon: 'Opportunity',
+        isCustomerList: true
       })
     }
     
@@ -741,7 +738,17 @@ const DashboardEnterprisePro = () => {
                 <IconComponent />
                 <div className="alert-content">
                   <div className="alert-title">{alert.title}</div>
-                  <div className="alert-description">{alert.description}</div>
+                  <div className="alert-description">
+                    {alert.isCustomerList ? (
+                      <div className="customer-list">
+                        {alert.description.map((customer, idx) => (
+                          <div key={idx} className="customer-item">• {customer}</div>
+                        ))}
+                      </div>
+                    ) : (
+                      alert.description
+                    )}
+                  </div>
                   <div className="alert-action">AZIONE: {alert.action}</div>
                 </div>
               </div>
