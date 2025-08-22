@@ -76,19 +76,26 @@ export default async function handler(req, res) {
     if (printerServerUrl) {
       try {
         // Usa l'URL dalle impostazioni del database
-        const printerResponse = await fetch(`${printerServerUrl}/health`, { 
+        const printerResponse = await fetch(`${printerServerUrl}/print/status`, { 
           timeout: 3000 
         });
         
         if (printerResponse.ok) {
           const printerData = await printerResponse.json();
+          const isConnected = printerData.connected === true;
+          
           results.services.printer = {
-            status: 'online',
-            details: 'Stampante connessa e pronta (autodiscovery)',
+            status: isConnected ? 'online' : 'offline',
+            details: isConnected ? 'Stampante connessa e pronta (autodiscovery)' : 'Stampante spenta o scollegata',
             model: printerData.printerType || 'Termica',
-            ip: printerData.printerIP || 'N/A'
+            ip: printerData.interface || 'N/A',
+            lastCheck: printerData.lastCheck,
+            autoDiscovered: printerData.autoDiscovered
           };
-          console.log('✅ Printer: OK');
+          
+          if (!isConnected) allOnline = false;
+          
+          console.log(isConnected ? '✅ Printer: OK' : '❌ Printer: Disconnected');
         } else {
           throw new Error('Printer server not responding');
         }
