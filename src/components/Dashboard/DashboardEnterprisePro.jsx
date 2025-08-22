@@ -441,23 +441,35 @@ const DashboardEnterprisePro = () => {
     }
   }
 
-  // Check system status
+  // Check system status - CONTROLLI REALI
   const checkSystemStatus = async () => {
     try {
-      // Check print server
-      const printResponse = await fetch('/api/print/status')
-      const printStatus = printResponse.ok ? 'online' : 'offline'
+      console.log('🔍 Checking real system status...')
+      const response = await fetch('/api/system-status')
+      
+      if (!response.ok) {
+        throw new Error('System status API failed')
+      }
+      
+      const data = await response.json()
       
       return {
-        nfc: 'online', // Assumiamo online per ora
-        printer: printStatus,
-        ngrok: 'online' // Assumiamo online per ora
+        overall: data.overall,
+        database: data.services.database?.status || 'offline',
+        email: data.services.email?.status || 'offline', 
+        storage: data.services.storage?.status || 'offline',
+        performance: data.services.performance?.status || 'offline',
+        details: data.services
       }
-    } catch {
+    } catch (error) {
+      console.error('❌ System status check failed:', error)
       return {
-        nfc: 'offline',
-        printer: 'offline', 
-        ngrok: 'offline'
+        overall: 'offline',
+        database: 'offline',
+        email: 'offline',
+        storage: 'offline', 
+        performance: 'offline',
+        error: error.message
       }
     }
   }
@@ -580,19 +592,26 @@ const DashboardEnterprisePro = () => {
           </div>
           <div className="system-indicators">
             <div className="status-item">
-              {dashboardData.systemStatus.nfc === 'online' ? 
+              {dashboardData.systemStatus.database === 'online' ? 
                 <Icons.StatusOnline /> : <Icons.StatusOffline />}
-              <span>NFC</span>
+              <span>Database</span>
             </div>
             <div className="status-item">
-              {dashboardData.systemStatus.printer === 'online' ? 
+              {dashboardData.systemStatus.email === 'online' ? 
                 <Icons.StatusOnline /> : <Icons.StatusOffline />}
-              <span>Stampa</span>
+              <span>Email</span>
             </div>
             <div className="status-item">
-              {dashboardData.systemStatus.ngrok === 'online' ? 
+              {dashboardData.systemStatus.storage === 'online' ? 
                 <Icons.StatusOnline /> : <Icons.StatusOffline />}
-              <span>Web</span>
+              <span>Storage</span>
+            </div>
+            <div className="status-item">
+              {dashboardData.systemStatus.performance === 'online' ? 
+                <Icons.StatusOnline /> : 
+                dashboardData.systemStatus.performance === 'slow' ? 
+                <Icons.StatusOffline /> : <Icons.StatusOffline />}
+              <span>Performance</span>
             </div>
           </div>
         </div>
