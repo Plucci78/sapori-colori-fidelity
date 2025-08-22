@@ -19,7 +19,65 @@ export default async function handler(req, res) {
   let allOnline = true;
 
   try {
-    // 1. TEST DATABASE CONNECTION
+    // 1. TEST NFC READER CONNECTION
+    console.log('🔍 Testing NFC reader connection...');
+    try {
+      // Prova a contattare il raspberry NFC bridge
+      const nfcResponse = await fetch('http://192.168.1.6:3001/status', { 
+        timeout: 3000 
+      });
+      
+      if (nfcResponse.ok) {
+        const nfcData = await nfcResponse.json();
+        results.services.nfc = {
+          status: 'online',
+          details: 'Lettore NFC connesso e funzionante',
+          bridge: 'Raspberry Pi raggiungibile'
+        };
+        console.log('✅ NFC Reader: OK');
+      } else {
+        throw new Error('NFC bridge not responding');
+      }
+    } catch (nfcError) {
+      results.services.nfc = {
+        status: 'offline',
+        error: nfcError.message,
+        details: 'Lettore NFC non raggiungibile (Raspberry Pi off?)'
+      };
+      allOnline = false;
+      console.log('❌ NFC Reader: OFFLINE -', nfcError.message);
+    }
+
+    // 2. TEST PRINTER CONNECTION  
+    console.log('🔍 Testing printer connection...');
+    try {
+      // Prova a contattare il print server del raspberry
+      const printerResponse = await fetch('http://192.168.1.6:3002/status', { 
+        timeout: 3000 
+      });
+      
+      if (printerResponse.ok) {
+        const printerData = await printerResponse.json();
+        results.services.printer = {
+          status: 'online',
+          details: 'Stampante connessa e pronta',
+          model: printerData.printer || 'Termica'
+        };
+        console.log('✅ Printer: OK');
+      } else {
+        throw new Error('Printer server not responding');
+      }
+    } catch (printerError) {
+      results.services.printer = {
+        status: 'offline', 
+        error: printerError.message,
+        details: 'Stampante non raggiungibile (spenta o scollegata?)'
+      };
+      allOnline = false;
+      console.log('❌ Printer: OFFLINE -', printerError.message);
+    }
+
+    // 3. TEST DATABASE CONNECTION
     console.log('🔍 Testing database connection...');
     const dbStart = Date.now();
     

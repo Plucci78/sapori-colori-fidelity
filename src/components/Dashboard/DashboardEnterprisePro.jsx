@@ -455,20 +455,20 @@ const DashboardEnterprisePro = () => {
       
       return {
         overall: data.overall,
+        nfc: data.services.nfc?.status || 'offline',
+        printer: data.services.printer?.status || 'offline',
         database: data.services.database?.status || 'offline',
-        email: data.services.email?.status || 'offline', 
-        storage: data.services.storage?.status || 'offline',
-        performance: data.services.performance?.status || 'offline',
+        email: data.services.email?.status || 'offline',
         details: data.services
       }
     } catch (error) {
       console.error('❌ System status check failed:', error)
       return {
         overall: 'offline',
+        nfc: 'offline',
+        printer: 'offline',
         database: 'offline',
         email: 'offline',
-        storage: 'offline', 
-        performance: 'offline',
         error: error.message
       }
     }
@@ -592,6 +592,16 @@ const DashboardEnterprisePro = () => {
           </div>
           <div className="system-indicators">
             <div className="status-item">
+              {dashboardData.systemStatus.nfc === 'online' ? 
+                <Icons.StatusOnline /> : <Icons.StatusOffline />}
+              <span>NFC</span>
+            </div>
+            <div className="status-item">
+              {dashboardData.systemStatus.printer === 'online' ? 
+                <Icons.StatusOnline /> : <Icons.StatusOffline />}
+              <span>Stampante</span>
+            </div>
+            <div className="status-item">
               {dashboardData.systemStatus.database === 'online' ? 
                 <Icons.StatusOnline /> : <Icons.StatusOffline />}
               <span>Database</span>
@@ -600,18 +610,6 @@ const DashboardEnterprisePro = () => {
               {dashboardData.systemStatus.email === 'online' ? 
                 <Icons.StatusOnline /> : <Icons.StatusOffline />}
               <span>Email</span>
-            </div>
-            <div className="status-item">
-              {dashboardData.systemStatus.storage === 'online' ? 
-                <Icons.StatusOnline /> : <Icons.StatusOffline />}
-              <span>Storage</span>
-            </div>
-            <div className="status-item">
-              {dashboardData.systemStatus.performance === 'online' ? 
-                <Icons.StatusOnline /> : 
-                dashboardData.systemStatus.performance === 'slow' ? 
-                <Icons.StatusOffline /> : <Icons.StatusOffline />}
-              <span>Performance</span>
             </div>
           </div>
         </div>
