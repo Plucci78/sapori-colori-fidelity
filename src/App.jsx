@@ -1603,7 +1603,8 @@ for (const customer of recipients) {
         .update({
           points_per_euro: settings.points_per_euro,
           points_for_prize: settings.points_for_prize,
-          nfc_server_url: settings.nfc_server_url
+          nfc_server_url: settings.nfc_server_url,
+          printer_server_url: settings.printer_server_url
         })
         .eq('id', settings.id)
 

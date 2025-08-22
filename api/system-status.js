@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     if (nfcServerUrl) {
       try {
         // Usa l'URL dalle impostazioni
-        const nfcResponse = await fetch(`${nfcServerUrl}/status`, { 
+        const nfcResponse = await fetch(`${nfcServerUrl}/health`, { 
           timeout: 3000 
         });
       
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
     if (printerServerUrl) {
       try {
         // Usa l'URL dalle impostazioni del database
-        const printerResponse = await fetch(`${printerServerUrl}/status`, { 
+        const printerResponse = await fetch(`${printerServerUrl}/health`, { 
           timeout: 3000 
         });
         
