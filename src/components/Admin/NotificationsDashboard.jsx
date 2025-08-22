@@ -916,7 +916,7 @@ const NotificationsDashboard = ({ customerLevels }) => {
         <h2>📊 Storico Notifiche Inviate</h2>
         
         {notificationHistory.length > 0 ? (
-          <div className="history-table-container">
+          <div className="history-table-container scrollable-history">
             <table className="history-table">
               <thead>
                 <tr>
