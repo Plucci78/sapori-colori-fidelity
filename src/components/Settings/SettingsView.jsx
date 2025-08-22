@@ -146,6 +146,27 @@ const SettingsView = ({ settings, setSettings, saveSettings, EMAIL_CONFIG, showN
               </div>
             </div>
             <div className="settings-section">
+              <h4>🖨️ Server Stampante</h4>
+              <div className="settings-grid">
+                <div className="setting-field">
+                  <label>URL Server Stampante:</label>
+                  <input
+                    type="text"
+                    value={settings.printer_server_url || ''}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      printer_server_url: e.target.value
+                    })}
+                    className="setting-input"
+                    placeholder="es. https://your-printer-ngrok.ngrok.io"
+                  />
+                  <p className="setting-description">
+                    Indirizzo del server di stampa termica (tunnel ngrok o IP locale)
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="settings-section">
               <h4>🎁 Sistema Referral</h4>
               <div className="settings-grid">
                 <div className="setting-field">

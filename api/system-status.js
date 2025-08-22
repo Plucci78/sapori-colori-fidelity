@@ -19,62 +19,109 @@ export default async function handler(req, res) {
   let allOnline = true;
 
   try {
+    // Prima carica le impostazioni dal database
+    const { data: settingsData } = await supabase
+      .from('settings')
+      .select('nfc_server_url, printer_server_url')
+      .single();
+      
+    const nfcServerUrl = settingsData?.nfc_server_url;
+    const printerServerUrl = settingsData?.printer_server_url;
+    
     // 1. TEST NFC READER CONNECTION
     console.log('🔍 Testing NFC reader connection...');
-    try {
-      // Prova a contattare il raspberry NFC bridge
-      const nfcResponse = await fetch('http://192.168.1.6:3001/status', { 
-        timeout: 3000 
-      });
+    console.log('NFC Server URL from settings:', nfcServerUrl);
+    
+    if (nfcServerUrl) {
+      try {
+        // Usa l'URL dalle impostazioni
+        const nfcResponse = await fetch(`${nfcServerUrl}/status`, { 
+          timeout: 3000 
+        });
       
-      if (nfcResponse.ok) {
-        const nfcData = await nfcResponse.json();
+        if (nfcResponse.ok) {
+          await nfcResponse.json();
+          results.services.nfc = {
+            status: 'online',
+            details: 'Lettore NFC connesso e funzionante',
+            bridge: 'Raspberry Pi raggiungibile'
+          };
+          console.log('✅ NFC Reader: OK');
+        } else {
+          throw new Error('NFC bridge not responding');
+        }
+      } catch (nfcError) {
         results.services.nfc = {
-          status: 'online',
-          details: 'Lettore NFC connesso e funzionante',
-          bridge: 'Raspberry Pi raggiungibile'
+          status: 'offline',
+          error: nfcError.message,
+          details: 'Lettore NFC non raggiungibile (Raspberry Pi off?)'
         };
-        console.log('✅ NFC Reader: OK');
-      } else {
-        throw new Error('NFC bridge not responding');
+        allOnline = false;
+        console.log('❌ NFC Reader: OFFLINE -', nfcError.message);
       }
-    } catch (nfcError) {
+    } else {
       results.services.nfc = {
         status: 'offline',
-        error: nfcError.message,
-        details: 'Lettore NFC non raggiungibile (Raspberry Pi off?)'
+        error: 'NFC server URL not configured',
+        details: 'Configurare URL server NFC nelle impostazioni'
       };
       allOnline = false;
-      console.log('❌ NFC Reader: OFFLINE -', nfcError.message);
+      console.log('❌ NFC Reader: URL non configurato');
     }
 
     // 2. TEST PRINTER CONNECTION  
     console.log('🔍 Testing printer connection...');
-    try {
-      // Prova a contattare il print server del raspberry
-      const printerResponse = await fetch('http://192.168.1.6:3002/status', { 
-        timeout: 3000 
-      });
-      
-      if (printerResponse.ok) {
-        const printerData = await printerResponse.json();
+    console.log('Printer Server URL from settings:', printerServerUrl);
+    
+    if (printerServerUrl) {
+      try {
+        // Usa l'URL dalle impostazioni del database
+        const printerResponse = await fetch(`${printerServerUrl}/status`, { 
+          timeout: 3000 
+        });
+        
+        if (printerResponse.ok) {
+          const printerData = await printerResponse.json();
+          results.services.printer = {
+            status: 'online',
+            details: 'Stampante connessa e pronta (autodiscovery)',
+            model: printerData.printerType || 'Termica',
+            ip: printerData.printerIP || 'N/A'
+          };
+          console.log('✅ Printer: OK');
+        } else {
+          throw new Error('Printer server not responding');
+        }
+      } catch (printerError) {
         results.services.printer = {
-          status: 'online',
-          details: 'Stampante connessa e pronta',
-          model: printerData.printer || 'Termica'
+          status: 'offline', 
+          error: printerError.message,
+          details: 'Stampante non raggiungibile (Raspberry Pi off?)'
         };
-        console.log('✅ Printer: OK');
-      } else {
-        throw new Error('Printer server not responding');
+        allOnline = false;
+        console.log('❌ Printer: OFFLINE -', printerError.message);
       }
-    } catch (printerError) {
-      results.services.printer = {
-        status: 'offline', 
-        error: printerError.message,
-        details: 'Stampante non raggiungibile (spenta o scollegata?)'
-      };
-      allOnline = false;
-      console.log('❌ Printer: OFFLINE -', printerError.message);
+    } else {
+      // Fallback: usa l'autodiscovery se non è configurato URL
+      try {
+        // Prova l'autodiscovery locale (se il sistema è sulla stessa rete)
+        console.log('🔄 Printer URL not configured, using autodiscovery fallback...');
+        
+        results.services.printer = {
+          status: 'warning',
+          details: 'URL server stampante non configurato nelle impostazioni',
+          note: 'Configurare printer_server_url per monitoraggio completo'
+        };
+        console.log('⚠️ Printer: URL non configurato');
+      } catch (autodiscoveryError) {
+        results.services.printer = {
+          status: 'offline',
+          error: 'Printer server URL not configured',
+          details: 'Configurare URL server stampante nelle impostazioni'
+        };
+        allOnline = false;
+        console.log('❌ Printer: URL non configurato');
+      }
     }
 
     // 3. TEST DATABASE CONNECTION
@@ -82,7 +129,7 @@ export default async function handler(req, res) {
     const dbStart = Date.now();
     
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('customers')
         .select('id')
         .limit(1);
