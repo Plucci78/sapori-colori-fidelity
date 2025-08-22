@@ -280,10 +280,14 @@ const DashboardEnterprisePro = () => {
     // Alert per clienti con molti punti (opportunità)
     const highPointsCustomers = customers?.filter(c => c.points > 100) || []
     if (highPointsCustomers.length > 0) {
+      const customerNames = highPointsCustomers
+        .map(c => `${c.name} (${c.points} punti)`)
+        .join(', ')
+      
       alerts.push({
         type: 'opportunity',
         title: `${highPointsCustomers.length} clienti con molti punti`,
-        description: `Clienti con oltre 100 punti pronti per rewards`,
+        description: customerNames,
         action: 'Proponi utilizzo punti',
         icon: 'Opportunity'
       })
