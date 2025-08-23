@@ -11,6 +11,30 @@ const TransactionFilters = ({ filters, onFiltersChange, onClearFilters, cardType
   // Opzioni per filtro tipo carta
   const cardTypeOptions = Object.keys(cardTypes || {}).sort()
 
+  // Icona per tipo carta
+  const getCardIcon = (cardType) => {
+    const type = cardType?.toUpperCase()
+    switch(type) {
+      case 'VISA':
+      case 'V PAY':
+        return <SumUpIcons.Visa size={16} />
+      case 'MASTERCARD':
+        return <SumUpIcons.Mastercard size={16} />
+      case 'MAESTRO':
+        return <SumUpIcons.Maestro size={16} />
+      case 'AMERICAN EXPRESS':
+      case 'AMEX':
+        return <SumUpIcons.AmericanExpress size={16} />
+      case 'DISCOVER':
+        return <SumUpIcons.Discover size={16} />
+      case 'DINERS CLUB':
+      case 'DINERSCLUB':
+        return <SumUpIcons.DinersClub size={16} />
+      default:
+        return <SumUpIcons.CreditCard size={16} />
+    }
+  }
+
   return (
     <div className="transaction-filters">
       <div className="filters-header">
@@ -89,13 +113,13 @@ const TransactionFilters = ({ filters, onFiltersChange, onClearFilters, cardType
           <SumUpIcons.Calendar size={16} /> Oggi
         </button>
         
-        {cardTypeOptions.slice(0, 3).map(cardType => (
+        {cardTypeOptions.slice(0, 4).map(cardType => (
           <button
             key={cardType}
             onClick={() => handleInputChange('cardType', cardType)}
             className={`btn btn-quick ${filters.cardType === cardType ? 'active' : ''}`}
           >
-            <SumUpIcons.CreditCard size={16} /> {cardType}
+            {getCardIcon(cardType)} {cardType}
           </button>
         ))}
       </div>
