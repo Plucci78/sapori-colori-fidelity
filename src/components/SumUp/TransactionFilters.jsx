@@ -84,7 +84,9 @@ const TransactionFilters = ({ filters, onFiltersChange, onClearFilters, cardType
 
         {/* Filtro tipo carta */}
         <div className="filter-group">
-          <label htmlFor="card-type-filter"><SumUpIcons.CreditCard size={16} /> Tipo Carta</label>
+          <label htmlFor="card-type-filter">
+            {filters.cardType ? getCardIcon(filters.cardType) : <SumUpIcons.CreditCard size={16} />} Tipo Carta
+          </label>
           <select
             id="card-type-filter"
             value={filters.cardType}
