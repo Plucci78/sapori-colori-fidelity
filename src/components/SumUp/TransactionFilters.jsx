@@ -1,4 +1,5 @@
 import React from 'react'
+import SumUpIcons from './SumUpIcons'
 
 const TransactionFilters = ({ filters, onFiltersChange, onClearFilters, cardTypes }) => {
   const handleInputChange = (field, value) => {
@@ -13,13 +14,13 @@ const TransactionFilters = ({ filters, onFiltersChange, onClearFilters, cardType
   return (
     <div className="transaction-filters">
       <div className="filters-header">
-        <h3>🔍 Filtri e Ricerca</h3>
+        <h3><SumUpIcons.Filter size={18} /> Filtri e Ricerca</h3>
         {hasActiveFilters && (
           <button 
             onClick={onClearFilters}
             className="btn btn-clear"
           >
-            ✕ Pulisci Filtri
+            <SumUpIcons.Close size={16} /> Pulisci Filtri
           </button>
         )}
       </div>
@@ -27,7 +28,7 @@ const TransactionFilters = ({ filters, onFiltersChange, onClearFilters, cardType
       <div className="filters-grid">
         {/* Ricerca per importo */}
         <div className="filter-group">
-          <label htmlFor="amount-filter">💰 Importo Esatto</label>
+          <label htmlFor="amount-filter"><SumUpIcons.Money size={16} /> Importo Esatto</label>
           <div className="input-group">
             <span className="input-prefix">€</span>
             <input
@@ -46,7 +47,7 @@ const TransactionFilters = ({ filters, onFiltersChange, onClearFilters, cardType
 
         {/* Filtro per data */}
         <div className="filter-group">
-          <label htmlFor="date-filter">📅 Data Transazione</label>
+          <label htmlFor="date-filter"><SumUpIcons.Calendar size={16} /> Data Transazione</label>
           <input
             id="date-filter"
             type="date"
@@ -59,7 +60,7 @@ const TransactionFilters = ({ filters, onFiltersChange, onClearFilters, cardType
 
         {/* Filtro tipo carta */}
         <div className="filter-group">
-          <label htmlFor="card-type-filter">💳 Tipo Carta</label>
+          <label htmlFor="card-type-filter"><SumUpIcons.CreditCard size={16} /> Tipo Carta</label>
           <select
             id="card-type-filter"
             value={filters.cardType}
@@ -79,13 +80,13 @@ const TransactionFilters = ({ filters, onFiltersChange, onClearFilters, cardType
 
       {/* Filtri rapidi */}
       <div className="quick-filters">
-        <span className="quick-filters-label">🚀 Filtri Rapidi:</span>
+        <span className="quick-filters-label"><SumUpIcons.Filter size={16} /> Filtri Rapidi:</span>
         
         <button
           onClick={() => handleInputChange('date', new Date().toISOString().split('T')[0])}
           className={`btn btn-quick ${filters.date === new Date().toISOString().split('T')[0] ? 'active' : ''}`}
         >
-          📅 Oggi
+          <SumUpIcons.Calendar size={16} /> Oggi
         </button>
         
         {cardTypeOptions.slice(0, 3).map(cardType => (
@@ -94,7 +95,7 @@ const TransactionFilters = ({ filters, onFiltersChange, onClearFilters, cardType
             onClick={() => handleInputChange('cardType', cardType)}
             className={`btn btn-quick ${filters.cardType === cardType ? 'active' : ''}`}
           >
-            💳 {cardType}
+            <SumUpIcons.CreditCard size={16} /> {cardType}
           </button>
         ))}
       </div>
@@ -103,7 +104,7 @@ const TransactionFilters = ({ filters, onFiltersChange, onClearFilters, cardType
       {hasActiveFilters && (
         <div className="filter-results">
           <span className="results-info">
-            🔍 {hasActiveFilters ? 'Filtri attivi' : 'Mostra tutto'}
+            <SumUpIcons.Filter size={16} /> {hasActiveFilters ? 'Filtri attivi' : 'Mostra tutto'}
           </span>
         </div>
       )}
