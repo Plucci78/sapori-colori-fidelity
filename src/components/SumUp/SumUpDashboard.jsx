@@ -81,14 +81,13 @@ const SumUpDashboard = () => {
         <div className="header-title">
           <img 
             src="https://jexkalekaofsfcusdfjh.supabase.co/storage/v1/object/public/tinymce-images/sumup-logo.png" 
-            alt="SumUp Logo" 
+            alt="SumUp Dashboard" 
             className="sumup-logo"
             onError={(e) => {
               // Fallback se il logo non è disponibile
               e.target.style.display = 'none'
             }}
           />
-          <h2>SumUp Payments</h2>
         </div>
         <div className="header-actions">
           <button 

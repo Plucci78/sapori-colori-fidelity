@@ -1,16 +1,23 @@
 import React from 'react'
+import SumUpIcons from './SumUpIcons'
 
 const TransactionCard = ({ transaction, onPrintReceipt, isPrinting }) => {
   // Icone per tipi di carta
   const getCardIcon = (cardType) => {
-    const icons = {
-      'VISA': '💳',
-      'MASTERCARD': '💳',
-      'MAESTRO': '💳',
-      'AMERICAN EXPRESS': '💳',
-      'AMEX': '💳'
+    const type = cardType?.toUpperCase()
+    switch(type) {
+      case 'VISA':
+        return <SumUpIcons.Visa size={20} />
+      case 'MASTERCARD':
+        return <SumUpIcons.Mastercard size={20} />
+      case 'MAESTRO':
+        return <SumUpIcons.Maestro size={20} />
+      case 'AMERICAN EXPRESS':
+      case 'AMEX':
+        return <SumUpIcons.AmericanExpress size={20} />
+      default:
+        return <SumUpIcons.CreditCard size={20} />
     }
-    return icons[cardType?.toUpperCase()] || '💳'
   }
 
   // Colori per tipi di carta
@@ -27,13 +34,19 @@ const TransactionCard = ({ transaction, onPrintReceipt, isPrinting }) => {
 
   // Icona per modalità di pagamento
   const getEntryModeIcon = (entryMode) => {
-    const icons = {
-      'contactless': '📡',
-      'chip': '🔒',
-      'swipe': '💳',
-      'manual': '✋'
+    const mode = entryMode?.toLowerCase()
+    switch(mode) {
+      case 'contactless':
+        return <SumUpIcons.Contactless size={16} />
+      case 'chip':
+        return <SumUpIcons.Chip size={16} />
+      case 'swipe':
+        return <SumUpIcons.Swipe size={16} />
+      case 'manual':
+        return <SumUpIcons.Manual size={16} />
+      default:
+        return <SumUpIcons.CreditCard size={16} />
     }
-    return icons[entryMode?.toLowerCase()] || '💳'
   }
 
   const formatAmount = (amount) => {
@@ -68,11 +81,11 @@ const TransactionCard = ({ transaction, onPrintReceipt, isPrinting }) => {
         <div className="status-section">
           {transaction.printed && (
             <span className="print-status printed">
-              ✅ Stampato
+              <SumUpIcons.Success size={12} /> Stampato
             </span>
           )}
           <span className="transaction-status success">
-            ✅ SUCCESSFUL
+            <SumUpIcons.Success size={12} /> SUCCESSFUL
           </span>
         </div>
       </div>
@@ -84,7 +97,7 @@ const TransactionCard = ({ transaction, onPrintReceipt, isPrinting }) => {
             className="card-type"
             style={{ color: getCardColor(transaction.cardType) }}
           >
-            {getCardIcon(transaction.cardType)} {transaction.cardType}
+{getCardIcon(transaction.cardType)} {transaction.cardType}
           </span>
           <span className="entry-mode">
             {getEntryModeIcon(transaction.entryMode)} {transaction.entryMode}
@@ -95,8 +108,8 @@ const TransactionCard = ({ transaction, onPrintReceipt, isPrinting }) => {
       {/* Info transazione */}
       <div className="transaction-info">
         <div className="date-time">
-          <span className="date">📅 {formatDate(transaction.timestamp)}</span>
-          <span className="time">🕐 {formatTime(transaction.timestamp)}</span>
+          <span className="date"><SumUpIcons.Calendar size={14} /> {formatDate(transaction.timestamp)}</span>
+          <span className="time"><SumUpIcons.Clock size={14} /> {formatTime(transaction.timestamp)}</span>
         </div>
         <div className="transaction-id">
           <span className="label">ID:</span>
@@ -112,9 +125,9 @@ const TransactionCard = ({ transaction, onPrintReceipt, isPrinting }) => {
           className={`btn btn-print ${isPrinting ? 'printing' : ''}`}
         >
           {isPrinting ? (
-            <>🔄 Stampa in corso...</>
+            <><SumUpIcons.Refresh size={16} /> Stampa in corso...</>
           ) : (
-            <>🖨️ Stampa Scontrino</>
+            <><SumUpIcons.Print size={16} /> Stampa Scontrino</>
           )}
         </button>
         
