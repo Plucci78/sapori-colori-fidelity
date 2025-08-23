@@ -80,7 +80,7 @@ const SumUpDashboard = () => {
       <div className="sumup-header">
         <div className="header-title">
           <img 
-            src="https://saporiecolori.supabase.co/storage/v1/object/public/assets/sumup-logo.png" 
+            src="https://jexkalekaofsfcusdfjh.supabase.co/storage/v1/object/public/tinymce-images/sumup-logo.png" 
             alt="SumUp Logo" 
             className="sumup-logo"
             onError={(e) => {
