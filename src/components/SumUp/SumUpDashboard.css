@@ -29,7 +29,7 @@
 }
 
 .sumup-logo {
-  height: 80px;
+  height: 120px;
   width: auto;
   object-fit: contain;
 }
@@ -663,7 +663,7 @@
   }
   
   .sumup-logo {
-    height: 64px;
+    height: 90px;
   }
   
   .stats-grid {
