@@ -71,7 +71,7 @@ const SumUpIcons = {
     </svg>
   ),
 
-  TrendUp: ({ size = 32, color = '#2196f3' }) => (
+  TrendingUp: ({ size = 32, color = '#2196f3' }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M3 17l6-6 4 4 8-8" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M17 7h4v4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -150,6 +150,28 @@ const SumUpIcons = {
   Close: ({ size = 16, color = 'currentColor' }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+
+  Error: ({ size = 16, color = '#dc3545' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" fill="none"/>
+      <path d="M15 9l-6 6M9 9l6 6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+
+  Empty: ({ size = 16, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="6" width="18" height="12" rx="2" stroke={color} strokeWidth="2" fill="none"/>
+      <path d="M3 12h18" stroke={color} strokeWidth="2"/>
+      <circle cx="12" cy="12" r="1" fill={color}/>
+    </svg>
+  ),
+
+  Chart: ({ size = 16, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M3 3v18h18" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M7 16l4-4 4 4 6-6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }

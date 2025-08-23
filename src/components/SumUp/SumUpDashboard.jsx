@@ -3,6 +3,7 @@ import { useSumUp } from '../../hooks/useSumUp'
 import TransactionCard from './TransactionCard'
 import SumUpStats from './SumUpStats'
 import TransactionFilters from './TransactionFilters'
+import SumUpIcons from './SumUpIcons'
 import './SumUpDashboard.css'
 
 const SumUpDashboard = () => {
@@ -95,7 +96,11 @@ const SumUpDashboard = () => {
             disabled={loading}
             className="btn btn-outline"
           >
-            {loading ? '🔄 Caricamento...' : '🔄 Aggiorna'}
+            {loading ? (
+              <><SumUpIcons.Refresh size={16} /> Caricamento...</>
+            ) : (
+              <><SumUpIcons.Refresh size={16} /> Aggiorna</>
+            )}
           </button>
         </div>
       </div>
@@ -114,7 +119,7 @@ const SumUpDashboard = () => {
       {/* Errori */}
       {error && (
         <div className="error-banner">
-          <span>❌ {error}</span>
+          <span><SumUpIcons.Error size={16} /> {error}</span>
           <button onClick={clearError} className="btn-close">×</button>
         </div>
       )}
@@ -122,7 +127,7 @@ const SumUpDashboard = () => {
       {/* Lista Transazioni */}
       <div className="transactions-section">
         <div className="transactions-header">
-          <h3>💳 Transazioni Recenti</h3>
+          <h3><SumUpIcons.CreditCard size={18} /> Transazioni Recenti</h3>
           <span className="transactions-count">
             {filteredTransactions.length} di {transactions.length}
           </span>
@@ -130,12 +135,12 @@ const SumUpDashboard = () => {
 
         {loading ? (
           <div className="loading-state">
-            <div className="spinner">🔄</div>
+            <div className="spinner"><SumUpIcons.Refresh size={24} /></div>
             <p>Caricamento transazioni SumUp...</p>
           </div>
         ) : filteredTransactions.length === 0 ? (
           <div className="empty-state">
-            <p>📭 {filters.amount || filters.date || filters.cardType 
+            <p><SumUpIcons.Empty size={16} /> {filters.amount || filters.date || filters.cardType 
               ? 'Nessuna transazione trovata con i filtri attuali' 
               : 'Nessuna transazione SumUp trovata'
             }</p>
@@ -167,7 +172,7 @@ const SumUpDashboard = () => {
             disabled={!!printingTransaction}
             className="btn btn-primary"
           >
-            🖨️ Stampa Ultima Transazione
+            <SumUpIcons.Print size={16} /> Stampa Ultima Transazione
           </button>
         </div>
       )}

@@ -1,4 +1,5 @@
 import React from 'react'
+import SumUpIcons from './SumUpIcons'
 
 const SumUpStats = ({ stats }) => {
   const {
@@ -24,12 +25,12 @@ const SumUpStats = ({ stats }) => {
 
   return (
     <div className="sumup-stats">
-      <h3>📊 Statistiche Pagamenti</h3>
+      <h3><SumUpIcons.Chart size={18} /> Statistiche Pagamenti</h3>
       
       <div className="stats-grid">
         {/* Incassi oggi */}
         <div className="stat-card today">
-          <div className="stat-icon">💰</div>
+          <div className="stat-icon"><SumUpIcons.Money size={24} /></div>
           <div className="stat-content">
             <div className="stat-value">€{todayTotal}</div>
             <div className="stat-label">Oggi ({todayCount} transazioni)</div>
@@ -38,7 +39,7 @@ const SumUpStats = ({ stats }) => {
 
         {/* Incassi settimana */}
         <div className="stat-card week">
-          <div className="stat-icon">📈</div>
+          <div className="stat-icon"><SumUpIcons.TrendingUp size={24} /></div>
           <div className="stat-content">
             <div className="stat-value">€{weekTotal}</div>
             <div className="stat-label">Questa settimana ({weekCount})</div>
@@ -47,7 +48,7 @@ const SumUpStats = ({ stats }) => {
 
         {/* Totale transazioni */}
         <div className="stat-card total">
-          <div className="stat-icon">🧾</div>
+          <div className="stat-icon"><SumUpIcons.Receipt size={24} /></div>
           <div className="stat-content">
             <div className="stat-value">{totalTransactions}</div>
             <div className="stat-label">Transazioni totali</div>
@@ -57,7 +58,7 @@ const SumUpStats = ({ stats }) => {
         {/* Carta più usata */}
         {mostUsedCard && (
           <div className="stat-card card-type">
-            <div className="stat-icon">💳</div>
+            <div className="stat-icon"><SumUpIcons.CreditCard size={24} /></div>
             <div className="stat-content">
               <div className="stat-value">{mostUsedCard[0]}</div>
               <div className="stat-label">Più usata ({mostUsedCard[1]}x)</div>
@@ -69,7 +70,7 @@ const SumUpStats = ({ stats }) => {
       {/* Breakdown tipi carta */}
       {cardTypes && Object.keys(cardTypes).length > 1 && (
         <div className="card-breakdown">
-          <h4>💳 Distribuzione Tipi Carta</h4>
+          <h4><SumUpIcons.CreditCard size={16} /> Distribuzione Tipi Carta</h4>
           <div className="card-types">
             {Object.entries(cardTypes)
               .sort(([,a], [,b]) => b - a)
