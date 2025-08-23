@@ -39,6 +39,7 @@ import GiftCardManagement from './components/GiftCards/GiftCardManagement'
 import WalletCashRegister from './components/Wallet/WalletCashRegister'
 import NotificationsDashboard from './components/Admin/NotificationsDashboard'
 import LandingPagesManager from './components/Admin/LandingPagesManager'
+import SumUpDashboard from './components/SumUp/SumUpDashboard'
 import { generateClientToken, isValidToken } from './utils/tokenUtils'
 import nfcService from './services/nfcService'
 import { birthdayScheduler } from './services/birthdayScheduler'
@@ -904,6 +905,17 @@ const fixReferralData = async (customerId) => {
       ),
       description: 'Crea landing pages drag & drop',
       permission: 'canSendEmails'
+    },
+    {
+      id: 'sumup',
+      title: 'SumUp Payments',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+      description: 'Stampa scontrini SumUp con logo',
+      permission: 'canManageCoupons'
     },
     {
       id: 'settings',
@@ -2358,6 +2370,12 @@ for (const customer of recipients) {
         return (
           <ProtectedComponent permission="canSendEmails">
             <NotificationsDashboard customerLevels={customerLevels} />
+          </ProtectedComponent>
+        )
+      case 'sumup':
+        return (
+          <ProtectedComponent permission="canManageCoupons">
+            <SumUpDashboard />
           </ProtectedComponent>
         )
       case 'pagebuilder':
