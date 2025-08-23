@@ -78,7 +78,18 @@ const SumUpDashboard = () => {
     <div className="sumup-dashboard">
       {/* Header */}
       <div className="sumup-header">
-        <h2>🏪 SumUp Payments</h2>
+        <div className="header-title">
+          <img 
+            src="https://saporiecolori.supabase.co/storage/v1/object/public/assets/sumup-logo.png" 
+            alt="SumUp Logo" 
+            className="sumup-logo"
+            onError={(e) => {
+              // Fallback se il logo non è disponibile
+              e.target.style.display = 'none'
+            }}
+          />
+          <h2>SumUp Payments</h2>
+        </div>
         <div className="header-actions">
           <button 
             onClick={refreshTransactions}

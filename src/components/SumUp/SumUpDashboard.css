@@ -22,6 +22,18 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.sumup-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
 .sumup-header h2 {
   margin: 0;
   color: #2c3e50;
@@ -644,6 +656,14 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+  }
+  
+  .header-title {
+    gap: 12px;
+  }
+  
+  .sumup-logo {
+    height: 32px;
   }
   
   .stats-grid {
