@@ -1,34 +1,65 @@
 import React from 'react'
 
 const SumUpIcons = {
-  // Tipi di carta
-  Visa: ({ size = 24, color = '#1a73e8' }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <rect x="3" y="6" width="18" height="12" rx="2" stroke={color} strokeWidth="2" fill="none"/>
-      <path d="M7 10h2l1 4h1l1-4h2" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
+  // Tipi di carta - Icone professionali da Supabase
+  Visa: ({ size = 24 }) => (
+    <img 
+      src="https://jexkalekaofsfcusdfjh.supabase.co/storage/v1/object/public/tinymce-images/icone%20carte/visacard.png"
+      alt="Visa"
+      width={size}
+      height={size}
+      style={{ objectFit: 'contain' }}
+    />
   ),
 
-  Mastercard: ({ size = 24, color = '#ff5f00' }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <rect x="3" y="6" width="18" height="12" rx="2" stroke={color} strokeWidth="2" fill="none"/>
-      <circle cx="10" cy="12" r="2" stroke={color} strokeWidth="1.5" fill="none"/>
-      <circle cx="14" cy="12" r="2" stroke={color} strokeWidth="1.5" fill="none"/>
-    </svg>
+  Mastercard: ({ size = 24 }) => (
+    <img 
+      src="https://jexkalekaofsfcusdfjh.supabase.co/storage/v1/object/public/tinymce-images/icone%20carte/mastercard.png"
+      alt="Mastercard"
+      width={size}
+      height={size}
+      style={{ objectFit: 'contain' }}
+    />
   ),
 
-  Maestro: ({ size = 24, color = '#0099df' }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <rect x="3" y="6" width="18" height="12" rx="2" stroke={color} strokeWidth="2" fill="none"/>
-      <path d="M8 10v4m2-2h4m2-2v4" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
+  Maestro: ({ size = 24 }) => (
+    <img 
+      src="https://jexkalekaofsfcusdfjh.supabase.co/storage/v1/object/public/tinymce-images/icone%20carte/maestrocard.png"
+      alt="Maestro"
+      width={size}
+      height={size}
+      style={{ objectFit: 'contain' }}
+    />
   ),
 
-  AmericanExpress: ({ size = 24, color = '#2e77bb' }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <rect x="3" y="6" width="18" height="12" rx="2" stroke={color} strokeWidth="2" fill="none"/>
-      <path d="M7 10h2m2 0h2m-4 2h4m-4 2h2" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
+  AmericanExpress: ({ size = 24 }) => (
+    <img 
+      src="https://jexkalekaofsfcusdfjh.supabase.co/storage/v1/object/public/tinymce-images/icone%20carte/americancard.png"
+      alt="American Express"
+      width={size}
+      height={size}
+      style={{ objectFit: 'contain' }}
+    />
+  ),
+
+  Discover: ({ size = 24 }) => (
+    <img 
+      src="https://jexkalekaofsfcusdfjh.supabase.co/storage/v1/object/public/tinymce-images/icone%20carte/discovercard.png"
+      alt="Discover"
+      width={size}
+      height={size}
+      style={{ objectFit: 'contain' }}
+    />
+  ),
+
+  DinersClub: ({ size = 24 }) => (
+    <img 
+      src="https://jexkalekaofsfcusdfjh.supabase.co/storage/v1/object/public/tinymce-images/icone%20carte/dinnerscard.png"
+      alt="Diners Club"
+      width={size}
+      height={size}
+      style={{ objectFit: 'contain' }}
+    />
   ),
 
   // Modalità di pagamento

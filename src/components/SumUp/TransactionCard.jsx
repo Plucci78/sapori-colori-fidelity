@@ -7,6 +7,7 @@ const TransactionCard = ({ transaction, onPrintReceipt, isPrinting }) => {
     const type = cardType?.toUpperCase()
     switch(type) {
       case 'VISA':
+      case 'V PAY':
         return <SumUpIcons.Visa size={20} />
       case 'MASTERCARD':
         return <SumUpIcons.Mastercard size={20} />
@@ -15,6 +16,11 @@ const TransactionCard = ({ transaction, onPrintReceipt, isPrinting }) => {
       case 'AMERICAN EXPRESS':
       case 'AMEX':
         return <SumUpIcons.AmericanExpress size={20} />
+      case 'DISCOVER':
+        return <SumUpIcons.Discover size={20} />
+      case 'DINERS CLUB':
+      case 'DINERSCLUB':
+        return <SumUpIcons.DinersClub size={20} />
       default:
         return <SumUpIcons.CreditCard size={20} />
     }
@@ -24,10 +30,14 @@ const TransactionCard = ({ transaction, onPrintReceipt, isPrinting }) => {
   const getCardColor = (cardType) => {
     const colors = {
       'VISA': '#1a73e8',
+      'V PAY': '#1a73e8',
       'MASTERCARD': '#ff5f00', 
       'MAESTRO': '#0099df',
       'AMERICAN EXPRESS': '#2e77bb',
-      'AMEX': '#2e77bb'
+      'AMEX': '#2e77bb',
+      'DISCOVER': '#ff6000',
+      'DINERS CLUB': '#0079be',
+      'DINERSCLUB': '#0079be'
     }
     return colors[cardType?.toUpperCase()] || '#666'
   }
