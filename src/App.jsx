@@ -2314,6 +2314,13 @@ for (const customer of recipients) {
                 <EmailDragBuilder
                   onSave={handleSaveEmailDesign}
                   initialBlocks={emailBuilderBlocks}
+                  onSendEmail={sendEmail}
+                  emailSubject={emailSubject}
+                  setEmailSubject={setEmailSubject}
+                  emailRecipients={emailRecipients}
+                  setEmailRecipients={setEmailRecipients}
+                  allCustomers={allCustomers}
+                  showNotification={showNotification}
                 />
               </div>
               {showTemplateManager && (

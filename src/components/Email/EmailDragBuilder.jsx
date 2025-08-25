@@ -18,13 +18,30 @@ const BLOCK_TYPES = {
 
 // Componente blocco trascinabile
 const DraggableBlock = ({ type, icon, label, onDragStart }) => {
+  const getIconClass = (blockType) => {
+    const iconMap = {
+      [BLOCK_TYPES.HEADER]: 'icon-header',
+      [BLOCK_TYPES.TEXT]: 'icon-text',
+      [BLOCK_TYPES.IMAGE]: 'icon-image',
+      [BLOCK_TYPES.BUTTON]: 'icon-button',
+      [BLOCK_TYPES.SPACER]: 'icon-spacer',
+      [BLOCK_TYPES.DIVIDER]: 'icon-divider',
+      [BLOCK_TYPES.COLUMNS]: 'icon-columns',
+      [BLOCK_TYPES.QUOTE]: 'icon-quote',
+      [BLOCK_TYPES.LIST]: 'icon-list',
+      [BLOCK_TYPES.SOCIAL]: 'icon-social',
+      [BLOCK_TYPES.FOOTER]: 'icon-footer'
+    }
+    return iconMap[blockType] || ''
+  }
+
   return (
     <div
       className="draggable-block"
       draggable
       onDragStart={(e) => onDragStart(e, type)}
     >
-      <div className="block-icon">{icon}</div>
+      <div className={`block-icon ${getIconClass(type)}`}></div>
       <span className="block-label">{label}</span>
     </div>
   )
@@ -35,18 +52,37 @@ const EditableBlock = ({ block, index, onSelect, onUpdate, onDelete, isSelected 
   const renderBlockContent = () => {
     switch (block.type) {
       case BLOCK_TYPES.HEADER:
+        const headerStyle = {
+          background: block.props.backgroundImage 
+            ? `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${block.props.backgroundImage})` 
+            : block.props.background || '#8B4513',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          color: block.props.color || 'white',
+          padding: block.props.height ? `${parseInt(block.props.height)/2}px 20px` : '40px 20px',
+          textAlign: block.props.align || 'center',
+          minHeight: block.props.height || '80px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center'
+        }
+        
         return (
-          <div className="block-header" style={{ 
-            background: block.props.background || '#8B4513',
-            color: block.props.color || 'white',
-            padding: '40px 20px',
-            textAlign: block.props.align || 'center'
-          }}>
-            <h1 style={{ margin: 0, fontSize: '32px' }}>
+          <div className="block-header" style={headerStyle}>
+            <h1 style={{ 
+              margin: 0, 
+              fontSize: block.props.titleSize || '32px',
+              fontFamily: block.props.titleFont || 'Arial, sans-serif'
+            }}>
               {block.props.title || 'Inserisci titolo'}
             </h1>
             {block.props.subtitle && (
-              <p style={{ margin: '15px 0 0 0', fontSize: '18px', opacity: 0.9 }}>
+              <p style={{ 
+                margin: '15px 0 0 0', 
+                fontSize: '18px', 
+                opacity: 0.9,
+                fontFamily: block.props.titleFont || 'Arial, sans-serif'
+              }}>
                 {block.props.subtitle}
               </p>
             )}
@@ -316,6 +352,85 @@ const PropertiesPanel = ({ selectedBlock, onUpdateBlock }) => {
                 onChange={(e) => handlePropertyChange('color', e.target.value)}
               />
             </div>
+            <div className="property-group">
+              <label>Dimensione titolo:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.titleSize || '32px'}
+                onChange={(e) => handlePropertyChange('titleSize', e.target.value)}
+                placeholder="32px"
+              />
+            </div>
+            <div className="property-group">
+              <label>Font titolo:</label>
+              <select
+                value={selectedBlock.props.titleFont || 'Arial'}
+                onChange={(e) => handlePropertyChange('titleFont', e.target.value)}
+              >
+                <option value="Arial">Arial</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Verdana">Verdana</option>
+                <option value="Helvetica">Helvetica</option>
+              </select>
+            </div>
+            <div className="property-group">
+              <label>Altezza blocco:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.height || '80px'}
+                onChange={(e) => handlePropertyChange('height', e.target.value)}
+                placeholder="80px"
+              />
+            </div>
+            <div className="property-group">
+              <label>Immagine di sfondo:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.backgroundImage || ''}
+                onChange={(e) => handlePropertyChange('backgroundImage', e.target.value)}
+                placeholder="URL immagine"
+              />
+            </div>
+            <div className="property-group">
+              <button 
+                onClick={() => {
+                  const input = document.createElement('input')
+                  input.type = 'file'
+                  input.accept = 'image/*'
+                  input.onchange = (e) => {
+                    const file = e.target.files[0]
+                    if (file) {
+                      const url = URL.createObjectURL(file)
+                      handlePropertyChange('backgroundImage', url)
+                    }
+                  }
+                  input.click()
+                }}
+                style={{ 
+                  background: '#8B4513', 
+                  color: 'white', 
+                  border: 'none', 
+                  padding: '8px 16px', 
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  width: '100%'
+                }}
+              >
+                Carica Immagine Sfondo
+              </button>
+            </div>
+            <div className="property-group">
+              <label>Allineamento:</label>
+              <select
+                value={selectedBlock.props.align || 'center'}
+                onChange={(e) => handlePropertyChange('align', e.target.value)}
+              >
+                <option value="left">Sinistra</option>
+                <option value="center">Centro</option>
+                <option value="right">Destra</option>
+              </select>
+            </div>
           </>
         )
       
@@ -342,6 +457,96 @@ const PropertiesPanel = ({ selectedBlock, onUpdateBlock }) => {
               <label>Allineamento:</label>
               <select
                 value={selectedBlock.props.align || 'left'}
+                onChange={(e) => handlePropertyChange('align', e.target.value)}
+              >
+                <option value="left">Sinistra</option>
+                <option value="center">Centro</option>
+                <option value="right">Destra</option>
+              </select>
+            </div>
+          </>
+        )
+
+      case BLOCK_TYPES.IMAGE:
+        return (
+          <>
+            <div className="property-group">
+              <label>URL Immagine:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.src || ''}
+                onChange={(e) => handlePropertyChange('src', e.target.value)}
+                placeholder="https://esempio.com/immagine.jpg"
+              />
+            </div>
+            <div className="property-group">
+              <button 
+                onClick={() => {
+                  const input = document.createElement('input')
+                  input.type = 'file'
+                  input.accept = 'image/*'
+                  input.onchange = (e) => {
+                    const file = e.target.files[0]
+                    if (file) {
+                      const url = URL.createObjectURL(file)
+                      handlePropertyChange('src', url)
+                    }
+                  }
+                  input.click()
+                }}
+                style={{ 
+                  background: '#8B4513', 
+                  color: 'white', 
+                  border: 'none', 
+                  padding: '8px 16px', 
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  width: '100%'
+                }}
+              >
+                Carica Immagine dal PC
+              </button>
+            </div>
+            <div className="property-group">
+              <label>Testo alternativo:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.alt || ''}
+                onChange={(e) => handlePropertyChange('alt', e.target.value)}
+                placeholder="Descrizione immagine"
+              />
+            </div>
+            <div className="property-group">
+              <label>Larghezza:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.width || '100%'}
+                onChange={(e) => handlePropertyChange('width', e.target.value)}
+                placeholder="100% o 300px"
+              />
+            </div>
+            <div className="property-group">
+              <label>Altezza:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.height || 'auto'}
+                onChange={(e) => handlePropertyChange('height', e.target.value)}
+                placeholder="auto o 200px"
+              />
+            </div>
+            <div className="property-group">
+              <label>Bordo arrotondato:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.borderRadius || '0px'}
+                onChange={(e) => handlePropertyChange('borderRadius', e.target.value)}
+                placeholder="0px o 10px"
+              />
+            </div>
+            <div className="property-group">
+              <label>Allineamento:</label>
+              <select
+                value={selectedBlock.props.align || 'center'}
                 onChange={(e) => handlePropertyChange('align', e.target.value)}
               >
                 <option value="left">Sinistra</option>
@@ -562,10 +767,23 @@ const PropertiesPanel = ({ selectedBlock, onUpdateBlock }) => {
 }
 
 // Componente principale Email Builder
-const EmailDragBuilder = ({ onSave, initialBlocks = [] }) => {
+const EmailDragBuilder = ({ 
+  onSave, 
+  initialBlocks = [], 
+  onSendEmail,
+  emailSubject,
+  setEmailSubject,
+  emailRecipients,
+  setEmailRecipients,
+  allCustomers = [],
+  showNotification 
+}) => {
   const [blocks, setBlocks] = useState(initialBlocks)
   const [selectedBlockIndex, setSelectedBlockIndex] = useState(null)
   const [draggedBlockType, setDraggedBlockType] = useState(null)
+  const [showEmailConfig, setShowEmailConfig] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
+  const [previewDevice, setPreviewDevice] = useState('desktop')
   const canvasRef = useRef(null)
 
   const handleDragStart = useCallback((e, blockType) => {
@@ -623,9 +841,52 @@ const EmailDragBuilder = ({ onSave, initialBlocks = [] }) => {
 <body style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
   <div style="max-width: 600px; margin: 0 auto;">
     ${blocks.map(block => {
-      // Converte ogni blocco in HTML
-      // Implementation per ogni tipo di blocco
-      return `<!-- Block: ${block.type} -->`
+      switch (block.type) {
+        case BLOCK_TYPES.HEADER:
+          const headerStyle = {
+            background: block.props.backgroundImage 
+              ? `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${block.props.backgroundImage})` 
+              : block.props.background || '#8B4513',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            color: block.props.color || 'white',
+            padding: block.props.height ? `${parseInt(block.props.height)/2}px 20px` : '40px 20px',
+            textAlign: block.props.align || 'center',
+            minHeight: block.props.height || '80px',
+            fontFamily: block.props.fontFamily || 'Arial, sans-serif'
+          }
+          return `<div style="${Object.entries(headerStyle).map(([k,v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${v}`).join('; ')}">
+            <h1 style="margin: 0 0 10px 0; font-size: ${block.props.titleSize || '28px'};">${block.props.title || 'Header'}</h1>
+            ${block.props.subtitle ? `<p style="margin: 0; font-size: ${block.props.subtitleSize || '16px'}; opacity: 0.9;">${block.props.subtitle}</p>` : ''}
+          </div>`
+          
+        case BLOCK_TYPES.TEXT:
+          return `<div style="padding: 20px; text-align: ${block.props.align || 'left'}; color: ${block.props.color || '#333'}; font-family: ${block.props.fontFamily || 'Arial, sans-serif'};">
+            ${block.props.title ? `<h3 style="margin: 0 0 15px 0; font-size: ${block.props.titleSize || '20px'};">${block.props.title}</h3>` : ''}
+            <p style="margin: 0; font-size: ${block.props.fontSize || '14px'}; line-height: 1.6;">${block.props.content || 'Testo esempio'}</p>
+          </div>`
+          
+        case BLOCK_TYPES.IMAGE:
+          return `<div style="padding: 20px; text-align: ${block.props.align || 'center'};">
+            ${block.props.src ? `<img src="${block.props.src}" alt="${block.props.alt || 'Immagine'}" style="width: ${block.props.width || '100%'}; height: ${block.props.height || 'auto'}; border-radius: ${block.props.borderRadius || '0px'}; max-width: 100%;" />` : '<div style="background: #f0f0f0; padding: 40px; border-radius: 8px; color: #666;">Carica un\'immagine</div>'}
+          </div>`
+          
+        case BLOCK_TYPES.BUTTON:
+          return `<div style="padding: 20px; text-align: ${block.props.align || 'center'};">
+            <a href="${block.props.url || '#'}" style="display: inline-block; background: ${block.props.background || '#8B4513'}; color: ${block.props.color || 'white'}; padding: ${block.props.padding || '15px 30px'}; border-radius: ${block.props.borderRadius || '8px'}; text-decoration: none; font-weight: 600; font-size: ${block.props.fontSize || '16px'}; font-family: ${block.props.fontFamily || 'Arial, sans-serif'};">${block.props.text || 'Bottone'}</a>
+          </div>`
+          
+        case BLOCK_TYPES.SPACER:
+          return `<div style="height: ${block.props.height || '40px'};"></div>`
+          
+        case BLOCK_TYPES.DIVIDER:
+          return `<div style="padding: 20px;">
+            <hr style="border: none; border-top: ${block.props.thickness || '2px'} ${block.props.style || 'solid'} ${block.props.color || '#ddd'}; margin: 0;" />
+          </div>`
+          
+        default:
+          return `<div style="padding: 20px; background: #f9f9f9; text-align: center; color: #666;">Blocco ${block.type}</div>`
+      }
     }).join('\n')}
   </div>
 </body>
@@ -633,6 +894,34 @@ const EmailDragBuilder = ({ onSave, initialBlocks = [] }) => {
     
     return html
   }, [blocks])
+
+  const handleSendEmail = async () => {
+    if (!emailSubject?.trim()) {
+      showNotification?.('Inserisci l\'oggetto dell\'email', 'error')
+      return
+    }
+    
+    if (blocks.length === 0) {
+      showNotification?.('Aggiungi almeno un blocco all\'email', 'error')
+      return
+    }
+
+    const htmlContent = generateHTML()
+    
+    try {
+      await onSendEmail?.({
+        subject: emailSubject,
+        content: htmlContent,
+        template: 'custom',
+        segments: []
+      })
+      
+      setShowEmailConfig(false)
+      showNotification?.('Email inviata con successo!', 'success')
+    } catch (error) {
+      showNotification?.('Errore invio email: ' + error.message, 'error')
+    }
+  }
 
   const selectedBlock = selectedBlockIndex !== null ? blocks[selectedBlockIndex] : null
 
@@ -642,12 +931,69 @@ const EmailDragBuilder = ({ onSave, initialBlocks = [] }) => {
       <div className="builder-header">
         <h1>Email Builder Pro</h1>
         <div className="builder-actions">
-          <button className="btn-preview">Anteprima</button>
+          <button className="btn-preview" onClick={() => setShowPreview(true)}>Anteprima</button>
+          <button 
+            className="btn-config" 
+            onClick={() => setShowEmailConfig(!showEmailConfig)}
+          >
+            Configura & Invia
+          </button>
           <button className="btn-save" onClick={() => onSave?.(generateHTML())}>
             Salva Design
           </button>
         </div>
       </div>
+
+      {/* Pannello configurazione email */}
+      {showEmailConfig && (
+        <div className="email-config-panel">
+          <div className="config-section">
+            <h3>Configurazione Email</h3>
+            <div className="config-row">
+              <label>Oggetto Email:</label>
+              <input
+                type="text"
+                value={emailSubject || ''}
+                onChange={(e) => setEmailSubject?.(e.target.value)}
+                placeholder="Inserisci l'oggetto dell'email"
+                style={{ 
+                  flex: 1, 
+                  padding: '8px 12px', 
+                  border: '1px solid #ddd', 
+                  borderRadius: '4px',
+                  marginLeft: '10px'
+                }}
+              />
+            </div>
+            <div className="config-row">
+              <label>Destinatari:</label>
+              <select
+                value={emailRecipients || 'all'}
+                onChange={(e) => setEmailRecipients?.(e.target.value)}
+                style={{ 
+                  flex: 1, 
+                  padding: '8px 12px', 
+                  border: '1px solid #ddd', 
+                  borderRadius: '4px',
+                  marginLeft: '10px'
+                }}
+              >
+                <option value="all">Tutti i clienti ({allCustomers.length})</option>
+                <option value="active">Solo clienti attivi</option>
+                <option value="vip">Solo clienti VIP</option>
+              </select>
+            </div>
+            <div className="config-actions">
+              <button className="btn-send" onClick={handleSendEmail}>
+                Invia Email
+              </button>
+              <button className="btn-cancel" onClick={() => setShowEmailConfig(false)}>
+                Annulla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="builder-layout">
         {/* Sidebar blocchi */}
@@ -762,6 +1108,57 @@ const EmailDragBuilder = ({ onSave, initialBlocks = [] }) => {
           />
         </div>
       </div>
+
+      {/* Modal Anteprima */}
+      {showPreview && (
+        <div className="preview-modal-overlay">
+          <div className="preview-modal">
+            <div className="preview-header">
+              <h3>Anteprima Email</h3>
+              <div className="device-selector">
+                <button 
+                  className={`device-btn ${previewDevice === 'mobile' ? 'active' : ''}`}
+                  onClick={() => setPreviewDevice('mobile')}
+                >
+                  📱 Mobile
+                </button>
+                <button 
+                  className={`device-btn ${previewDevice === 'tablet' ? 'active' : ''}`}
+                  onClick={() => setPreviewDevice('tablet')}
+                >
+                  📟 Tablet  
+                </button>
+                <button 
+                  className={`device-btn ${previewDevice === 'desktop' ? 'active' : ''}`}
+                  onClick={() => setPreviewDevice('desktop')}
+                >
+                  💻 Desktop
+                </button>
+              </div>
+              <button 
+                className="close-btn" 
+                onClick={() => setShowPreview(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="preview-body">
+              <div className={`preview-frame ${previewDevice}`}>
+                <iframe 
+                  srcDoc={generateHTML()}
+                  title="Email Preview"
+                  style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    border: 'none',
+                    borderRadius: '8px'
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
