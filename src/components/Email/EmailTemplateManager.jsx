@@ -29,13 +29,22 @@ const EmailTemplateManager = ({
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        // Se la tabella non esiste, usa template vuoti
+        if (error.code === '42P01') {
+          console.log('Tabella email_custom_templates non trovata, usando template vuoti')
+          setSavedTemplates([])
+          return
+        }
+        throw error
+      }
       
       setSavedTemplates(data || [])
     } catch (error) {
       console.error('Errore caricamento template:', error)
+      setSavedTemplates([])
       if (showNotification) {
-        showNotification('Errore caricamento template', 'error')
+        showNotification('Template personalizzati non disponibili (tabella non trovata)', 'warning')
       }
     } finally {
       setLoading(false)
@@ -62,7 +71,13 @@ const EmailTemplateManager = ({
         }])
         .select()
 
-      if (error) throw error
+      if (error) {
+        if (error.code === '42P01') {
+          showNotification('Tabella template non trovata. Contattare l\'amministratore.', 'error')
+          return
+        }
+        throw error
+      }
       
       // Aggiorna la lista locale
       setSavedTemplates(prev => [data[0], ...prev])
@@ -79,7 +94,7 @@ const EmailTemplateManager = ({
     } catch (error) {
       console.error('Errore salvataggio template:', error)
       if (showNotification) {
-        showNotification('Errore salvataggio template', 'error')
+        showNotification('Errore salvataggio template: ' + error.message, 'error')
       }
     } finally {
       setLoading(false)
@@ -89,7 +104,12 @@ const EmailTemplateManager = ({
   // Carica un template esistente
   const loadTemplate = (template) => {
     try {
-      const blocks = JSON.parse(template.blocks)
+      // Se template.blocks è già un array (template predefiniti), usalo direttamente
+      // Se è una stringa (template salvati), parsificalo
+      const blocks = Array.isArray(template.blocks) 
+        ? template.blocks 
+        : JSON.parse(template.blocks)
+      
       onLoadTemplate?.(blocks)
       
       if (showNotification) {
@@ -150,7 +170,7 @@ const EmailTemplateManager = ({
   const defaultTemplates = [
     {
       id: 'welcome',
-      name: '🎉 Benvenuto',
+      name: 'Benvenuto',
       description: 'Template di benvenuto per nuovi clienti',
       isDefault: true,
       blocks: [
@@ -187,7 +207,7 @@ const EmailTemplateManager = ({
     },
     {
       id: 'promo',
-      name: '🎁 Promozione',
+      name: 'Promozione',
       description: 'Template per offerte speciali',
       isDefault: true,
       blocks: [
@@ -196,7 +216,7 @@ const EmailTemplateManager = ({
           type: 'header',
           props: {
             title: 'Solo per te, {{nome}}!',
-            subtitle: '🔥 OFFERTA LIMITATA',
+            subtitle: 'OFFERTA LIMITATA',
             background: '#D4AF37',
             color: 'white'
           }
@@ -227,13 +247,13 @@ const EmailTemplateManager = ({
   return (
     <div className="template-manager">
       <div className="template-manager-header">
-        <h3>📚 I Miei Template</h3>
+        <h3>I Miei Template</h3>
         <button 
           className="btn-save-template"
           onClick={() => setShowSaveDialog(true)}
           disabled={currentBlocks.length === 0}
         >
-          💾 Salva Design Attuale
+          Salva Design Attuale
         </button>
       </div>
 
@@ -241,7 +261,7 @@ const EmailTemplateManager = ({
       {showSaveDialog && (
         <div className="save-dialog-overlay">
           <div className="save-dialog">
-            <h4>💾 Salva Template</h4>
+            <h4>Salva Template</h4>
             <div className="form-group">
               <label>Nome Template:</label>
               <input
@@ -285,12 +305,12 @@ const EmailTemplateManager = ({
       <div className="templates-grid">
         {/* Template predefiniti */}
         <div className="templates-section">
-          <h4>🎨 Template Predefiniti</h4>
+          <h4>Template Predefiniti</h4>
           <div className="templates-list">
             {defaultTemplates.map((template) => (
               <div key={template.id} className="template-card default">
                 <div className="template-preview">
-                  <div className="preview-icon">🎨</div>
+                  <div className="preview-icon">TPL</div>
                 </div>
                 <div className="template-info">
                   <h5>{template.name}</h5>
@@ -299,7 +319,7 @@ const EmailTemplateManager = ({
                     className="btn-load"
                     onClick={() => loadTemplate(template)}
                   >
-                    📥 Usa Template
+                    Usa Template
                   </button>
                 </div>
               </div>
@@ -309,13 +329,13 @@ const EmailTemplateManager = ({
 
         {/* Template personalizzati */}
         <div className="templates-section">
-          <h4>💎 I Tuoi Template</h4>
+          <h4>I Tuoi Template</h4>
           <div className="templates-list">
             {loading ? (
               <div className="loading">Caricamento template...</div>
             ) : savedTemplates.length === 0 ? (
               <div className="empty-state">
-                <p>🎨 Nessun template personalizzato ancora.</p>
+                <p>Nessun template personalizzato ancora.</p>
                 <p>Crea il tuo primo design e salvalo come template!</p>
               </div>
             ) : (
@@ -330,7 +350,7 @@ const EmailTemplateManager = ({
                         }}
                       />
                     ) : (
-                      <div className="preview-icon">📧</div>
+                      <div className="preview-icon">MAIL</div>
                     )}
                   </div>
                   <div className="template-info">
@@ -348,13 +368,13 @@ const EmailTemplateManager = ({
                         className="btn-load"
                         onClick={() => loadTemplate(template)}
                       >
-                        📥 Carica
+                        Carica
                       </button>
                       <button 
                         className="btn-delete"
                         onClick={() => deleteTemplate(template.id, template.name)}
                       >
-                        🗑️
+                        Elimina
                       </button>
                     </div>
                   </div>

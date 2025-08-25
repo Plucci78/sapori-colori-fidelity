@@ -8,7 +8,12 @@ const BLOCK_TYPES = {
   IMAGE: 'image',
   BUTTON: 'button',
   SPACER: 'spacer',
-  DIVIDER: 'divider'
+  DIVIDER: 'divider',
+  COLUMNS: 'columns',
+  QUOTE: 'quote',
+  LIST: 'list',
+  SOCIAL: 'social',
+  FOOTER: 'footer'
 }
 
 // Componente blocco trascinabile
@@ -92,9 +97,10 @@ const EditableBlock = ({ block, index, onSelect, onUpdate, onDelete, isSelected 
                 background: '#f8f9fa',
                 padding: '60px',
                 borderRadius: '8px',
-                color: '#6c757d'
+                color: '#6c757d',
+                textAlign: 'center'
               }}>
-                📷 Clicca per aggiungere immagine
+                Clicca per aggiungere immagine
               </div>
             )}
           </div>
@@ -141,6 +147,92 @@ const EditableBlock = ({ block, index, onSelect, onUpdate, onDelete, isSelected 
           </div>
         )
       
+      case BLOCK_TYPES.COLUMNS:
+        return (
+          <div className="block-columns" style={{ 
+            padding: '20px',
+            display: 'flex',
+            gap: '20px'
+          }}>
+            <div style={{ flex: 1, background: '#f8f9fa', padding: '20px', borderRadius: '4px' }}>
+              <h4>Colonna 1</h4>
+              <p>{block.props.leftContent || 'Contenuto colonna sinistra'}</p>
+            </div>
+            <div style={{ flex: 1, background: '#f8f9fa', padding: '20px', borderRadius: '4px' }}>
+              <h4>Colonna 2</h4>
+              <p>{block.props.rightContent || 'Contenuto colonna destra'}</p>
+            </div>
+          </div>
+        )
+
+      case BLOCK_TYPES.QUOTE:
+        return (
+          <div className="block-quote" style={{ 
+            padding: '30px',
+            background: '#f8f9fa',
+            borderLeft: '4px solid #8B4513',
+            fontStyle: 'italic'
+          }}>
+            <p style={{ fontSize: '18px', margin: 0, color: '#555' }}>
+              "{block.props.quote || 'Inserisci la tua citazione qui'}"
+            </p>
+            {block.props.author && (
+              <p style={{ marginTop: '10px', fontWeight: 'bold', color: '#8B4513' }}>
+                - {block.props.author}
+              </p>
+            )}
+          </div>
+        )
+
+      case BLOCK_TYPES.LIST:
+        return (
+          <div className="block-list" style={{ padding: '20px' }}>
+            <h3 style={{ color: '#333', marginBottom: '15px' }}>
+              {block.props.title || 'Lista'}
+            </h3>
+            <ul style={{ paddingLeft: '20px' }}>
+              {(block.props.items || ['Elemento 1', 'Elemento 2', 'Elemento 3']).map((item, i) => (
+                <li key={i} style={{ marginBottom: '8px', color: '#666' }}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        )
+
+      case BLOCK_TYPES.SOCIAL:
+        return (
+          <div className="block-social" style={{ 
+            padding: '30px',
+            textAlign: 'center'
+          }}>
+            <p style={{ marginBottom: '15px', color: '#666' }}>Seguici sui social</p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
+              <div style={{ width: '40px', height: '40px', background: '#3b5998', borderRadius: '50%' }}></div>
+              <div style={{ width: '40px', height: '40px', background: '#1da1f2', borderRadius: '50%' }}></div>
+              <div style={{ width: '40px', height: '40px', background: '#e1306c', borderRadius: '50%' }}></div>
+            </div>
+          </div>
+        )
+
+      case BLOCK_TYPES.FOOTER:
+        return (
+          <div className="block-footer" style={{ 
+            background: '#2c3e50',
+            color: 'white',
+            padding: '30px',
+            textAlign: 'center'
+          }}>
+            <h4 style={{ margin: '0 0 15px 0' }}>
+              {block.props.companyName || 'Sapori & Colori'}
+            </h4>
+            <p style={{ margin: '0 0 10px 0', fontSize: '14px' }}>
+              {block.props.address || 'Via Example 123, 00100 Roma'}
+            </p>
+            <p style={{ margin: 0, fontSize: '12px', opacity: 0.8 }}>
+              {block.props.unsubscribe || 'Clicca qui per disiscriverti'}
+            </p>
+          </div>
+        )
+      
       default:
         return <div>Blocco sconosciuto</div>
     }
@@ -156,8 +248,8 @@ const EditableBlock = ({ block, index, onSelect, onUpdate, onDelete, isSelected 
       {/* Overlay controlli quando selezionato */}
       {isSelected && (
         <div className="block-controls">
-          <button className="control-btn edit" title="Modifica">✏️</button>
-          <button className="control-btn delete" onClick={() => onDelete(index)} title="Elimina">🗑️</button>
+          <button className="control-btn edit" title="Modifica">✎</button>
+          <button className="control-btn delete" onClick={() => onDelete(index)} title="Elimina">×</button>
         </div>
       )}
     </div>
@@ -380,11 +472,11 @@ const EmailDragBuilder = ({ onSave, initialBlocks = [] }) => {
     <div className="email-drag-builder">
       {/* Header */}
       <div className="builder-header">
-        <h1>📧 Email Builder Pro</h1>
+        <h1>Email Builder Pro</h1>
         <div className="builder-actions">
-          <button className="btn-preview">👁️ Preview</button>
+          <button className="btn-preview">Anteprima</button>
           <button className="btn-save" onClick={() => onSave?.(generateHTML())}>
-            💾 Salva
+            Salva Design
           </button>
         </div>
       </div>
@@ -392,42 +484,72 @@ const EmailDragBuilder = ({ onSave, initialBlocks = [] }) => {
       <div className="builder-layout">
         {/* Sidebar blocchi */}
         <div className="blocks-sidebar">
-          <h3>📦 Blocchi</h3>
+          <h3>Elementi</h3>
           <div className="blocks-grid">
             <DraggableBlock
               type={BLOCK_TYPES.HEADER}
-              icon="📰"
+              icon="H"
               label="Header"
               onDragStart={handleDragStart}
             />
             <DraggableBlock
               type={BLOCK_TYPES.TEXT}
-              icon="📝"
+              icon="T"
               label="Testo"
               onDragStart={handleDragStart}
             />
             <DraggableBlock
               type={BLOCK_TYPES.IMAGE}
-              icon="🖼️"
+              icon="IMG"
               label="Immagine"
               onDragStart={handleDragStart}
             />
             <DraggableBlock
               type={BLOCK_TYPES.BUTTON}
-              icon="🔘"
+              icon="BTN"
               label="Bottone"
               onDragStart={handleDragStart}
             />
             <DraggableBlock
               type={BLOCK_TYPES.SPACER}
-              icon="📏"
+              icon="SPC"
               label="Spazio"
               onDragStart={handleDragStart}
             />
             <DraggableBlock
               type={BLOCK_TYPES.DIVIDER}
-              icon="➖"
+              icon="HR"
               label="Divisore"
+              onDragStart={handleDragStart}
+            />
+            <DraggableBlock
+              type={BLOCK_TYPES.COLUMNS}
+              icon="COL"
+              label="Colonne"
+              onDragStart={handleDragStart}
+            />
+            <DraggableBlock
+              type={BLOCK_TYPES.QUOTE}
+              icon="Q"
+              label="Citazione"
+              onDragStart={handleDragStart}
+            />
+            <DraggableBlock
+              type={BLOCK_TYPES.LIST}
+              icon="LIST"
+              label="Lista"
+              onDragStart={handleDragStart}
+            />
+            <DraggableBlock
+              type={BLOCK_TYPES.SOCIAL}
+              icon="SOC"
+              label="Social"
+              onDragStart={handleDragStart}
+            />
+            <DraggableBlock
+              type={BLOCK_TYPES.FOOTER}
+              icon="FTR"
+              label="Footer"
               onDragStart={handleDragStart}
             />
           </div>
@@ -436,7 +558,7 @@ const EmailDragBuilder = ({ onSave, initialBlocks = [] }) => {
         {/* Canvas centrale */}
         <div className="email-canvas">
           <div className="canvas-header">
-            <h3>📱 Canvas (600px)</h3>
+            <h3>Canvas Editor</h3>
           </div>
           <div
             ref={canvasRef}
@@ -446,7 +568,7 @@ const EmailDragBuilder = ({ onSave, initialBlocks = [] }) => {
           >
             {blocks.length === 0 ? (
               <div className="canvas-empty">
-                <p>🎨 Trascina i blocchi qui per iniziare</p>
+                <p>Trascina gli elementi qui per iniziare</p>
               </div>
             ) : (
               blocks.map((block, index) => (

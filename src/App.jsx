@@ -2343,7 +2343,7 @@ for (const customer of recipients) {
                 zIndex: 1000
               }}
             >
-              {showTemplateManager ? '🔙 Chiudi Template' : '📚 Template'}
+              {showTemplateManager ? 'Chiudi Template' : 'Template'}
             </button>
           </ProtectedComponent>
         )
