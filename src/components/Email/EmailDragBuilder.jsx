@@ -204,11 +204,13 @@ const EditableBlock = ({ block, index, onSelect, onUpdate, onDelete, isSelected 
             padding: '30px',
             textAlign: 'center'
           }}>
-            <p style={{ marginBottom: '15px', color: '#666' }}>Seguici sui social</p>
+            <p style={{ marginBottom: '15px', color: '#666' }}>
+              {block.props.socialText || 'Seguici sui social'}
+            </p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
-              <div style={{ width: '40px', height: '40px', background: '#3b5998', borderRadius: '50%' }}></div>
-              <div style={{ width: '40px', height: '40px', background: '#1da1f2', borderRadius: '50%' }}></div>
-              <div style={{ width: '40px', height: '40px', background: '#e1306c', borderRadius: '50%' }}></div>
+              <a href={block.props.facebookUrl || '#'} style={{ width: '40px', height: '40px', background: '#3b5998', borderRadius: '50%', display: 'block' }}></a>
+              <a href="#" style={{ width: '40px', height: '40px', background: '#1da1f2', borderRadius: '50%', display: 'block' }}></a>
+              <a href={block.props.instagramUrl || '#'} style={{ width: '40px', height: '40px', background: '#e1306c', borderRadius: '50%', display: 'block' }}></a>
             </div>
           </div>
         )
@@ -375,6 +377,172 @@ const PropertiesPanel = ({ selectedBlock, onUpdateBlock }) => {
                 type="color"
                 value={selectedBlock.props.color || '#ffffff'}
                 onChange={(e) => handlePropertyChange('color', e.target.value)}
+              />
+            </div>
+          </>
+        )
+
+      case BLOCK_TYPES.COLUMNS:
+        return (
+          <>
+            <div className="property-group">
+              <label>Contenuto Colonna Sinistra:</label>
+              <textarea
+                value={selectedBlock.props.leftContent || ''}
+                onChange={(e) => handlePropertyChange('leftContent', e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="property-group">
+              <label>Contenuto Colonna Destra:</label>
+              <textarea
+                value={selectedBlock.props.rightContent || ''}
+                onChange={(e) => handlePropertyChange('rightContent', e.target.value)}
+                rows={3}
+              />
+            </div>
+          </>
+        )
+
+      case BLOCK_TYPES.QUOTE:
+        return (
+          <>
+            <div className="property-group">
+              <label>Citazione:</label>
+              <textarea
+                value={selectedBlock.props.quote || ''}
+                onChange={(e) => handlePropertyChange('quote', e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="property-group">
+              <label>Autore:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.author || ''}
+                onChange={(e) => handlePropertyChange('author', e.target.value)}
+              />
+            </div>
+          </>
+        )
+
+      case BLOCK_TYPES.LIST:
+        return (
+          <>
+            <div className="property-group">
+              <label>Titolo Lista:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.title || ''}
+                onChange={(e) => handlePropertyChange('title', e.target.value)}
+              />
+            </div>
+            <div className="property-group">
+              <label>Elementi (uno per riga):</label>
+              <textarea
+                value={(selectedBlock.props.items || []).join('\n')}
+                onChange={(e) => handlePropertyChange('items', e.target.value.split('\n').filter(item => item.trim()))}
+                rows={4}
+                placeholder="Elemento 1&#10;Elemento 2&#10;Elemento 3"
+              />
+            </div>
+          </>
+        )
+
+      case BLOCK_TYPES.SOCIAL:
+        return (
+          <>
+            <div className="property-group">
+              <label>Testo Social:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.socialText || 'Seguici sui social'}
+                onChange={(e) => handlePropertyChange('socialText', e.target.value)}
+              />
+            </div>
+            <div className="property-group">
+              <label>Link Facebook:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.facebookUrl || '#'}
+                onChange={(e) => handlePropertyChange('facebookUrl', e.target.value)}
+              />
+            </div>
+            <div className="property-group">
+              <label>Link Instagram:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.instagramUrl || '#'}
+                onChange={(e) => handlePropertyChange('instagramUrl', e.target.value)}
+              />
+            </div>
+          </>
+        )
+
+      case BLOCK_TYPES.FOOTER:
+        return (
+          <>
+            <div className="property-group">
+              <label>Nome Azienda:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.companyName || 'Sapori & Colori'}
+                onChange={(e) => handlePropertyChange('companyName', e.target.value)}
+              />
+            </div>
+            <div className="property-group">
+              <label>Indirizzo:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.address || 'Via Example 123, 00100 Roma'}
+                onChange={(e) => handlePropertyChange('address', e.target.value)}
+              />
+            </div>
+            <div className="property-group">
+              <label>Testo Disiscrizione:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.unsubscribe || 'Clicca qui per disiscriverti'}
+                onChange={(e) => handlePropertyChange('unsubscribe', e.target.value)}
+              />
+            </div>
+          </>
+        )
+
+      case BLOCK_TYPES.SPACER:
+        return (
+          <>
+            <div className="property-group">
+              <label>Altezza Spazio:</label>
+              <input
+                type="text"
+                value={selectedBlock.props.height || '40px'}
+                onChange={(e) => handlePropertyChange('height', e.target.value)}
+                placeholder="40px"
+              />
+            </div>
+          </>
+        )
+
+      case BLOCK_TYPES.DIVIDER:
+        return (
+          <>
+            <div className="property-group">
+              <label>Colore Divisore:</label>
+              <input
+                type="color"
+                value={selectedBlock.props.color || '#dddddd'}
+                onChange={(e) => handlePropertyChange('color', e.target.value)}
+              />
+            </div>
+            <div className="property-group">
+              <label>Spessore:</label>
+              <input
+                type="number"
+                value={selectedBlock.props.thickness || 1}
+                onChange={(e) => handlePropertyChange('thickness', parseInt(e.target.value))}
+                min="1"
+                max="10"
               />
             </div>
           </>
