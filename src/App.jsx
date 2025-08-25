@@ -29,6 +29,8 @@ import DashboardEnterprisePro from './components/Dashboard/DashboardEnterprisePr
 import SubscriptionManager from './components/Subscriptions/SubscriptionManager'
 import CustomerView from './components/Customers/CustomerView'
 import EmailView from './components/Email/EmailView'
+import EmailDragBuilder from './components/Email/EmailDragBuilder'
+import EmailTemplateManager from './components/Email/EmailTemplateManager'
 import ChatView from './components/Chat/ChatView'
 import PrizesView from './components/Prizes/PrizesView'
 import SettingsView from './components/Settings/SettingsView'
@@ -168,6 +170,10 @@ function AppContent() {
   const [emailRecipients, setEmailRecipients] = useState('all')
   const [customMessage, setCustomMessage] = useState('')
   const [emailStats, setEmailStats] = useState({ sent: 0, opened: 0 })
+  
+  // Stati per Email Builder
+  const [emailBuilderBlocks, setEmailBuilderBlocks] = useState([])
+  const [showTemplateManager, setShowTemplateManager] = useState(false)
 
   // Stati per selezione clienti individuali
   const [selectedIndividualCustomers, setSelectedIndividualCustomers] = useState([])
@@ -1525,6 +1531,17 @@ for (const customer of recipients) {
     EMAIL_CONFIG
   ])
 
+  // Callback per Email Builder
+  const handleLoadTemplate = useCallback((blocks) => {
+    setEmailBuilderBlocks(blocks)
+    setShowTemplateManager(false)
+  }, [])
+
+  const handleSaveEmailDesign = useCallback((htmlContent) => {
+    console.log('Design salvato:', htmlContent)
+    showNotification('Design email salvato con successo!', 'success')
+  }, [showNotification])
+
   const searchCustomersForManual = useCallback(async (searchName) => {
     if (searchName.length < 2) {
       setFoundCustomers([])
@@ -2292,28 +2309,42 @@ for (const customer of recipients) {
       case 'email':
         return (
           <ProtectedComponent permission="canSendEmails">
-            <EmailView
-              emailStats={emailStats}
-              emailTemplate={emailTemplate}
-              setEmailTemplate={setEmailTemplate}
-              emailRecipients={emailRecipients}
-              setEmailRecipients={setEmailRecipients}
-              showIndividualSelection={showIndividualSelection}
-              setShowIndividualSelection={setShowIndividualSelection}
-              loadAllCustomersForEmail={loadAllCustomersForEmail}
-              selectedIndividualCustomers={selectedIndividualCustomers}
-              allCustomersForEmail={allCustomersForEmail}
-              toggleAllCustomers={toggleAllCustomers}
-              toggleIndividualCustomer={toggleIndividualCustomer}
-              emailSubject={emailSubject}
-              setEmailSubject={setEmailSubject}
-              customMessage={customMessage}
-              setCustomMessage={setCustomMessage}
-              sendEmail={sendEmail}
-              showNotification={showNotification}
-              supabase={supabase}
-              customers={allCustomers}
-            />
+            <div style={{ display: 'flex', height: '100vh', gap: '16px', padding: '16px' }}>
+              <div style={{ flex: 1 }}>
+                <EmailDragBuilder
+                  onSave={handleSaveEmailDesign}
+                  initialBlocks={emailBuilderBlocks}
+                />
+              </div>
+              {showTemplateManager && (
+                <div style={{ width: '400px' }}>
+                  <EmailTemplateManager
+                    supabase={supabase}
+                    onLoadTemplate={handleLoadTemplate}
+                    currentBlocks={emailBuilderBlocks}
+                    showNotification={showNotification}
+                  />
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => setShowTemplateManager(!showTemplateManager)}
+              style={{
+                position: 'fixed',
+                top: '20px',
+                right: '20px',
+                background: '#8B4513',
+                color: 'white',
+                border: 'none',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                zIndex: 1000
+              }}
+            >
+              {showTemplateManager ? '🔙 Chiudi Template' : '📚 Template'}
+            </button>
           </ProtectedComponent>
         )
       case 'chat':
