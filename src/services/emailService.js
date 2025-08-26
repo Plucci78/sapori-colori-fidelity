@@ -140,7 +140,7 @@ export const emailService = {
     const trackingId = btoa(trackingData)
     
     // URL dinamico basato sull'ambiente
-    let baseUrl = 'https://forno-loyalty.vercel.app' // Il tuo dominio di produzione
+    let baseUrl = 'https://sapori-colori-fidelity.vercel.app' // Il tuo dominio di produzione
     
     if (typeof window !== 'undefined' && window.location) {
       baseUrl = window.location.origin
