@@ -24,15 +24,77 @@ const EmailTemplateManager = ({
     
     setLoading(true)
     try {
+      console.log('🔍 EmailTemplateManager - Caricamento template...')
+      
+      // Prima prova con la tabella unificata email_templates
+      const { data: unifiedData, error: unifiedError } = await supabase
+        .from('email_templates')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      console.log('📊 Dati dal database:', { unifiedData, unifiedError })
+      
+      if (!unifiedError && unifiedData) {
+        // Se non ci sono template, crea alcuni di esempio
+        if (unifiedData.length === 0) {
+          console.log('📝 Nessun template trovato, creazione template di esempio...')
+          await createSampleTemplates()
+          // Ricarica dopo aver creato i template
+          const { data: newData } = await supabase
+            .from('email_templates')
+            .select('*')
+            .order('created_at', { ascending: false })
+          
+          if (newData && newData.length > 0) {
+            const convertedTemplates = newData.map(template => ({
+              ...template,
+              blocks: template.unlayer_design?.blocks ? 
+                JSON.stringify(template.unlayer_design.blocks) :
+                JSON.stringify([{
+                  id: Date.now(),
+                  type: 'html',
+                  props: { content: template.html_preview || 'Template Unlayer' }
+                }]),
+              preview_html: template.html_preview || `<div>Template: ${template.name}</div>`
+            }))
+            setSavedTemplates(convertedTemplates)
+            return
+          }
+        }
+
+        // Converti i template esistenti in formato compatibile
+        console.log('🔄 Conversione template existenti:', unifiedData.length)
+        
+        const convertedTemplates = unifiedData.map(template => {
+          console.log('🔧 Conversione template:', template.name, template)
+          return {
+            ...template,
+            blocks: template.unlayer_design?.blocks ? 
+              JSON.stringify(template.unlayer_design.blocks) :
+              JSON.stringify([{
+                id: Date.now(),
+                type: 'html',
+                props: { content: template.html_preview || 'Template Unlayer' }
+              }]),
+            preview_html: template.html_preview || `<div>Template: ${template.name}</div>`
+          }
+        })
+        
+        console.log('✅ Template convertiti:', convertedTemplates)
+        setSavedTemplates(convertedTemplates)
+        return
+      }
+
+      // Fallback alla tabella legacy
       const { data, error } = await supabase
         .from('email_custom_templates')
         .select('*')
         .order('created_at', { ascending: false })
 
       if (error) {
-        // Se la tabella non esiste, usa template vuoti
+        // Se nessuna tabella esiste, usa template vuoti
         if (error.code === '42P01') {
-          console.log('Tabella email_custom_templates non trovata, usando template vuoti')
+          console.log('Nessuna tabella template trovata, usando template vuoti')
           setSavedTemplates([])
           return
         }
@@ -44,10 +106,65 @@ const EmailTemplateManager = ({
       console.error('Errore caricamento template:', error)
       setSavedTemplates([])
       if (showNotification) {
-        showNotification('Template personalizzati non disponibili (tabella non trovata)', 'warning')
+        showNotification('Template non disponibili', 'warning')
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Crea template di esempio se non esistono
+  const createSampleTemplates = async () => {
+    try {
+      const sampleTemplates = [
+        {
+          name: 'Benvenuto Nuovo Cliente',
+          description: 'Template di benvenuto per nuovi clienti registrati',
+          category: 'welcome',
+          unlayer_design: {
+            body: {
+              rows: [{
+                cells: [{
+                  contents: [
+                    { type: 'heading', values: { text: '<p><span style="color: #8b4513;">Benvenuto {{nome}}!</span></p>' } },
+                    { type: 'text', values: { text: '<p>Ti diamo il benvenuto nella famiglia Sapori & Colori.</p>' } },
+                    { type: 'button', values: { text: 'Inizia Subito', href: '#' } }
+                  ]
+                }]
+              }]
+            }
+          },
+          html_preview: '<div style="text-align:center;padding:20px;"><h1 style="color:#8B4513;">Benvenuto {{nome}}!</h1><p>Ti diamo il benvenuto nella famiglia Sapori & Colori.</p><a href="#" style="display:inline-block;padding:15px 25px;background:#8B4513;color:white;text-decoration:none;border-radius:8px;">Inizia Subito</a></div>'
+        },
+        {
+          name: 'Newsletter Mensile',
+          description: 'Template per newsletter con novità e promozioni',
+          category: 'newsletter',
+          unlayer_design: { basic: true },
+          html_preview: '<div style="padding:20px;"><h2 style="color:#8B4513;text-align:center;">Newsletter Sapori & Colori</h2><p><strong>Ciao {{nome}},</strong></p><p>Ecco le novità di questo mese dal nostro ristorante.</p></div>'
+        },
+        {
+          name: 'Promozione Speciale',
+          description: 'Template per offerte e promozioni limitate',
+          category: 'promotions',
+          unlayer_design: { basic: true },
+          html_preview: '<div style="text-align:center;padding:20px;background:linear-gradient(135deg,#f8f9fa,#e9ecef);"><h1 style="color:#D4AF37;">OFFERTA SPECIALE!</h1><h3 style="color:#333;">Solo per te, {{nome}}</h3><p><strong>Sconto del 20%</strong> su tutti i piatti del menu.</p><a href="#" style="display:inline-block;padding:20px 40px;background:#D4AF37;color:white;text-decoration:none;border-radius:12px;font-weight:700;">Prenota Ora</a></div>'
+        }
+      ]
+
+      const { data, error } = await supabase
+        .from('email_templates')
+        .insert(sampleTemplates)
+        .select()
+
+      if (error) {
+        console.error('Errore creazione template di esempio:', error)
+      } else {
+        console.log('✅ Template di esempio creati:', data.length)
+      }
+      
+    } catch (error) {
+      console.error('Errore creazione template di esempio:', error)
     }
   }
 
@@ -60,14 +177,16 @@ const EmailTemplateManager = ({
       // Genera anteprima HTML per preview
       const previewHtml = generatePreviewHtml(currentBlocks)
       
+      // Salva nella tabella unificata email_templates
+      // Metti i blocks nel campo unlayer_design per mantenerli
       const { data, error } = await supabase
-        .from('email_custom_templates')
+        .from('email_templates')
         .insert([{
           name: templateName.trim(),
           description: templateDescription.trim(),
-          blocks: JSON.stringify(currentBlocks),
-          preview_html: previewHtml,
-          created_at: new Date().toISOString()
+          category: 'drag_drop',
+          unlayer_design: { blocks: currentBlocks }, // Salva i blocks qui
+          html_preview: previewHtml
         }])
         .select()
 
@@ -79,8 +198,15 @@ const EmailTemplateManager = ({
         throw error
       }
       
+      // Converti per compatibilità locale
+      const convertedTemplate = {
+        ...data[0],
+        blocks: JSON.stringify(currentBlocks),
+        preview_html: previewHtml
+      }
+      
       // Aggiorna la lista locale
-      setSavedTemplates(prev => [data[0], ...prev])
+      setSavedTemplates(prev => [convertedTemplate, ...prev])
       
       // Reset form
       setTemplateName('')
@@ -128,8 +254,9 @@ const EmailTemplateManager = ({
     if (!confirm(`Sei sicuro di voler eliminare il template "${templateName}"?`)) return
     
     try {
+      // Elimina dalla tabella unificata
       const { error } = await supabase
-        .from('email_custom_templates')
+        .from('email_templates')
         .delete()
         .eq('id', templateId)
 
@@ -246,8 +373,13 @@ const EmailTemplateManager = ({
 
   return (
     <div className="template-manager">
+      {console.log('🎯 COMPONENT RENDER - Loading:', loading, 'Templates:', savedTemplates.length, 'Supabase:', !!supabase)}
       <div className="template-manager-header">
         <h3>I Miei Template</h3>
+        {!supabase && <p style={{color: 'red'}}>⚠️ Supabase non connesso</p>}
+        <p style={{background: '#e3f2fd', padding: '8px', borderRadius: '4px', fontSize: '12px'}}>
+          Debug: Loading={loading ? 'true' : 'false'}, Templates={savedTemplates.length}
+        </p>
         <button 
           className="btn-save-template"
           onClick={() => setShowSaveDialog(true)}
@@ -330,6 +462,7 @@ const EmailTemplateManager = ({
         {/* Template personalizzati */}
         <div className="templates-section">
           <h4>I Tuoi Template</h4>
+          {console.log('🎨 RENDERING - Loading:', loading, 'SavedTemplates:', savedTemplates.length, savedTemplates)}
           <div className="templates-list">
             {loading ? (
               <div className="loading">Caricamento template...</div>

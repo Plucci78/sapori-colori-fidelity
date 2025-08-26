@@ -12,6 +12,7 @@ import { ProtectedComponent } from './auth/ProtectedComponent'
 import { usePermissions } from './hooks/usePermissions'
 import { activityService } from './services/activityService'
 import { emailQuotaService } from './services/emailQuotaService'
+import { campaignService } from './services/campaignService'
 import { playGemmeSound } from './utils/soundUtils'
 import { getLevelsForEmails, checkLevelUpForEmail, generateLevelEmailContent } from './utils/levelEmailUtils'
 
@@ -29,7 +30,8 @@ import DashboardEnterprisePro from './components/Dashboard/DashboardEnterprisePr
 import SubscriptionManager from './components/Subscriptions/SubscriptionManager'
 import CustomerView from './components/Customers/CustomerView'
 import EmailView from './components/Email/EmailView'
-import EmailDragBuilder from './components/Email/EmailDragBuilder'
+import EmailEnterprise from './components/Email/EmailEnterprise'
+import EmailSection from './components/Email/EmailSection'
 import EmailTemplateManager from './components/Email/EmailTemplateManager'
 import ChatView from './components/Chat/ChatView'
 import PrizesView from './components/Prizes/PrizesView'
@@ -824,6 +826,17 @@ const fixReferralData = async (customerId) => {
       permission: 'canSendEmails'
     },
     {
+      id: 'templates',
+      title: 'Template',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+        </svg>
+      ),
+      description: 'Gestione template email',
+      permission: 'canSendEmails'
+    },
+    {
       id: 'chat',
       title: 'Chat',
       icon: (
@@ -1537,9 +1550,29 @@ for (const customer of recipients) {
     setShowTemplateManager(false)
   }, [])
 
-  const handleSaveEmailDesign = useCallback((htmlContent) => {
-    console.log('Design salvato:', htmlContent)
-    showNotification('Design email salvato con successo!', 'success')
+  const handleSaveEmailDesign = useCallback(async (templateData) => {
+    console.log('💾 Salvataggio template:', templateData)
+    
+    try {
+      const savedTemplate = await campaignService.saveTemplate({
+        name: templateData.name,
+        description: templateData.description || 'Template creato con Unlayer',
+        category: 'custom',
+        unlayer_design: templateData.design,
+        html_preview: templateData.html,
+        thumbnail_url: null
+      })
+      
+      if (savedTemplate) {
+        console.log('✅ Template salvato con ID:', savedTemplate.id)
+        showNotification(`Template "${templateData.name}" salvato!`, 'success')
+      } else {
+        throw new Error('Errore durante il salvataggio')
+      }
+    } catch (error) {
+      console.error('❌ Errore salvataggio template:', error)
+      showNotification('Errore durante il salvataggio del template', 'error')
+    }
   }, [showNotification])
 
   const searchCustomersForManual = useCallback(async (searchName) => {
@@ -2309,49 +2342,27 @@ for (const customer of recipients) {
       case 'email':
         return (
           <ProtectedComponent permission="canSendEmails">
-            <div style={{ display: 'flex', height: '100vh', gap: '16px', padding: '16px' }}>
-              <div style={{ flex: 1 }}>
-                <EmailDragBuilder
-                  onSave={handleSaveEmailDesign}
-                  initialBlocks={emailBuilderBlocks}
-                  onSendEmail={sendEmail}
-                  emailSubject={emailSubject}
-                  setEmailSubject={setEmailSubject}
-                  emailRecipients={emailRecipients}
-                  setEmailRecipients={setEmailRecipients}
-                  allCustomers={allCustomers}
-                  showNotification={showNotification}
-                />
-              </div>
-              {showTemplateManager && (
-                <div style={{ width: '400px' }}>
-                  <EmailTemplateManager
-                    supabase={supabase}
-                    onLoadTemplate={handleLoadTemplate}
-                    currentBlocks={emailBuilderBlocks}
-                    showNotification={showNotification}
-                  />
-                </div>
-              )}
-            </div>
-            <button
-              onClick={() => setShowTemplateManager(!showTemplateManager)}
-              style={{
-                position: 'fixed',
-                top: '20px',
-                right: '20px',
-                background: '#8B4513',
-                color: 'white',
-                border: 'none',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: '600',
-                zIndex: 1000
-              }}
-            >
-              {showTemplateManager ? 'Chiudi Template' : 'Template'}
-            </button>
+            <EmailEnterprise
+              onSave={handleSaveEmailDesign}
+              onSendEmail={sendEmail}
+              emailSubject={emailSubject}
+              setEmailSubject={setEmailSubject}
+              allCustomers={allCustomers}
+              showNotification={showNotification}
+              sidebarMinimized={sidebarMinimized}
+            />
+          </ProtectedComponent>
+        )
+      case 'templates':
+        return (
+          <ProtectedComponent permission="canSendEmails">
+            <EmailTemplateManager
+              supabase={supabase}
+              onLoadTemplate={handleLoadTemplate}
+              onSaveCurrentDesign={handleSaveEmailDesign}
+              currentBlocks={emailBuilderBlocks}
+              showNotification={showNotification}
+            />
           </ProtectedComponent>
         )
       case 'chat':
