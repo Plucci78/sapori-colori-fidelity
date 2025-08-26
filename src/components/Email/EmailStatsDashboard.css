@@ -49,6 +49,12 @@
   font-weight: 700;
 }
 
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
 .period-selector {
   display: flex;
   align-items: center;

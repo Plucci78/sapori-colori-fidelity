@@ -215,14 +215,10 @@ class EmailTrackingService {
       console.log('📧 Deliveries trovate:', deliveries?.length || 0)
 
       if (deliveriesError) {
-        console.error('Errore conteggio deliveries:', deliveriesError)
-        return {
-          totalSent: 0,
-          totalOpened: 0,
-          totalClicked: 0,
-          avgOpenRate: 0,
-          avgClickRate: 0
-        }
+        console.error('❌ Errore conteggio deliveries:', deliveriesError)
+        // Anche se deliveries fallisce, proviamo con le aperture
+      } else {
+        console.log('✅ Deliveries query riuscita')
       }
 
       const totalSent = deliveries?.length || 0

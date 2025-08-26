@@ -71,18 +71,37 @@ const EmailStatsDashboard = () => {
       {/* Header con filtri periodo */}
       <div className="stats-header">
         <h2>📊 Statistiche Email</h2>
-        <div className="period-selector">
-          <label>Periodo:</label>
-          <select 
-            value={selectedPeriod} 
-            onChange={(e) => setSelectedPeriod(Number(e.target.value))}
-            className="period-select"
+        <div className="header-controls">
+          <div className="period-selector">
+            <label>Periodo:</label>
+            <select 
+              value={selectedPeriod} 
+              onChange={(e) => setSelectedPeriod(Number(e.target.value))}
+              className="period-select"
+            >
+              <option value={7}>Ultimi 7 giorni</option>
+              <option value={30}>Ultimi 30 giorni</option>
+              <option value={90}>Ultimi 3 mesi</option>
+              <option value={365}>Ultimo anno</option>
+            </select>
+          </div>
+          <button 
+            onClick={loadDashboardData} 
+            disabled={loading}
+            className="refresh-btn"
+            style={{
+              marginLeft: '15px',
+              padding: '8px 16px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.6 : 1
+            }}
           >
-            <option value={7}>Ultimi 7 giorni</option>
-            <option value={30}>Ultimi 30 giorni</option>
-            <option value={90}>Ultimi 3 mesi</option>
-            <option value={365}>Ultimo anno</option>
-          </select>
+            {loading ? '🔄 Aggiornamento...' : '🔄 Aggiorna'}
+          </button>
         </div>
       </div>
 
