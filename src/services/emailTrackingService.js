@@ -203,14 +203,15 @@ class EmailTrackingService {
       const endDate = new Date().toISOString()
       const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
 
-      const { data, error } = await supabase
-        .from('email_campaign_stats')
-        .select('*')
-        .gte('created_at', startDate)
-        .lte('created_at', endDate)
+      // Conta email inviate
+      const { data: emailLogs, error: logsError } = await supabase
+        .from('email_logs')
+        .select('id')
+        .gte('sent_at', startDate)
+        .lte('sent_at', endDate)
 
-      if (error) {
-        console.error('Errore statistiche dashboard:', error)
+      if (logsError) {
+        console.error('Errore conteggio email inviate:', logsError)
         return {
           totalSent: 0,
           totalOpened: 0,
@@ -220,28 +221,48 @@ class EmailTrackingService {
         }
       }
 
-      const stats = data.reduce((acc, campaign) => ({
-        totalSent: acc.totalSent + campaign.total_sent,
-        totalOpened: acc.totalOpened + campaign.unique_opens,
-        totalClicked: acc.totalClicked + campaign.unique_clicks,
-        avgOpenRate: acc.avgOpenRate + campaign.open_rate,
-        avgClickRate: acc.avgClickRate + campaign.click_rate
-      }), {
-        totalSent: 0,
-        totalOpened: 0,
-        totalClicked: 0,
-        avgOpenRate: 0,
-        avgClickRate: 0
-      })
+      const totalSent = emailLogs.length
 
-      // Calcola medie
-      const campaignCount = data.length
-      if (campaignCount > 0) {
-        stats.avgOpenRate = stats.avgOpenRate / campaignCount
-        stats.avgClickRate = stats.avgClickRate / campaignCount
+      // Conta aperture uniche
+      const { data: opens, error: opensError } = await supabase
+        .from('email_opens')
+        .select('customer_email')
+        .gte('created_at', startDate)
+        .lte('created_at', endDate)
+
+      if (opensError) {
+        console.error('Errore conteggio aperture:', opensError)
       }
 
-      return stats
+      const uniqueOpens = opens ? new Set(opens.map(o => o.customer_email)).size : 0
+
+      // Conta click unici
+      const { data: clicks, error: clicksError } = await supabase
+        .from('email_clicks')
+        .select('customer_email')
+        .gte('created_at', startDate)
+        .lte('created_at', endDate)
+
+      if (clicksError) {
+        console.error('Errore conteggio click:', clicksError)
+      }
+
+      const uniqueClicks = clicks ? new Set(clicks.map(c => c.customer_email)).size : 0
+
+      // Calcola percentuali
+      const openRate = totalSent > 0 ? (uniqueOpens / totalSent) * 100 : 0
+      const clickRate = totalSent > 0 ? (uniqueClicks / totalSent) * 100 : 0
+
+      console.log(`📊 Dashboard Stats: ${totalSent} sent, ${uniqueOpens} opened (${openRate.toFixed(1)}%), ${uniqueClicks} clicked (${clickRate.toFixed(1)}%)`)
+
+      return {
+        totalSent,
+        totalOpened: uniqueOpens,
+        totalClicked: uniqueClicks,
+        avgOpenRate: openRate,
+        avgClickRate: clickRate
+      }
+
     } catch (error) {
       console.error('Errore statistiche dashboard:', error)
       return {
