@@ -33,11 +33,15 @@ export default async function handler(req, res) {
     
     if (action === 'pixel') {
       // Pixel tracking for email opens - verifica se questa specifica email è già stata aperta
+      // Considera duplicate le aperture della stessa email entro 5 minuti
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+      
       const { data: existingOpen } = await supabase
         .from('email_opens')
-        .select('id')
+        .select('id, created_at')
         .eq('email_log_id', parseInt(emailLogId) || null)
         .eq('customer_email', customerEmail)
+        .gte('created_at', fiveMinutesAgo)
         .single()
 
       if (!existingOpen) {
@@ -56,7 +60,7 @@ export default async function handler(req, res) {
           console.log('✅ Apertura registrata:', customerEmail, 'per emailLogId:', emailLogId)
         }
       } else {
-        console.log('ℹ️ Apertura già registrata per:', customerEmail, 'emailLogId:', emailLogId)
+        console.log('ℹ️ Apertura duplicata ignorata (entro 5min):', customerEmail, 'emailLogId:', emailLogId)
       }
       
       // Return 1x1 transparent pixel

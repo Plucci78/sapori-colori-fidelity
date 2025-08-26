@@ -92,7 +92,7 @@ export const emailService = {
         console.log(`✅ Email inviata a ${customer.name}`)
 
         // Log nel database per tracking
-        await this.logEmailSent(campaignId, customer, templateParams)
+        await this.logEmailSent(customer, templateParams)
 
       } catch (error) {
         emailsFailed++
@@ -193,14 +193,12 @@ export const emailService = {
     return 'Bronze'
   },
 
-  async logEmailSent(campaignId, customer, templateParams) {
+  async logEmailSent(customer, templateParams) {
     try {
       // Log nella tabella email_logs se esiste
       const { data: logEntry, error } = await supabase
         .from('email_logs')
         .insert([{
-          campaign_id: campaignId,
-          customer_id: customer.id,
           customer_email: customer.email,
           subject: templateParams.subject,
           content: templateParams.message_html,
