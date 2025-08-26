@@ -23,13 +23,17 @@ export default defineConfig({
           ],
           // TinyMCE separato
           'tinymce': ['tinymce', '@tinymce/tinymce-react'],
+          // Email editor components
+          'email-editor': ['react-email-editor'],
+          // Supabase separato
+          'supabase': ['@supabase/supabase-js'],
           // Utilities
           'vendor': ['react', 'react-dom', 'lucide-react']
         }
       }
     },
     // Chunk size warning threshold più alto
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 2000
   },
   
   // OTTIMIZZAZIONI DEV  
@@ -39,7 +43,8 @@ export default defineConfig({
       'react', 
       'react-dom',
       'lucide-react',
-      '@supabase/supabase-js'
+      '@supabase/supabase-js',
+      'react-email-editor'
     ],
     // Escludi GrapesJS dal pre-bundling per evitare problemi
     exclude: [
