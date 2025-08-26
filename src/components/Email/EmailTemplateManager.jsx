@@ -227,7 +227,7 @@ const EmailTemplateManager = ({
     }
   }
 
-  // Carica un template esistente
+  // Carica un template nel drag-and-drop builder
   const loadTemplate = (template) => {
     try {
       // Se template.blocks è già un array (template predefiniti), usalo direttamente
@@ -239,12 +239,39 @@ const EmailTemplateManager = ({
       onLoadTemplate?.(blocks)
       
       if (showNotification) {
-        showNotification(`Template "${template.name}" caricato!`, 'success')
+        showNotification(`Template "${template.name}" caricato nel Drag & Drop Builder!`, 'success')
       }
     } catch (error) {
       console.error('Errore caricamento template:', error)
       if (showNotification) {
         showNotification('Errore caricamento template', 'error')
+      }
+    }
+  }
+
+  // Carica un template nell'editor Unlayer
+  const loadTemplateInUnlayer = (template) => {
+    try {
+      if (template.unlayer_design && Object.keys(template.unlayer_design).length > 1) {
+        // Ha un design Unlayer valido - reindirizza alla sezione Email
+        if (showNotification) {
+          showNotification(`Caricamento template "${template.name}" nell'Editor Unlayer...`, 'info')
+        }
+        
+        // Salva il template da caricare e reindirizza
+        sessionStorage.setItem('templateToLoad', JSON.stringify(template))
+        window.location.hash = '#email'
+        
+      } else {
+        // Non ha design Unlayer - solo messaggio
+        if (showNotification) {
+          showNotification(`Template "${template.name}" non compatibile con Unlayer (creato con Drag & Drop)`, 'warning')
+        }
+      }
+    } catch (error) {
+      console.error('Errore caricamento template Unlayer:', error)
+      if (showNotification) {
+        showNotification('Errore caricamento template in Unlayer', 'error')
       }
     }
   }
@@ -500,8 +527,17 @@ const EmailTemplateManager = ({
                       <button 
                         className="btn-load"
                         onClick={() => loadTemplate(template)}
+                        title="Carica nel Drag & Drop Builder"
                       >
-                        Carica
+                        📦 Drag & Drop
+                      </button>
+                      <button 
+                        className="btn-load"
+                        onClick={() => loadTemplateInUnlayer(template)}
+                        style={{ background: '#D4AF37', marginLeft: '8px' }}
+                        title="Carica nell'Editor Unlayer"
+                      >
+                        🎨 Unlayer
                       </button>
                       <button 
                         className="btn-delete"

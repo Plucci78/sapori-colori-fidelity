@@ -41,6 +41,27 @@ const EmailEnterprise = ({
   const onReady = useCallback(() => {
     console.log('🎨 Unlayer Editor pronto!')
     showNotification?.('Editor email caricato!', 'success')
+    
+    // Controlla se c'è un template da caricare da sessionStorage
+    const templateToLoad = sessionStorage.getItem('templateToLoad')
+    if (templateToLoad) {
+      try {
+        const template = JSON.parse(templateToLoad)
+        console.log('📋 Caricamento template automatico:', template.name)
+        
+        // Carica il design nell'editor
+        if (template.unlayer_design && emailEditorRef.current) {
+          emailEditorRef.current.editor.loadDesign(template.unlayer_design)
+          showNotification?.(`Template "${template.name}" caricato automaticamente!`, 'success')
+        }
+        
+        // Rimuovi il template dal sessionStorage
+        sessionStorage.removeItem('templateToLoad')
+      } catch (error) {
+        console.error('❌ Errore caricamento template automatico:', error)
+        sessionStorage.removeItem('templateToLoad')
+      }
+    }
   }, [showNotification])
 
   // Salva design come template
