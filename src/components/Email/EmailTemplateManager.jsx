@@ -448,9 +448,11 @@ const EmailTemplateManager = ({
       <div className="template-manager-header">
         <h3>I Miei Template</h3>
         {!supabase && <p style={{color: 'red'}}>⚠️ Supabase non connesso</p>}
-        <p style={{background: '#e3f2fd', padding: '8px', borderRadius: '4px', fontSize: '12px'}}>
+        <div style={{background: '#e3f2fd', padding: '8px', borderRadius: '4px', fontSize: '12px', marginBottom: '10px'}}>
           Debug: Loading={loading ? 'true' : 'false'}, Templates={savedTemplates.length}
-        </p>
+          <br/>
+          Template names: {savedTemplates.map(t => t.name).join(', ')}
+        </div>
         <button 
           className="btn-save-template"
           onClick={() => setShowSaveDialog(true)}
@@ -534,16 +536,29 @@ const EmailTemplateManager = ({
         <div className="templates-section">
           <h4>I Tuoi Template</h4>
           {console.log('🎨 RENDERING - Loading:', loading, 'SavedTemplates:', savedTemplates.length, savedTemplates)}
-          <div className="templates-list">
+          <div className="templates-list" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '20px',
+            border: '2px solid red', // DEBUG - vedere se c'è
+            padding: '20px',
+            backgroundColor: '#f9f9f9',
+            minHeight: '200px'
+          }}>
+            {console.log('🔍 RENDERING CONDITIONS - Loading:', loading, 'Length:', savedTemplates.length)}
             {loading ? (
-              <div className="loading">Caricamento template...</div>
+              <div className="loading" style={{background: 'yellow', padding: '20px'}}>Caricamento template...</div>
             ) : savedTemplates.length === 0 ? (
-              <div className="empty-state">
+              <div className="empty-state" style={{background: 'orange', padding: '20px'}}>
                 <p>Nessun template personalizzato ancora.</p>
                 <p>Crea il tuo primo design e salvalo come template!</p>
               </div>
             ) : (
-              savedTemplates.map((template) => (
+              <>
+                <div style={{background: 'lightgreen', padding: '10px', gridColumn: '1 / -1'}}>
+                  🎯 RENDERING {savedTemplates.length} TEMPLATES
+                </div>
+                {savedTemplates.map((template) => (
                 <div key={template.id} className="template-card custom">
                   <div className="template-preview">
                     {template.preview_html ? (
@@ -592,7 +607,8 @@ const EmailTemplateManager = ({
                     </div>
                   </div>
                 </div>
-              ))
+                ))
+              </>
             )}
           </div>
         </div>
