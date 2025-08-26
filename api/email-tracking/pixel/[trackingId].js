@@ -14,6 +14,11 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 export default async function handler(req, res) {
+  // SUPER DEBUG LOG
+  console.log('🔥🔥 TRACKING PIXEL ENDPOINT INVOCATO 🔥🔥');
+  console.log('VITE_SUPABASE_URL:', process.env.VITE_SUPABASE_URL ? '✅ Trovata' : '❌ MANCANTE');
+  console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅ Trovata' : '❌ MANCANTE');
+  
   const { trackingId } = req.query
 
   try {
