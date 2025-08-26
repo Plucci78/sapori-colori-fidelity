@@ -44,12 +44,12 @@ export const emailService = {
         }
         
         // Personalizza il contenuto per ogni cliente
-        let personalizedContent = this.personalizeContent(finalContent, customer, campaignData)
+        let personalizedContent = finalContent // DISABILITA TEMPORANEAMENTE LA PERSONALIZZAZIONE
         
         // Aggiungi pixel di tracking per le aperture email
         const trackingPixel = this.generateTrackingPixel(campaignId, customer.email)
         console.log('🔍 Pixel generato:', trackingPixel)
-        // personalizedContent = this.injectTrackingPixel(personalizedContent, trackingPixel)
+        personalizedContent = this.injectTrackingPixel(personalizedContent, trackingPixel)
         console.log('📧 Contenuto finale con pixel:', personalizedContent.slice(-200)) // Ultimi 200 caratteri
         
         const templateParams = {
