@@ -1,6 +1,19 @@
 -- Tabelle per tracking email avanzato
 -- Esegui questo in Supabase SQL Editor
 
+-- Prima creiamo la tabella base email_logs se non esiste
+CREATE TABLE IF NOT EXISTS email_logs (
+  id BIGSERIAL PRIMARY KEY,
+  campaign_id UUID,
+  customer_id UUID,
+  customer_email TEXT,
+  subject TEXT,
+  content TEXT,
+  status TEXT DEFAULT 'sent',
+  sent_at TIMESTAMP DEFAULT NOW(),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Tabella per tracking aperture email
 CREATE TABLE IF NOT EXISTS email_opens (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -100,13 +113,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger per aperture
+-- Trigger per aperture (DROP IF EXISTS per evitare errori)
+DROP TRIGGER IF EXISTS update_stats_on_open ON email_opens;
 CREATE TRIGGER update_stats_on_open
   AFTER INSERT ON email_opens
   FOR EACH ROW
   EXECUTE FUNCTION update_campaign_stats();
 
--- Trigger per click
+-- Trigger per click (DROP IF EXISTS per evitare errori)
+DROP TRIGGER IF EXISTS update_stats_on_click ON email_clicks;
 CREATE TRIGGER update_stats_on_click
   AFTER INSERT ON email_clicks
   FOR EACH ROW

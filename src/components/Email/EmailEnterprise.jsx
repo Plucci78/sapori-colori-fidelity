@@ -205,19 +205,31 @@ const EmailEnterprise = ({
 
   // Carica template in Unlayer
   const handleLoadTemplate = useCallback((template) => {
-    if (!emailEditorRef.current || !template.design) {
-      showNotification?.('Template non valido o editor non pronto', 'error')
+    if (!template.design) {
+      showNotification?.('Template non valido', 'error')
+      return
+    }
+    
+    // Verifica che l'editor sia completamente pronto
+    if (!emailEditorRef.current || !emailEditorRef.current.editor) {
+      console.log('⏳ Editor non ancora pronto, tentativo tra 1 secondo...')
+      setTimeout(() => handleLoadTemplate(template), 1000)
       return
     }
     
     try {
       console.log('🎨 Caricamento template:', template.name)
-      emailEditorRef.current.editor.loadDesign(template.design)
+      console.log('📋 Design template:', template.design)
+      
+      // Usa il design corretto (potrebbe essere in design o unlayer_design)
+      const designData = template.design || template.unlayer_design
+      
+      emailEditorRef.current.editor.loadDesign(designData)
       showNotification?.(`Template "${template.name}" caricato!`, 'success')
       setShowTemplates(false)
     } catch (error) {
       console.error('❌ Errore caricamento template:', error)
-      showNotification?.('Errore caricamento template', 'error')
+      showNotification?.('Errore caricamento template: ' + error.message, 'error')
     }
   }, [showNotification])
 

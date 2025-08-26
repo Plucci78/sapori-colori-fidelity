@@ -24,22 +24,15 @@ const EmailTemplateManager = ({
     
     setLoading(true)
     try {
-      console.log('🔍 EmailTemplateManager - Caricamento template...')
-      
       // Prima prova con la tabella unificata email_templates
       const { data: unifiedData, error: unifiedError } = await supabase
         .from('email_templates')
         .select('*')
         .order('created_at', { ascending: false })
 
-      console.log('📊 Dati dal database:', { unifiedData, unifiedError })
-      
       if (!unifiedError && unifiedData) {
-        console.log('📊 Template trovati nel DB:', unifiedData.length)
         
-        // FORZA sempre la creazione per debug - rimuovi dopo test
         if (unifiedData.length === 0) {
-          console.log('📝 DB vuoto, creazione template di esempio...')
           await createSampleTemplates()
           // Ricarica dopo aver creato i template
           const { data: newData } = await supabase
@@ -48,7 +41,6 @@ const EmailTemplateManager = ({
             .order('created_at', { ascending: false })
           
           if (newData && newData.length > 0) {
-            console.log('✅ Template creati e ricaricati:', newData.length)
             const convertedTemplates = newData.map(template => ({
               ...template,
               blocks: template.unlayer_design?.blocks ? 
@@ -62,16 +54,11 @@ const EmailTemplateManager = ({
             }))
             setSavedTemplates(convertedTemplates)
             return
-          } else {
-            console.log('❌ Nessun template dopo la creazione!')
           }
         }
 
         // Converti i template esistenti in formato compatibile
-        console.log('🔄 Conversione template existenti:', unifiedData.length)
-        
         const convertedTemplates = unifiedData.map(template => {
-          console.log('🔧 Conversione template:', template.name, template)
           return {
             ...template,
             blocks: template.unlayer_design?.blocks ? 
@@ -85,7 +72,6 @@ const EmailTemplateManager = ({
           }
         })
         
-        console.log('✅ Template convertiti:', convertedTemplates)
         setSavedTemplates(convertedTemplates)
         return
       }
@@ -121,7 +107,6 @@ const EmailTemplateManager = ({
   // Crea template di esempio se non esistono
   const createSampleTemplates = async () => {
     try {
-      console.log('📝 Creazione template di esempio...')
       
       const sampleTemplates = [
         {
@@ -203,8 +188,6 @@ const EmailTemplateManager = ({
 
       if (error) {
         console.error('Errore creazione template di esempio:', error)
-      } else {
-        console.log('✅ Template di esempio creati:', data.length)
       }
       
     } catch (error) {
@@ -444,15 +427,8 @@ const EmailTemplateManager = ({
 
   return (
     <div className="template-manager">
-      {console.log('🎯 COMPONENT RENDER - Loading:', loading, 'Templates:', savedTemplates.length, 'Supabase:', !!supabase)}
       <div className="template-manager-header">
         <h3>I Miei Template</h3>
-        {!supabase && <p style={{color: 'red'}}>⚠️ Supabase non connesso</p>}
-        <div style={{background: '#e3f2fd', padding: '8px', borderRadius: '4px', fontSize: '12px', marginBottom: '10px'}}>
-          Debug: Loading={loading ? 'true' : 'false'}, Templates={savedTemplates.length}
-          <br/>
-          Template names: {savedTemplates.map(t => t.name).join(', ')}
-        </div>
         <button 
           className="btn-save-template"
           onClick={() => setShowSaveDialog(true)}
@@ -535,30 +511,16 @@ const EmailTemplateManager = ({
         {/* Template personalizzati */}
         <div className="templates-section">
           <h4>I Tuoi Template</h4>
-          {console.log('🎨 RENDERING - Loading:', loading, 'SavedTemplates:', savedTemplates.length, savedTemplates)}
-          <div className="templates-list" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: '20px',
-            border: '2px solid red', // DEBUG - vedere se c'è
-            padding: '20px',
-            backgroundColor: '#f9f9f9',
-            minHeight: '200px'
-          }}>
-            {console.log('🔍 RENDERING CONDITIONS - Loading:', loading, 'Length:', savedTemplates.length)}
+          <div className="templates-list">
             {loading ? (
-              <div className="loading" style={{background: 'yellow', padding: '20px'}}>Caricamento template...</div>
+              <div className="loading">Caricamento template...</div>
             ) : savedTemplates.length === 0 ? (
-              <div className="empty-state" style={{background: 'orange', padding: '20px'}}>
+              <div className="empty-state">
                 <p>Nessun template personalizzato ancora.</p>
                 <p>Crea il tuo primo design e salvalo come template!</p>
               </div>
             ) : (
-              <>
-                <div style={{background: 'lightgreen', padding: '10px', gridColumn: '1 / -1'}}>
-                  🎯 RENDERING {savedTemplates.length} TEMPLATES
-                </div>
-                {savedTemplates.map((template) => (
+              savedTemplates.map((template) => (
                 <div key={template.id} className="template-card custom">
                   <div className="template-preview">
                     {template.preview_html ? (
@@ -607,8 +569,7 @@ const EmailTemplateManager = ({
                     </div>
                   </div>
                 </div>
-                ))}
-              </>
+                ))
             )}
           </div>
         </div>

@@ -348,6 +348,28 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 15px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 5px; /* Space for scrollbar */
+}
+
+/* Custom scrollbar for template grid */
+.templates-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.templates-grid::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.templates-grid::-webkit-scrollbar-thumb {
+  background: #8B4513;
+  border-radius: 4px;
+}
+
+.templates-grid::-webkit-scrollbar-thumb:hover {
+  background: #6d3410;
 }
 
 .template-card {
