@@ -7,9 +7,27 @@
     <h1>Test Pixel di Tracking</h1>
     <p>Questa pagina dovrebbe attivare il pixel e registrare un'apertura.</p>
     
-    <!-- Pixel di test -->
+    <!-- Pixel di test (VISIBILE per debug) -->
     <img src="https://sapori-colori-fidelity.vercel.app/api/email-tracking/pixel/dGVzdDp0ZXN0QHRlc3QuY29tOjE3MzUzNDAwMDA=" 
-         width="1" height="1" style="display:none;" alt="" />
+         width="100" height="100" style="border: 2px solid red;" alt="Pixel di test" />
+    
+    <p><strong>Se vedi un quadrato rosso vuoto sopra = pixel carica!</strong></p>
+    
+    <!-- Test con JavaScript per debug -->
+    <script>
+        const img = new Image();
+        img.onload = function() {
+            console.log('✅ Pixel caricato con successo!');
+            document.getElementById('result').innerHTML = '✅ Pixel funziona!';
+        };
+        img.onerror = function() {
+            console.log('❌ Errore caricamento pixel');
+            document.getElementById('result').innerHTML = '❌ Pixel fallito';
+        };
+        img.src = 'https://sapori-colori-fidelity.vercel.app/api/email-tracking/pixel/dGVzdDp0ZXN0QHRlc3QuY29tOjE3MzUzNDAwMDA=';
+    </script>
+    
+    <div id="result">🔄 Testing...</div>
     
     <p>Se funziona, vedrai un record nella tabella email_opens con email "test@test.com"</p>
     
