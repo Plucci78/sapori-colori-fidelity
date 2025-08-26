@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Pixel Tracking</title>
+</head>
+<body>
+    <h1>Test Pixel di Tracking</h1>
+    <p>Questa pagina dovrebbe attivare il pixel e registrare un'apertura.</p>
+    
+    <!-- Pixel di test -->
+    <img src="https://forno-loyalty.vercel.app/api/email-tracking/pixel/dGVzdDp0ZXN0QHRlc3QuY29tOjE3MzUzNDAwMDA=" 
+         width="1" height="1" style="display:none;" alt="" />
+    
+    <p>Se funziona, vedrai un record nella tabella email_opens con email "test@test.com"</p>
+    
+    <script>
+        console.log('🔍 Pixel caricato. Controlla Network tab per vedere se la richiesta parte.');
+    </script>
+</body>
+</html>
