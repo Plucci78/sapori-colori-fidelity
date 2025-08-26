@@ -176,6 +176,7 @@ function AppContent() {
   // Stati per Email Builder
   const [emailBuilderBlocks, setEmailBuilderBlocks] = useState([])
   const [showTemplateManager, setShowTemplateManager] = useState(false)
+  const [savedEmailTemplates, setSavedEmailTemplates] = useState([])
 
   // Stati per selezione clienti individuali
   const [selectedIndividualCustomers, setSelectedIndividualCustomers] = useState([])
@@ -1550,6 +1551,29 @@ for (const customer of recipients) {
     setShowTemplateManager(false)
   }, [])
 
+  // Carica template per EmailEnterprise
+  const loadEmailTemplates = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('email_templates')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      setSavedEmailTemplates(data || [])
+    } catch (error) {
+      console.error('Errore caricamento template per EmailEnterprise:', error)
+      setSavedEmailTemplates([])
+    }
+  }, [])
+
+  // Carica template al mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadEmailTemplates()
+    }
+  }, [isAuthenticated, loadEmailTemplates])
+
   const handleSaveEmailDesign = useCallback(async (templateData) => {
     console.log('💾 Salvataggio template:', templateData)
     
@@ -1566,6 +1590,8 @@ for (const customer of recipients) {
       if (savedTemplate) {
         console.log('✅ Template salvato con ID:', savedTemplate.id)
         showNotification(`Template "${templateData.name}" salvato!`, 'success')
+        // Ricarica i template per aggiornare la lista
+        loadEmailTemplates()
       } else {
         throw new Error('Errore durante il salvataggio')
       }
@@ -2350,6 +2376,7 @@ for (const customer of recipients) {
               allCustomers={allCustomers}
               showNotification={showNotification}
               sidebarMinimized={sidebarMinimized}
+              savedTemplates={savedEmailTemplates}
             />
           </ProtectedComponent>
         )
