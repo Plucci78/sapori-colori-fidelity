@@ -44,7 +44,7 @@ export const emailService = {
         }
         
         // Personalizza il contenuto per ogni cliente
-        let personalizedContent = finalContent // DISABILITA TEMPORANEAMENTE LA PERSONALIZZAZIONE
+        let personalizedContent = this.personalizeContent(finalContent, customer, campaignData)
         
         // Aggiungi pixel di tracking per le aperture email
         const trackingPixel = this.generateTrackingPixel(campaignId, customer.email)
