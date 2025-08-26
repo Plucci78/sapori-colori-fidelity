@@ -24,10 +24,15 @@ export default async function handler(req, res) {
     const ipAddress = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown'
     const userAgent = req.headers['user-agent'] || 'unknown'
     
-    console.log('🔍 Tracking data:', { emailLogId, customerEmail, ipAddress })
+    console.log('🔍 Tracking data:', { 
+      emailLogId, 
+      customerEmail, 
+      ipAddress,
+      userAgent: userAgent.substring(0, 150)
+    })
     
     if (action === 'pixel') {
-      // Pixel tracking for email opens
+      // Pixel tracking for email opens - verifica se questa specifica email è già stata aperta
       const { data: existingOpen } = await supabase
         .from('email_opens')
         .select('id')
@@ -48,8 +53,10 @@ export default async function handler(req, res) {
         if (insertError) {
           console.error('❌ Errore inserimento apertura:', insertError)
         } else {
-          console.log('✅ Apertura registrata:', customerEmail)
+          console.log('✅ Apertura registrata:', customerEmail, 'per emailLogId:', emailLogId)
         }
+      } else {
+        console.log('ℹ️ Apertura già registrata per:', customerEmail, 'emailLogId:', emailLogId)
       }
       
       // Return 1x1 transparent pixel
