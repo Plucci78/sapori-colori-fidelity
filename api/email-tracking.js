@@ -31,7 +31,7 @@ export default async function handler(req, res) {
       const { data: existingOpen } = await supabase
         .from('email_opens')
         .select('id')
-        .eq('email_log_id', emailLogId)
+        .eq('email_log_id', parseInt(emailLogId) || null)
         .eq('customer_email', customerEmail)
         .single()
 
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
         const { error: insertError } = await supabase
           .from('email_opens')
           .insert([{
-            email_log_id: emailLogId,
+            email_log_id: parseInt(emailLogId) || null,
             customer_email: customerEmail,
             ip_address: ipAddress,
             user_agent: userAgent
@@ -70,7 +70,7 @@ export default async function handler(req, res) {
       const { error: insertError } = await supabase
         .from('email_clicks')
         .insert([{
-          email_log_id: emailLogId,
+          email_log_id: parseInt(emailLogId) || null,
           customer_email: customerEmail,
           clicked_url: redirectUrl,
           ip_address: ipAddress,
