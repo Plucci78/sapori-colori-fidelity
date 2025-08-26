@@ -19,27 +19,27 @@ export default async function handler(req, res) {
   try {
     // Decodifica il tracking ID
     const decodedData = Buffer.from(trackingId, 'base64').toString('utf-8')
-    const [emailLogId, customerEmail, timestamp] = decodedData.split(':')
+    const [campaignId, customerEmail, timestamp] = decodedData.split(':')
     
     const ipAddress = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown'
     const userAgent = req.headers['user-agent'] || 'unknown'
     
     console.log('🔍 Tracking data:', { 
-      emailLogId, 
+      campaignId, 
       customerEmail, 
       ipAddress,
       userAgent: userAgent.substring(0, 150)
     })
     
     if (action === 'pixel') {
-      // Pixel tracking for email opens - verifica se questa specifica email è già stata aperta
-      // Considera duplicate le aperture della stessa email entro 5 minuti
+      // Pixel tracking for email opens - verifica se questa campagna è già stata aperta da questo cliente
+      // Considera duplicate le aperture della stessa campagna entro 5 minuti
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
       
       const { data: existingOpen } = await supabase
         .from('email_opens')
         .select('id, created_at')
-        .eq('email_log_id', parseInt(emailLogId) || null)
+        .eq('campaign_id', campaignId)
         .eq('customer_email', customerEmail)
         .gte('created_at', fiveMinutesAgo)
         .single()
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
         const { error: insertError } = await supabase
           .from('email_opens')
           .insert([{
-            email_log_id: parseInt(emailLogId) || null,
+            campaign_id: campaignId,
             customer_email: customerEmail,
             ip_address: ipAddress,
             user_agent: userAgent
@@ -57,10 +57,10 @@ export default async function handler(req, res) {
         if (insertError) {
           console.error('❌ Errore inserimento apertura:', insertError)
         } else {
-          console.log('✅ Apertura registrata:', customerEmail, 'per emailLogId:', emailLogId)
+          console.log('✅ Apertura registrata:', customerEmail, 'per campaign:', campaignId)
         }
       } else {
-        console.log('ℹ️ Apertura duplicata ignorata (entro 5min):', customerEmail, 'emailLogId:', emailLogId)
+        console.log('ℹ️ Apertura duplicata ignorata (entro 5min):', customerEmail, 'campaign:', campaignId)
       }
       
       // Return 1x1 transparent pixel

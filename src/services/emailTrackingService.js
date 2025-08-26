@@ -204,11 +204,14 @@ class EmailTrackingService {
       const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
 
       // Conta email inviate
+      console.log('🔍 Conteggio email inviate dal', startDate, 'al', endDate)
       const { data: emailLogs, error: logsError } = await supabase
         .from('email_logs')
         .select('id')
         .gte('sent_at', startDate)
         .lte('sent_at', endDate)
+        
+      console.log('📧 Email logs trovati:', emailLogs?.length || 0)
 
       if (logsError) {
         console.error('Errore conteggio email inviate:', logsError)
@@ -224,11 +227,14 @@ class EmailTrackingService {
       const totalSent = emailLogs.length
 
       // Conta aperture uniche
+      console.log('🔍 Conteggio aperture email dal', startDate, 'al', endDate)
       const { data: opens, error: opensError } = await supabase
         .from('email_opens')
         .select('customer_email')
         .gte('created_at', startDate)
         .lte('created_at', endDate)
+        
+      console.log('📖 Aperture trovate:', opens?.length || 0)
 
       if (opensError) {
         console.error('Errore conteggio aperture:', opensError)

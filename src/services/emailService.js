@@ -20,6 +20,7 @@ export const emailService = {
 
     console.log(`📧 Invio campagna: ${subject}`)
     console.log(`👥 Destinatari: ${targetCustomers.length}`)
+    console.log(`🆔 Campaign ID: ${campaignId}`)
 
     let emailsSent = 0
     let emailsFailed = 0
@@ -91,8 +92,8 @@ export const emailService = {
 
         console.log(`✅ Email inviata a ${customer.name}`)
 
-        // Log nel database per tracking
-        await this.logEmailSent(customer, templateParams)
+        // Log nel database per tracking delle delivery
+        await this.logCampaignDelivery(campaignId, customer, templateParams)
 
       } catch (error) {
         emailsFailed++
@@ -193,29 +194,30 @@ export const emailService = {
     return 'Bronze'
   },
 
-  async logEmailSent(customer, templateParams) {
+  async logCampaignDelivery(campaignId, customer, templateParams) {
     try {
-      // Log nella tabella email_logs se esiste
+      // Log nella tabella campaign_deliveries
       const { data: logEntry, error } = await supabase
-        .from('email_logs')
+        .from('campaign_deliveries')
         .insert([{
+          campaign_id: campaignId,
+          customer_id: customer.id?.toString() || null,
           customer_email: customer.email,
-          subject: templateParams.subject,
-          content: templateParams.message_html,
-          status: 'sent',
+          delivery_status: 'sent',
           sent_at: new Date().toISOString()
         }])
         .select()
         .single()
 
-      if (error && error.code !== '42P01') { // Ignora se la tabella non esiste
-        console.error('Errore log email:', error)
+      if (error) {
+        console.error('Errore log delivery:', error)
         return null
       }
       
+      console.log('✅ Delivery logged per campaign:', campaignId)
       return logEntry
     } catch (error) {
-      console.error('Errore log email:', error)
+      console.error('Errore log delivery:', error)
       return null
     }
   },
