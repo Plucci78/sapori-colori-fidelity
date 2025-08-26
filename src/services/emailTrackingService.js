@@ -197,24 +197,25 @@ class EmailTrackingService {
     }
   }
 
-  // Ottieni statistiche generali dashboard
+  // Ottieni statistiche generali dashboard basate sulle campagne
   async getDashboardStats(days = 30) {
     try {
       const endDate = new Date().toISOString()
       const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
 
-      // Conta email inviate
-      console.log('🔍 Conteggio email inviate dal', startDate, 'al', endDate)
-      const { data: emailLogs, error: logsError } = await supabase
-        .from('email_logs')
-        .select('id')
+      // Conta email inviate dalle delivery delle campagne
+      console.log('🔍 Conteggio email inviate dalle campagne dal', startDate, 'al', endDate)
+      const { data: deliveries, error: deliveriesError } = await supabase
+        .from('campaign_deliveries')
+        .select('customer_email, campaign_id')
         .gte('sent_at', startDate)
         .lte('sent_at', endDate)
+        .eq('delivery_status', 'sent')
         
-      console.log('📧 Email logs trovati:', emailLogs?.length || 0)
+      console.log('📧 Deliveries trovate:', deliveries?.length || 0)
 
-      if (logsError) {
-        console.error('Errore conteggio email inviate:', logsError)
+      if (deliveriesError) {
+        console.error('Errore conteggio deliveries:', deliveriesError)
         return {
           totalSent: 0,
           totalOpened: 0,
@@ -224,13 +225,13 @@ class EmailTrackingService {
         }
       }
 
-      const totalSent = emailLogs.length
+      const totalSent = deliveries?.length || 0
 
-      // Conta aperture uniche
+      // Conta aperture uniche per le campagne nel periodo
       console.log('🔍 Conteggio aperture email dal', startDate, 'al', endDate)
       const { data: opens, error: opensError } = await supabase
         .from('email_opens')
-        .select('customer_email')
+        .select('customer_email, campaign_id')
         .gte('created_at', startDate)
         .lte('created_at', endDate)
         
@@ -242,10 +243,10 @@ class EmailTrackingService {
 
       const uniqueOpens = opens ? new Set(opens.map(o => o.customer_email)).size : 0
 
-      // Conta click unici
+      // Conta click unici per le campagne nel periodo
       const { data: clicks, error: clicksError } = await supabase
         .from('email_clicks')
-        .select('customer_email')
+        .select('customer_email, campaign_id')
         .gte('created_at', startDate)
         .lte('created_at', endDate)
 
