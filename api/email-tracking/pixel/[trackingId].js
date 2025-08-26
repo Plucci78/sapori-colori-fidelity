@@ -26,11 +26,16 @@ export default async function handler(req, res) {
     const userAgent = req.headers['user-agent'] || 'unknown'
 
     console.log('🔍 Tracking apertura email:', {
+      trackingId,
       emailLogId,
       customerEmail,
       ipAddress,
       userAgent: userAgent.substring(0, 100) // Tronca user agent
     })
+
+    // DEBUG: Test connessione Supabase
+    console.log('🔗 Supabase URL:', supabaseUrl ? 'OK' : 'MANCANTE')
+    console.log('🔑 Supabase Key:', supabaseKey ? 'OK' : 'MANCANTE')
 
     // Verifica se l'apertura è già stata registrata (evita duplicati)
     const { data: existingOpen } = await supabase
@@ -42,7 +47,9 @@ export default async function handler(req, res) {
 
     if (!existingOpen) {
       // Registra l'apertura
-      const { error: insertError } = await supabase
+      console.log('📝 Tentativo inserimento in email_opens...')
+      
+      const { data: insertData, error: insertError } = await supabase
         .from('email_opens')
         .insert([{
           email_log_id: emailLogId,
@@ -50,11 +57,19 @@ export default async function handler(req, res) {
           ip_address: ipAddress,
           user_agent: userAgent
         }])
+        .select()
 
       if (insertError) {
         console.error('❌ Errore inserimento apertura:', insertError)
+        console.error('❌ Dettagli errore:', {
+          code: insertError.code,
+          message: insertError.message,
+          details: insertError.details,
+          hint: insertError.hint
+        })
       } else {
         console.log('✅ Apertura email registrata:', customerEmail)
+        console.log('📊 Dati inseriti:', insertData)
       }
     } else {
       console.log('ℹ️ Apertura già registrata per:', customerEmail)
