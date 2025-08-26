@@ -157,7 +157,7 @@ export const emailService = {
   // Genera pixel di tracking per aperture email
   generateTrackingPixel(campaignId, customerEmail) {
     const trackingData = `${campaignId}:${customerEmail}:${Date.now()}`
-    const trackingId = Buffer.from(trackingData).toString('base64')
+    const trackingId = btoa(trackingData)
     
     // URL dinamico basato sull'ambiente
     let baseUrl = 'https://sapori-colori-fidelity.vercel.app' // Il tuo dominio di produzione
@@ -166,7 +166,7 @@ export const emailService = {
       baseUrl = window.location.origin
     }
     
-    const pixelUrl = `${baseUrl}/api/email-tracking/pixel/${trackingId}`
+    const pixelUrl = `${baseUrl}/api/email-tracking?action=pixel&trackingId=${trackingId}`
     console.log('🔗 URL pixel tracking:', pixelUrl)
     
     return `<img src="${pixelUrl}" width="1" height="1" style="display:none;" alt="" />`
