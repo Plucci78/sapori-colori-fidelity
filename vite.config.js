@@ -23,8 +23,8 @@ export default defineConfig({
           ],
           // TinyMCE separato
           'tinymce': ['tinymce', '@tinymce/tinymce-react'],
-          // Email editor components
-          'email-editor': ['react-email-editor'],
+          // Email editor components (removed - causing build issues)
+          // 'email-editor': ['react-email-editor'],
           // Supabase separato
           'supabase': ['@supabase/supabase-js'],
           // Utilities
@@ -43,8 +43,7 @@ export default defineConfig({
       'react', 
       'react-dom',
       'lucide-react',
-      '@supabase/supabase-js',
-      'react-email-editor'
+      '@supabase/supabase-js'
     ],
     // Escludi GrapesJS dal pre-bundling per evitare problemi
     exclude: [
