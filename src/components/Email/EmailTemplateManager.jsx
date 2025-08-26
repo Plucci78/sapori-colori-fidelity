@@ -35,9 +35,11 @@ const EmailTemplateManager = ({
       console.log('📊 Dati dal database:', { unifiedData, unifiedError })
       
       if (!unifiedError && unifiedData) {
-        // Se non ci sono template, crea alcuni di esempio
+        console.log('📊 Template trovati nel DB:', unifiedData.length)
+        
+        // FORZA sempre la creazione per debug - rimuovi dopo test
         if (unifiedData.length === 0) {
-          console.log('📝 Nessun template trovato, creazione template di esempio...')
+          console.log('📝 DB vuoto, creazione template di esempio...')
           await createSampleTemplates()
           // Ricarica dopo aver creato i template
           const { data: newData } = await supabase
@@ -46,6 +48,7 @@ const EmailTemplateManager = ({
             .order('created_at', { ascending: false })
           
           if (newData && newData.length > 0) {
+            console.log('✅ Template creati e ricaricati:', newData.length)
             const convertedTemplates = newData.map(template => ({
               ...template,
               blocks: template.unlayer_design?.blocks ? 
@@ -59,6 +62,8 @@ const EmailTemplateManager = ({
             }))
             setSavedTemplates(convertedTemplates)
             return
+          } else {
+            console.log('❌ Nessun template dopo la creazione!')
           }
         }
 
@@ -116,39 +121,78 @@ const EmailTemplateManager = ({
   // Crea template di esempio se non esistono
   const createSampleTemplates = async () => {
     try {
+      console.log('📝 Creazione template di esempio...')
+      
       const sampleTemplates = [
         {
           name: 'Benvenuto Nuovo Cliente',
           description: 'Template di benvenuto per nuovi clienti registrati',
           category: 'welcome',
           unlayer_design: {
-            body: {
-              rows: [{
-                cells: [{
-                  contents: [
-                    { type: 'heading', values: { text: '<p><span style="color: #8b4513;">Benvenuto {{nome}}!</span></p>' } },
-                    { type: 'text', values: { text: '<p>Ti diamo il benvenuto nella famiglia Sapori & Colori.</p>' } },
-                    { type: 'button', values: { text: 'Inizia Subito', href: '#' } }
+            "counters": {"u_column": 1, "u_row": 1, "u_content_text": 1, "u_content_heading": 1, "u_content_button": 1},
+            "body": {
+              "id": "body",
+              "rows": [{
+                "id": "row-1",
+                "cells": [{
+                  "id": "column-1",
+                  "contents": [
+                    {
+                      "id": "heading-1",
+                      "type": "heading", 
+                      "values": {
+                        "containerPadding": "10px",
+                        "headingType": "h1",
+                        "fontSize": "32px",
+                        "fontWeight": 700,
+                        "textAlign": "center",
+                        "text": "<p><span style=\"color: #8b4513;\">Benvenuto {{nome}}!</span></p>"
+                      }
+                    },
+                    {
+                      "id": "text-1", 
+                      "type": "text",
+                      "values": {
+                        "containerPadding": "10px",
+                        "fontSize": "14px",
+                        "textAlign": "center", 
+                        "text": "<p>Ti diamo il benvenuto nella famiglia Sapori & Colori. Da oggi ogni tuo acquisto ti farà guadagnare preziose GEMME!</p>"
+                      }
+                    },
+                    {
+                      "id": "button-1",
+                      "type": "button",
+                      "values": {
+                        "containerPadding": "10px",
+                        "fontSize": "14px", 
+                        "textAlign": "center",
+                        "padding": "15px 25px",
+                        "buttonColors": {"color": "#FFFFFF", "backgroundColor": "#8B4513"},
+                        "borderRadius": "8px",
+                        "text": "Inizia Subito",
+                        "href": "#"
+                      }
+                    }
                   ]
                 }]
               }]
             }
           },
-          html_preview: '<div style="text-align:center;padding:20px;"><h1 style="color:#8B4513;">Benvenuto {{nome}}!</h1><p>Ti diamo il benvenuto nella famiglia Sapori & Colori.</p><a href="#" style="display:inline-block;padding:15px 25px;background:#8B4513;color:white;text-decoration:none;border-radius:8px;">Inizia Subito</a></div>'
+          html_preview: '<div style="text-align:center;padding:20px;"><h1 style="color:#8B4513;">Benvenuto {{nome}}!</h1><p>Ti diamo il benvenuto nella famiglia Sapori & Colori. Da oggi ogni tuo acquisto ti farà guadagnare preziose GEMME!</p><a href="#" style="display:inline-block;padding:15px 25px;background:#8B4513;color:white;text-decoration:none;border-radius:8px;">Inizia Subito</a></div>'
         },
         {
-          name: 'Newsletter Mensile',
+          name: 'Newsletter Mensile', 
           description: 'Template per newsletter con novità e promozioni',
           category: 'newsletter',
-          unlayer_design: { basic: true },
-          html_preview: '<div style="padding:20px;"><h2 style="color:#8B4513;text-align:center;">Newsletter Sapori & Colori</h2><p><strong>Ciao {{nome}},</strong></p><p>Ecco le novità di questo mese dal nostro ristorante.</p></div>'
+          unlayer_design: {"type": "newsletter", "version": 1},
+          html_preview: '<div style="padding:20px;"><h2 style="color:#8B4513;text-align:center;">Newsletter Sapori & Colori</h2><p><strong>Ciao {{nome}},</strong></p><p>Ecco le novità di questo mese dal nostro ristorante:</p><ul><li>Nuovi piatti della tradizione siciliana</li><li>Menu degustazione primaverile</li><li>Eventi speciali del weekend</li></ul></div>'
         },
         {
           name: 'Promozione Speciale',
-          description: 'Template per offerte e promozioni limitate',
+          description: 'Template per offerte e promozioni limitate', 
           category: 'promotions',
-          unlayer_design: { basic: true },
-          html_preview: '<div style="text-align:center;padding:20px;background:linear-gradient(135deg,#f8f9fa,#e9ecef);"><h1 style="color:#D4AF37;">OFFERTA SPECIALE!</h1><h3 style="color:#333;">Solo per te, {{nome}}</h3><p><strong>Sconto del 20%</strong> su tutti i piatti del menu.</p><a href="#" style="display:inline-block;padding:20px 40px;background:#D4AF37;color:white;text-decoration:none;border-radius:12px;font-weight:700;">Prenota Ora</a></div>'
+          unlayer_design: {"type": "promotion", "version": 1},
+          html_preview: '<div style="text-align:center;padding:20px;background:linear-gradient(135deg,#f8f9fa,#e9ecef);"><h1 style="color:#D4AF37;margin:0;">OFFERTA SPECIALE!</h1><h3 style="color:#333;margin:10px 0;">Solo per te, {{nome}}</h3><p style="font-size:16px;"><strong>Sconto del 20%</strong> su tutti i piatti del menu. Offerta valida fino al {{data_scadenza}}.</p><a href="#" style="display:inline-block;padding:20px 40px;background:#D4AF37;color:white;text-decoration:none;border-radius:12px;font-weight:700;">Prenota Ora</a></div>'
         }
       ]
 
