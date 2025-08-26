@@ -1,0 +1,120 @@
+/* Email Section con Tab Navigation */
+.email-section {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tab Navigation */
+.email-tabs-nav {
+  background: linear-gradient(135deg, #8B4513 0%, #D4AF37 100%);
+  display: flex;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border-bottom: 3px solid #D4AF37;
+}
+
+.email-tab {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: white;
+  padding: 15px 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 0;
+  backdrop-filter: blur(10px);
+  position: relative;
+}
+
+.email-tab:hover {
+  background: rgba(255,255,255,0.2);
+  transform: translateY(-1px);
+}
+
+.email-tab.active {
+  background: rgba(255,255,255,0.3);
+  border-bottom: 3px solid #fff;
+  transform: translateY(-1px);
+}
+
+.email-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: white;
+  border-radius: 3px 3px 0 0;
+}
+
+.tab-icon {
+  font-size: 16px;
+}
+
+.tab-name {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* Tab Content */
+.email-tab-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Override per EmailEnterprise quando è dentro le tab */
+.email-tab-content .email-builder-unlayer {
+  height: calc(100vh - 60px); /* Sottrai altezza delle tab */
+}
+
+.email-tab-content .email-builder-unlayer .unlayer-container {
+  height: calc(100vh - 200px); /* Spazio per header + tab */
+}
+
+/* Statistiche Dashboard dentro tab */
+.email-tab-content .email-stats-dashboard {
+  height: 100%;
+  margin: 0;
+  padding: 20px;
+  overflow-y: auto;
+  background: #f8f9fa;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .email-tabs-nav {
+    flex-direction: column;
+  }
+  
+  .email-tab {
+    padding: 12px 20px;
+    justify-content: center;
+  }
+  
+  .tab-name {
+    display: none;
+  }
+  
+  .tab-icon {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .email-tabs-nav {
+    flex-direction: row;
+    justify-content: center;
+  }
+  
+  .email-tab {
+    flex: 1;
+    padding: 10px 15px;
+  }
+}
