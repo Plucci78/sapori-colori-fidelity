@@ -47,8 +47,227 @@ const DraggableBlock = ({ type, icon, label, onDragStart }) => {
   )
 }
 
+// Componente drop zone tra blocchi
+const DropZone = ({ index, isActive, onDragEnter, onDragLeave }) => (
+  <div 
+    className={`drop-zone ${isActive ? 'active' : ''}`}
+    data-drop-index={index}
+    onDragOver={(e) => e.preventDefault()}
+    onDragEnter={() => onDragEnter?.(index)}
+    onDragLeave={() => onDragLeave?.()}
+  >
+    {isActive && <div className="drop-indicator">Rilascia qui</div>}
+  </div>
+)
+
+// Componente per blocchi nested
+const NestedEditableBlock = ({ block, onUpdate, onDelete, onSelect, isSelected }) => {
+  const handlePropertyChange = (prop, value) => {
+    const updatedBlock = {
+      ...block,
+      props: {
+        ...block.props,
+        [prop]: value
+      }
+    }
+    onUpdate(updatedBlock)
+  }
+
+  const renderContent = () => {
+    switch (block.type) {
+      case BLOCK_TYPES.IMAGE:
+        return (
+          <div 
+            className="nested-image-block"
+            style={{
+              position: 'absolute',
+              top: block.props.top || '10px',
+              left: block.props.left || '10px',
+              width: block.props.width || '100px',
+              height: block.props.height || 'auto',
+              zIndex: 10,
+              cursor: isSelected ? 'move' : 'pointer'
+            }}
+            draggable={isSelected}
+            onDragStart={(e) => {
+              e.dataTransfer.setData('text/plain', '')
+            }}
+            onDrag={(e) => {
+              if (!isSelected) return
+              const rect = e.target.closest('.block-header').getBoundingClientRect()
+              const newLeft = e.clientX - rect.left
+              const newTop = e.clientY - rect.top
+              
+              if (newLeft > 0 && newTop > 0) {
+                const updatedBlock = {
+                  ...block,
+                  props: {
+                    ...block.props,
+                    left: `${newLeft}px`,
+                    top: `${newTop}px`
+                  }
+                }
+                onUpdate(updatedBlock)
+              }
+            }}
+          >
+            {block.props.src ? (
+              <div className="resizable-image-container">
+                <img 
+                  src={block.props.src} 
+                  alt={block.props.alt || 'Logo'} 
+                  style={{ 
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    borderRadius: block.props.borderRadius || '4px'
+                  }} 
+                />
+                {isSelected && (
+                  <div className="resize-handles">
+                    <div 
+                      className="resize-handle se"
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        
+                        const startX = e.clientX
+                        const startY = e.clientY
+                        const startWidth = parseInt(block.props.width || '100')
+                        const startHeight = parseInt(block.props.height || '100')
+                        
+                        const handleResize = (e) => {
+                          const newWidth = startWidth + (e.clientX - startX)
+                          const newHeight = startHeight + (e.clientY - startY)
+                          
+                          if (newWidth > 20 && newHeight > 20) {
+                            const updatedBlock = {
+                              ...block,
+                              props: {
+                                ...block.props,
+                                width: `${newWidth}px`,
+                                height: `${newHeight}px`
+                              }
+                            }
+                            onUpdate(updatedBlock)
+                          }
+                        }
+                        
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleResize)
+                          document.removeEventListener('mouseup', handleMouseUp)
+                        }
+                        
+                        document.addEventListener('mousemove', handleResize)
+                        document.addEventListener('mouseup', handleMouseUp)
+                      }}
+                    ></div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="nested-placeholder">
+                <span>📷 Logo</span>
+              </div>
+            )}
+          </div>
+        )
+      case BLOCK_TYPES.BUTTON:
+        return (
+          <button 
+            className="nested-button-block"
+            style={{
+              background: block.props.background || '#D4AF37',
+              color: block.props.color || 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            {block.props.text || 'Nested Button'}
+          </button>
+        )
+      default:
+        return <div>Elemento {block.type}</div>
+    }
+  }
+
+  return (
+    <div 
+      className={`nested-editable-block ${isSelected ? 'selected' : ''}`}
+      onClick={(e) => {
+        e.stopPropagation()
+        onSelect()
+      }}
+    >
+      {renderContent()}
+      {isSelected && (
+        <div className="nested-block-controls">
+          <button 
+            className="control-btn edit"
+            onClick={(e) => {
+              e.stopPropagation()
+              // Il pannello proprietà si aprirà automaticamente
+            }}
+          >
+            ✏️
+          </button>
+          <button 
+            className="control-btn delete"
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete()
+            }}
+          >
+            🗑️
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Componente blocco nell'editor
-const EditableBlock = ({ block, index, onSelect, onUpdate, onDelete, isSelected }) => {
+const EditableBlock = ({ block, index, onSelect, onUpdate, onDelete, isSelected, draggedBlockType, blocks, setBlocks, setSelectedBlockIndex, selectedBlockIndex }) => {
+  
+  // Funzione per renderizzare blocchi nested
+  const renderNestedBlock = (nestedBlock) => {
+    switch (nestedBlock.type) {
+      case BLOCK_TYPES.IMAGE:
+        return (
+          <img 
+            src={nestedBlock.props.src || 'https://via.placeholder.com/200x100'} 
+            alt={nestedBlock.props.alt || 'Nested Image'} 
+            style={{ 
+              width: nestedBlock.props.width || 'auto',
+              height: nestedBlock.props.height || 'auto',
+              maxWidth: '100%',
+              borderRadius: nestedBlock.props.borderRadius || '4px',
+              margin: '10px 0'
+            }} 
+          />
+        )
+      case BLOCK_TYPES.BUTTON:
+        return (
+          <button style={{
+            background: nestedBlock.props.background || '#D4AF37',
+            color: nestedBlock.props.color || 'white',
+            border: 'none',
+            padding: '10px 20px',
+            borderRadius: '6px',
+            margin: '10px 0',
+            cursor: 'pointer'
+          }}>
+            {nestedBlock.props.text || 'Nested Button'}
+          </button>
+        )
+      default:
+        return <div>Elemento {nestedBlock.type}</div>
+    }
+  }
+  
   const renderBlockContent = () => {
     switch (block.type) {
       case BLOCK_TYPES.HEADER:
@@ -64,11 +283,73 @@ const EditableBlock = ({ block, index, onSelect, onUpdate, onDelete, isSelected 
           minHeight: block.props.height || '80px',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          position: 'relative'
         }
         
         return (
           <div className="block-header" style={headerStyle}>
+            {/* Drop zone SOPRA il testo */}
+            <div 
+              className={`header-drop-zone top ${draggedBlockType ? 'active' : ''}`}
+              data-block-drop={index}
+              data-drop-type="header-top"
+              onDragOver={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              onDrop={(e) => handleHeaderDrop(e, index, 'top')}
+            >
+              {draggedBlockType && (
+                <div className="header-drop-indicator">
+                  📷 Rilascia SOPRA il titolo
+                </div>
+              )}
+              
+              {/* Render children SOPRA */}
+              {block.props.children && block.props.children
+                .map((child, originalIndex) => ({ child, originalIndex }))
+                .filter(({ child }) => child.props.position === 'top')
+                .map(({ child, originalIndex }) => (
+                <div key={child.id} className="header-element-container">
+                  {child.props.src ? (
+                    <img
+                      src={child.props.src}
+                      alt={child.props.alt || 'Logo'}
+                      style={{
+                        width: child.props.width || '60px',
+                        height: child.props.height || 'auto',
+                        borderRadius: child.props.borderRadius || '4px',
+                        margin: '0 auto 15px auto',
+                        display: 'block'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedBlockIndex(`${index}-${originalIndex}`)
+                      }}
+                      className={selectedBlockIndex === `${index}-${originalIndex}` ? 'selected-nested' : ''}
+                    />
+                  ) : (
+                    <div className="logo-placeholder">📷 Logo</div>
+                  )}
+                  {selectedBlockIndex === `${index}-${originalIndex}` && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const newBlocks = [...blocks]
+                        newBlocks[index].props.children = newBlocks[index].props.children.filter((_, i) => i !== originalIndex)
+                        setBlocks(newBlocks)
+                        setSelectedBlockIndex(null)
+                      }}
+                      className="delete-nested-simple"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            
             <h1 style={{ 
               margin: 0, 
               fontSize: block.props.titleSize || '32px',
@@ -86,6 +367,67 @@ const EditableBlock = ({ block, index, onSelect, onUpdate, onDelete, isSelected 
                 {block.props.subtitle}
               </p>
             )}
+            
+            {/* Drop zone SOTTO il testo */}
+            <div 
+              className={`header-drop-zone bottom ${draggedBlockType ? 'active' : ''}`}
+              data-block-drop={index}
+              data-drop-type="header-bottom"
+              onDragOver={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              onDrop={(e) => handleHeaderDrop(e, index, 'bottom')}
+            >
+              {draggedBlockType && (
+                <div className="header-drop-indicator">
+                  📷 Rilascia SOTTO il testo
+                </div>
+              )}
+              
+              {/* Render children SOTTO */}
+              {block.props.children && block.props.children
+                .map((child, originalIndex) => ({ child, originalIndex }))
+                .filter(({ child }) => child.props.position === 'bottom')
+                .map(({ child, originalIndex }) => (
+                <div key={child.id} className="header-element-container">
+                  {child.props.src ? (
+                    <img
+                      src={child.props.src}
+                      alt={child.props.alt || 'Logo'}
+                      style={{
+                        width: child.props.width || '60px',
+                        height: child.props.height || 'auto',
+                        borderRadius: child.props.borderRadius || '4px',
+                        margin: '15px auto 0 auto',
+                        display: 'block'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedBlockIndex(`${index}-${originalIndex}`)
+                      }}
+                      className={selectedBlockIndex === `${index}-${originalIndex}` ? 'selected-nested' : ''}
+                    />
+                  ) : (
+                    <div className="logo-placeholder">📷 Logo</div>
+                  )}
+                  {selectedBlockIndex === `${index}-${originalIndex}` && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const newBlocks = [...blocks]
+                        newBlocks[index].props.children = newBlocks[index].props.children.filter((_, i) => i !== originalIndex)
+                        setBlocks(newBlocks)
+                        setSelectedBlockIndex(null)
+                      }}
+                      className="delete-nested-simple"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )
       
@@ -190,13 +532,176 @@ const EditableBlock = ({ block, index, onSelect, onUpdate, onDelete, isSelected 
             display: 'flex',
             gap: '20px'
           }}>
-            <div style={{ flex: 1, background: '#f8f9fa', padding: '20px', borderRadius: '4px' }}>
+            {/* Colonna Sinistra */}
+            <div style={{ flex: 1, background: '#f8f9fa', padding: '20px', borderRadius: '4px', position: 'relative' }}>
               <h4>Colonna 1</h4>
-              <p>{block.props.leftContent || 'Contenuto colonna sinistra'}</p>
+              
+              {/* Drop zone colonna sinistra */}
+              <div
+                className={`column-drop-zone ${draggedBlockType ? 'active' : ''}`}
+                data-block-drop={index}
+                data-drop-type="column-left"
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }}
+                onDrop={(e) => handleColumnDrop(e, index, 'left')}
+              >
+                {draggedBlockType && (
+                  <div className="column-drop-indicator">
+                    Rilascia nella colonna sinistra
+                  </div>
+                )}
+                
+                {/* Contenuto text default */}
+                {!block.props.leftChildren?.length && (
+                  <p>{block.props.leftContent || 'Contenuto colonna sinistra'}</p>
+                )}
+                
+                {/* Render children colonna sinistra */}
+                {block.props.leftChildren && block.props.leftChildren.map((child, originalIndex) => (
+                  <div key={child.id} className="column-element-container">
+                    {child.type === BLOCK_TYPES.IMAGE && child.props.src ? (
+                      <img
+                        src={child.props.src}
+                        alt={child.props.alt || 'Immagine'}
+                        style={{
+                          width: child.props.width || '100%',
+                          height: child.props.height || 'auto',
+                          borderRadius: child.props.borderRadius || '4px',
+                          maxWidth: '100%',
+                          margin: '10px 0',
+                          display: 'block'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedBlockIndex(`${index}-left-${originalIndex}`)
+                        }}
+                        className={selectedBlockIndex === `${index}-left-${originalIndex}` ? 'selected-nested' : ''}
+                      />
+                    ) : child.type === BLOCK_TYPES.TEXT ? (
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedBlockIndex(`${index}-left-${originalIndex}`)
+                        }}
+                        className={selectedBlockIndex === `${index}-left-${originalIndex}` ? 'selected-nested' : ''}
+                        style={{ margin: '10px 0' }}
+                      >
+                        <h5>{child.props.title || ''}</h5>
+                        <p>{child.props.content || 'Testo'}</p>
+                      </div>
+                    ) : child.type === BLOCK_TYPES.BUTTON ? (
+                      <button
+                        style={{
+                          background: child.props.background || '#8B4513',
+                          color: child.props.color || 'white',
+                          border: 'none',
+                          padding: '10px 20px',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          margin: '10px 0'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedBlockIndex(`${index}-left-${originalIndex}`)
+                        }}
+                        className={selectedBlockIndex === `${index}-left-${originalIndex}` ? 'selected-nested' : ''}
+                      >
+                        {child.props.text || 'Button'}
+                      </button>
+                    ) : (
+                      <div className="column-placeholder">📦 {child.type}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-            <div style={{ flex: 1, background: '#f8f9fa', padding: '20px', borderRadius: '4px' }}>
+            
+            {/* Colonna Destra */}
+            <div style={{ flex: 1, background: '#f8f9fa', padding: '20px', borderRadius: '4px', position: 'relative' }}>
               <h4>Colonna 2</h4>
-              <p>{block.props.rightContent || 'Contenuto colonna destra'}</p>
+              
+              {/* Drop zone colonna destra */}
+              <div
+                className={`column-drop-zone ${draggedBlockType ? 'active' : ''}`}
+                data-block-drop={index}
+                data-drop-type="column-right"
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }}
+                onDrop={(e) => handleColumnDrop(e, index, 'right')}
+              >
+                {draggedBlockType && (
+                  <div className="column-drop-indicator">
+                    Rilascia nella colonna destra
+                  </div>
+                )}
+                
+                {/* Contenuto text default */}
+                {!block.props.rightChildren?.length && (
+                  <p>{block.props.rightContent || 'Contenuto colonna destra'}</p>
+                )}
+                
+                {/* Render children colonna destra */}
+                {block.props.rightChildren && block.props.rightChildren.map((child, originalIndex) => (
+                  <div key={child.id} className="column-element-container">
+                    {child.type === BLOCK_TYPES.IMAGE && child.props.src ? (
+                      <img
+                        src={child.props.src}
+                        alt={child.props.alt || 'Immagine'}
+                        style={{
+                          width: child.props.width || '100%',
+                          height: child.props.height || 'auto',
+                          borderRadius: child.props.borderRadius || '4px',
+                          maxWidth: '100%',
+                          margin: '10px 0',
+                          display: 'block'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedBlockIndex(`${index}-right-${originalIndex}`)
+                        }}
+                        className={selectedBlockIndex === `${index}-right-${originalIndex}` ? 'selected-nested' : ''}
+                      />
+                    ) : child.type === BLOCK_TYPES.TEXT ? (
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedBlockIndex(`${index}-right-${originalIndex}`)
+                        }}
+                        className={selectedBlockIndex === `${index}-right-${originalIndex}` ? 'selected-nested' : ''}
+                        style={{ margin: '10px 0' }}
+                      >
+                        <h5>{child.props.title || ''}</h5>
+                        <p>{child.props.content || 'Testo'}</p>
+                      </div>
+                    ) : child.type === BLOCK_TYPES.BUTTON ? (
+                      <button
+                        style={{
+                          background: child.props.background || '#8B4513',
+                          color: child.props.color || 'white',
+                          border: 'none',
+                          padding: '10px 20px',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          margin: '10px 0'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedBlockIndex(`${index}-right-${originalIndex}`)
+                        }}
+                        className={selectedBlockIndex === `${index}-right-${originalIndex}` ? 'selected-nested' : ''}
+                      >
+                        {child.props.text || 'Button'}
+                      </button>
+                    ) : (
+                      <div className="column-placeholder">📦 {child.type}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )
@@ -784,6 +1289,7 @@ const EmailDragBuilder = ({
   const [showEmailConfig, setShowEmailConfig] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [previewDevice, setPreviewDevice] = useState('desktop')
+  const [activeDropZone, setActiveDropZone] = useState(null)
   const canvasRef = useRef(null)
 
   const handleDragStart = useCallback((e, blockType) => {
@@ -798,17 +1304,156 @@ const EmailDragBuilder = ({
 
   const handleDrop = useCallback((e) => {
     e.preventDefault()
+    e.stopPropagation()
     
     if (!draggedBlockType) return
+    
+    console.log('🎯 Drop event triggered, draggedBlockType:', draggedBlockType)
 
+    // Controlla se il drop è dentro un blocco esistente
+    const blockDropZone = e.target.closest('[data-block-drop]')
+    const regularDropZone = e.target.closest('[data-drop-index]')
+    
+    // Se è un drop specifico su header zone, ignora questo handler
+    if (blockDropZone && (blockDropZone.dataset.dropType === 'header-top' || blockDropZone.dataset.dropType === 'header-bottom')) {
+      console.log('🚫 Drop su zona specifica - ignorato dal handler principale')
+      return
+    }
+    
     const newBlock = {
       id: Date.now(),
       type: draggedBlockType,
       props: {}
     }
 
-    setBlocks(prev => [...prev, newBlock])
+    if (regularDropZone) {
+      // Drop tra blocchi (comportamento esistente)
+      const insertIndex = parseInt(regularDropZone.dataset.dropIndex)
+      
+      setBlocks(prev => {
+        const newBlocks = [...prev]
+        newBlocks.splice(insertIndex, 0, newBlock)
+        return newBlocks
+      })
+    } else {
+      // Drop alla fine (fallback)
+      setBlocks(prev => [...prev, newBlock])
+    }
+    
     setDraggedBlockType(null)
+    setActiveDropZone(null)
+  }, [draggedBlockType])
+
+  const handleDropZoneEnter = useCallback((index) => {
+    if (draggedBlockType) {
+      setActiveDropZone(index)
+    }
+  }, [draggedBlockType])
+
+  const handleDropZoneLeave = useCallback(() => {
+    setActiveDropZone(null)
+  }, [])
+
+  const handleHeaderDrop = useCallback((e, blockIndex, position) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (!draggedBlockType) return
+    
+    console.log(`🎯 Header drop - Position: ${position}, Block: ${blockIndex}`)
+    
+    const newBlock = {
+      id: Date.now(),
+      type: draggedBlockType,
+      props: {
+        position: position
+      }
+    }
+    
+    setBlocks(prev => {
+      const newBlocks = [...prev]
+      const targetBlock = newBlocks[blockIndex]
+      
+      targetBlock.props.children = targetBlock.props.children || []
+      targetBlock.props.children.push(newBlock)
+      
+      console.log(`📤 Header ${position} - Nuovo blocco:`, newBlock, 'Children totali:', targetBlock.props.children.length)
+      
+      return newBlocks
+    })
+    
+    setDraggedBlockType(null)
+    setActiveDropZone(null)
+  }, [draggedBlockType])
+
+  const handleColumnDrop = useCallback((e, blockIndex, column) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (!draggedBlockType) return
+    
+    console.log(`🎯 Column drop - Column: ${column}, Block: ${blockIndex}`)
+    
+    // Imposta proprietà default basate sul tipo di blocco
+    let defaultProps = { column: column }
+    
+    switch (draggedBlockType) {
+      case BLOCK_TYPES.TEXT:
+        defaultProps = {
+          ...defaultProps,
+          title: 'Titolo testo',
+          content: 'Inserisci qui il contenuto del testo',
+          color: '#333',
+          align: 'left'
+        }
+        break
+      case BLOCK_TYPES.IMAGE:
+        defaultProps = {
+          ...defaultProps,
+          src: '',
+          alt: 'Immagine',
+          width: '100%',
+          height: 'auto'
+        }
+        break
+      case BLOCK_TYPES.BUTTON:
+        defaultProps = {
+          ...defaultProps,
+          text: 'Click here',
+          background: '#8B4513',
+          color: 'white',
+          url: '#'
+        }
+        break
+      default:
+        break
+    }
+    
+    const newBlock = {
+      id: Date.now(),
+      type: draggedBlockType,
+      props: defaultProps
+    }
+    
+    setBlocks(prev => {
+      const newBlocks = [...prev]
+      const targetBlock = newBlocks[blockIndex]
+      
+      if (column === 'left') {
+        targetBlock.props.leftChildren = targetBlock.props.leftChildren || []
+        targetBlock.props.leftChildren.push(newBlock)
+        console.log(`📤 Column LEFT - Nuovo blocco:`, newBlock, 'Children totali:', targetBlock.props.leftChildren.length)
+      } else if (column === 'right') {
+        targetBlock.props.rightChildren = targetBlock.props.rightChildren || []
+        targetBlock.props.rightChildren.push(newBlock)
+        console.log(`📤 Column RIGHT - Nuovo blocco:`, newBlock, 'Children totali:', targetBlock.props.rightChildren.length)
+      }
+      
+      return newBlocks
+    })
+    
+    setDraggedBlockType(null)
+    setActiveDropZone(null)
   }, [draggedBlockType])
 
   const handleBlockSelect = useCallback((index) => {
@@ -818,9 +1463,44 @@ const EmailDragBuilder = ({
   const handleBlockUpdate = useCallback((updatedBlock) => {
     if (selectedBlockIndex === null) return
     
-    setBlocks(prev => prev.map((block, index) => 
-      index === selectedBlockIndex ? updatedBlock : block
-    ))
+    if (typeof selectedBlockIndex === 'string' && selectedBlockIndex.includes('-')) {
+      // Aggiorna blocco nested
+      const parts = selectedBlockIndex.split('-')
+      if (parts.length === 2) {
+        // Formato header: parentIndex-childIndex
+        const [parentIndex, childIndex] = parts.map(Number)
+        setBlocks(prev => prev.map((block, index) => {
+          if (index === parentIndex) {
+            const newBlock = { ...block }
+            if (newBlock.props.children) {
+              newBlock.props.children[childIndex] = updatedBlock
+            }
+            return newBlock
+          }
+          return block
+        }))
+      } else if (parts.length === 3) {
+        // Formato colonne: parentIndex-column-childIndex
+        const [parentIndex, column, childIndex] = [parseInt(parts[0]), parts[1], parseInt(parts[2])]
+        setBlocks(prev => prev.map((block, index) => {
+          if (index === parentIndex) {
+            const newBlock = { ...block }
+            if (column === 'left' && newBlock.props.leftChildren) {
+              newBlock.props.leftChildren[childIndex] = updatedBlock
+            } else if (column === 'right' && newBlock.props.rightChildren) {
+              newBlock.props.rightChildren[childIndex] = updatedBlock
+            }
+            return newBlock
+          }
+          return block
+        }))
+      }
+    } else {
+      // Aggiorna blocco normale
+      setBlocks(prev => prev.map((block, index) => 
+        index === selectedBlockIndex ? updatedBlock : block
+      ))
+    }
   }, [selectedBlockIndex])
 
   const handleBlockDelete = useCallback((index) => {
@@ -855,9 +1535,21 @@ const EmailDragBuilder = ({
             minHeight: block.props.height || '80px',
             fontFamily: block.props.fontFamily || 'Arial, sans-serif'
           }
+          const childrenHtml = block.props.children ? block.props.children.map(child => {
+            switch (child.type) {
+              case BLOCK_TYPES.IMAGE:
+                return `<img src="${child.props.src || ''}" alt="${child.props.alt || ''}" style="width: ${child.props.width || 'auto'}; height: ${child.props.height || 'auto'}; max-width: 100%; border-radius: ${child.props.borderRadius || '4px'}; margin: 10px 0;" />`
+              case BLOCK_TYPES.BUTTON:
+                return `<a href="${child.props.url || '#'}" style="display: inline-block; background: ${child.props.background || '#D4AF37'}; color: ${child.props.color || 'white'}; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin: 10px 0;">${child.props.text || 'Button'}</a>`
+              default:
+                return `<div>${child.type}</div>`
+            }
+          }).join('') : ''
+          
           return `<div style="${Object.entries(headerStyle).map(([k,v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${v}`).join('; ')}">
             <h1 style="margin: 0 0 10px 0; font-size: ${block.props.titleSize || '28px'};">${block.props.title || 'Header'}</h1>
             ${block.props.subtitle ? `<p style="margin: 0; font-size: ${block.props.subtitleSize || '16px'}; opacity: 0.9;">${block.props.subtitle}</p>` : ''}
+            ${childrenHtml}
           </div>`
           
         case BLOCK_TYPES.TEXT:
@@ -923,7 +1615,38 @@ const EmailDragBuilder = ({
     }
   }
 
-  const selectedBlock = selectedBlockIndex !== null ? blocks[selectedBlockIndex] : null
+  // Gestione selezione blocchi (inclusi nested)
+  const selectedBlock = (() => {
+    if (selectedBlockIndex === null) return null
+    
+    if (typeof selectedBlockIndex === 'string' && selectedBlockIndex.includes('-')) {
+      // Blocco nested
+      const parts = selectedBlockIndex.split('-')
+      if (parts.length === 2) {
+        // Formato header: parentIndex-childIndex
+        const [parentIndex, childIndex] = parts.map(Number)
+        const nestedBlock = blocks[parentIndex]?.props?.children?.[childIndex] || null
+        console.log('🔍 Blocco header nested selezionato:', nestedBlock, 'Parent:', parentIndex, 'Child:', childIndex)
+        return nestedBlock
+      } else if (parts.length === 3) {
+        // Formato colonne: parentIndex-column-childIndex
+        const [parentIndex, column, childIndex] = [parseInt(parts[0]), parts[1], parseInt(parts[2])]
+        let nestedBlock = null
+        if (column === 'left') {
+          nestedBlock = blocks[parentIndex]?.props?.leftChildren?.[childIndex] || null
+        } else if (column === 'right') {
+          nestedBlock = blocks[parentIndex]?.props?.rightChildren?.[childIndex] || null
+        }
+        console.log('🔍 Blocco column nested selezionato:', nestedBlock, 'Parent:', parentIndex, 'Column:', column, 'Child:', childIndex)
+        return nestedBlock
+      }
+    } else {
+      // Blocco normale
+      const normalBlock = blocks[selectedBlockIndex] || null
+      console.log('🔍 Blocco normale selezionato:', normalBlock, 'Index:', selectedBlockIndex)
+      return normalBlock
+    }
+  })()
 
   return (
     <div className="email-drag-builder">
@@ -1085,17 +1808,37 @@ const EmailDragBuilder = ({
                 <p>Trascina gli elementi qui per iniziare</p>
               </div>
             ) : (
-              blocks.map((block, index) => (
-                <EditableBlock
-                  key={block.id}
-                  block={block}
-                  index={index}
-                  isSelected={selectedBlockIndex === index}
-                  onSelect={handleBlockSelect}
-                  onUpdate={handleBlockUpdate}
-                  onDelete={handleBlockDelete}
+              <>
+                <DropZone 
+                  index={0} 
+                  isActive={activeDropZone === 0}
+                  onDragEnter={handleDropZoneEnter}
+                  onDragLeave={handleDropZoneLeave}
                 />
-              ))
+                {blocks.map((block, index) => (
+                  <React.Fragment key={block.id}>
+                    <EditableBlock
+                      block={block}
+                      index={index}
+                      isSelected={selectedBlockIndex === index}
+                      onSelect={handleBlockSelect}
+                      onUpdate={handleBlockUpdate}
+                      onDelete={handleBlockDelete}
+                      draggedBlockType={draggedBlockType}
+                      blocks={blocks}
+                      setBlocks={setBlocks}
+                      setSelectedBlockIndex={setSelectedBlockIndex}
+                      selectedBlockIndex={selectedBlockIndex}
+                    />
+                    <DropZone 
+                      index={index + 1} 
+                      isActive={activeDropZone === index + 1}
+                      onDragEnter={handleDropZoneEnter}
+                      onDragLeave={handleDropZoneLeave}
+                    />
+                  </React.Fragment>
+                ))}
+              </>
             )}
           </div>
         </div>

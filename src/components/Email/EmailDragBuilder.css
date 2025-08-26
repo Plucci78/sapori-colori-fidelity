@@ -319,6 +319,284 @@
 }
 
 /* ===================================
+   DROP ZONES
+   =================================== */
+
+.drop-zone {
+  height: 8px;
+  margin: 4px 0;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drop-zone.active {
+  height: 40px;
+  background: rgba(139, 69, 19, 0.1);
+  border: 2px dashed #8B4513;
+  margin: 8px 0;
+}
+
+.drop-indicator {
+  color: #8B4513;
+  font-weight: 600;
+  font-size: 14px;
+  opacity: 0;
+  animation: fadeIn 0.2s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Drop zone interna header */
+.header-drop-zone {
+  min-height: 15px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.header-drop-zone.top {
+  margin-bottom: 10px;
+}
+
+.header-drop-zone.bottom {
+  margin-top: 10px;
+}
+
+.header-drop-zone.active {
+  background: rgba(255,255,255,0.1);
+  border: 2px dashed rgba(255,255,255,0.5);
+  padding: 10px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-element-container {
+  position: relative;
+  display: inline-block;
+}
+
+.selected-nested {
+  border: 2px solid rgba(255,255,255,0.8);
+  box-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
+
+.delete-nested-simple {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1;
+  z-index: 15;
+}
+
+.header-drop-indicator {
+  color: rgba(255,255,255,0.9);
+  font-weight: 600;
+  font-size: 14px;
+  text-align: center;
+}
+
+.header-child {
+  margin: 8px 0;
+  padding: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* Blocchi nested */
+.nested-editable-block {
+  position: relative;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  padding: 4px;
+}
+
+.nested-editable-block:hover {
+  background: rgba(255,255,255,0.1);
+  border: 1px dashed rgba(255,255,255,0.4);
+}
+
+.nested-editable-block.selected {
+  background: rgba(255,255,255,0.2);
+  border: 2px solid rgba(255,255,255,0.6);
+}
+
+.nested-placeholder {
+  padding: 20px;
+  text-align: center;
+  color: rgba(255,255,255,0.7);
+  border: 2px dashed rgba(255,255,255,0.3);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.nested-block-controls {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.nested-editable-block.selected .nested-block-controls {
+  opacity: 1;
+}
+
+.nested-block-controls .control-btn {
+  width: 24px;
+  height: 24px;
+  font-size: 10px;
+  border-radius: 4px;
+}
+
+/* Sistema di resize per immagini nested */
+.resizable-image-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.resize-handles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.resize-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #8B4513;
+  border: 2px solid white;
+  border-radius: 50%;
+  pointer-events: all;
+  cursor: nw-resize;
+  z-index: 20;
+}
+
+.resize-handle.nw {
+  top: -4px;
+  left: -4px;
+  cursor: nw-resize;
+}
+
+.resize-handle.ne {
+  top: -4px;
+  right: -4px;
+  cursor: ne-resize;
+}
+
+.resize-handle.sw {
+  bottom: -4px;
+  left: -4px;
+  cursor: sw-resize;
+}
+
+.resize-handle.se {
+  bottom: -4px;
+  right: -4px;
+  cursor: se-resize;
+}
+
+.nested-image-block {
+  transition: none !important;
+}
+
+.nested-image-block:hover {
+  border: 2px dashed rgba(255,255,255,0.5) !important;
+}
+
+.nested-image-block.selected {
+  border: 2px solid rgba(255,255,255,0.8) !important;
+  background: rgba(255,255,255,0.1) !important;
+}
+
+/* Immagini nested semplificate */
+.nested-image-direct {
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  border-radius: 4px;
+}
+
+.nested-image-direct:hover {
+  border-color: rgba(255,255,255,0.5);
+}
+
+.nested-image-direct.selected {
+  border-color: rgba(255,255,255,0.9);
+  box-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
+
+.logo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.2);
+  border: 2px dashed rgba(255,255,255,0.4);
+  border-radius: 4px;
+  font-size: 24px;
+  color: rgba(255,255,255,0.7);
+}
+
+.nested-controls {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  z-index: 15;
+}
+
+.delete-nested {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.resize-corner {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  background: #8B4513;
+  border: 2px solid white;
+  border-radius: 2px;
+  cursor: se-resize;
+  z-index: 15;
+}
+
+/* ===================================
    BLOCCHI EDITABILI
    =================================== */
 
@@ -760,4 +1038,51 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #6d3410;
+}
+
+/* Stili per drop zone colonne */
+.column-drop-zone {
+  min-height: 60px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.column-drop-zone.active {
+  background: rgba(139, 69, 19, 0.1);
+  border: 2px dashed rgba(139, 69, 19, 0.4);
+  padding: 15px;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.column-drop-indicator {
+  color: rgba(139, 69, 19, 0.8);
+  font-size: 12px;
+  text-align: center;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(139, 69, 19, 0.3);
+}
+
+.column-element-container {
+  position: relative;
+  margin: 10px 0;
+}
+
+.column-element-container:hover .delete-nested-simple {
+  display: flex;
+}
+
+.column-placeholder {
+  background: #f0f0f0;
+  padding: 15px;
+  border-radius: 4px;
+  text-align: center;
+  color: #666;
+  border: 2px dashed #ccc;
 }
