@@ -61,6 +61,18 @@ export const emailService = {
         }
 
         console.log(`📤 Invio a ${customer.name} (${customer.email})`)
+        console.log(`🔧 EmailJS Config:`, {
+          serviceId: EMAIL_CONFIG.serviceId,
+          templateId: EMAIL_CONFIG.templateId,
+          publicKey: EMAIL_CONFIG.publicKey ? 'OK' : 'MANCANTE'
+        })
+        console.log(`📋 Template params:`, {
+          to_email: templateParams.to_email,
+          to_name: templateParams.to_name,
+          subject: templateParams.subject,
+          message_html_length: templateParams.message_html?.length || 0,
+          reply_to: templateParams.reply_to
+        })
         
         await emailjs.send(
           EMAIL_CONFIG.serviceId,
@@ -85,12 +97,20 @@ export const emailService = {
       } catch (error) {
         emailsFailed++
         console.error(`❌ Errore invio a ${customer.name}:`, error)
+        console.error(`❌ Errore completo:`, JSON.stringify(error, null, 2))
+        console.error(`❌ Stack trace:`, error.stack)
         
         results.push({
           customer_id: customer.id,
           email: customer.email,
           status: 'failed',
           error: error.message,
+          errorDetails: {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+            fullError: JSON.stringify(error, null, 2)
+          },
           failed_at: new Date().toISOString()
         })
       }
