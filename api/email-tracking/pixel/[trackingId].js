@@ -3,21 +3,26 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
+// Verifica variabili ambiente
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Variabili ambiente Supabase mancanti')
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey)
 
 export default async function handler(req, res) {
   const { trackingId } = req.query
 
   try {
-    // Decodifica il tracking ID
-    const decodedData = atob(trackingId)
-    const [emailLogId, customerEmail] = decodedData.split(':')
+    // Decodifica il tracking ID (usa Buffer invece di atob)
+    const decodedData = Buffer.from(trackingId, 'base64').toString('utf-8')
+    const [emailLogId, customerEmail, timestamp] = decodedData.split(':')
 
-    // Ottieni info sulla richiesta
-    const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown'
+    // Ottieni info sulla richiesta (usa socket invece di connection)
+    const ipAddress = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown'
     const userAgent = req.headers['user-agent'] || 'unknown'
 
     console.log('🔍 Tracking apertura email:', {
