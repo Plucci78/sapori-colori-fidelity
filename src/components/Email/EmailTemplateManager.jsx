@@ -607,7 +607,7 @@ const EmailTemplateManager = ({
                     </div>
                   </div>
                 </div>
-                ))
+                ))}
               </>
             )}
           </div>
