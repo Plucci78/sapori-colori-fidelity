@@ -1577,79 +1577,92 @@ for (const customer of recipients) {
   // Genera screenshot per template
   const generateTemplateScreenshot = async (html) => {
     try {
-      console.log('📸 Generando screenshot con html2canvas...')
+      console.log('📸 Generando screenshot con Puppeteer API...')
       
-      // 1. Crea un contenitore nascosto per il rendering
-      const container = document.createElement('div')
-      container.style.position = 'fixed'
-      container.style.top = '-9999px'
-      container.style.left = '0'
-      container.style.width = '600px'
-      container.style.height = '800px'
-      container.style.zIndex = '-1000'
-      document.body.appendChild(container)
-
-      // 2. Inserisci l'HTML del template e sostituisci immagini esterne con proxy
-      container.innerHTML = html
+      // Usa la API server-side con Puppeteer
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:5173/api/screenshot'
+        : '/api/screenshot'
       
-      // Sostituisci immagini esterne con placeholder per evitare CORS
-      const images = container.querySelectorAll('img')
-      images.forEach(img => {
-        if (img.src && (img.src.startsWith('https://assets.unlayer.com/') || img.src.startsWith('http'))) {
-          // Sostituisci con un placeholder colorato che rappresenta l'immagine
-          const placeholder = document.createElement('div')
-          placeholder.style.width = img.style.width || '200px'
-          placeholder.style.height = img.style.height || '100px'
-          placeholder.style.backgroundColor = '#8B4513'
-          placeholder.style.color = 'white'
-          placeholder.style.display = 'flex'
-          placeholder.style.alignItems = 'center'
-          placeholder.style.justifyContent = 'center'
-          placeholder.style.fontSize = '14px'
-          placeholder.style.fontFamily = 'Arial, sans-serif'
-          placeholder.style.textAlign = 'center'
-          placeholder.innerHTML = '📧<br>Logo'
-          img.parentNode.replaceChild(placeholder, img)
-        }
+      console.log('🌐 Chiamando API screenshot:', apiUrl)
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          html: html,
+          width: 600,
+          height: 800
+        })
       })
-
-      // 3. Non servono promesse per i placeholder, sono già pronti
-      await new Promise(resolve => setTimeout(resolve, 100)) // Piccolo delay per il rendering
       
-      // 4. Importa html2canvas dinamicamente
-      const html2canvas = await import('html2canvas')
-      const html2canvasDefault = html2canvas.default || html2canvas
+      const result = await response.json()
       
-      // 5. Genera il canvas con opzioni migliorate
-      const canvas = await html2canvasDefault(container, {
-        useCORS: false, // Disabilita CORS per evitare problemi
-        allowTaint: true, // Permetti immagini "contaminate"
-        width: 600,
-        height: 800,
-        scale: 0.8, // Scala ridotta per performance
-        backgroundColor: '#ffffff',
-        logging: true, // Debug
-        ignoreElements: function(element) {
-          // Ignora script e link che potrebbero dare problemi
-          return element.tagName === 'SCRIPT' || element.tagName === 'LINK'
-        }
-      })
-
-      // 6. Rimuovi il contenitore
-      document.body.removeChild(container)
-
-      // 7. Converte il canvas in URL dati
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.8)
-      console.log('✅ Screenshot html2canvas generato con successo!')
-      return dataUrl
+      if (result.success && result.screenshot) {
+        console.log('✅ Screenshot Puppeteer generato con successo!')
+        console.log('📊 Dimensione:', Math.round(result.size / 1024), 'KB')
+        return result.screenshot
+      } else {
+        throw new Error(result.error || 'Screenshot API failed')
+      }
 
     } catch (error) {
-      console.error('❌ Errore html2canvas:', error)
+      console.error('❌ Errore Puppeteer API:', error)
       
-      // Fallback personalizzato con nome template
-      const templateName = 'Email Template'
-      return `https://via.placeholder.com/600x800/8B4513/ffffff?text=${encodeURIComponent(`📧\n${templateName}\n❌ Error`)}`
+      // Fallback con html2canvas
+      console.log('🔄 Tentando fallback con html2canvas...')
+      try {
+        return await generateTemplateScreenshotFallback(html)
+      } catch (fallbackError) {
+        console.error('❌ Anche fallback fallito:', fallbackError)
+        return `https://via.placeholder.com/600x800/8B4513/ffffff?text=${encodeURIComponent('📧\nTemplate\n❌ Preview Error')}`
+      }
     }
+  }
+
+  // Fallback con html2canvas
+  const generateTemplateScreenshotFallback = async (html) => {
+    const container = document.createElement('div')
+    container.style.position = 'fixed'
+    container.style.top = '-9999px'
+    container.style.left = '0'
+    container.style.width = '600px'
+    container.style.height = '800px'
+    container.style.zIndex = '-1000'
+    document.body.appendChild(container)
+    container.innerHTML = html
+    
+    // Sostituisci immagini con placeholder
+    const images = container.querySelectorAll('img')
+    images.forEach(img => {
+      if (img.src && img.src.startsWith('http')) {
+        const placeholder = document.createElement('div')
+        placeholder.style.width = '200px'
+        placeholder.style.height = '100px'
+        placeholder.style.backgroundColor = '#8B4513'
+        placeholder.style.color = 'white'
+        placeholder.style.display = 'flex'
+        placeholder.style.alignItems = 'center'
+        placeholder.style.justifyContent = 'center'
+        placeholder.style.fontSize = '12px'
+        placeholder.innerHTML = '📧 Logo'
+        img.parentNode.replaceChild(placeholder, img)
+      }
+    })
+    
+    await new Promise(resolve => setTimeout(resolve, 100))
+    const html2canvas = await import('html2canvas')
+    const canvas = await (html2canvas.default || html2canvas)(container, {
+      useCORS: false,
+      allowTaint: true,
+      width: 600,
+      height: 800,
+      scale: 0.8
+    })
+    document.body.removeChild(container)
+    return canvas.toDataURL('image/jpeg', 0.8)
   }
 
   const handleSaveEmailDesign = useCallback(async (templateData) => {
