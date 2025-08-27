@@ -1619,9 +1619,8 @@ for (const customer of recipients) {
     try {
       console.log('📸 Generando screenshot con HTMLCssToImage...')
       
-      // Pre-processa HTML per convertire immagini esterne in base64
-      const processedHtml = await convertImagesToBase64(html)
-      console.log('✅ HTML processato con immagini base64')
+      // Usa HTML originale (senza conversione base64 per ora)  
+      const processedHtml = html
       
       // Usa HTMLCssToImage.com - servizio gratuito per screenshot
       const response = await fetch('https://hcti.io/v1/image', {
@@ -1678,9 +1677,8 @@ for (const customer of recipients) {
   const generateTemplateScreenshotFallback = async (html) => {
     console.log('📸 Generando anteprima con html2canvas...')
     
-    // Pre-processa HTML per convertire immagini esterne in base64
-    const processedHtml = await convertImagesToBase64(html)
-    console.log('✅ HTML processato con immagini base64 per fallback')
+    // Usa HTML originale per il fallback
+    const processedHtml = html
     
     const container = document.createElement('div')
     container.style.position = 'fixed'
