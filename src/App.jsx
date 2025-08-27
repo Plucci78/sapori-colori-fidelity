@@ -1606,6 +1606,7 @@ for (const customer of recipients) {
           })
         } catch (error) {
           console.warn('⚠️ Errore caricamento immagine:', src, error)
+          return Promise.resolve()
         }
       }
     })
@@ -1619,10 +1620,12 @@ for (const customer of recipients) {
     try {
       // Prima converti le immagini esterne in base64
       console.log('🔄 Convertendo immagini esterne in base64...')
+      console.log('🔍 HTML originale contiene:', html.includes('<img') ? 'immagini trovate' : 'nessuna immagine')
       let processedHtml = html
       try {
         processedHtml = await convertImagesToBase64(html)
         console.log('✅ Immagini convertite in base64')
+        console.log('🔍 HTML processato contiene data:image?', processedHtml.includes('data:image') ? 'SI - base64 presente!' : 'NO - base64 mancante')
       } catch (conversionError) {
         console.warn('⚠️ Errore conversione immagini, uso HTML originale:', conversionError.message)
       }
