@@ -37,6 +37,7 @@ const EmailSection = ({
 
       setSavedTemplates(data || [])
       console.log('✅ Template caricati:', data?.length || 0)
+      console.log('📋 Template data:', data)
     } catch (error) {
       console.error('Errore caricamento template:', error)
     }

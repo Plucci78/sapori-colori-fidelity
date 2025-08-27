@@ -372,7 +372,10 @@ const EmailEnterprise = ({
                     <div className="template-actions">
                       <button 
                         className="btn-load-template"
-                        onClick={() => handleLoadTemplate(template)}
+                        onClick={() => {
+                          console.log('🖱️ Click su Carica template:', template.name)
+                          handleLoadTemplate(template)
+                        }}
                       >
                         Carica
                       </button>
