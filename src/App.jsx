@@ -1617,6 +1617,16 @@ for (const customer of recipients) {
   // Genera screenshot per template
   const generateTemplateScreenshot = async (html) => {
     try {
+      // Prima converti le immagini esterne in base64
+      console.log('🔄 Convertendo immagini esterne in base64...')
+      let processedHtml = html
+      try {
+        processedHtml = await convertImagesToBase64(html)
+        console.log('✅ Immagini convertite in base64')
+      } catch (conversionError) {
+        console.warn('⚠️ Errore conversione immagini, uso HTML originale:', conversionError.message)
+      }
+      
       // Prima prova con la nostra API Puppeteer (può caricare loghi esterni)
       try {
         console.log('📸 Tentando screenshot con API locale Puppeteer...')
@@ -1626,7 +1636,7 @@ for (const customer of recipients) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            html: html,
+            html: processedHtml,
             width: 600,
             height: 800
           })
@@ -1644,7 +1654,7 @@ for (const customer of recipients) {
         console.log('⚠️ Errore API locale, fallback a HTMLCssToImage...')
       }
       
-      // Fallback con HTMLCssToImage.com (senza loghi esterni)
+      // Fallback con HTMLCssToImage.com (con immagini già convertite in base64)
       console.log('📸 Generando screenshot con HTMLCssToImage...')
       const response = await fetch('https://hcti.io/v1/image', {
         method: 'POST',
@@ -1653,7 +1663,7 @@ for (const customer of recipients) {
           'Authorization': 'Basic ' + btoa('demo-user-id:demo-api-key')
         },
         body: JSON.stringify({
-          html: html,
+          html: processedHtml,
           css: '',
           device_scale: 1,
           width: 600,

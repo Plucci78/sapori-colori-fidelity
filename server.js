@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import { createClient } from '@supabase/supabase-js'
+import puppeteer from 'puppeteer'
 
 const app = express()
 const PORT = 3001
@@ -81,7 +82,7 @@ app.post('/api/landing-pages', async (req, res) => {
     
     if (existing) {
       return res.status(400).json({ 
-        error: 'Slug già esistente. Scegli un nome diverso.' 
+        error: 'Slug giï¿½ esistente. Scegli un nome diverso.' 
       })
     }
     
@@ -153,7 +154,7 @@ app.put('/api/landing-pages', async (req, res) => {
       
       if (existing) {
         return res.status(400).json({ 
-          error: 'Slug già esistente. Scegli un nome diverso.' 
+          error: 'Slug giï¿½ esistente. Scegli un nome diverso.' 
         })
       }
     }
@@ -198,16 +199,106 @@ app.put('/api/landing-pages', async (req, res) => {
   }
 })
 
+// Screenshot API endpoint
+app.post('/api/screenshot', async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end()
+  }
+
+  try {
+    const { html, width = 600, height = 800 } = req.body
+
+    if (!html) {
+      return res.status(400).json({ error: 'HTML content required' })
+    }
+
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process'
+      ]
+    })
+
+    const page = await browser.newPage()
+    
+    await page.setViewport({
+      width: parseInt(width),
+      height: parseInt(height),
+      deviceScaleFactor: 1
+    })
+
+    await page.setContent(html, {
+      waitUntil: ['networkidle0', 'domcontentloaded'],
+      timeout: 10000
+    })
+
+    // Wait for images to load
+    await page.evaluate(() => {
+      return Promise.all(
+        Array.from(document.querySelectorAll('img')).map(img => {
+          if (img.complete) return Promise.resolve()
+          return new Promise(resolve => {
+            img.onload = resolve
+            img.onerror = resolve
+            setTimeout(resolve, 3000)
+          })
+        })
+      )
+    })
+
+    const screenshot = await page.screenshot({
+      type: 'jpeg',
+      quality: 80,
+      fullPage: false,
+      clip: {
+        x: 0,
+        y: 0,
+        width: parseInt(width),
+        height: parseInt(height)
+      }
+    })
+
+    await browser.close()
+
+    const base64 = screenshot.toString('base64')
+    const dataUrl = `data:image/jpeg;base64,${base64}`
+
+    return res.status(200).json({
+      success: true,
+      screenshot: dataUrl,
+      size: screenshot.length
+    })
+
+  } catch (error) {
+    console.error('Screenshot error:', error)
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+      fallback: `https://via.placeholder.com/600x800/8B4513/ffffff?text=${encodeURIComponent('ðŸ“§ Template Preview')}`
+    })
+  }
+})
+
 function generateSlugFromTitle(title) {
   return title
     .toLowerCase()
-    .replace(/[àáâãäå]/g, 'a')
-    .replace(/[èéêë]/g, 'e')
-    .replace(/[ìíîï]/g, 'i')
-    .replace(/[òóôõö]/g, 'o')
-    .replace(/[ùúûü]/g, 'u')
-    .replace(/[ñ]/g, 'n')
-    .replace(/[ç]/g, 'c')
+    .replace(/[ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½]/g, 'a')
+    .replace(/[ï¿½ï¿½ï¿½ï¿½]/g, 'e')
+    .replace(/[ï¿½ï¿½ï¿½ï¿½]/g, 'i')
+    .replace(/[ï¿½ï¿½ï¿½ï¿½ï¿½]/g, 'o')
+    .replace(/[ï¿½ï¿½ï¿½ï¿½]/g, 'u')
+    .replace(/[ï¿½]/g, 'n')
+    .replace(/[ï¿½]/g, 'c')
     .replace(/[^a-z0-9]/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
@@ -215,8 +306,8 @@ function generateSlugFromTitle(title) {
 }
 
 app.listen(PORT, () => {
-  console.log(`=€ Server API in esecuzione su http://localhost:${PORT}`)
-  console.log(`=Ë Endpoint disponibili:`)
+  console.log(`=ï¿½ Server API in esecuzione su http://localhost:${PORT}`)
+  console.log(`=ï¿½ Endpoint disponibili:`)
   console.log(`   GET    /api/landing-pages`)
   console.log(`   POST   /api/landing-pages`)
   console.log(`   PUT    /api/landing-pages`)
