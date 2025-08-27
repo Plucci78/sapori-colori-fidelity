@@ -1,5 +1,7 @@
-// API Route per inviare notifiche OneSignal con storico completo
+// API Route per inviare notifiche OneSignal con storico completo e sincronizzazione
 import { createClient } from '@supabase/supabase-js'
+import { inflate } from 'pako'
+import Papa from 'papaparse'
 
 const supabase = createClient(
   'https://jexkalekaofsfcusdfjh.supabase.co',
@@ -13,7 +15,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { title, message, playerIds, url, imageUrl, targetType, targetValue, sentBy } = req.body
+    const { action, title, message, playerIds, url, imageUrl, targetType, targetValue, sentBy } = req.body
+    
+    // Se action è sync, esegui la sincronizzazione OneSignal
+    if (action === 'sync') {
+      return await handleSyncSubscriptions(req, res)
+    }
+
+    // Altrimenti, continua con l'invio notifica normale
 
     // Validazione
     if (!title || !message || !playerIds || !Array.isArray(playerIds)) {
@@ -137,6 +146,85 @@ export default async function handler(req, res) {
       success: false,
       error: `Errore server: ${error.message}`,
       stack: error.stack
+    })
+  }
+}
+
+// Funzione per sincronizzare subscriptions OneSignal
+async function handleSyncSubscriptions(req, res) {
+  try {
+    console.log('🔄 Avvio sincronizzazione OneSignal subscriptions...')
+    
+    // OneSignal API configuration (stesso della funzione principale)
+    const ONESIGNAL_CONFIG = {
+      appId: '61a2318f-68f7-4a79-8beb-203c58bf8763',
+      restApiKey: 'os_v2_app_mgrddd3i65fhtc7lea6frp4hmncfypt3q7mugmfh4hi67xyyoz3emmmkj5zd7hwbgt7qwkoxxyavzlux76q47oot2e5e6qieftmnf4a'
+    }
+    
+    // 1. Ottieni tutti i clienti dal database
+    const { data: customers, error: customersError } = await supabase
+      .from('customers')
+      .select('id, name, email, onesignal_player_id, onesignal_subscription_id, external_id')
+      .eq('is_active', true)
+    
+    if (customersError) {
+      throw new Error(`Errore caricamento clienti: ${customersError.message}`)
+    }
+    
+    console.log(`📊 Trovati ${customers.length} clienti attivi`)
+    
+    // 2. Ottieni subscription tramite API OneSignal (versione semplificata)
+    const playersResponse = await fetch(`https://api.onesignal.com/players?app_id=${ONESIGNAL_CONFIG.appId}&limit=300`, {
+      headers: {
+        'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`
+      }
+    })
+    
+    if (!playersResponse.ok) {
+      throw new Error(`OneSignal API error: ${playersResponse.status}`)
+    }
+    
+    const playersData = await playersResponse.json()
+    console.log(`📱 Trovati ${playersData.players?.length || 0} players OneSignal`)
+    
+    // 3. Sincronizza i dati (versione semplificata)
+    let syncCount = 0
+    
+    for (const player of (playersData.players || [])) {
+      if (player.external_user_id) {
+        const customer = customers.find(c => c.external_id === player.external_user_id)
+        
+        if (customer && player.id !== customer.onesignal_player_id) {
+          // Aggiorna il player_id del cliente
+          const { error: updateError } = await supabase
+            .from('customers')
+            .update({ 
+              onesignal_player_id: player.id,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', customer.id)
+            
+          if (!updateError) {
+            syncCount++
+            console.log(`✅ Aggiornato ${customer.name}: ${player.id}`)
+          }
+        }
+      }
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: `Sincronizzazione completata: ${syncCount} aggiornamenti`,
+      customers: customers.length,
+      players: playersData.players?.length || 0,
+      synced: syncCount
+    })
+    
+  } catch (error) {
+    console.error('❌ Errore sincronizzazione:', error)
+    return res.status(500).json({
+      success: false,
+      error: error.message
     })
   }
 }
