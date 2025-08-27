@@ -1,5 +1,6 @@
 import React, { useRef, useCallback, useState } from 'react'
 import EmailEditor from 'react-email-editor'
+import html2canvas from 'html2canvas' // Importa html2canvas
 import { emailTrackingService } from '../../services/emailTrackingService'
 import { supabase } from '../../supabase'
 import EmailStatsDashboard from './EmailStatsDashboard'
@@ -15,7 +16,8 @@ const EmailEnterprise = ({
   showNotification,
   sidebarMinimized = false,
   onLoadTemplate, // Nuovo: per caricare template
-  savedTemplates = [] // Nuovo: lista template salvati
+  savedTemplates = [], // Nuovo: lista template salvati
+  onTemplateDeleted // Nuovo: per aggiornare la lista dopo eliminazione
 }) => {
   const emailEditorRef = useRef(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -30,6 +32,7 @@ const EmailEnterprise = ({
   const [showTemplateSaveModal, setShowTemplateSaveModal] = useState(false)
   const [templateName, setTemplateName] = useState('')
   const [templateDescription, setTemplateDescription] = useState('')
+  const [templateThumbnails, setTemplateThumbnails] = useState({}) // Stato per le anteprime generate
   
   // Calcola dinamicamente le dimensioni in base allo stato sidebar
   const sidebarWidth = sidebarMinimized ? 70 : 280
@@ -137,37 +140,53 @@ const EmailEnterprise = ({
     }
   }, [templateName, templateDescription, onSave, showNotification])
 
-  // Genera screenshot con servizio alternativo
+  // Genera screenshot con html2canvas
   const generateScreenshot = async (html) => {
     try {
-      console.log('📸 Generando screenshot con Screenshot API...')
-      console.log('📧 HTML length:', html.length)
+      console.log('📸 Generando anteprima con html2canvas...');
       
-      // Prova con Screenshot Machine API
-      const response = await fetch('https://api.screenshotmachine.com', {
-        method: 'GET',
-        params: new URLSearchParams({
-          key: 'demo', // Chiave demo gratuita
-          url: `data:text/html;base64,${btoa(html)}`,
-          dimension: '600x800'
-        })
-      })
+      // 1. Crea un contenitore nascosto per il rendering
+      const container = document.createElement('div');
+      container.style.position = 'fixed';
+      container.style.top = '-9999px';
+      container.style.left = '0';
+      container.style.width = '600px'; // Larghezza standard email
+      container.style.height = '800px';
+      document.body.appendChild(container);
+
+      // 2. Inserisci l'HTML del template
+      container.innerHTML = html;
+
+      // 3. Aspetta che le immagini interne si carichino (se presenti)
+      const images = Array.from(container.getElementsByTagName('img'));
+      const promises = images.map(img => new Promise(resolve => {
+        if (img.complete) return resolve();
+        img.onload = resolve;
+        img.onerror = resolve; // Risolvi anche in caso di errore per non bloccare tutto
+      }));
+      await Promise.all(promises);
       
-      if (!response.ok) {
-        throw new Error(`Screenshot API error: ${response.status}`)
-      }
-      
-      const imageUrl = response.url
-      console.log('✅ Screenshot generato:', imageUrl)
-      return imageUrl
-      
+      // 4. Genera il canvas
+      const canvas = await html2canvas(container, {
+        useCORS: true, // Per immagini da altre origini
+        allowTaint: true,
+        width: 600,
+        height: 800,
+        scale: 1
+      });
+
+      // 5. Rimuovi il contenitore
+      document.body.removeChild(container);
+
+      // 6. Converte il canvas in un URL dati (immagine JPEG di qualità media)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      console.log('✅ Anteprima generata con successo!');
+      return dataUrl;
+
     } catch (error) {
-      console.error('❌ Errore screenshot:', error)
-      
-      // Fallback: usa servizio image placeholder con dimensioni corrette
-      const placeholderUrl = `https://via.placeholder.com/600x800/8B4513/ffffff?text=${encodeURIComponent('📧 Email\nTemplate')}`
-      console.log('🔄 Uso placeholder migliorato:', placeholderUrl)
-      return placeholderUrl
+      console.error('❌ Errore durante la generazione dell\'anteprima con html2canvas:', error);
+      // Fallback in caso di errore
+      return `https://via.placeholder.com/600x800/8B4513/ffffff?text=${encodeURIComponent('Errore Anteprima')}`;
     }
   }
 
@@ -449,6 +468,34 @@ const EmailEnterprise = ({
     }
   }, [showNotification])
 
+  // Elimina un singolo template
+  const handleDeleteTemplate = async (templateId, templateName) => {
+    if (!window.confirm(`Sei sicuro di voler eliminare il template "${templateName}"? L'azione è irreversibile.`)) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const { error } = await supabase
+        .from('email_templates')
+        .delete()
+        .eq('id', templateId);
+
+      if (error) {
+        throw error;
+      }
+
+      showNotification?.(`Template "${templateName}" eliminato con successo!`, 'success');
+      onTemplateDeleted?.(templateId); // Notifica al componente genitore di aggiornare la lista
+
+    } catch (error) {
+      console.error('❌ Errore eliminazione template:', error);
+      showNotification?.(`Errore durante l'eliminazione: ${error.message}`, 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Funzioni per segmentazione avanzata
   const getCustomerSegments = useCallback(() => {
     if (!allCustomers.length) return {}
@@ -493,6 +540,44 @@ const EmailEnterprise = ({
   }, [allCustomers])
 
   const segments = getCustomerSegments()
+
+  // Effetto per generare anteprime mancanti quando si apre la modale
+  React.useEffect(() => {
+    if (showTemplates) {
+      const generateMissingThumbnails = async () => {
+        let updated = false;
+        const newThumbnails = {};
+
+        console.log('🔍 Controllo anteprime mancanti...');
+        for (const template of savedTemplates) {
+          if (!template.thumbnail_url && !templateThumbnails[template.id] && template.html_preview) {
+            console.log(`⏳ Generazione anteprima per: ${template.name}`);
+            try {
+              const thumb = await generateScreenshot(template.html_preview);
+              newThumbnails[template.id] = thumb;
+              
+              // Persisti l'URL nel database
+              console.log(`💾 Aggiornamento template "${template.name}" con la nuova anteprima.`);
+              onSave?.({ ...template, thumbnail_url: thumb });
+              updated = true;
+
+            } catch (e) {
+              console.error(`❌ Fallita generazione per ${template.name}`, e);
+            }
+          }
+        }
+        
+        if (Object.keys(newThumbnails).length > 0) {
+          setTemplateThumbnails(prev => ({ ...prev, ...newThumbnails }));
+        }
+
+        if (updated) {
+          showNotification?.('Anteprime mancanti sono state generate e salvate!', 'info');
+        }
+      };
+      generateMissingThumbnails();
+    }
+  }, [showTemplates, savedTemplates]); // Rimosso templateThumbnails per evitare loop
 
   // Filtra clienti per ricerca manuale
   const filteredCustomers = allCustomers.filter(customer => {
@@ -738,6 +823,36 @@ const EmailEnterprise = ({
                       e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'
                     }}
                   >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation(); // Impedisce di caricare il template
+                        handleDeleteTemplate(template.id, template.name);
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: '15px',
+                        right: '15px',
+                        background: 'rgba(220, 53, 69, 0.8)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '32px',
+                        height: '32px',
+                        fontSize: '18px',
+                        cursor: 'pointer',
+                        zIndex: 10,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                        transition: 'background 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220, 53, 69, 1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(220, 53, 69, 0.8)'}
+                      title="Elimina template"
+                    >
+                      &times;
+                    </button>
                     <div 
                       className="template-preview"
                       style={{
@@ -751,7 +866,7 @@ const EmailEnterprise = ({
                         borderBottom: '1px solid #e9ecef'
                       }}
                     >
-                      {template.thumbnail_url ? (
+                      {(template.thumbnail_url || templateThumbnails[template.id]) ? (
                         <div style={{
                           width: '100%',
                           height: '100%',
@@ -762,7 +877,7 @@ const EmailEnterprise = ({
                           padding: '10px'
                         }}>
                           <img 
-                            src={template.thumbnail_url} 
+                            src={template.thumbnail_url || templateThumbnails[template.id]} 
                             alt={`Preview ${template.name}`}
                             style={{
                               maxWidth: '100%',

@@ -1678,7 +1678,15 @@ for (const customer of recipients) {
       console.error('❌ Errore salvataggio template:', error)
       showNotification('Errore durante il salvataggio del template', 'error')
     }
-  }, [showNotification])
+  }, [showNotification, loadEmailTemplates])
+
+  // Gestisce l'eliminazione di un template dalla lista (senza ricaricare)
+  const handleTemplateDeleted = (templateId) => {
+    setSavedEmailTemplates(prevTemplates => 
+      prevTemplates.filter(template => template.id !== templateId)
+    );
+    showNotification('Lista template aggiornata!', 'info');
+  };
 
   const searchCustomersForManual = useCallback(async (searchName) => {
     if (searchName.length < 2) {
@@ -2447,16 +2455,18 @@ for (const customer of recipients) {
       case 'email':
         return (
           <ProtectedComponent permission="canSendEmails">
-            <EmailEnterprise
-              onSave={handleSaveEmailDesign}
-              onSendEmail={sendEmail}
-              emailSubject={emailSubject}
-              setEmailSubject={setEmailSubject}
-              allCustomers={allCustomers}
-              showNotification={showNotification}
-              sidebarMinimized={sidebarMinimized}
-              savedTemplates={savedEmailTemplates}
-            />
+    <EmailEnterprise
+      onSave={handleSaveEmailDesign}
+      onSendEmail={sendEmail}
+      emailSubject={emailSubject}
+      setEmailSubject={setEmailSubject}
+      allCustomers={allCustomers}
+      showNotification={showNotification}
+      sidebarMinimized={sidebarMinimized}
+      onLoadTemplate={handleLoadTemplate}
+      savedTemplates={savedEmailTemplates}
+      onTemplateDeleted={handleTemplateDeleted}
+    />
           </ProtectedComponent>
         )
       case 'templates':
