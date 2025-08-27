@@ -1676,6 +1676,12 @@ for (const customer of recipients) {
 
   // Fallback con html2canvas
   const generateTemplateScreenshotFallback = async (html) => {
+    console.log('📸 Generando anteprima con html2canvas...')
+    
+    // Pre-processa HTML per convertire immagini esterne in base64
+    const processedHtml = await convertImagesToBase64(html)
+    console.log('✅ HTML processato con immagini base64 per fallback')
+    
     const container = document.createElement('div')
     container.style.position = 'fixed'
     container.style.top = '-9999px'
@@ -1684,25 +1690,7 @@ for (const customer of recipients) {
     container.style.height = '800px'
     container.style.zIndex = '-1000'
     document.body.appendChild(container)
-    container.innerHTML = html
-    
-    // Sostituisci immagini con placeholder
-    const images = container.querySelectorAll('img')
-    images.forEach(img => {
-      if (img.src && img.src.startsWith('http')) {
-        const placeholder = document.createElement('div')
-        placeholder.style.width = '200px'
-        placeholder.style.height = '100px'
-        placeholder.style.backgroundColor = '#8B4513'
-        placeholder.style.color = 'white'
-        placeholder.style.display = 'flex'
-        placeholder.style.alignItems = 'center'
-        placeholder.style.justifyContent = 'center'
-        placeholder.style.fontSize = '12px'
-        placeholder.innerHTML = '📧 Logo'
-        img.parentNode.replaceChild(placeholder, img)
-      }
-    })
+    container.innerHTML = processedHtml
     
     await new Promise(resolve => setTimeout(resolve, 100))
     const html2canvas = await import('html2canvas')
