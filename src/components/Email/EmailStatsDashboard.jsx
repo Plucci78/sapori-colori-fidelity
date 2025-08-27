@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { emailTrackingService } from '../../services/emailTrackingService'
+import { BarChart3, Send, Target, TrendingUp } from 'lucide-react'
 
 const EmailStatsDashboard = () => {
   const [stats, setStats] = useState({
@@ -70,7 +71,10 @@ const EmailStatsDashboard = () => {
     <div className="email-stats-dashboard">
       {/* Header con filtri periodo */}
       <div className="stats-header">
-        <h2>📊 Statistiche Email</h2>
+        <h2 style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+          <BarChart3 size={24} />
+          Statistiche Email
+        </h2>
         <div className="header-controls">
           <div className="period-selector">
             <label>Periodo:</label>
@@ -108,7 +112,9 @@ const EmailStatsDashboard = () => {
       {/* Statistiche principali */}
       <div className="stats-overview">
         <div className="stat-card">
-          <div className="stat-icon">📤</div>
+          <div className="stat-icon">
+            <Send size={24} />
+          </div>
           <div className="stat-content">
             <h3>{stats.totalSent.toLocaleString()}</h3>
             <p>Email Inviate</p>
@@ -132,7 +138,9 @@ const EmailStatsDashboard = () => {
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon">📈</div>
+          <div className="stat-icon">
+            <TrendingUp size={24} />
+          </div>
           <div className="stat-content">
             <h3>{formatPercentage(stats.avgOpenRate)}</h3>
             <p>Tasso Apertura Medio</p>
@@ -140,7 +148,9 @@ const EmailStatsDashboard = () => {
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon">🎯</div>
+          <div className="stat-icon">
+            <Target size={24} />
+          </div>
           <div className="stat-content">
             <h3>{formatPercentage(stats.avgClickRate)}</h3>
             <p>Tasso Click Medio</p>
@@ -168,7 +178,10 @@ const EmailStatsDashboard = () => {
                     </p>
                     <div className="performance-metrics">
                       <span className="metric">
-                        📤 {email.total_sent} inviate
+                        <span style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
+                          <Send size={16} />
+                          {email.total_sent} inviate
+                        </span>
                       </span>
                       <span className="metric">
                         📖 {formatPercentage(email.open_rate)} aperture

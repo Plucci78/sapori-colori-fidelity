@@ -5,6 +5,18 @@ import { emailTrackingService } from '../../services/emailTrackingService'
 import { supabase } from '../../supabase'
 import EmailStatsDashboard from './EmailStatsDashboard'
 import CampaignManager from '../Campaigns/CampaignManager'
+import { 
+  Palette, 
+  Eye, 
+  Upload, 
+  Save, 
+  Settings, 
+  Rocket, 
+  BarChart3, 
+  X,
+  Users,
+  Search
+} from 'lucide-react'
 import './EmailEnterprise.css'
 
 const EmailEnterprise = ({ 
@@ -757,7 +769,7 @@ sessionStorage.removeItem('templateToLoad');
       {/* Header Toolbar */}
       <div className="unlayer-toolbar">
         <div className="toolbar-left">
-          <h1>🚀 Email Enterprise</h1>
+          <h1>Email Enterprise</h1>
           <span className="powered-by">Professional Email Builder</span>
         </div>
         
@@ -766,7 +778,8 @@ sessionStorage.removeItem('templateToLoad');
             className="btn-templates" 
             onClick={() => setShowTemplates(!showTemplates)}
           >
-            🎨 Template
+            <Palette size={16} />
+            Template
           </button>
           
           <button 
@@ -774,7 +787,8 @@ sessionStorage.removeItem('templateToLoad');
             onClick={handlePreview}
             disabled={isLoading}
           >
-            👁️ Anteprima
+            <Eye size={16} />
+            Anteprima
           </button>
           
           <button 
@@ -786,7 +800,8 @@ sessionStorage.removeItem('templateToLoad');
             disabled={isLoading}
             title="Carica immagini locali su Supabase"
           >
-            📤 Carica Immagini
+            <Upload size={16} />
+            Carica Immagini
           </button>
           
           <button 
@@ -794,28 +809,32 @@ sessionStorage.removeItem('templateToLoad');
             onClick={handleSave}
             disabled={isLoading}
           >
-            {isLoading ? '⏳ Salvando...' : '💾 Salva'}
+            <Save size={16} />
+            {isLoading ? 'Salvando...' : 'Salva'}
           </button>
           
           <button 
             className="btn-config" 
             onClick={() => setShowEmailConfig(!showEmailConfig)}
           >
-            📤 Configura & Invia
+            <Settings size={16} />
+            Configura & Invia
           </button>
           
           <button 
             className="btn-campaigns" 
             onClick={() => setShowCampaignsModal(true)}
           >
-            🚀 Campagne
+            <Rocket size={16} />
+            Campagne
           </button>
           
           <button 
             className="btn-stats" 
             onClick={() => setShowStatsModal(true)}
           >
-            📊 Statistiche
+            <BarChart3 size={16} />
+            Statistiche
           </button>
         </div>
       </div>
@@ -860,7 +879,10 @@ sessionStorage.removeItem('templateToLoad');
               justifyContent: 'space-between',
               alignItems: 'center'
             }}>
-              <h2 style={{margin: 0, fontSize: '24px', fontWeight: '700'}}>🎨 I Tuoi Template</h2>
+              <h2 style={{margin: 0, fontSize: '24px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px'}}>
+                <Palette size={24} />
+                I Tuoi Template
+              </h2>
               <button 
                 onClick={() => setShowTemplates(false)}
                 style={{
@@ -890,7 +912,7 @@ sessionStorage.removeItem('templateToLoad');
             {!savedTemplates || savedTemplates.length === 0 ? (
               <div className="no-templates" style={{textAlign: 'center', padding: '40px 20px', color: '#6c757d'}}>
                 <p style={{margin: '10px 0', fontSize: '16px'}}>Nessun template salvato ancora.</p>
-                <p style={{margin: '10px 0', fontSize: '14px'}}>Crea il tuo primo design e clicca "💾 Salva"!</p>
+                <p style={{margin: '10px 0', fontSize: '14px'}}>Crea il tuo primo design e clicca "Salva"!</p>
                 <div style={{marginTop: '20px', fontSize: '12px', opacity: '0.7'}}>
                   Debug: {savedTemplates ? `Array vuoto (${savedTemplates.length})` : 'savedTemplates è null/undefined'}
                 </div>
@@ -974,7 +996,10 @@ sessionStorage.removeItem('templateToLoad');
                             height: '100%'
                           }}
                         >
-                          📧
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                            <polyline points="22,6 12,13 2,6"/>
+                          </svg>
                         </div>
                       )}
                     </div>
@@ -1059,10 +1084,13 @@ sessionStorage.removeItem('templateToLoad');
       {showEmailConfig && (
         <div className="email-config-panel">
           <div className="config-content">
-            <h3>⚙️ Configurazione Email</h3>
+            <h3>
+              <Settings size={20} style={{marginRight: '8px'}} />
+              Configurazione Email
+            </h3>
             
             <div className="config-row">
-              <label>📝 Oggetto Email:</label>
+              <label>Oggetto Email:</label>
               <input
                 type="text"
                 value={emailSubject || ''}
@@ -1073,7 +1101,10 @@ sessionStorage.removeItem('templateToLoad');
             </div>
             
             <div className="config-row">
-              <label>👥 Destinatari:</label>
+              <label>
+                <Users size={16} style={{marginRight: '6px'}} />
+                Destinatari:
+              </label>
               <select
                 value={emailRecipients}
                 onChange={(e) => setEmailRecipients(e.target.value)}
@@ -1083,22 +1114,22 @@ sessionStorage.removeItem('templateToLoad');
                   <option value="all">Tutti i clienti ({segments.all?.length || 0})</option>
                 </optgroup>
                 
-                <optgroup label="💎 Per Livello Gemme">
+                <optgroup label="◆ Per Livello Gemme">
                   <option value="bronze">🥉 Bronze - meno di 100 gemme ({segments.bronze?.length || 0})</option>
                   <option value="silver">🥈 Silver - 100-299 gemme ({segments.silver?.length || 0})</option>
                   <option value="gold">🥇 Gold - 300-499 gemme ({segments.gold?.length || 0})</option>
-                  <option value="platinum">💎 Platinum - 500+ gemme ({segments.platinum?.length || 0})</option>
+                  <option value="platinum">◆ Platinum - 500+ gemme ({segments.platinum?.length || 0})</option>
                 </optgroup>
                 
                 <optgroup label="💰 Per Spesa">
                   <option value="lowSpenders">💸 Spesa Bassa - meno di 50€ ({segments.lowSpenders?.length || 0})</option>
                   <option value="mediumSpenders">💵 Spesa Media - 50-200€ ({segments.mediumSpenders?.length || 0})</option>
-                  <option value="highSpenders">💎 Spesa Alta - oltre 200€ ({segments.highSpenders?.length || 0})</option>
+                  <option value="highSpenders">◆ Spesa Alta - oltre 200€ ({segments.highSpenders?.length || 0})</option>
                 </optgroup>
                 
                 <optgroup label="📅 Per Attività">
                   <option value="newCustomers">🆕 Nuovi - ultimi 30gg ({segments.newCustomers?.length || 0})</option>
-                  <option value="activeCustomers">✅ Attivi - acquisto &lt; 60gg ({segments.activeCustomers?.length || 0})</option>
+                  <option value="activeCustomers">✓ Attivi - acquisto &lt; 60gg ({segments.activeCustomers?.length || 0})</option>
                   <option value="dormantCustomers">😴 Dormienti - nessun acquisto &gt; 60gg ({segments.dormantCustomers?.length || 0})</option>
                   <option value="historicalCustomers">🏛️ Storici - oltre 1 anno ({segments.historicalCustomers?.length || 0})</option>
                 </optgroup>
@@ -1126,13 +1157,24 @@ sessionStorage.removeItem('templateToLoad');
                 onClick={handleSendEmail}
                 disabled={isLoading || !emailSubject?.trim()}
               >
-                {isLoading ? '📤 Invio...' : '🚀 Invia Email'}
+                {isLoading ? (
+                  <>
+                    <Upload size={16} />
+                    Invio...
+                  </>
+                ) : (
+                  <>
+                    <Rocket size={16} />
+                    Invia Email
+                  </>
+                )}
               </button>
               <button 
                 className="btn-cancel" 
                 onClick={() => setShowEmailConfig(false)}
               >
-                ❌ Annulla
+                <X size={16} />
+                Annulla
               </button>
             </div>
           </div>
@@ -1190,16 +1232,26 @@ sessionStorage.removeItem('templateToLoad');
                 justifyContent: 'center'
               }}
             >
-              ✕
+              <X size={20} />
             </button>
-            <h3 style={{marginTop: 0, color: '#8B4513'}}>👥 Selezione Manuale Clienti</h3>
+            <h3 style={{marginTop: 0, color: '#8B4513', display: 'flex', alignItems: 'center', gap: '8px'}}>
+              <Users size={20} />
+              Selezione Manuale Clienti
+            </h3>
             <div className="customer-search">
               <input
                 type="text"
                 value={customerSearchTerm}
                 onChange={(e) => setCustomerSearchTerm(e.target.value)}
-                placeholder="🔍 Cerca cliente per nome o email..."
+                placeholder="Cerca cliente per nome o email..."
                 className="customer-search-input"
+                style={{
+                  paddingLeft: '40px',
+                  backgroundImage: `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>')}")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: '12px center',
+                  backgroundSize: '16px'
+                }}
               />
             </div>
             
@@ -1245,7 +1297,10 @@ sessionStorage.removeItem('templateToLoad');
                   />
                   <div className="customer-info">
                     <strong>{customer.name}</strong>
-                    <small>{customer.email} • {customer.points} 💎</small>
+                    <small style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
+                      {customer.email} • {customer.points}
+                      <span style={{color: '#D4AF37'}}>◆</span>
+                    </small>
                   </div>
                 </div>
                 ))
@@ -1271,7 +1326,12 @@ sessionStorage.removeItem('templateToLoad');
                   fontSize: '14px'
                 }}
               >
-                ✅ Conferma Selezione ({selectedCustomers.length} clienti)
+                <span style={{display: 'flex', alignItems: 'center', gap: '6px'}}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5"/>
+                  </svg>
+                  Conferma Selezione ({selectedCustomers.length} clienti)
+                </span>
               </button>
             </div>
           </div>
@@ -1338,7 +1398,12 @@ sessionStorage.removeItem('templateToLoad');
         <div className="loading-overlay">
           <div className="loading-spinner">
             <div className="spinner"></div>
-            <p>⏳ Elaborazione in corso...</p>
+            <p style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{animation: 'spin 1s linear infinite'}}>
+                <path d="M21 12a9 9 0 11-6.219-8.56"/>
+              </svg>
+              Elaborazione in corso...
+            </p>
           </div>
         </div>
       )}
@@ -1396,7 +1461,7 @@ sessionStorage.removeItem('templateToLoad');
                 zIndex: 1000
               }}
             >
-              ✕
+              <X size={24} />
             </button>
             <div style={{ height: '100%', overflow: 'auto' }}>
               <EmailStatsDashboard />
@@ -1458,7 +1523,7 @@ sessionStorage.removeItem('templateToLoad');
                 zIndex: 1000
               }}
             >
-              ✕
+              <X size={24} />
             </button>
             <div style={{ height: '100%', overflow: 'auto' }}>
               <CampaignManager showNotification={showNotification} />
@@ -1518,7 +1583,7 @@ sessionStorage.removeItem('templateToLoad');
                 justifyContent: 'center'
               }}
             >
-              ✕
+              <X size={20} />
             </button>
             
             <h3 style={{
@@ -1527,7 +1592,10 @@ sessionStorage.removeItem('templateToLoad');
               fontSize: '24px',
               fontWeight: '700'
             }}>
-              💾 Salva Template
+              <span style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                <Save size={24} />
+                Salva Template
+              </span>
             </h3>
             
             <div style={{ marginBottom: '20px' }}>
@@ -1640,7 +1708,17 @@ sessionStorage.removeItem('templateToLoad');
                   e.target.style.boxShadow = 'none'
                 }}
               >
-                {isLoading ? '💾 Salvataggio...' : '💾 Salva Template'}
+                {isLoading ? (
+                  <span style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                    <Save size={16} />
+                    Salvataggio...
+                  </span>
+                ) : (
+                  <span style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                    <Save size={16} />
+                    Salva Template
+                  </span>
+                )}
               </button>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { campaignService } from '../../services/campaignService'
 import { supabase } from '../../supabase'
 import CampaignWizard from './CampaignWizard'
 import './CampaignManager.css'
+import { BarChart3, Rocket, CheckCircle, Send, TrendingUp, FileText, Mail, Clock, Pause, X, HelpCircle } from 'lucide-react'
 
 const CampaignManager = ({ showNotification }) => {
   const [campaigns, setCampaigns] = useState([])
@@ -44,7 +45,7 @@ const CampaignManager = ({ showNotification }) => {
       const campaignsData = await campaignService.getAllCampaigns()
       
       // Ricalcola le metriche per ogni campagna che ha dati di tracking
-      console.log(`📊 Ricalcolo metriche per ${campaignsData.length} campagne`)
+      console.log(`Ricalcolo metriche per ${campaignsData.length} campagne`)
       for (const campaign of campaignsData) {
         if (campaign.status === 'completed' || campaign.total_sent > 0) {
           await campaignService.calculateCampaignMetrics(campaign.id)
@@ -59,7 +60,7 @@ const CampaignManager = ({ showNotification }) => {
       
       setCampaigns(updatedCampaignsData)
       setStats(statsData)
-      console.log('✅ Campagne e statistiche aggiornate')
+      console.log('Campagne e statistiche aggiornate')
     } catch (error) {
       console.error('Errore caricamento dati:', error)
       showNotification?.('Errore caricamento campagne', 'error')
@@ -107,15 +108,15 @@ const CampaignManager = ({ showNotification }) => {
   }
 
   const getStatusIcon = (status) => {
-    const icons = {
-      draft: '📝',
-      scheduled: '⏰',
-      sending: '📤',
-      sent: '✅',
-      paused: '⏸️',
-      cancelled: '❌'
+    const iconMap = {
+      draft: <FileText size={16} />,
+      scheduled: <Clock size={16} />,
+      sending: <Send size={16} />,
+      sent: <CheckCircle size={16} style={{color: '#28a745'}} />,
+      paused: <Pause size={16} style={{color: '#ffc107'}} />,
+      cancelled: <X size={16} style={{color: '#dc3545'}} />
     }
-    return icons[status] || '❓'
+    return iconMap[status] || <HelpCircle size={16} />
   }
 
   const getStatusColor = (status) => {
@@ -166,7 +167,10 @@ const CampaignManager = ({ showNotification }) => {
       {/* Header */}
       <div className="campaign-header">
         <div className="header-content">
-          <h1>🚀 Campaign Manager</h1>
+          <h1 style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+            <Rocket size={28} />
+            Campaign Manager
+          </h1>
           <p>Gestisci le tue campagne email professionali</p>
         </div>
         <div className="header-actions">
@@ -200,7 +204,9 @@ const CampaignManager = ({ showNotification }) => {
       {/* Statistics Overview */}
       <div className="campaign-stats-overview">
         <div className="stat-card">
-          <div className="stat-icon">📊</div>
+          <div className="stat-icon">
+            <BarChart3 size={24} />
+          </div>
           <div className="stat-content">
             <h3>{stats.totalCampaigns || 0}</h3>
             <p>Campagne Totali</p>
@@ -216,7 +222,9 @@ const CampaignManager = ({ showNotification }) => {
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon">🚀</div>
+          <div className="stat-icon">
+            <Rocket size={24} />
+          </div>
           <div className="stat-content">
             <h3>{stats.activeCampaigns || 0}</h3>
             <p>Attive</p>
@@ -224,7 +232,9 @@ const CampaignManager = ({ showNotification }) => {
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon">✅</div>
+          <div className="stat-icon">
+            <CheckCircle size={24} />
+          </div>
           <div className="stat-content">
             <h3>{stats.sentCampaigns || 0}</h3>
             <p>Inviate</p>
@@ -232,7 +242,9 @@ const CampaignManager = ({ showNotification }) => {
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon">📤</div>
+          <div className="stat-icon">
+            <Send size={24} />
+          </div>
           <div className="stat-content">
             <h3>{stats.totalSent?.toLocaleString() || 0}</h3>
             <p>Email Inviate</p>
@@ -240,7 +252,9 @@ const CampaignManager = ({ showNotification }) => {
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon">📈</div>
+          <div className="stat-icon">
+            <TrendingUp size={24} />
+          </div>
           <div className="stat-content">
             <h3>{formatPercentage(stats.avgOpenRate)}</h3>
             <p>Open Rate Medio</p>
@@ -252,10 +266,10 @@ const CampaignManager = ({ showNotification }) => {
       <div className="campaign-filters">
         <div className="filter-tabs">
           {[
-            { id: 'all', name: 'Tutte', icon: '📋' },
-            { id: 'draft', name: 'Bozze', icon: '📝' },
-            { id: 'scheduled', name: 'Programmate', icon: '⏰' },
-            { id: 'sent', name: 'Inviate', icon: '✅' }
+            { id: 'all', name: 'Tutte', icon: <FileText size={16} /> },
+            { id: 'draft', name: 'Bozze', icon: <FileText size={16} /> },
+            { id: 'scheduled', name: 'Programmate', icon: <Clock size={16} /> },
+            { id: 'sent', name: 'Inviate', icon: <CheckCircle size={16} /> }
           ].map(filter => (
             <button
               key={filter.id}
@@ -309,7 +323,7 @@ const CampaignManager = ({ showNotification }) => {
                       onClick={() => handleDuplicateCampaign(campaign.id)}
                       title="Duplica"
                     >
-                      📋
+                      <FileText size={16} />
                     </button>
                     <button 
                       className="btn-action danger"
@@ -323,7 +337,10 @@ const CampaignManager = ({ showNotification }) => {
 
                 <div className="campaign-content">
                   <h3 className="campaign-name">{campaign.name}</h3>
-                  <p className="campaign-subject">📧 {campaign.subject}</p>
+                  <p className="campaign-subject" style={{display: 'flex', alignItems: 'center', gap: '6px'}}>
+                    <Mail size={16} />
+                    {campaign.subject}
+                  </p>
                   
                   {campaign.description && (
                     <p className="campaign-description">{campaign.description}</p>
