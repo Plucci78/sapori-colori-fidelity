@@ -42,12 +42,25 @@ const EmailEnterprise = ({
     left: `${sidebarWidth}px`
   }
   
-  // Funzione per calcolare hash MD5 del file
+  // Funzione per calcolare hash del file con fallback
   const calculateFileHash = async (file) => {
-    const arrayBuffer = await file.arrayBuffer();
-    const hashBuffer = await crypto.subtle.digest('MD5', arrayBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    try {
+      // Controlla se crypto.subtle è disponibile (richiede HTTPS)
+      if (!window.crypto || !window.crypto.subtle) {
+        throw new Error('crypto.subtle non disponibile');
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      // Usa solo i primi 16 caratteri per nome file più corto
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
+    } catch (error) {
+      console.warn('❌ Errore calcolo hash, uso fallback:', error);
+      // Fallback: usa dimensione file + nome + timestamp ridotto per "deduplicazione" approssimativa
+      const cleanName = file.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 8);
+      return `${cleanName}_${file.size}_${Date.now().toString().slice(-6)}`;
+    }
   };
 
   // Funzione upload personalizzato per Supabase con deduplicazione
