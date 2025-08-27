@@ -1577,64 +1577,59 @@ for (const customer of recipients) {
   // Genera screenshot per template
   const generateTemplateScreenshot = async (html) => {
     try {
-      console.log('📸 Tentativo con ApiFlash screenshot API...')
+      console.log('📸 Generando screenshot con html2canvas...')
       
-      // Converti HTML in data URL
-      const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(html)}`
+      // 1. Crea un contenitore nascosto per il rendering
+      const container = document.createElement('div')
+      container.style.position = 'fixed'
+      container.style.top = '-9999px'
+      container.style.left = '0'
+      container.style.width = '600px'
+      container.style.height = '800px'
+      container.style.zIndex = '-1000'
+      document.body.appendChild(container)
+
+      // 2. Inserisci l'HTML del template
+      container.innerHTML = html
+
+      // 3. Aspetta che le immagini interne si carichino
+      const images = Array.from(container.getElementsByTagName('img'))
+      const promises = images.map(img => new Promise(resolve => {
+        if (img.complete) return resolve()
+        img.onload = resolve
+        img.onerror = resolve // Risolvi anche in caso di errore
+        setTimeout(resolve, 3000) // Timeout per evitare blocchi
+      }))
+      await Promise.all(promises)
       
-      // Usa ApiFlash free service con CORS abilitato
-      const apiUrl = `https://api.apiflash.com/v1/urltoimage?access_key=demo&url=${encodeURIComponent(dataUrl)}&width=600&height=800&format=png`
+      // 4. Importa html2canvas dinamicamente
+      const html2canvas = await import('html2canvas')
+      const html2canvasDefault = html2canvas.default || html2canvas
       
-      console.log('🌐 Chiamando:', apiUrl.substring(0, 100) + '...')
-      
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json'
-        }
+      // 5. Genera il canvas
+      const canvas = await html2canvasDefault(container, {
+        useCORS: true,
+        allowTaint: true,
+        width: 600,
+        height: 800,
+        scale: 1,
+        backgroundColor: '#ffffff'
       })
-      
-      if (!response.ok) {
-        throw new Error(`ApiFlash error: ${response.status}`)
-      }
-      
-      // ApiFlash restituisce direttamente l'immagine
-      const imageBlob = await response.blob()
-      const imageUrl = URL.createObjectURL(imageBlob)
-      
-      console.log('✅ Screenshot ApiFlash generato')
-      return imageUrl
-      
+
+      // 6. Rimuovi il contenitore
+      document.body.removeChild(container)
+
+      // 7. Converte il canvas in URL dati
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.8)
+      console.log('✅ Screenshot html2canvas generato con successo!')
+      return dataUrl
+
     } catch (error) {
-      console.error('❌ Errore ApiFlash, provo alternativa...', error)
+      console.error('❌ Errore html2canvas:', error)
       
-      try {
-        // Fallback: Screenshot Machine
-        console.log('📸 Tentativo con ScreenshotAPI...')
-        
-        const html64 = btoa(unescape(encodeURIComponent(html)))
-        const screenshotUrl = `https://screenshot-v1.p.rapidapi.com/screenshot?url=data:text/html;base64,${html64}&width=600&height=800`
-        
-        const response = await fetch(screenshotUrl, {
-          headers: {
-            'X-RapidAPI-Key': 'demo', // Chiave demo
-          }
-        })
-        
-        if (response.ok) {
-          const imageBlob = await response.blob()
-          return URL.createObjectURL(imageBlob)
-        }
-        
-        throw new Error('Screenshot API fallito')
-        
-      } catch (error2) {
-        console.error('❌ Tutti i servizi falliti:', error2)
-        // Placeholder personalizzato con nome template
-        const templateName = templateData?.name || 'Email Template'
-        const shortName = templateName.length > 20 ? templateName.substring(0, 17) + '...' : templateName
-        return `https://via.placeholder.com/600x800/8B4513/ffffff?text=${encodeURIComponent(`📧\n${shortName}\n✨ Ready`)}`
-      }
+      // Fallback personalizzato con nome template
+      const templateName = 'Email Template'
+      return `https://via.placeholder.com/600x800/8B4513/ffffff?text=${encodeURIComponent(`📧\n${templateName}\n❌ Error`)}`
     }
   }
 
