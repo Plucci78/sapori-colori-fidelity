@@ -44,27 +44,67 @@ const EmailEnterprise = ({
   
   // Configurazione Unlayer
   const onReady = useCallback(() => {
-    showNotification?.('Editor email caricato!', 'success')
-    
+    const editor = emailEditorRef.current?.editor;
+    if (!editor) return;
+
+    showNotification?.('Editor email caricato!', 'success');
+
+    // REGISTRA UPLOAD PERSONALIZZATO
+    editor.registerCallback('image', async (file, done) => {
+      try {
+        console.log('🚀 Inizio upload personalizzato (callback)...');
+        const imageFile = file.attachments[0];
+        if (!imageFile) {
+          throw new Error('Nessun file immagine trovato.');
+        }
+
+        const fileName = `${Date.now()}_${imageFile.name}`;
+        const bucketName = 'email-assets';
+
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .upload(fileName, imageFile, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (error) {
+          throw error;
+        }
+
+        console.log('✅ File caricato su Supabase:', data.path);
+
+        const { data: { publicUrl } } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(data.path);
+
+        console.log('🔗 URL pubblico generato:', publicUrl);
+        
+done({ progress: 100, url: publicUrl });
+
+      } catch (error) {
+        console.error('❌ Errore durante l\'upload personalizzato:', error);
+        showNotification?.(`Errore caricamento immagine: ${error.message}`, 'error');
+      }
+    });
+
     // Controlla se c'è un template da caricare da sessionStorage
-    const templateToLoad = sessionStorage.getItem('templateToLoad')
+    const templateToLoad = sessionStorage.getItem('templateToLoad');
     if (templateToLoad) {
       try {
-        const template = JSON.parse(templateToLoad)
+        const template = JSON.parse(templateToLoad);
         
-        // Carica il design nell'editor
-        if (template.unlayer_design && emailEditorRef.current) {
-          emailEditorRef.current.editor.loadDesign(template.unlayer_design)
-          showNotification?.(`Template "${template.name}" caricato automaticamente!`, 'success')
+        if (template.unlayer_design) {
+          editor.loadDesign(template.unlayer_design);
+          showNotification?.(`Template "${template.name}" caricato automaticamente!`, 'success');
         }
         
-        // Rimuovi il template dal sessionStorage
-        sessionStorage.removeItem('templateToLoad')
+sessionStorage.removeItem('templateToLoad');
       } catch (error) {
-        sessionStorage.removeItem('templateToLoad')
+        sessionStorage.removeItem('templateToLoad');
       }
     }
-  }, [showNotification])
+  }, [showNotification]);
 
   // Salva design come template
   const handleSave = useCallback(() => {
@@ -1060,40 +1100,6 @@ const EmailEnterprise = ({
               preview: true,
               imageEditor: true,
               stockImages: false
-            },
-            uploader: {
-              upload: async (file, done) => {
-                try {
-                  console.log('🚀 Inizio upload personalizzato su Supabase...');
-                  const fileName = `${Date.now()}_${file.name}`;
-                  const bucketName = 'email-assets';
-
-                  const { data, error } = await supabase.storage
-                    .from(bucketName)
-                    .upload(fileName, file, {
-                      cacheControl: '3600',
-                      upsert: false,
-                    });
-
-                  if (error) {
-                    throw error;
-                  }
-
-                  console.log('✅ File caricato su Supabase:', data.path);
-
-                  const { data: { publicUrl } } = supabase.storage
-                    .from(bucketName)
-                    .getPublicUrl(data.path);
-
-                  console.log('🔗 URL pubblico generato:', publicUrl);
-                  
-                  done({ progress: 100, url: publicUrl });
-
-                } catch (error) {
-                  console.error('❌ Errore durante l\'upload personalizzato:', error);
-                  showNotification?.(`Errore caricamento immagine: ${error.message}`, 'error');
-                }
-              },
             },
             tools: {
               text: { enabled: true },
