@@ -349,22 +349,52 @@ class CampaignService {
     }
   }
 
-  // Calcola metriche campagna
+  // Calcola metriche campagna usando dati reali
   async calculateCampaignMetrics(campaignId) {
     try {
-      const { error } = await supabase.rpc('calculate_campaign_metrics', {
-        campaign_uuid: campaignId
-      })
+      console.log(`🔢 Calcolando metriche per campagna: ${campaignId}`)
 
-      if (error) {
-        console.error('Errore calcolo metriche:', error)
-        return false
+      // Conta email inviate da campaign_deliveries
+      const { data: deliveries, error: deliveriesError } = await supabase
+        .from('campaign_deliveries')
+        .select('customer_email')
+        .eq('campaign_id', campaignId)
+        .eq('delivery_status', 'sent')
+
+      if (deliveriesError) {
+        console.error('Errore conteggio deliveries:', deliveriesError)
+        return { totalSent: 0, totalOpened: 0, openRate: 0 }
       }
 
-      return true
+      const totalSent = deliveries?.length || 0
+
+      // Conta aperture uniche da email_opens
+      const { data: opens, error: opensError } = await supabase
+        .from('email_opens')
+        .select('customer_email')
+        .eq('campaign_id', campaignId)
+
+      if (opensError) {
+        console.error('Errore conteggio aperture:', opensError)
+      }
+
+      const uniqueOpens = opens ? new Set(opens.map(o => o.customer_email)).size : 0
+      const openRate = totalSent > 0 ? (uniqueOpens / totalSent) * 100 : 0
+
+      console.log(`📊 Metriche campagna ${campaignId}: ${totalSent} inviate, ${uniqueOpens} aperte, ${openRate.toFixed(1)}% apertura`)
+
+      // Aggiorna la campagna con le statistiche calcolate
+      await this.updateCampaign(campaignId, {
+        total_sent: totalSent,
+        total_opened: uniqueOpens,
+        open_rate: openRate,
+        updated_at: new Date().toISOString()
+      })
+
+      return { totalSent, totalOpened: uniqueOpens, openRate }
     } catch (error) {
       console.error('Errore calcolo metriche:', error)
-      return false
+      return { totalSent: 0, totalOpened: 0, openRate: 0 }
     }
   }
 }

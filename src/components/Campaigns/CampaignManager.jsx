@@ -38,13 +38,28 @@ const CampaignManager = ({ showNotification }) => {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [campaignsData, statsData] = await Promise.all([
+      console.log('🔄 Caricamento campagne e ricalcolo statistiche...')
+      
+      // Carica le campagne
+      const campaignsData = await campaignService.getAllCampaigns()
+      
+      // Ricalcola le metriche per ogni campagna che ha dati di tracking
+      console.log(`📊 Ricalcolo metriche per ${campaignsData.length} campagne`)
+      for (const campaign of campaignsData) {
+        if (campaign.status === 'completed' || campaign.total_sent > 0) {
+          await campaignService.calculateCampaignMetrics(campaign.id)
+        }
+      }
+      
+      // Ricarica le campagne con le statistiche aggiornate
+      const [updatedCampaignsData, statsData] = await Promise.all([
         campaignService.getAllCampaigns(),
         campaignService.getCampaignStats()
       ])
       
-      setCampaigns(campaignsData)
+      setCampaigns(updatedCampaignsData)
       setStats(statsData)
+      console.log('✅ Campagne e statistiche aggiornate')
     } catch (error) {
       console.error('Errore caricamento dati:', error)
       showNotification?.('Errore caricamento campagne', 'error')
@@ -154,12 +169,32 @@ const CampaignManager = ({ showNotification }) => {
           <h1>🚀 Campaign Manager</h1>
           <p>Gestisci le tue campagne email professionali</p>
         </div>
-        <button 
-          className="btn-create-campaign"
-          onClick={() => setShowWizard(true)}
-        >
-          🧙‍♂️ Crea Campagna (Wizard)
-        </button>
+        <div className="header-actions">
+          <button 
+            className="btn-refresh"
+            onClick={loadData}
+            disabled={loading}
+            style={{
+              marginRight: '10px',
+              padding: '10px 16px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.6 : 1,
+              fontSize: '14px'
+            }}
+          >
+            {loading ? '🔄 Aggiornamento...' : '🔄 Aggiorna'}
+          </button>
+          <button 
+            className="btn-create-campaign"
+            onClick={() => setShowWizard(true)}
+          >
+            🧙‍♂️ Crea Campagna (Wizard)
+          </button>
+        </div>
       </div>
 
       {/* Statistics Overview */}
