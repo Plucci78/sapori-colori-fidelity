@@ -15,10 +15,44 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { html, width = 600, height = 800 } = req.body
+    const { html, width = 600, height = 800, imageUrl } = req.body
 
+    // Se c'è imageUrl, funziona come proxy per immagini
+    if (imageUrl) {
+      console.log('🔄 Proxy downloading image:', imageUrl)
+
+      const response = await fetch(imageUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'image/*,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      })
+
+      if (!response.ok) {
+        console.error(`❌ HTTP Error: ${response.status} ${response.statusText}`)
+        return res.status(response.status).json({ 
+          error: `HTTP ${response.status}: ${response.statusText}` 
+        })
+      }
+
+      const buffer = await response.arrayBuffer()
+      const contentType = response.headers.get('content-type') || 'image/jpeg'
+
+      console.log('✅ Image downloaded successfully, size:', buffer.byteLength, 'bytes')
+
+      res.setHeader('Content-Type', contentType)
+      res.setHeader('Content-Length', buffer.byteLength)
+      res.setHeader('Cache-Control', 'public, max-age=3600')
+      
+      return res.send(Buffer.from(buffer))
+    }
+
+    // Funzionalità screenshot normale
     if (!html) {
-      return res.status(400).json({ error: 'HTML content required' })
+      return res.status(400).json({ error: 'HTML content or imageUrl required' })
     }
 
     console.log('🚀 Starting Puppeteer screenshot generation...')

@@ -173,8 +173,8 @@ const EmailEnterprise = ({
     try {
       console.log('🔄 Scaricando immagine tramite proxy server...');
       
-      // Usa il nostro server come proxy per evitare CORS
-      const proxyResponse = await fetch('/api/proxy-image', {
+      // Usa la funzione screenshot come proxy per evitare CORS
+      const proxyResponse = await fetch('/api/screenshot', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
