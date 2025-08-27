@@ -108,12 +108,13 @@ const EmailEnterprise = ({
               const imageUrl = obj[key].url;
               console.log('🔍 Trovata immagine con URL:', imageUrl);
               
-              // Rileva URL da spostare su Supabase (locali + Unlayer)
+              // Rileva URL da spostare su Supabase (locali + Unlayer, escluse immagini già su Supabase)
               if ((imageUrl.startsWith('blob:') || 
                    imageUrl.startsWith('data:') || 
                    imageUrl.startsWith('file:') || 
                    imageUrl.includes('localhost') ||
                    imageUrl.includes('assets.unlayer.com')) && 
+                   !imageUrl.includes('supabase.co') && // Non processare se già su Supabase
                    !processedUrls.has(imageUrl)) {
                 
                 processedUrls.add(imageUrl);
@@ -207,14 +208,8 @@ const EmailEnterprise = ({
       }
     });
 
-    // Intercetta modifiche al design per processare immagini
-    editor.addEventListener('design:updated', async () => {
-      try {
-        await processLocalImages();
-      } catch (error) {
-        console.error('❌ Errore processamento immagini locali:', error);
-      }
-    });
+    // Event listener rimosso per evitare loop durante modifiche al design
+    // Le immagini verranno processate solo manualmente tramite il pulsante
 
     // Controlla se c'è un template da caricare da sessionStorage
     const templateToLoad = sessionStorage.getItem('templateToLoad');
