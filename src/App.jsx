@@ -1589,11 +1589,21 @@ for (const customer of recipients) {
       container.style.zIndex = '-1000'
       document.body.appendChild(container)
 
-      // 2. Inserisci l'HTML del template
+      // 2. Inserisci l'HTML del template e sostituisci immagini esterne con proxy
       container.innerHTML = html
+      
+      // Sostituisci immagini esterne con versioni proxy
+      const images = container.querySelectorAll('img')
+      images.forEach(img => {
+        if (img.src && img.src.startsWith('https://assets.unlayer.com/')) {
+          // Usa un servizio proxy per evitare CORS
+          const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(img.src)}`
+          img.src = proxyUrl
+          img.crossOrigin = 'anonymous'
+        }
+      })
 
-      // 3. Aspetta che le immagini interne si carichino
-      const images = Array.from(container.getElementsByTagName('img'))
+      // 3. Aspetta che le immagini interne si carichino (usa le immagini già selezionate)
       const promises = images.map(img => new Promise(resolve => {
         if (img.complete) return resolve()
         img.onload = resolve
@@ -1606,14 +1616,19 @@ for (const customer of recipients) {
       const html2canvas = await import('html2canvas')
       const html2canvasDefault = html2canvas.default || html2canvas
       
-      // 5. Genera il canvas
+      // 5. Genera il canvas con opzioni migliorate
       const canvas = await html2canvasDefault(container, {
-        useCORS: true,
-        allowTaint: true,
+        useCORS: false, // Disabilita CORS per evitare problemi
+        allowTaint: true, // Permetti immagini "contaminate"
         width: 600,
         height: 800,
-        scale: 1,
-        backgroundColor: '#ffffff'
+        scale: 0.8, // Scala ridotta per performance
+        backgroundColor: '#ffffff',
+        logging: true, // Debug
+        ignoreElements: function(element) {
+          // Ignora script e link che potrebbero dare problemi
+          return element.tagName === 'SCRIPT' || element.tagName === 'LINK'
+        }
       })
 
       // 6. Rimuovi il contenitore
