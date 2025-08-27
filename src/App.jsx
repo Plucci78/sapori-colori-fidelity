@@ -1574,10 +1574,54 @@ for (const customer of recipients) {
     }
   }, [isAuthenticated, loadEmailTemplates])
 
+  // Converte immagini esterne in base64 per evitare problemi CORS negli screenshot
+  const convertImagesToBase64 = async (html) => {
+    const tempDiv = document.createElement('div')
+    tempDiv.innerHTML = html
+    const images = tempDiv.querySelectorAll('img')
+    
+    const imagePromises = Array.from(images).map(async (img) => {
+      const src = img.getAttribute('src')
+      if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
+        try {
+          console.log('🖼️ Convertendo immagine:', src)
+          
+          // Usa un proxy CORS per evitare errori
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(src)}`
+          const response = await fetch(proxyUrl)
+          const blob = await response.blob()
+          
+          return new Promise((resolve) => {
+            const reader = new FileReader()
+            reader.onload = () => {
+              img.setAttribute('src', reader.result)
+              console.log('✅ Immagine convertita in base64')
+              resolve()
+            }
+            reader.onerror = () => {
+              console.warn('⚠️ Errore conversione, mantengo originale:', src)
+              resolve()
+            }
+            reader.readAsDataURL(blob)
+          })
+        } catch (error) {
+          console.warn('⚠️ Errore caricamento immagine:', src, error)
+        }
+      }
+    })
+    
+    await Promise.all(imagePromises)
+    return tempDiv.innerHTML
+  }
+
   // Genera screenshot per template
   const generateTemplateScreenshot = async (html) => {
     try {
       console.log('📸 Generando screenshot con HTMLCssToImage...')
+      
+      // Pre-processa HTML per convertire immagini esterne in base64
+      const processedHtml = await convertImagesToBase64(html)
+      console.log('✅ HTML processato con immagini base64')
       
       // Usa HTMLCssToImage.com - servizio gratuito per screenshot
       const response = await fetch('https://hcti.io/v1/image', {
@@ -1587,7 +1631,7 @@ for (const customer of recipients) {
           'Authorization': 'Basic ' + btoa('demo-user-id:demo-api-key') // Free tier
         },
         body: JSON.stringify({
-          html: html,
+          html: processedHtml,
           css: '', // CSS già incluso nell'HTML
           device_scale: 1,
           width: 600,

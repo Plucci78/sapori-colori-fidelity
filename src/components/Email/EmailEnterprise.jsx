@@ -877,10 +877,7 @@ const EmailEnterprise = ({
                           width: '100%',
                           height: '100%',
                           background: 'white',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '10px'
+                          overflow: 'hidden'
                         }}>
                           <img 
                             src={template.thumbnail_url || templateThumbnails[template.id]} 
@@ -889,9 +886,7 @@ const EmailEnterprise = ({
                               width: '100%',
                               height: '100%',
                               objectFit: 'cover',
-                              objectPosition: 'top center',
-                              borderRadius: '4px',
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                              objectPosition: 'top center'
                             }}
                           />
                         </div>
