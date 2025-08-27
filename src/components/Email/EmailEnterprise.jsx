@@ -76,24 +76,22 @@ const EmailEnterprise = ({
 
       console.log('🔍 Hash file:', fileHash);
 
-      // 2. Controlla se il file esiste già
-      const { data: existingFile } = await supabase.storage
-        .from(bucketName)
-        .list('', {
-          search: fileHash
-        });
-
-      if (existingFile && existingFile.length > 0) {
-        const existingFileName = existingFile.find(f => f.name.startsWith(fileHash));
-        if (existingFileName) {
-          const { data: { publicUrl } } = supabase.storage
-            .from(bucketName)
-            .getPublicUrl(existingFileName.name);
+      // 2. Controlla se il file esiste già provando a ottenere l'URL
+      try {
+        const { data: { publicUrl } } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(hashFileName);
           
+        // Testa se il file esiste facendo una HEAD request
+        const testResponse = await fetch(publicUrl, { method: 'HEAD' });
+        
+        if (testResponse.ok) {
           console.log('♻️ File già esistente, riutilizzo:', publicUrl);
           showNotification?.('♻️ Immagine già presente, riutilizzata!', 'info');
           return publicUrl;
         }
+      } catch (error) {
+        console.log('🔍 File non esistente, procedo con upload');
       }
 
       // 3. File nuovo, carica con nome hash
@@ -105,6 +103,15 @@ const EmailEnterprise = ({
         });
 
       if (error) {
+        // Se il file esiste già (errore 400), riutilizzalo
+        if (error.message?.includes('already exists') || error.status === 409 || error.statusCode === 409) {
+          console.log('♻️ File esistente rilevato dall\'errore, riutilizzo');
+          const { data: { publicUrl } } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(hashFileName);
+          showNotification?.('♻️ Immagine già presente, riutilizzata!', 'info');
+          return publicUrl;
+        }
         throw error;
       }
 
