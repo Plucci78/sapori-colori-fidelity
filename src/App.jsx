@@ -1574,17 +1574,96 @@ for (const customer of recipients) {
     }
   }, [isAuthenticated, loadEmailTemplates])
 
+  // Genera screenshot per template
+  const generateTemplateScreenshot = async (html) => {
+    try {
+      console.log('📸 Tentativo con ApiFlash screenshot API...')
+      
+      // Converti HTML in data URL
+      const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(html)}`
+      
+      // Usa ApiFlash free service con CORS abilitato
+      const apiUrl = `https://api.apiflash.com/v1/urltoimage?access_key=demo&url=${encodeURIComponent(dataUrl)}&width=600&height=800&format=png`
+      
+      console.log('🌐 Chiamando:', apiUrl.substring(0, 100) + '...')
+      
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error(`ApiFlash error: ${response.status}`)
+      }
+      
+      // ApiFlash restituisce direttamente l'immagine
+      const imageBlob = await response.blob()
+      const imageUrl = URL.createObjectURL(imageBlob)
+      
+      console.log('✅ Screenshot ApiFlash generato')
+      return imageUrl
+      
+    } catch (error) {
+      console.error('❌ Errore ApiFlash, provo alternativa...', error)
+      
+      try {
+        // Fallback: Screenshot Machine
+        console.log('📸 Tentativo con ScreenshotAPI...')
+        
+        const html64 = btoa(unescape(encodeURIComponent(html)))
+        const screenshotUrl = `https://screenshot-v1.p.rapidapi.com/screenshot?url=data:text/html;base64,${html64}&width=600&height=800`
+        
+        const response = await fetch(screenshotUrl, {
+          headers: {
+            'X-RapidAPI-Key': 'demo', // Chiave demo
+          }
+        })
+        
+        if (response.ok) {
+          const imageBlob = await response.blob()
+          return URL.createObjectURL(imageBlob)
+        }
+        
+        throw new Error('Screenshot API fallito')
+        
+      } catch (error2) {
+        console.error('❌ Tutti i servizi falliti:', error2)
+        // Placeholder personalizzato con nome template
+        const templateName = templateData?.name || 'Email Template'
+        const shortName = templateName.length > 20 ? templateName.substring(0, 17) + '...' : templateName
+        return `https://via.placeholder.com/600x800/8B4513/ffffff?text=${encodeURIComponent(`📧\n${shortName}\n✨ Ready`)}`
+      }
+    }
+  }
+
   const handleSaveEmailDesign = useCallback(async (templateData) => {
     console.log('💾 Salvataggio template:', templateData)
     
     try {
+      let thumbnailUrl = templateData.thumbnail_url
+      
+      // Se non c'è thumbnail_url, genera screenshot
+      if (!thumbnailUrl && (templateData.html_preview || templateData.html)) {
+        console.log('📸 Generando screenshot per template...')
+        try {
+          const html = templateData.html_preview || templateData.html
+          thumbnailUrl = await generateTemplateScreenshot(html)
+          console.log('✅ Screenshot generato:', thumbnailUrl)
+        } catch (error) {
+          console.warn('⚠️ Errore screenshot, salvo senza:', error)
+          thumbnailUrl = null
+        }
+      }
+      
       const savedTemplate = await campaignService.saveTemplate({
         name: templateData.name,
         description: templateData.description || 'Template creato con Unlayer',
-        category: 'custom',
-        unlayer_design: templateData.design,
-        html_preview: templateData.html,
-        thumbnail_url: null
+        category: templateData.category || 'custom',
+        unlayer_design: templateData.unlayer_design || templateData.design, // Support both
+        html_preview: templateData.html_preview || templateData.html, // Support both
+        thumbnail_url: thumbnailUrl
       })
       
       if (savedTemplate) {
