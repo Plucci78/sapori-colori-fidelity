@@ -1061,58 +1061,12 @@ const EmailEnterprise = ({
               imageEditor: true,
               stockImages: false
             },
-            tools: {
-              // Componenti base sempre disponibili
-              text: { enabled: true },
-              image: { enabled: true }, 
-              button: { enabled: true },
-              heading: { enabled: true },
-              html: { enabled: true },
-              divider: { enabled: true },
-              
-              // Componenti layout
-              columns: { enabled: true },
-              
-              // Componenti che potrebbero essere Pro/Premium
-              video: { enabled: true },
-              social: { enabled: true }
-              
-              // Rimuoviamo questi che potrebbero non essere disponibili:
-              // menu: { enabled: true },
-              // timer: { enabled: true }
-            },
-            editor: {
-              minRows: 1,
-              maxRows: 25
-            }
-          }}
-          style={{ 
-            height: 'calc(100vh - 140px)',
-            width: '100%'
-          }}
-          options={{
-            displayMode: 'email',
-            locale: 'it-IT',
-            appearance: {
-              theme: 'light',
-              panels: {
-                tools: {
-                  dock: 'left'
-                }
-              }
-            },
-            features: {
-              preview: true,
-              imageEditor: true,
-              stockImages: false
-            },
-            // Insegniamo all'editor come caricare le immagini sul nostro Supabase
             uploader: {
               upload: async (file, done) => {
                 try {
                   console.log('🚀 Inizio upload personalizzato su Supabase...');
                   const fileName = `${Date.now()}_${file.name}`;
-                  const bucketName = 'email-assets'; // IMPORTANTE: Il bucket deve esistere!
+                  const bucketName = 'email-assets';
 
                   const { data, error } = await supabase.storage
                     .from(bucketName)
@@ -1133,7 +1087,6 @@ const EmailEnterprise = ({
 
                   console.log('🔗 URL pubblico generato:', publicUrl);
                   
-                  // Passa l'URL finale all'editor
                   done({ progress: 100, url: publicUrl });
 
                 } catch (error) {
@@ -1143,30 +1096,26 @@ const EmailEnterprise = ({
               },
             },
             tools: {
-              // Componenti base sempre disponibili
               text: { enabled: true },
               image: { enabled: true }, 
               button: { enabled: true },
               heading: { enabled: true },
               html: { enabled: true },
               divider: { enabled: true },
-              
-              // Componenti layout
               columns: { enabled: true },
-              
-              // Componenti che potrebbero essere Pro/Premium
               video: { enabled: true },
               social: { enabled: true }
-              
-              // Rimuoviamo questi che potrebbero non essere disponibili:
-              // menu: { enabled: true },
-              // timer: { enabled: true }
             },
             editor: {
               minRows: 1,
               maxRows: 25
             }
           }}
+          style={{ 
+            height: 'calc(100vh - 140px)',
+            width: '100%'
+          }}
+        />
       </div>
 
       {/* Loading overlay */}
