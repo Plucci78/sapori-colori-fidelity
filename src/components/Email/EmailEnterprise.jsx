@@ -674,33 +674,6 @@ const EmailEnterprise = ({
                     key={index} 
                     className="template-card"
                     onClick={() => handleLoadTemplate(template)}
-                    style={{
-                      position: 'relative',
-                      borderRadius: '20px',
-                      overflow: 'hidden',
-                      background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
-                      height: '350px',
-                      cursor: 'pointer',
-                      boxShadow: '0 12px 40px rgba(139, 69, 19, 0.15), 0 4px 16px rgba(0,0,0,0.1)',
-                      border: '2px solid rgba(139, 69, 19, 0.1)',
-                      borderLeft: '4px solid #D4AF37',
-                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                      backdropFilter: 'blur(10px)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-12px) scale(1.03)'
-                      e.currentTarget.style.boxShadow = '0 25px 80px rgba(139, 69, 19, 0.3), 0 8px 32px rgba(0,0,0,0.2)'
-                      e.currentTarget.style.borderColor = 'rgba(139, 69, 19, 0.4)'
-                      e.currentTarget.style.borderLeftColor = '#8B4513'
-                      e.currentTarget.style.background = 'linear-gradient(145deg, #ffffff 0%, #f0f8ff 100%)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0) scale(1)'
-                      e.currentTarget.style.boxShadow = '0 12px 40px rgba(139, 69, 19, 0.15), 0 4px 16px rgba(0,0,0,0.1)'
-                      e.currentTarget.style.borderColor = 'rgba(139, 69, 19, 0.1)'
-                      e.currentTarget.style.borderLeftColor = '#D4AF37'
-                      e.currentTarget.style.background = 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)'
-                    }}
                   >
                     {/* Delete Button */}
                     <button
