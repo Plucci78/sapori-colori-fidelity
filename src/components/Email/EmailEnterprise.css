@@ -387,21 +387,27 @@
 }
 
 .template-card {
-  border: 2px solid #e9ecef;
-  border-radius: 12px;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  background: white;
-  display: flex;
-  flex-direction: column;
-  height: 380px;
-  position: relative;
+  position: relative !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%) !important;
+  height: 350px !important;
+  cursor: pointer !important;
+  box-shadow: 0 12px 40px rgba(139, 69, 19, 0.15), 0 4px 16px rgba(0,0,0,0.1) !important;
+  border: 2px solid rgba(139, 69, 19, 0.2) !important;
+  border-left: 6px solid #D4AF37 !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  backdrop-filter: blur(10px) !important;
+  transform: translateZ(0) !important;
+  display: block !important;
 }
 
 .template-card:hover {
-  border-color: #8B4513;
-  transform: translateY(-4px);
-  box-shadow: 0 12px 35px rgba(139, 69, 19, 0.2);
+  transform: translateY(-12px) scale(1.03) !important;
+  box-shadow: 0 25px 80px rgba(139, 69, 19, 0.3), 0 8px 32px rgba(0,0,0,0.2) !important;
+  border-color: rgba(139, 69, 19, 0.4) !important;
+  border-left-color: #8B4513 !important;
+  background: linear-gradient(145deg, #ffffff 0%, #f0f8ff 100%) !important;
 }
 
 .template-preview {
