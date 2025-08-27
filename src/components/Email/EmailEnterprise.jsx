@@ -76,28 +76,51 @@ const EmailEnterprise = ({
 
       console.log('🔍 Hash file:', fileHash);
 
-      // 2. Carica sempre con upsert: true (evita errori 409 e deduplica automaticamente)
+      // 2. Prova upload, se fallisce per duplicato usa il file esistente
       const { data, error } = await supabase.storage
         .from(bucketName)
         .upload(hashFileName, file, {
           cacheControl: '3600',
-          upsert: true, // Sovrascrive se esiste (stesso hash = stesso contenuto)
+          upsert: false,
         });
 
+      let finalUrl;
+
       if (error) {
-        throw error;
+        console.log('⚠️ Errore upload:', error);
+        console.log('⚠️ Messaggio errore:', error.message);
+        console.log('⚠️ Status errore:', error.status, error.statusCode);
+        
+        // Se errore di duplicato, genera URL del file esistente
+        if (error.status === 409 || error.statusCode === 409 || 
+            error.message?.includes('already exists') || 
+            error.message?.includes('duplicate') ||
+            error.message?.includes('Duplicate')) {
+          
+          console.log('♻️ File duplicato, riutilizzo esistente');
+          const { data: { publicUrl } } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(hashFileName);
+          
+          finalUrl = publicUrl;
+          showNotification?.('♻️ Immagine già presente, riutilizzata!', 'info');
+        } else {
+          throw error; // Altri errori sono problemi reali
+        }
+      } else {
+        // Upload riuscito
+        console.log('✅ File caricato su Supabase:', data.path);
+        const { data: { publicUrl } } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(data.path);
+        
+        finalUrl = publicUrl;
+        showNotification?.('✅ Nuova immagine caricata su Supabase!', 'success');
       }
 
-      console.log('✅ File processato su Supabase:', data.path);
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(data.path);
-
-      console.log('🔗 URL pubblico generato:', publicUrl);
-      showNotification?.('✅ Immagine caricata su Supabase!', 'success');
+      console.log('🔗 URL finale:', finalUrl);
       
-      return publicUrl;
+      return finalUrl;
 
     } catch (error) {
       console.error('❌ Errore durante l\'upload personalizzato:', error);
