@@ -205,8 +205,11 @@ const EmailEnterprise = ({
 
   // Carica template in Unlayer
   const handleLoadTemplate = useCallback((template) => {
-    if (!template.design) {
-      showNotification?.('Template non valido', 'error')
+    // Controlla se c'è un design valido (può essere in design o unlayer_design)
+    const designData = template.design || template.unlayer_design
+    if (!designData) {
+      showNotification?.('Template non valido: manca il design', 'error')
+      console.error('❌ Template senza design:', template)
       return
     }
     
@@ -219,10 +222,7 @@ const EmailEnterprise = ({
     
     try {
       console.log('🎨 Caricamento template:', template.name)
-      console.log('📋 Design template:', template.design)
-      
-      // Usa il design corretto (potrebbe essere in design o unlayer_design)
-      const designData = template.design || template.unlayer_design
+      console.log('📋 Design template:', designData)
       
       emailEditorRef.current.editor.loadDesign(designData)
       showNotification?.(`Template "${template.name}" caricato!`, 'success')
