@@ -1577,39 +1577,47 @@ for (const customer of recipients) {
   // Genera screenshot per template
   const generateTemplateScreenshot = async (html) => {
     try {
-      console.log('📸 Generando screenshot con Puppeteer API...')
+      console.log('📸 Generando screenshot con HTMLCssToImage...')
       
-      // Usa la API server-side con Puppeteer
-      const apiUrl = window.location.hostname === 'localhost' 
-        ? 'http://localhost:5173/api/screenshot'
-        : '/api/screenshot'
-      
-      console.log('🌐 Chiamando API screenshot:', apiUrl)
-      
-      const response = await fetch(apiUrl, {
+      // Usa HTMLCssToImage.com - servizio gratuito per screenshot
+      const response = await fetch('https://hcti.io/v1/image', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + btoa('demo-user-id:demo-api-key') // Free tier
         },
         body: JSON.stringify({
           html: html,
+          css: '', // CSS già incluso nell'HTML
+          device_scale: 1,
           width: 600,
-          height: 800
+          height: 800,
+          format: 'jpg',
+          quality: 80
         })
       })
       
       const result = await response.json()
       
-      if (result.success && result.screenshot) {
-        console.log('✅ Screenshot Puppeteer generato con successo!')
-        console.log('📊 Dimensione:', Math.round(result.size / 1024), 'KB')
-        return result.screenshot
+      if (result.url) {
+        console.log('✅ Screenshot HTMLCssToImage generato!')
+        console.log('🌐 URL:', result.url)
+        
+        // Converti l'immagine in base64 per storage locale
+        const imageResponse = await fetch(result.url)
+        const imageBlob = await imageResponse.blob()
+        
+        return new Promise((resolve) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result)
+          reader.readAsDataURL(imageBlob)
+        })
       } else {
-        throw new Error(result.error || 'Screenshot API failed')
+        throw new Error('HTMLCssToImage failed: ' + JSON.stringify(result))
       }
 
     } catch (error) {
-      console.error('❌ Errore Puppeteer API:', error)
+      console.error('❌ Errore HTMLCssToImage API:', error)
       
       // Fallback con html2canvas
       console.log('🔄 Tentando fallback con html2canvas...')
