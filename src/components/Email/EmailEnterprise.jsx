@@ -42,17 +42,51 @@ const EmailEnterprise = ({
     left: `${sidebarWidth}px`
   }
   
-  // Funzione upload personalizzato per Supabase
+  // Funzione per calcolare hash MD5 del file
+  const calculateFileHash = async (file) => {
+    const arrayBuffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('MD5', arrayBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
+  // Funzione upload personalizzato per Supabase con deduplicazione
   const customImageUpload = async (file) => {
     try {
       console.log('🚀 Inizio upload personalizzato su Supabase...');
       
-      const fileName = `${Date.now()}_${file.name}`;
+      // 1. Calcola hash del file per deduplicazione
+      const fileHash = await calculateFileHash(file);
+      const fileExtension = file.name.split('.').pop() || 'jpg';
+      const hashFileName = `${fileHash}.${fileExtension}`;
       const bucketName = 'email-assets';
 
+      console.log('🔍 Hash file:', fileHash);
+
+      // 2. Controlla se il file esiste già
+      const { data: existingFile } = await supabase.storage
+        .from(bucketName)
+        .list('', {
+          search: fileHash
+        });
+
+      if (existingFile && existingFile.length > 0) {
+        const existingFileName = existingFile.find(f => f.name.startsWith(fileHash));
+        if (existingFileName) {
+          const { data: { publicUrl } } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(existingFileName.name);
+          
+          console.log('♻️ File già esistente, riutilizzo:', publicUrl);
+          showNotification?.('♻️ Immagine già presente, riutilizzata!', 'info');
+          return publicUrl;
+        }
+      }
+
+      // 3. File nuovo, carica con nome hash
       const { data, error } = await supabase.storage
         .from(bucketName)
-        .upload(fileName, file, {
+        .upload(hashFileName, file, {
           cacheControl: '3600',
           upsert: false,
         });
@@ -68,6 +102,7 @@ const EmailEnterprise = ({
         .getPublicUrl(data.path);
 
       console.log('🔗 URL pubblico generato:', publicUrl);
+      showNotification?.('✅ Nuova immagine caricata su Supabase!', 'success');
       
       return publicUrl;
 
