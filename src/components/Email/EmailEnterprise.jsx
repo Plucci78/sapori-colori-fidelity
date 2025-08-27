@@ -168,13 +168,25 @@ const EmailEnterprise = ({
     }
   };
 
-  // Converte URL in File object
+  // Converte URL in File object usando proxy server
   const urlToFile = async (url) => {
     try {
-      const response = await fetch(url);
-      if (!response.ok) return null;
+      console.log('🔄 Scaricando immagine tramite proxy server...');
       
-      const blob = await response.blob();
+      // Usa il nostro server come proxy per evitare CORS
+      const proxyResponse = await fetch('/api/proxy-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageUrl: url })
+      });
+
+      if (!proxyResponse.ok) {
+        throw new Error(`Proxy server error: ${proxyResponse.status}`);
+      }
+
+      const blob = await proxyResponse.blob();
       const fileName = `image_${Date.now()}.${blob.type.split('/')[1] || 'jpg'}`;
       
       return new File([blob], fileName, { type: blob.type });
