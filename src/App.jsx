@@ -1617,21 +1617,44 @@ for (const customer of recipients) {
   // Genera screenshot per template
   const generateTemplateScreenshot = async (html) => {
     try {
+      // Prima prova con la nostra API Puppeteer (può caricare loghi esterni)
+      try {
+        console.log('📸 Tentando screenshot con API locale Puppeteer...')
+        const response = await fetch('/api/screenshot', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            html: html,
+            width: 600,
+            height: 800
+          })
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.screenshot) {
+            console.log('✅ Screenshot generato con API locale (con loghi!)')
+            return data.screenshot
+          }
+        }
+        console.log('⚠️ API locale non disponibile, fallback a HTMLCssToImage...')
+      } catch (localError) {
+        console.log('⚠️ Errore API locale, fallback a HTMLCssToImage...')
+      }
+      
+      // Fallback con HTMLCssToImage.com (senza loghi esterni)
       console.log('📸 Generando screenshot con HTMLCssToImage...')
-      
-      // Usa HTML originale (senza conversione base64 per ora)  
-      const processedHtml = html
-      
-      // Usa HTMLCssToImage.com - servizio gratuito per screenshot
       const response = await fetch('https://hcti.io/v1/image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Basic ' + btoa('demo-user-id:demo-api-key') // Free tier
+          'Authorization': 'Basic ' + btoa('demo-user-id:demo-api-key')
         },
         body: JSON.stringify({
-          html: processedHtml,
-          css: '', // CSS già incluso nell'HTML
+          html: html,
+          css: '',
           device_scale: 1,
           width: 600,
           height: 800,
