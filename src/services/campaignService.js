@@ -387,8 +387,7 @@ class CampaignService {
       await this.updateCampaign(campaignId, {
         total_sent: totalSent,
         total_opened: uniqueOpens,
-        open_rate: openRate,
-        updated_at: new Date().toISOString()
+        open_rate: openRate
       })
 
       return { totalSent, totalOpened: uniqueOpens, openRate }
