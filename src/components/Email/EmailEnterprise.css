@@ -71,10 +71,16 @@
 }
 
 .btn-campaigns,
-.btn-stats {
+.btn-stats,
+.btn-upload-images {
   background: rgba(255,255,255,0.2) !important;
   border: 2px solid rgba(255,255,255,0.3) !important;
   color: white !important;
+}
+
+.btn-upload-images:hover {
+  background: rgba(212, 175, 55, 0.3) !important;
+  border-color: rgba(212, 175, 55, 0.6) !important;
 }
 
 /* Email Configuration Panel */

@@ -42,6 +42,147 @@ const EmailEnterprise = ({
     left: `${sidebarWidth}px`
   }
   
+  // Funzione upload personalizzato per Supabase
+  const customImageUpload = async (file) => {
+    try {
+      console.log('🚀 Inizio upload personalizzato su Supabase...');
+      
+      const fileName = `${Date.now()}_${file.name}`;
+      const bucketName = 'email-assets';
+
+      const { data, error } = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('✅ File caricato su Supabase:', data.path);
+
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(data.path);
+
+      console.log('🔗 URL pubblico generato:', publicUrl);
+      
+      return publicUrl;
+
+    } catch (error) {
+      console.error('❌ Errore durante l\'upload personalizzato:', error);
+      showNotification?.(`Errore caricamento immagine: ${error.message}`, 'error');
+      throw error;
+    }
+  };
+
+  // Processa immagini locali e le carica su Supabase
+  const processLocalImages = async () => {
+    console.log('🔵 processLocalImages chiamata');
+    
+    if (!emailEditorRef.current?.editor) {
+      console.log('❌ Editor non disponibile');
+      showNotification?.('Editor non caricato', 'error');
+      return;
+    }
+
+    console.log('✅ Editor disponibile, processing...');
+    showNotification?.('🔄 Cercando immagini locali...', 'info');
+
+    try {
+      // Ottieni il design corrente
+      emailEditorRef.current.editor.saveDesign(async (design) => {
+        console.log('🔵 Design ottenuto:', design);
+        let hasChanges = false;
+        const processedUrls = new Set(); // Per evitare duplicati
+
+        // Funzione ricorsiva per trovare e processare immagini
+        const processImages = async (obj) => {
+          if (!obj || typeof obj !== 'object') return;
+
+          for (const key in obj) {
+            // Cerca URL in src.url (struttura Unlayer)
+            if (key === 'src' && obj[key] && typeof obj[key] === 'object' && obj[key].url) {
+              const imageUrl = obj[key].url;
+              console.log('🔍 Trovata immagine con URL:', imageUrl);
+              
+              // Rileva URL da spostare su Supabase (locali + Unlayer)
+              if ((imageUrl.startsWith('blob:') || 
+                   imageUrl.startsWith('data:') || 
+                   imageUrl.startsWith('file:') || 
+                   imageUrl.includes('localhost') ||
+                   imageUrl.includes('assets.unlayer.com')) && 
+                   !processedUrls.has(imageUrl)) {
+                
+                processedUrls.add(imageUrl);
+                
+                try {
+                  console.log('🔄 Processando immagine:', imageUrl);
+                  showNotification?.(`🔄 Caricando immagine su Supabase...`, 'info');
+                  
+                  // Converte l'immagine in File
+                  const file = await urlToFile(imageUrl);
+                  if (file) {
+                    // Carica su Supabase
+                    const supabaseUrl = await customImageUpload(file);
+                    
+                    // Sostituisci l'URL nel design (mantieni la struttura Unlayer)
+                    obj[key].url = supabaseUrl;
+                    hasChanges = true;
+                    
+                    console.log('✅ Immagine sostituita:', imageUrl, '→', supabaseUrl);
+                    showNotification?.(`✅ Immagine caricata su Supabase!`, 'success');
+                  } else {
+                    console.log('❌ Impossibile convertire immagine in file');
+                  }
+                } catch (error) {
+                  console.error('❌ Errore processamento immagine:', error);
+                  showNotification?.(`❌ Errore caricamento: ${error.message}`, 'error');
+                }
+              }
+            } else if (typeof obj[key] === 'object') {
+              await processImages(obj[key]);
+            }
+          }
+        };
+
+        // Processa tutte le immagini
+        await processImages(design);
+
+        // Se ci sono state modifiche, ricarica il design
+        if (hasChanges) {
+          emailEditorRef.current.editor.loadDesign(design);
+          console.log('✅ Design aggiornato con immagini Supabase');
+          showNotification?.('✅ Immagini caricate su Supabase!', 'success');
+        } else {
+          console.log('ℹ️ Nessuna immagine locale trovata da processare');
+          showNotification?.('ℹ️ Nessuna immagine locale da processare', 'info');
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Errore nel processamento immagini:', error);
+    }
+  };
+
+  // Converte URL in File object
+  const urlToFile = async (url) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      
+      const blob = await response.blob();
+      const fileName = `image_${Date.now()}.${blob.type.split('/')[1] || 'jpg'}`;
+      
+      return new File([blob], fileName, { type: blob.type });
+    } catch (error) {
+      console.error('❌ Errore conversione URL to File:', error);
+      return null;
+    }
+  };
+
   // Configurazione Unlayer
   const onReady = useCallback(() => {
     const editor = emailEditorRef.current?.editor;
@@ -49,42 +190,29 @@ const EmailEnterprise = ({
 
     showNotification?.('Editor email caricato!', 'success');
 
-    // REGISTRA UPLOAD PERSONALIZZATO
+    // Registra il callback per l'upload personalizzato
     editor.registerCallback('image', async (file, done) => {
       try {
-        console.log('🚀 Inizio upload personalizzato (callback)...');
         const imageFile = file.attachments[0];
         if (!imageFile) {
           throw new Error('Nessun file immagine trovato.');
         }
 
-        const fileName = `${Date.now()}_${imageFile.name}`;
-        const bucketName = 'email-assets';
-
-        const { data, error } = await supabase.storage
-          .from(bucketName)
-          .upload(fileName, imageFile, {
-            cacheControl: '3600',
-            upsert: false,
-          });
-
-        if (error) {
-          throw error;
-        }
-
-        console.log('✅ File caricato su Supabase:', data.path);
-
-        const { data: { publicUrl } } = supabase.storage
-          .from(bucketName)
-          .getPublicUrl(data.path);
-
-        console.log('🔗 URL pubblico generato:', publicUrl);
-        
-done({ progress: 100, url: publicUrl });
+        const publicUrl = await customImageUpload(imageFile);
+        done({ progress: 100, url: publicUrl });
 
       } catch (error) {
-        console.error('❌ Errore durante l\'upload personalizzato:', error);
-        showNotification?.(`Errore caricamento immagine: ${error.message}`, 'error');
+        console.error('❌ Errore nel callback upload:', error);
+        done({ progress: 100, url: null });
+      }
+    });
+
+    // Intercetta modifiche al design per processare immagini
+    editor.addEventListener('design:updated', async () => {
+      try {
+        await processLocalImages();
+      } catch (error) {
+        console.error('❌ Errore processamento immagini locali:', error);
       }
     });
 
@@ -589,6 +717,18 @@ sessionStorage.removeItem('templateToLoad');
             disabled={isLoading}
           >
             👁️ Anteprima
+          </button>
+          
+          <button 
+            className="btn-upload-images" 
+            onClick={() => {
+              console.log('🔵 Pulsante Carica Immagini cliccato');
+              processLocalImages();
+            }}
+            disabled={isLoading}
+            title="Carica immagini locali su Supabase"
+          >
+            📤 Carica Immagini
           </button>
           
           <button 
@@ -1101,6 +1241,10 @@ sessionStorage.removeItem('templateToLoad');
               imageEditor: true,
               stockImages: false
             },
+            safeHtml: true,
+            customJS: [
+              "https://assets.unlayer.com/plugins/file-upload.js"
+            ],
             tools: {
               text: { enabled: true },
               image: { enabled: true }, 
