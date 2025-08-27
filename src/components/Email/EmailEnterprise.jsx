@@ -29,6 +29,7 @@ const EmailEnterprise = ({
   const [customerSearchTerm, setCustomerSearchTerm] = useState('')
   const [showStatsModal, setShowStatsModal] = useState(false)
   const [showCampaignsModal, setShowCampaignsModal] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, template: null })
   const [showTemplateSaveModal, setShowTemplateSaveModal] = useState(false)
   const [templateName, setTemplateName] = useState('')
   const [templateDescription, setTemplateDescription] = useState('')
@@ -43,7 +44,6 @@ const EmailEnterprise = ({
   
   // Configurazione Unlayer
   const onReady = useCallback(() => {
-    console.log('🎨 Unlayer Editor pronto!')
     showNotification?.('Editor email caricato!', 'success')
     
     // Controlla se c'è un template da caricare da sessionStorage
@@ -51,7 +51,6 @@ const EmailEnterprise = ({
     if (templateToLoad) {
       try {
         const template = JSON.parse(templateToLoad)
-        console.log('📋 Caricamento template automatico:', template.name)
         
         // Carica il design nell'editor
         if (template.unlayer_design && emailEditorRef.current) {
@@ -62,7 +61,6 @@ const EmailEnterprise = ({
         // Rimuovi il template dal sessionStorage
         sessionStorage.removeItem('templateToLoad')
       } catch (error) {
-        console.error('❌ Errore caricamento template automatico:', error)
         sessionStorage.removeItem('templateToLoad')
       }
     }
@@ -89,10 +87,7 @@ const EmailEnterprise = ({
         emailEditorRef.current.editor.exportHtml(async (data) => {
           try {
             // Genera screenshot con Machine
-            console.log('📸 Generando screenshot con Machine...')
-            console.log('📧 HTML da convertire (primi 200 chars):', data.html.substring(0, 200))
             const thumbnailUrl = await generateScreenshot(data.html)
-            console.log('✅ Screenshot generato URL:', thumbnailUrl)
             
             const templateData = {
               name: templateName.trim(),
@@ -104,10 +99,6 @@ const EmailEnterprise = ({
               created_at: new Date().toISOString()
             }
             
-            console.log('💾 Salvataggio template con screenshot:')
-            console.log('- Nome:', templateData.name)
-            console.log('- Thumbnail URL:', templateData.thumbnail_url)
-            console.log('- HTML length:', templateData.html.length)
             
             onSave?.(templateData)
             showNotification?.(`Template "${templateName}" salvato con anteprima!`, 'success')
@@ -134,7 +125,6 @@ const EmailEnterprise = ({
         })
       })
     } catch (error) {
-      console.error('❌ Errore salvataggio:', error)
       showNotification?.('Errore salvataggio template', 'error')
       setIsLoading(false)
     }
@@ -143,7 +133,6 @@ const EmailEnterprise = ({
   // Genera screenshot con html2canvas
   const generateScreenshot = async (html) => {
     try {
-      console.log('📸 Generando anteprima con html2canvas...');
       
       // 1. Crea un contenitore nascosto per il rendering
       const container = document.createElement('div');
@@ -180,11 +169,9 @@ const EmailEnterprise = ({
 
       // 6. Converte il canvas in un URL dati (immagine JPEG di qualità media)
       const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-      console.log('✅ Anteprima generata con successo!');
       return dataUrl;
 
     } catch (error) {
-      console.error('❌ Errore durante la generazione dell\'anteprima con html2canvas:', error);
       // Fallback in caso di errore
       return `https://via.placeholder.com/600x800/8B4513/ffffff?text=${encodeURIComponent('Errore Anteprima')}`;
     }
@@ -194,27 +181,22 @@ const EmailEnterprise = ({
   const regenerateThumbnails = async () => {
     try {
       const templatesNeedingThumbnails = savedTemplates.filter(t => !t.thumbnail_url && t.html_preview)
-      console.log(`🔄 Rigenerando anteprime per ${templatesNeedingThumbnails.length} template...`)
       
       for (const template of templatesNeedingThumbnails) {
         try {
-          console.log(`📸 Generando anteprima per: ${template.name}`)
           const thumbnailUrl = await generateScreenshot(template.html_preview)
-          console.log(`✅ Anteprima generata per ${template.name}: ${thumbnailUrl}`)
           
           // Aggiorna il template nel database
           const updatedTemplate = { ...template, thumbnail_url: thumbnailUrl }
           onSave?.(updatedTemplate) // Questo dovrebbe aggiornare il template esistente
           
         } catch (error) {
-          console.error(`❌ Errore anteprima per ${template.name}:`, error)
         }
       }
       
       showNotification?.('Anteprime rigenerate!', 'success')
       
     } catch (error) {
-      console.error('❌ Errore rigenerazione anteprime:', error)
       showNotification?.('Errore rigenerazione anteprime', 'error')
     }
   }
@@ -222,7 +204,6 @@ const EmailEnterprise = ({
   // Pulisce template duplicati (mantiene solo il più recente per nome)
   const cleanDuplicateTemplates = async () => {
     try {
-      console.log('🧹 Iniziando pulizia duplicati...')
       
       if (!savedTemplates || savedTemplates.length === 0) {
         alert('Nessun template da pulire')
@@ -247,13 +228,11 @@ const EmailEnterprise = ({
           templates.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
           toKeep.push(templates[0]) // Mantieni il più recente
           duplicates.push(...templates.slice(1)) // Elimina gli altri
-          console.log(`📋 ${name}: mantengo 1, elimino ${templates.length - 1}`)
         } else {
           toKeep.push(templates[0])
         }
       })
 
-      console.log(`🗑️ Eliminerò ${duplicates.length} duplicati, manterrò ${toKeep.length}`)
       
       if (duplicates.length === 0) {
         alert('✅ Nessun duplicato trovato!')
@@ -263,7 +242,6 @@ const EmailEnterprise = ({
       const confirmDelete = confirm(`Eliminare ${duplicates.length} template duplicati? (Mantieni ${toKeep.length})`)
       if (!confirmDelete) return
 
-      console.log('🗑️ Eliminando duplicati dal database...')
       
       // Elimina i duplicati dal database
       const idsToDelete = duplicates.map(t => t.id)
@@ -274,12 +252,10 @@ const EmailEnterprise = ({
         .in('id', idsToDelete)
 
       if (error) {
-        console.error('❌ Errore eliminazione database:', error)
         alert('❌ Errore eliminazione dal database')
         return
       }
 
-      console.log(`✅ Eliminati ${duplicates.length} template dal database`)
       
       // Aggiorna la lista locale (rimuovi i duplicati eliminati)
       showNotification?.(`✅ Eliminati ${duplicates.length} duplicati!`, 'success')
@@ -288,7 +264,6 @@ const EmailEnterprise = ({
       window.location.reload() // Modo rapido per aggiornare tutto
       
     } catch (error) {
-      console.error('❌ Errore pulizia duplicati:', error)
       alert('❌ Errore durante la pulizia')
     }
   }
@@ -306,7 +281,6 @@ const EmailEnterprise = ({
       const confirmDelete = confirm(`Eliminare ${corruptedTemplates.length} template corrotti? (Non hanno design utilizzabile)`)
       if (!confirmDelete) return
       
-      console.log('🗑️ Eliminando template corrotti...')
       
       const idsToDelete = corruptedTemplates.map(t => t.id)
       
@@ -316,19 +290,16 @@ const EmailEnterprise = ({
         .in('id', idsToDelete)
         
       if (error) {
-        console.error('❌ Errore eliminazione:', error)
         alert('❌ Errore eliminazione dal database')
         return
       }
       
-      console.log(`✅ Eliminati ${corruptedTemplates.length} template corrotti`)
       showNotification?.(`✅ Eliminati ${corruptedTemplates.length} template corrotti!`, 'success')
       
       // Ricarica la pagina
       window.location.reload()
       
     } catch (error) {
-      console.error('❌ Errore eliminazione corrotti:', error)
       alert('❌ Errore durante l\'eliminazione')
     }
   }
@@ -347,25 +318,14 @@ const EmailEnterprise = ({
 
     setIsLoading(true)
     try {
-      console.log('🚀 Avvio export HTML da Unlayer...')
-      console.log('📋 Metodi disponibili:', Object.getOwnPropertyNames(emailEditorRef.current))
       
       // Proviamo con il metodo corretto di react-email-editor
       emailEditorRef.current.editor.exportHtml((data) => {
-        console.log('📧 HTML generato da Unlayer:')
-        console.log('- Lunghezza:', data.html.length, 'caratteri')
-        console.log('- Preview:', data.html.substring(0, 200) + '...')
-        console.log('- Design JSON:', data.design)
         
         if (!data.html || data.html.trim().length === 0) {
           throw new Error('HTML vuoto generato da Unlayer')
         }
         
-        console.log('📤 Invio tramite sendEmail con parametri:')
-        console.log('- subject:', emailSubject)
-        console.log('- template: unlayer')
-        console.log('- segments:', emailRecipients === 'all' ? [] : [emailRecipients])
-        console.log('- selectedCustomers for custom:', selectedCustomers)
         
         // Determina destinatari in base alla selezione
         let recipients = []
@@ -386,7 +346,6 @@ const EmailEnterprise = ({
           targetCustomers = allCustomers
         }
 
-        console.log('🎯 Target customers per tracking:', targetCustomers.length)
 
         // Invio asincrono con tracking
         onSendEmail?.({
@@ -402,13 +361,11 @@ const EmailEnterprise = ({
           showNotification?.('Email inviata con successo!', 'success')
           setIsLoading(false)
         }).catch((sendError) => {
-          console.error('❌ Errore durante sendEmail:', sendError)
           showNotification?.('Errore invio email: ' + sendError.message, 'error')
           setIsLoading(false)
         })
       })
     } catch (error) {
-      console.error('❌ Errore invio completo:', error)
       showNotification?.('Errore invio email: ' + error.message, 'error')
       setIsLoading(false)
     }
@@ -426,54 +383,37 @@ const EmailEnterprise = ({
         previewWindow.document.close()
       })
     } catch (error) {
-      console.error('❌ Errore anteprima:', error)
       showNotification?.('Errore caricamento anteprima', 'error')
     }
   }, [showNotification])
 
   // Carica template in Unlayer
   const handleLoadTemplate = useCallback((template) => {
-    console.log('🔍 DEBUG Template da caricare:', {
-      name: template.name,
-      hasDesign: !!template.design,
-      hasUnlayerDesign: !!template.unlayer_design,
-      designKeys: Object.keys(template)
-    })
-    
     // Controlla se c'è un design valido (può essere in design o unlayer_design)
     const designData = template.design || template.unlayer_design
     if (!designData) {
       showNotification?.('Template non valido: manca il design', 'error')
-      console.error('❌ Template senza design:', template)
       return
     }
     
     // Verifica che l'editor sia completamente pronto
     if (!emailEditorRef.current || !emailEditorRef.current.editor) {
-      console.log('⏳ Editor non ancora pronto, tentativo tra 1 secondo...')
       setTimeout(() => handleLoadTemplate(template), 1000)
       return
     }
     
     try {
-      console.log('🎨 Caricamento template:', template.name)
-      console.log('📋 Design template:', designData)
       
       emailEditorRef.current.editor.loadDesign(designData)
       showNotification?.(`Template "${template.name}" caricato!`, 'success')
       setShowTemplates(false)
     } catch (error) {
-      console.error('❌ Errore caricamento template:', error)
       showNotification?.('Errore caricamento template: ' + error.message, 'error')
     }
   }, [showNotification])
 
   // Elimina un singolo template
   const handleDeleteTemplate = async (templateId, templateName) => {
-    if (!window.confirm(`Sei sicuro di voler eliminare il template "${templateName}"? L'azione è irreversibile.`)) {
-      return;
-    }
-
     try {
       setIsLoading(true);
       const { error } = await supabase
@@ -482,20 +422,14 @@ const EmailEnterprise = ({
         .eq('id', templateId);
 
       if (error) {
-        console.error('❌ ERRORE DETTAGLIATO ELIMINAZIONE:', error);
-        console.error('- Code:', error.code);
-        console.error('- Message:', error.message);
-        console.error('- Details:', error.details);
         throw error;
       }
 
-      console.log('✅ Template eliminato con successo dal database!');
 
       showNotification?.(`Template "${templateName}" eliminato con successo!`, 'success');
       onTemplateDeleted?.(templateId); // Notifica al componente genitore di aggiornare la lista
 
     } catch (error) {
-      console.error('❌ Errore eliminazione template:', error);
       showNotification?.(`Errore durante l'eliminazione: ${error.message}`, 'error');
     } finally {
       setIsLoading(false);
@@ -554,21 +488,17 @@ const EmailEnterprise = ({
         let updated = false;
         const newThumbnails = {};
 
-        console.log('🔍 Controllo anteprime mancanti...');
         for (const template of savedTemplates) {
           if (!template.thumbnail_url && !templateThumbnails[template.id] && template.html_preview) {
-            console.log(`⏳ Generazione anteprima per: ${template.name}`);
             try {
               const thumb = await generateScreenshot(template.html_preview);
               newThumbnails[template.id] = thumb;
               
               // Persisti l'URL nel database
-              console.log(`💾 Aggiornamento template "${template.name}" con la nuova anteprima.`);
               onSave?.({ ...template, thumbnail_url: thumb });
               updated = true;
 
             } catch (e) {
-              console.error(`❌ Fallita generazione per ${template.name}`, e);
             }
           }
         }
@@ -718,69 +648,6 @@ const EmailEnterprise = ({
               }}
             >
             
-            {/* Debug template data */}
-            <div style={{background: '#e3f2fd', padding: '15px', marginBottom: '20px', borderRadius: '8px', fontSize: '12px'}}>
-              <strong>🔍 Debug Template Data:</strong><br/>
-              Totale: {savedTemplates?.length || 0}<br/>
-              {savedTemplates?.[0] && (
-                <>
-                  Primo template:<br/>
-                  - Nome: {savedTemplates[0].name}<br/>
-                  - thumbnail_url: {savedTemplates[0].thumbnail_url ? '✅ PRESENTE' : '❌ MANCANTE'}<br/>
-                  - html_preview: {savedTemplates[0].html_preview ? '✅ PRESENTE' : '❌ MANCANTE'}<br/>
-                  {savedTemplates[0].thumbnail_url && (
-                    <>
-                    - URL: {savedTemplates[0].thumbnail_url}<br/>
-                    </>
-                  )}
-                </>
-              )}
-              <div style={{display: 'flex', gap: '8px', marginTop: '10px'}}>
-                <button 
-                  onClick={() => alert('Funzione temporaneamente disabilitata per evitare duplicati')}
-                  style={{
-                    background: '#f44336',
-                    color: 'white',
-                    border: 'none',
-                    padding: '6px 12px',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                    cursor: 'not-allowed'
-                  }}
-                  disabled
-                >
-                  🚫 DISABILITATO
-                </button>
-                <button 
-                  onClick={cleanDuplicateTemplates}
-                  style={{
-                    background: '#2196F3',
-                    color: 'white',
-                    border: 'none',
-                    padding: '6px 12px',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  🧹 Pulisci Duplicati
-                </button>
-                <button 
-                  onClick={deleteCorruptedTemplates}
-                  style={{
-                    background: '#f44336',
-                    color: 'white',
-                    border: 'none',
-                    padding: '6px 12px',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  🗑️ Elimina Corrotti
-                </button>
-              </div>
-            </div>
             
             {!savedTemplates || savedTemplates.length === 0 ? (
               <div className="no-templates" style={{textAlign: 'center', padding: '40px 20px', color: '#6c757d'}}>
@@ -806,246 +673,166 @@ const EmailEnterprise = ({
                   <div 
                     key={index} 
                     className="template-card"
+                    onClick={() => handleLoadTemplate(template)}
                     style={{
-                      border: '1px solid #e9ecef',
-                      borderRadius: '16px',
+                      position: 'relative',
+                      borderRadius: '20px',
                       overflow: 'hidden',
-                      background: 'white',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      height: '480px',
-                      transition: 'all 0.3s ease',
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-                      cursor: 'pointer'
+                      background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
+                      height: '350px',
+                      cursor: 'pointer',
+                      boxShadow: '0 12px 40px rgba(139, 69, 19, 0.15), 0 4px 16px rgba(0,0,0,0.1)',
+                      border: '2px solid rgba(139, 69, 19, 0.1)',
+                      borderLeft: '4px solid #D4AF37',
+                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                      backdropFilter: 'blur(10px)'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = '#8B4513'
-                      e.currentTarget.style.transform = 'translateY(-8px)'
-                      e.currentTarget.style.boxShadow = '0 16px 40px rgba(139, 69, 19, 0.15)'
+                      e.currentTarget.style.transform = 'translateY(-12px) scale(1.03)'
+                      e.currentTarget.style.boxShadow = '0 25px 80px rgba(139, 69, 19, 0.3), 0 8px 32px rgba(0,0,0,0.2)'
+                      e.currentTarget.style.borderColor = 'rgba(139, 69, 19, 0.4)'
+                      e.currentTarget.style.borderLeftColor = '#8B4513'
+                      e.currentTarget.style.background = 'linear-gradient(145deg, #ffffff 0%, #f0f8ff 100%)'
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = '#e9ecef'
-                      e.currentTarget.style.transform = 'translateY(0)'
-                      e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'
+                      e.currentTarget.style.transform = 'translateY(0) scale(1)'
+                      e.currentTarget.style.boxShadow = '0 12px 40px rgba(139, 69, 19, 0.15), 0 4px 16px rgba(0,0,0,0.1)'
+                      e.currentTarget.style.borderColor = 'rgba(139, 69, 19, 0.1)'
+                      e.currentTarget.style.borderLeftColor = '#D4AF37'
+                      e.currentTarget.style.background = 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)'
                     }}
                   >
+                    {/* Delete Button */}
                     <button
                       onClick={(e) => {
-                        e.stopPropagation(); // Impedisce di caricare il template
-                        handleDeleteTemplate(template.id, template.name);
+                        e.stopPropagation()
+                        setDeleteConfirm({ show: true, template })
                       }}
                       style={{
                         position: 'absolute',
-                        top: '15px',
-                        right: '15px',
-                        background: 'rgba(220, 53, 69, 0.8)',
+                        top: '12px',
+                        right: '12px',
+                        background: 'rgba(220, 53, 69, 0.9)',
                         color: 'white',
                         border: 'none',
                         borderRadius: '50%',
-                        width: '32px',
-                        height: '32px',
-                        fontSize: '18px',
+                        width: '28px',
+                        height: '28px',
+                        fontSize: '16px',
                         cursor: 'pointer',
                         zIndex: 10,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                        transition: 'background 0.2s ease'
+                        transition: 'all 0.2s ease'
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220, 53, 69, 1)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(220, 53, 69, 0.8)'}
                       title="Elimina template"
                     >
-                      &times;
+                      ×
                     </button>
-                    <div 
-                      className="template-preview"
-                      style={{
-                        background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
-                        height: '300px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        borderBottom: '1px solid #e9ecef'
-                      }}
-                    >
+                    
+                    {/* Template Preview - Full Card */}
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '250px',
+                      overflow: 'hidden'
+                    }}>
                       {(template.thumbnail_url || templateThumbnails[template.id]) ? (
-                        <div style={{
-                          width: '100%',
-                          height: '100%',
-                          background: 'white',
-                          overflow: 'hidden'
-                        }}>
-                          <img 
-                            src={template.thumbnail_url || templateThumbnails[template.id]} 
-                            alt={`Preview ${template.name}`}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              objectPosition: 'top center'
-                            }}
-                          />
-                        </div>
-                      ) : template.html_preview ? (
+                        <img 
+                          src={template.thumbnail_url || templateThumbnails[template.id]} 
+                          alt={`Preview ${template.name}`}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            objectPosition: 'top center'
+                          }}
+                        />
+                      ) : (
                         <div 
                           style={{
                             background: 'linear-gradient(135deg, #8B4513 0%, #D4AF37 100%)',
                             display: 'flex',
-                            flexDirection: 'column',
                             alignItems: 'center',
                             justifyContent: 'center',
                             color: 'white',
-                            textAlign: 'center',
-                            padding: '20px',
-                            height: '100%',
-                            position: 'relative'
+                            fontSize: '48px',
+                            height: '100%'
                           }}
                         >
-                          <div style={{fontSize: '64px', marginBottom: '12px', opacity: 0.9}}>📧</div>
-                          <h4 style={{margin: '0 0 6px 0', fontSize: '18px', fontWeight: '700'}}>
-                            {template.name}
-                          </h4>
-                          <p style={{margin: '0 0 12px 0', fontSize: '12px', opacity: 0.8, lineHeight: '1.3'}}>
-                            {template.description || 'Email Template'}
-                          </p>
-                          <div style={{
-                            background: 'rgba(255,255,255,0.15)',
-                            padding: '6px 12px',
-                            borderRadius: '16px',
-                            fontSize: '10px',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            marginBottom: '8px'
-                          }}>
-                            HTML: {Math.round(template.html_preview.length / 1024)}KB
-                          </div>
-                          <div style={{
-                            fontSize: '9px',
-                            opacity: 0.6,
-                            position: 'absolute',
-                            bottom: '8px',
-                            right: '8px'
-                          }}>
-                            {new Date(template.created_at).toLocaleDateString('it-IT')}
-                          </div>
-                        </div>
-                      ) : (
-                        <div style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '16px',
-                          color: '#8B4513',
-                          textAlign: 'center',
-                          padding: '30px'
-                        }}>
-                          <div style={{
-                            fontSize: '48px',
-                            opacity: '0.6'
-                          }}>🎨</div>
-                          <span style={{
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            color: '#6c757d'
-                          }}>Anteprima in preparazione...</span>
+                          📧
                         </div>
                       )}
                     </div>
+                    
+                    {/* Template Info */}
                     <div style={{
-                      padding: '20px',
-                      background: 'white',
-                      flex: 1,
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100px',
+                      background: 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(248,249,250,0.98) 100%)',
+                      borderTop: '1px solid rgba(139, 69, 19, 0.08)',
+                      padding: '12px',
                       display: 'flex',
-                      flexDirection: 'column'
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      backdropFilter: 'blur(10px)'
                     }}>
-                      <h4 style={{
-                        color: '#333',
-                        fontSize: '16px',
-                        fontWeight: '700',
-                        margin: '0 0 8px 0',
-                        lineHeight: '1.3'
-                      }}>
-                        {template.name || 'Template Personalizzato'}
-                      </h4>
-                      <p style={{
-                        color: '#6c757d',
-                        fontSize: '13px',
-                        lineHeight: '1.4',
-                        margin: '0 0 12px 0',
-                        flex: 1,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden'
-                      }}>
-                        {template.description || 'Un design email personalizzato per le tue campagne'}
-                      </p>
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '15px'
-                      }}>
-                        <small style={{
-                          color: '#8B4513',
-                          fontSize: '11px',
+                      <div>
+                        <h4 style={{
+                          color: '#333',
+                          fontSize: '14px',
                           fontWeight: '600',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px'
+                          margin: '0 0 4px 0',
+                          lineHeight: '1.2',
+                          overflow: 'hidden',
+                          whiteSpace: 'nowrap',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {template.name || 'Template Personalizzato'}
+                        </h4>
+                        <small style={{
+                          color: '#6c757d',
+                          fontSize: '11px',
+                          margin: 0
                         }}>
                           {template.created_at ? new Date(template.created_at).toLocaleDateString('it-IT') : 'Recente'}
                         </small>
-                        <small style={{
-                          color: '#28a745',
-                          fontSize: '11px',
-                          fontWeight: '600',
-                          background: '#e8f5e8',
-                          padding: '4px 8px',
-                          borderRadius: '12px'
-                        }}>
-                          Pronto
-                        </small>
                       </div>
-                    </div>
-                    <div style={{
-                      padding: '0 20px 20px 20px'
-                    }}>
-                      <button 
-                        style={{
-                          width: '100%',
-                          background: 'linear-gradient(135deg, #8B4513 0%, #D4AF37 100%)',
-                          color: 'white',
-                          border: 'none',
-                          padding: '12px 20px',
-                          borderRadius: '12px',
-                          fontSize: '14px',
-                          fontWeight: '700',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          boxShadow: '0 4px 12px rgba(139, 69, 19, 0.3)'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)'
-                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(139, 69, 19, 0.4)'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)'
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 69, 19, 0.3)'
-                        }}
-                        onClick={() => {
-                          console.log('🖱️ Caricando template:', template.name)
+                      
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
                           handleLoadTemplate(template)
                           setShowTemplates(false)
                         }}
+                        style={{
+                          background: 'linear-gradient(135deg, #8B4513 0%, #D4AF37 100%)',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 2px 8px rgba(139, 69, 19, 0.3)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-1px)'
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 69, 19, 0.4)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)'
+                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 69, 19, 0.3)'
+                        }}
                       >
-                        🚀 Usa Template
+                        🚀 Carica Template
                       </button>
                     </div>
                   </div>
@@ -1641,6 +1428,127 @@ const EmailEnterprise = ({
                 }}
               >
                 {isLoading ? '💾 Salvataggio...' : '💾 Salva Template'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Delete Confirmation Popup */}
+      {deleteConfirm.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0, 0, 0, 0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          backdropFilter: 'blur(8px)'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '20px',
+            padding: '40px',
+            minWidth: '400px',
+            maxWidth: '500px',
+            textAlign: 'center',
+            boxShadow: '0 25px 80px rgba(0,0,0,0.3)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            animation: 'popupIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}>
+            <div style={{
+              fontSize: '64px',
+              marginBottom: '24px',
+              color: '#dc3545'
+            }}>
+              🗑️
+            </div>
+            <h3 style={{
+              color: '#333',
+              fontSize: '24px',
+              fontWeight: '700',
+              marginBottom: '16px',
+              margin: 0
+            }}>
+              Elimina Template
+            </h3>
+            <p style={{
+              color: '#666',
+              fontSize: '16px',
+              lineHeight: '1.5',
+              marginBottom: '32px',
+              margin: '16px 0 32px 0'
+            }}>
+              Sei sicuro di voler eliminare il template<br />
+              <strong>"{deleteConfirm.template?.name}"</strong>?<br />
+              Questa azione non può essere annullata.
+            </p>
+            <div style={{
+              display: 'flex',
+              gap: '16px',
+              justifyContent: 'center'
+            }}>
+              <button
+                onClick={() => setDeleteConfirm({ show: false, template: null })}
+                style={{
+                  background: '#f8f9fa',
+                  color: '#666',
+                  border: '2px solid #e9ecef',
+                  padding: '14px 28px',
+                  borderRadius: '12px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  minWidth: '120px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#e9ecef'
+                  e.currentTarget.style.borderColor = '#dee2e6'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#f8f9fa'
+                  e.currentTarget.style.borderColor = '#e9ecef'
+                }}
+              >
+                Annulla
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await handleDeleteTemplate(deleteConfirm.template.id, deleteConfirm.template.name)
+                    setDeleteConfirm({ show: false, template: null })
+                  } catch (error) {
+                    showNotification?.('Errore durante l\'eliminazione', 'error')
+                  }
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '14px 28px',
+                  borderRadius: '12px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  minWidth: '120px',
+                  boxShadow: '0 4px 12px rgba(220, 53, 69, 0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(220, 53, 69, 0.4)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(220, 53, 69, 0.3)'
+                }}
+              >
+                Elimina
               </button>
             </div>
           </div>
