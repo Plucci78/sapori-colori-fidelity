@@ -76,53 +76,26 @@ const EmailEnterprise = ({
 
       console.log('🔍 Hash file:', fileHash);
 
-      // 2. Controlla se il file esiste già provando a ottenere l'URL
-      try {
-        const { data: { publicUrl } } = supabase.storage
-          .from(bucketName)
-          .getPublicUrl(hashFileName);
-          
-        // Testa se il file esiste facendo una HEAD request
-        const testResponse = await fetch(publicUrl, { method: 'HEAD' });
-        
-        if (testResponse.ok) {
-          console.log('♻️ File già esistente, riutilizzo:', publicUrl);
-          showNotification?.('♻️ Immagine già presente, riutilizzata!', 'info');
-          return publicUrl;
-        }
-      } catch (error) {
-        console.log('🔍 File non esistente, procedo con upload');
-      }
-
-      // 3. File nuovo, carica con nome hash
+      // 2. Carica sempre con upsert: true (evita errori 409 e deduplica automaticamente)
       const { data, error } = await supabase.storage
         .from(bucketName)
         .upload(hashFileName, file, {
           cacheControl: '3600',
-          upsert: false,
+          upsert: true, // Sovrascrive se esiste (stesso hash = stesso contenuto)
         });
 
       if (error) {
-        // Se il file esiste già (errore 400), riutilizzalo
-        if (error.message?.includes('already exists') || error.status === 409 || error.statusCode === 409) {
-          console.log('♻️ File esistente rilevato dall\'errore, riutilizzo');
-          const { data: { publicUrl } } = supabase.storage
-            .from(bucketName)
-            .getPublicUrl(hashFileName);
-          showNotification?.('♻️ Immagine già presente, riutilizzata!', 'info');
-          return publicUrl;
-        }
         throw error;
       }
 
-      console.log('✅ File caricato su Supabase:', data.path);
+      console.log('✅ File processato su Supabase:', data.path);
 
       const { data: { publicUrl } } = supabase.storage
         .from(bucketName)
         .getPublicUrl(data.path);
 
       console.log('🔗 URL pubblico generato:', publicUrl);
-      showNotification?.('✅ Nuova immagine caricata su Supabase!', 'success');
+      showNotification?.('✅ Immagine caricata su Supabase!', 'success');
       
       return publicUrl;
 
@@ -1301,7 +1274,14 @@ sessionStorage.removeItem('templateToLoad');
             features: {
               preview: true,
               imageEditor: true,
-              stockImages: false
+              stockImages: false,
+              colorPicker: true
+            },
+            colorPicker: {
+              presets: [
+                '#8B4513', '#D4AF37', '#FFFFFF', '#000000',
+                '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'
+              ]
             },
             safeHtml: true,
             customJS: [
