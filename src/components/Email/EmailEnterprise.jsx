@@ -886,9 +886,10 @@ const EmailEnterprise = ({
                             src={template.thumbnail_url || templateThumbnails[template.id]} 
                             alt={`Preview ${template.name}`}
                             style={{
-                              maxWidth: '100%',
-                              maxHeight: '100%',
-                              objectFit: 'contain',
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              objectPosition: 'top center',
                               borderRadius: '4px',
                               boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                             }}
