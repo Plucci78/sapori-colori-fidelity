@@ -482,8 +482,14 @@ const EmailEnterprise = ({
         .eq('id', templateId);
 
       if (error) {
+        console.error('❌ ERRORE DETTAGLIATO ELIMINAZIONE:', error);
+        console.error('- Code:', error.code);
+        console.error('- Message:', error.message);
+        console.error('- Details:', error.details);
         throw error;
       }
+
+      console.log('✅ Template eliminato con successo dal database!');
 
       showNotification?.(`Template "${templateName}" eliminato con successo!`, 'success');
       onTemplateDeleted?.(templateId); // Notifica al componente genitore di aggiornare la lista
