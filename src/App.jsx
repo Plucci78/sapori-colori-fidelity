@@ -1592,25 +1592,29 @@ for (const customer of recipients) {
       // 2. Inserisci l'HTML del template e sostituisci immagini esterne con proxy
       container.innerHTML = html
       
-      // Sostituisci immagini esterne con versioni proxy
+      // Sostituisci immagini esterne con placeholder per evitare CORS
       const images = container.querySelectorAll('img')
       images.forEach(img => {
-        if (img.src && img.src.startsWith('https://assets.unlayer.com/')) {
-          // Usa un servizio proxy per evitare CORS
-          const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(img.src)}`
-          img.src = proxyUrl
-          img.crossOrigin = 'anonymous'
+        if (img.src && (img.src.startsWith('https://assets.unlayer.com/') || img.src.startsWith('http'))) {
+          // Sostituisci con un placeholder colorato che rappresenta l'immagine
+          const placeholder = document.createElement('div')
+          placeholder.style.width = img.style.width || '200px'
+          placeholder.style.height = img.style.height || '100px'
+          placeholder.style.backgroundColor = '#8B4513'
+          placeholder.style.color = 'white'
+          placeholder.style.display = 'flex'
+          placeholder.style.alignItems = 'center'
+          placeholder.style.justifyContent = 'center'
+          placeholder.style.fontSize = '14px'
+          placeholder.style.fontFamily = 'Arial, sans-serif'
+          placeholder.style.textAlign = 'center'
+          placeholder.innerHTML = '📧<br>Logo'
+          img.parentNode.replaceChild(placeholder, img)
         }
       })
 
-      // 3. Aspetta che le immagini interne si carichino (usa le immagini già selezionate)
-      const promises = images.map(img => new Promise(resolve => {
-        if (img.complete) return resolve()
-        img.onload = resolve
-        img.onerror = resolve // Risolvi anche in caso di errore
-        setTimeout(resolve, 3000) // Timeout per evitare blocchi
-      }))
-      await Promise.all(promises)
+      // 3. Non servono promesse per i placeholder, sono già pronti
+      await new Promise(resolve => setTimeout(resolve, 100)) // Piccolo delay per il rendering
       
       // 4. Importa html2canvas dinamicamente
       const html2canvas = await import('html2canvas')
