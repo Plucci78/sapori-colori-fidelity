@@ -124,6 +124,13 @@ function CustomerView({
 
   // Funzione comune per controllare il compleanno
   const checkCustomerBirthday = (customer) => {
+    console.log('🔍 DEBUG checkCustomerBirthday:', {
+      cliente: customer.name,
+      birth_date: customer.birth_date,
+      notifyBirthday_exists: !!notifyBirthday,
+      notifyBirthday_type: typeof notifyBirthday
+    })
+    
     if (customer.birth_date && notifyBirthday) {
       const today = new Date()
       const birthday = new Date(customer.birth_date)
@@ -142,6 +149,12 @@ function CustomerView({
         console.log('🎉 È IL COMPLEANNO!', customer.name)
         notifyBirthday(customer)
       }
+    } else {
+      console.log('❌ Controllo compleanno saltato:', {
+        motivo: !customer.birth_date ? 'Manca birth_date' : 'Manca notifyBirthday',
+        birth_date: customer.birth_date,
+        notifyBirthday_disponibile: !!notifyBirthday
+      })
     }
   }
 
