@@ -17,14 +17,14 @@ export const birthdayScheduler = {
   lastRun: null,
 
   // Inizializza lo scheduler
-  init() {
+  async init() {
     console.log('🎂 Inizializzazione Birthday Scheduler...');
     
-    // Carica ultima esecuzione da localStorage
-    this.loadLastRun();
+    // Carica ultima esecuzione dal database
+    await this.loadLastRun();
     
     // Avvia controllo immediato se non è stato fatto oggi
-    this.checkTodayRun();
+    await this.checkTodayRun();
     
     // Programma controllo giornaliero alle 09:00
     this.scheduleDailyCheck();
@@ -32,18 +32,47 @@ export const birthdayScheduler = {
     console.log('✅ Birthday Scheduler attivato');
   },
 
-  // Carica ultima esecuzione da localStorage
-  loadLastRun() {
-    const stored = localStorage.getItem('birthday_last_run');
-    if (stored) {
-      this.lastRun = stored;
-      console.log('📅 Ultima esecuzione caricata:', new Date(stored).toLocaleString('it-IT'));
+  // Carica ultima esecuzione dal database
+  async loadLastRun() {
+    try {
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('last_birthday_check')
+        .eq('key', 'birthday_scheduler')
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.error('Errore caricamento last_birthday_check:', error);
+        return;
+      }
+
+      if (data?.last_birthday_check) {
+        this.lastRun = data.last_birthday_check;
+        console.log('📅 Ultima esecuzione caricata dal DB:', new Date(this.lastRun).toLocaleString('it-IT'));
+      }
+    } catch (error) {
+      console.error('Errore caricamento last_birthday_check:', error);
     }
   },
 
-  // Salva ultima esecuzione in localStorage
-  saveLastRun() {
-    localStorage.setItem('birthday_last_run', this.lastRun);
+  // Salva ultima esecuzione nel database
+  async saveLastRun() {
+    try {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({
+          key: 'birthday_scheduler',
+          last_birthday_check: this.lastRun
+        });
+
+      if (error) {
+        console.error('Errore salvataggio last_birthday_check:', error);
+      } else {
+        console.log('💾 Last run salvato nel DB:', new Date(this.lastRun).toLocaleString('it-IT'));
+      }
+    } catch (error) {
+      console.error('Errore salvataggio last_birthday_check:', error);
+    }
   },
 
   // Controlla se già eseguito oggi
@@ -112,7 +141,7 @@ export const birthdayScheduler = {
     try {
       this.isRunning = true;
       this.lastRun = new Date().toISOString();
-      this.saveLastRun(); // Salva in localStorage
+      await this.saveLastRun(); // Salva nel database
       
       console.log('🎂 Avvio controllo compleanni automatico...');
       
@@ -241,10 +270,22 @@ export const birthdayScheduler = {
   },
 
   // Reset controllo giornaliero (per test)
-  resetDailyCheck() {
-    localStorage.removeItem('birthday_last_run');
-    this.lastRun = null;
-    console.log('🔄 Reset controllo giornaliero completato');
+  async resetDailyCheck() {
+    try {
+      const { error } = await supabase
+        .from('app_settings')
+        .delete()
+        .eq('key', 'birthday_scheduler');
+
+      if (error) {
+        console.error('Errore reset controllo:', error);
+      }
+
+      this.lastRun = null;
+      console.log('🔄 Reset controllo giornaliero completato nel DB');
+    } catch (error) {
+      console.error('Errore reset controllo:', error);
+    }
   }
 };
 

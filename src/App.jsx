@@ -1257,7 +1257,9 @@ const fixReferralData = async (customerId) => {
       loadCustomerLevels()
       
       // Inizializza Birthday Scheduler
-      birthdayScheduler.init()
+      birthdayScheduler.init().catch(error => {
+        console.error('Errore inizializzazione Birthday Scheduler:', error);
+      })
       
       // Esponi funzioni di test in console (solo in dev)
       if (process.env.NODE_ENV === 'development') {
