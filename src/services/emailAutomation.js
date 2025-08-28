@@ -129,6 +129,12 @@ export const emailAutomationService = {
   async sendBirthdayEmail(customer) {
     if (!customer.email) return;
     
+    // LOGGING DETTAGLIATO PER DEBUG
+    console.log(`🚨 INVIO EMAIL COMPLEANNO - DEBUG INFO:`);
+    console.log(`👤 Cliente: ${customer.name} (${customer.email})`);
+    console.log(`📅 Timestamp: ${new Date().toISOString()}`);
+    console.log(`🔍 Stack trace:`, new Error().stack);
+    
     console.log(`🎂 Invio email compleanno a ${customer.name}`);
     return await this.sendAutomaticEmail('birthday', customer);
   },
@@ -195,20 +201,26 @@ export const emailAutomationService = {
     }
   },
 
-  // Controlla se email compleanno già inviata oggi
-  async isBirthdayEmailSentToday(customerId) {
+  // Controlla se sono già state inviate email compleanno oggi (controllo generico)
+  async areBirthdayEmailsSentToday() {
     try {
       const today = new Date().toISOString().split('T')[0];
       
       const { data, error } = await supabase
         .from('email_logs')
         .select('*')
-        .eq('template_name', 'automatic_birthday')
-        .eq('metadata->customer_id', customerId)
+        .eq('email_type', 'automatic_birthday')
         .gte('created_at', `${today}T00:00:00`)
         .lt('created_at', `${today}T23:59:59`);
 
-      return data && data.length > 0;
+      if (error) {
+        console.error('Errore controllo database email compleanno:', error);
+        return false;
+      }
+
+      const count = data?.length || 0;
+      console.log(`🔍 Trovate ${count} email compleanno inviate oggi nel database`);
+      return count > 0;
     } catch (error) {
       console.error('Errore controllo email compleanno:', error);
       return false;
@@ -220,29 +232,34 @@ export const emailAutomationService = {
     try {
       console.log('🎂 Inizio controllo compleanni giornaliero...');
       
+      // Prima controlla se sono già state inviate email oggi
+      const alreadyProcessedToday = await this.areBirthdayEmailsSentToday();
+      if (alreadyProcessedToday) {
+        console.log('✅ Email compleanno già inviate oggi, skip processo');
+        return { total: 0, sent: 0, skipped: true };
+      }
+      
       const birthdayCustomers = await this.getTodayBirthdays();
       let emailsSent = 0;
       
+      console.log(`🎂 Trovati ${birthdayCustomers.length} clienti con compleanno oggi`);
+      
       for (const customer of birthdayCustomers) {
-        // Controlla se email già inviata oggi
-        const alreadySent = await this.isBirthdayEmailSentToday(customer.id);
-        
-        if (!alreadySent) {
+        if (customer.email) {
           const success = await this.sendBirthdayEmail(customer);
           if (success) {
             emailsSent++;
-            // Salva log specifico per compleanno
             await this.saveBirthdayLog(customer);
           }
           
           // Pausa di 1 secondo tra email per evitare rate limiting
           await new Promise(resolve => setTimeout(resolve, 1000));
         } else {
-          console.log(`📧 Email compleanno già inviata oggi per ${customer.name}`);
+          console.log(`📧 ${customer.name} non ha email, skip`);
         }
       }
       
-      console.log(`✅ Processo compleanni completato: ${emailsSent} email inviate`);
+      console.log(`✅ Processo compleanni completato: ${emailsSent} email inviate su ${birthdayCustomers.length} clienti`);
       return { total: birthdayCustomers.length, sent: emailsSent };
       
     } catch (error) {
@@ -257,21 +274,14 @@ export const emailAutomationService = {
       console.log('💾 Tentativo salvataggio log compleanno per:', customer.name);
       
       const logEntry = {
-        template_name: 'automatic_birthday',
-        recipient_email: customer.email,
-        recipient_name: customer.name,
+        email_type: 'automatic_birthday',
+        recipients_count: 1,
         subject: `Tanti auguri ${customer.name}! 🎉`,
         status: 'sent',
-        sent_at: new Date().toISOString(),
-        metadata: { 
-          type: 'automatic', 
-          trigger: 'birthday',
-          customer_id: customer.id,
-          birth_date: customer.birth_date
-        }
+        sent_at: new Date().toISOString()
       };
       
-      console.log('💾 Dati log da inserire:', logEntry);
+      console.log('💾 Dati log da inserire (schema corretto):', logEntry);
       
       const { data, error } = await supabase
         .from('email_logs')
@@ -339,12 +349,11 @@ export const emailAutomationService = {
       await supabase
         .from('email_logs')
         .insert({
-          template_name: `automatic_${type}`,
-          recipient_email: customer.email,
-          recipient_name: customer.name,
+          email_type: `automatic_${type}`,
+          recipients_count: 1,
           subject: subject,
           status: 'sent',
-          metadata: { type: 'automatic', trigger: type }
+          sent_at: new Date().toISOString()
         });
     } catch (error) {
       console.error('Errore salvataggio log:', error);

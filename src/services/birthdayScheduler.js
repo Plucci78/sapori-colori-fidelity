@@ -139,6 +139,11 @@ export const birthdayScheduler = {
     }
 
     try {
+      // LOGGING DETTAGLIATO PER DEBUG
+      console.log('🚨 BIRTHDAY SCHEDULER - DEBUG INFO:');
+      console.log(`📅 Timestamp avvio: ${new Date().toISOString()}`);
+      console.log(`🔍 Chiamato da:`, new Error().stack);
+      
       this.isRunning = true;
       this.lastRun = new Date().toISOString();
       await this.saveLastRun(); // Salva nel database
