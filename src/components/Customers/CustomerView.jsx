@@ -154,13 +154,25 @@ function CustomerView({
             // Usa lo stesso controllo di emailAutomation.js per coerenza
             const today = new Date().toISOString().split('T')[0];
             
-            const { data: emailLogs, error } = await supabase
+            // Prima prova con recipient_email, poi con customer_id come fallback
+            const { data: emailLogsByEmail } = await supabase
               .from('email_logs')
               .select('*')
               .eq('template_name', 'automatic_birthday')
-              .or(`recipient_email.eq.${customer.email},metadata->>customer_id.eq.${customer.id}`)
+              .eq('recipient_email', customer.email)
               .gte('created_at', `${today}T00:00:00`)
-              .lt('created_at', `${today}T23:59:59`)
+              .lt('created_at', `${today}T23:59:59`);
+              
+            const { data: emailLogsByCustomerId } = await supabase
+              .from('email_logs')
+              .select('*')
+              .eq('template_name', 'automatic_birthday')
+              .contains('metadata', { customer_id: customer.id })
+              .gte('created_at', `${today}T00:00:00`)
+              .lt('created_at', `${today}T23:59:59`);
+            
+            const emailLogs = [...(emailLogsByEmail || []), ...(emailLogsByCustomerId || [])];
+            const error = null; // Ignora errori singoli, conta solo i risultati
             
             if (error) {
               console.error('Errore controllo email logs:', error)
