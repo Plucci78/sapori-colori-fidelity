@@ -1257,11 +1257,12 @@ const fixReferralData = async (customerId) => {
       loadCustomerLevels()
       
       // Inizializza Birthday Scheduler (ora coordinato con controllo manuale)
-      birthdayScheduler.init().catch(error => {
-        console.error('Errore inizializzazione Birthday Scheduler:', error);
-      })
+      // TEMP DISABILITATO: Birthday Scheduler causa email ad ogni refresh
+      // birthdayScheduler.init().catch(error => {
+      //   console.error('Errore inizializzazione Birthday Scheduler:', error);
+      // })
       
-      console.log('🎂 Birthday Scheduler RIABILITATO con controllo anti-duplicati');
+      console.log('⚠️ Birthday Scheduler DISABILITATO - causa email ad ogni refresh');
       
       // Esponi funzioni di test in console (solo in dev)
       if (process.env.NODE_ENV === 'development') {

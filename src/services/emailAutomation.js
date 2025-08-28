@@ -254,23 +254,38 @@ export const emailAutomationService = {
   // Salva log specifico per compleanno
   async saveBirthdayLog(customer) {
     try {
-      await supabase
+      console.log('💾 Tentativo salvataggio log compleanno per:', customer.name);
+      
+      const logEntry = {
+        template_name: 'automatic_birthday',
+        recipient_email: customer.email,
+        recipient_name: customer.name,
+        subject: `Tanti auguri ${customer.name}! 🎉`,
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+        metadata: { 
+          type: 'automatic', 
+          trigger: 'birthday',
+          customer_id: customer.id,
+          birth_date: customer.birth_date
+        }
+      };
+      
+      console.log('💾 Dati log da inserire:', logEntry);
+      
+      const { data, error } = await supabase
         .from('email_logs')
-        .insert({
-          template_name: 'automatic_birthday',
-          recipient_email: customer.email,
-          recipient_name: customer.name,
-          subject: `Tanti auguri ${customer.name}! 🎉`,
-          status: 'sent',
-          metadata: { 
-            type: 'automatic', 
-            trigger: 'birthday',
-            customer_id: customer.id,
-            birth_date: customer.birth_date
-          }
-        });
+        .insert(logEntry);
+        
+      if (error) {
+        console.error('❌ Errore inserimento log compleanno:', error);
+        console.error('❌ Dettagli errore:', error.message, error.details);
+      } else {
+        console.log('✅ Log compleanno salvato con successo:', data);
+      }
+      
     } catch (error) {
-      console.error('Errore salvataggio log compleanno:', error);
+      console.error('💥 Errore generale salvataggio log compleanno:', error);
     }
   },
 
