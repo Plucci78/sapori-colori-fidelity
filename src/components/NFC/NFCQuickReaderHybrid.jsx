@@ -75,7 +75,7 @@ const NFCQuickReaderHybrid = ({ onCustomerFound, showNotification }) => {
       // Poi cerchiamo il cliente (incluso avatar_url)
       const { data: customerData, error: customerError } = await supabase
         .from('customers')
-        .select('id, name, phone, email, points, wallet_balance, created_at, avatar_url')
+        .select('id, name, phone, email, points, wallet_balance, created_at, avatar_url, birth_date')
         .eq('id', tagData.customer_id)
         .single()
 
