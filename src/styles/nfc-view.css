@@ -19,12 +19,21 @@
 .nfc-title {
   font-size: 2.5rem;
   font-weight: 800;
+  color: #8B4513; /* Fallback color */
   background: linear-gradient(135deg, #8B4513 0%, #D4AF37 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin-bottom: 8px;
   animation: fadeInUp 0.6s ease-out;
+}
+
+/* Fallback per browser che non supportano background-clip: text */
+@supports not (-webkit-background-clip: text) {
+  .nfc-title {
+    color: #8B4513;
+    background: none;
+  }
 }
 
 .nfc-subtitle {
