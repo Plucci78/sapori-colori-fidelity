@@ -151,18 +151,16 @@ function CustomerView({
         // Controlla se email compleanno già inviata oggi per questo cliente
         if (customer.email) {
           try {
-            const todayStart = new Date()
-            todayStart.setHours(0, 0, 0, 0)
-            const todayEnd = new Date()
-            todayEnd.setHours(23, 59, 59, 999)
+            // Usa lo stesso controllo di emailAutomation.js per coerenza
+            const today = new Date().toISOString().split('T')[0];
             
             const { data: emailLogs, error } = await supabase
               .from('email_logs')
               .select('*')
               .eq('template_name', 'automatic_birthday')
-              .eq('recipient_email', customer.email)
-              .gte('created_at', todayStart.toISOString())
-              .lte('created_at', todayEnd.toISOString())
+              .or(`recipient_email.eq.${customer.email},metadata->>customer_id.eq.${customer.id}`)
+              .gte('created_at', `${today}T00:00:00`)
+              .lt('created_at', `${today}T23:59:59`)
             
             if (error) {
               console.error('Errore controllo email logs:', error)
@@ -172,12 +170,14 @@ function CustomerView({
             }
             
             if (emailLogs && emailLogs.length > 0) {
-              console.log('📧 Email compleanno già inviata oggi a', customer.name)
+              console.log('📧 Email compleanno già inviata oggi a', customer.name, 'Skip email: TRUE')
+              console.log('📧 DEBUG: emailLogs trovati:', emailLogs.length, 'record(s)')
               // Mostra solo popup e musica, senza inviare email
               notifyBirthday(customer, { skipEmail: true })
             } else {
-              console.log('✅ Nessuna email compleanno inviata oggi, procedo con email...')
-              notifyBirthday(customer)
+              console.log('✅ Nessuna email compleanno inviata oggi, procedo con email per', customer.name)
+              console.log('📧 DEBUG: emailLogs risultato:', emailLogs)
+              notifyBirthday(customer, { skipEmail: false })
             }
             
           } catch (error) {

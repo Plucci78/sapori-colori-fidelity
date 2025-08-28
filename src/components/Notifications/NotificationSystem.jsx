@@ -41,8 +41,18 @@ const NotificationSystem = ({
         }
         
         // Invia email di compleanno se necessario
+        console.log('🔍 DEBUG NotificationSystem:', {
+          type: notification.type,
+          skipEmail: notification.skipEmail,
+          hasEmail: !!notification.customer?.email,
+          customerName: notification.customer?.name
+        })
+        
         if (notification.type === 'birthday' && !notification.skipEmail && notification.customer?.email) {
+          console.log('📧 NotificationSystem: Invio email compleanno per', notification.customer.name)
           sendBirthdayEmail(notification.customer)
+        } else if (notification.type === 'birthday' && notification.skipEmail) {
+          console.log('📧 NotificationSystem: Skip email per', notification.customer?.name, '(skipEmail=true)')
         }
         
         // Auto-dismiss dopo 15 secondi
