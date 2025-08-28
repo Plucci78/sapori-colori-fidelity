@@ -20,6 +20,9 @@ export const birthdayScheduler = {
   init() {
     console.log('🎂 Inizializzazione Birthday Scheduler...');
     
+    // Carica ultima esecuzione da localStorage
+    this.loadLastRun();
+    
     // Avvia controllo immediato se non è stato fatto oggi
     this.checkTodayRun();
     
@@ -29,14 +32,36 @@ export const birthdayScheduler = {
     console.log('✅ Birthday Scheduler attivato');
   },
 
+  // Carica ultima esecuzione da localStorage
+  loadLastRun() {
+    const stored = localStorage.getItem('birthday_last_run');
+    if (stored) {
+      this.lastRun = stored;
+      console.log('📅 Ultima esecuzione caricata:', new Date(stored).toLocaleString('it-IT'));
+    }
+  },
+
+  // Salva ultima esecuzione in localStorage
+  saveLastRun() {
+    localStorage.setItem('birthday_last_run', this.lastRun);
+  },
+
   // Controlla se già eseguito oggi
   async checkTodayRun() {
-    const today = new Date().toDateString();
+    const now = new Date();
+    const today = now.toDateString();
     const lastRunDate = this.lastRun ? new Date(this.lastRun).toDateString() : null;
     
+    // Se non è mai stato eseguito oggi
     if (lastRunDate !== today) {
-      console.log('🎂 Controllo compleanni non eseguito oggi, avvio...');
-      await this.runBirthdayCheck();
+      // Esegui solo se è almeno mezzogiorno o se è dopo le 9:00
+      const hour = now.getHours();
+      if (hour >= 9) {
+        console.log('🎂 Controllo compleanni non eseguito oggi, avvio...');
+        await this.runBirthdayCheck();
+      } else {
+        console.log(`⏰ Troppo presto per controllo compleanni (${hour}:${now.getMinutes()}), aspetto le 9:00`);
+      }
     } else {
       console.log('✅ Controllo compleanni già eseguito oggi');
     }
@@ -44,17 +69,28 @@ export const birthdayScheduler = {
 
   // Programma controllo giornaliero
   scheduleDailyCheck() {
-    // Calcola millisecondi fino alle 09:00 del giorno successivo
     const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0);
+    let nextCheck;
     
-    const msUntilTomorrow = tomorrow.getTime() - now.getTime();
+    // Se sono già passate le 9:00 di oggi, programma per domani
+    const todayAt9 = new Date(now);
+    todayAt9.setHours(9, 0, 0, 0);
     
-    console.log(`⏰ Prossimo controllo compleanni: ${tomorrow.toLocaleString('it-IT')}`);
+    if (now >= todayAt9) {
+      // È già passata l'ora di oggi, programma per domani
+      nextCheck = new Date(now);
+      nextCheck.setDate(nextCheck.getDate() + 1);
+      nextCheck.setHours(9, 0, 0, 0);
+    } else {
+      // Non sono ancora le 9:00 di oggi, programma per oggi
+      nextCheck = todayAt9;
+    }
     
-    // Timer per domani alle 09:00
+    const msUntilNext = nextCheck.getTime() - now.getTime();
+    
+    console.log(`⏰ Prossimo controllo compleanni: ${nextCheck.toLocaleString('it-IT')}`);
+    
+    // Timer per il prossimo controllo
     this.dailyTimer = setTimeout(() => {
       this.runBirthdayCheck();
       
@@ -63,7 +99,7 @@ export const birthdayScheduler = {
         this.runBirthdayCheck();
       }, 24 * 60 * 60 * 1000); // 24 ore
       
-    }, msUntilTomorrow);
+    }, msUntilNext);
   },
 
   // Esegue controllo compleanni
@@ -76,6 +112,7 @@ export const birthdayScheduler = {
     try {
       this.isRunning = true;
       this.lastRun = new Date().toISOString();
+      this.saveLastRun(); // Salva in localStorage
       
       console.log('🎂 Avvio controllo compleanni automatico...');
       
@@ -155,11 +192,23 @@ export const birthdayScheduler = {
     if (!this.dailyTimer) return null;
     
     const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0);
+    let nextCheck;
     
-    return tomorrow.toISOString();
+    // Se sono già passate le 9:00 di oggi, programma per domani
+    const todayAt9 = new Date(now);
+    todayAt9.setHours(9, 0, 0, 0);
+    
+    if (now >= todayAt9) {
+      // È già passata l'ora di oggi, prossimo controllo domani
+      nextCheck = new Date(now);
+      nextCheck.setDate(nextCheck.getDate() + 1);
+      nextCheck.setHours(9, 0, 0, 0);
+    } else {
+      // Non sono ancora le 9:00 di oggi, prossimo controllo oggi
+      nextCheck = todayAt9;
+    }
+    
+    return nextCheck.toISOString();
   },
 
   // Test manuale
@@ -189,6 +238,13 @@ export const birthdayScheduler = {
       console.error('Errore test:', error);
       return false;
     }
+  },
+
+  // Reset controllo giornaliero (per test)
+  resetDailyCheck() {
+    localStorage.removeItem('birthday_last_run');
+    this.lastRun = null;
+    console.log('🔄 Reset controllo giornaliero completato');
   }
 };
 

@@ -31,6 +31,7 @@ import SubscriptionManager from './components/Subscriptions/SubscriptionManager'
 import CustomerView from './components/Customers/CustomerView'
 import EmailView from './components/Email/EmailView'
 import EmailEnterprise from './components/Email/EmailEnterprise'
+import FlowEditor from './email-flow/FlowEditor'
 import EmailSection from './components/Email/EmailSection'
 import EmailTemplateManager from './components/Email/EmailTemplateManager'
 import ChatView from './components/Chat/ChatView'
@@ -827,6 +828,17 @@ const fixReferralData = async (customerId) => {
       permission: 'canSendEmails'
     },
     {
+      id: 'flow',
+      title: 'Flow Editor',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+        </svg>
+      ),
+      description: 'Crea workflow email automatici',
+      permission: 'canSendEmails'
+    },
+    {
       id: 'templates',
       title: 'Template',
       icon: (
@@ -1249,10 +1261,33 @@ const fixReferralData = async (customerId) => {
       
       // Esponi funzioni di test in console (solo in dev)
       if (process.env.NODE_ENV === 'development') {
+        // Esponi notifyBirthday direttamente per test
+        window.notifyBirthday = notifyBirthday
+        
         window.testBirthday = {
           forceCheck: () => birthdayScheduler.forceCheck(),
           getStatus: () => birthdayScheduler.getStatus(),
-          testEmail: (email) => birthdayScheduler.testBirthdayEmail(email)
+          testEmail: (email) => birthdayScheduler.testBirthdayEmail(email),
+          resetDailyCheck: () => birthdayScheduler.resetDailyCheck(),
+          // Test notifica compleanno con cliente selezionato
+          testNotification: () => {
+            if (selectedCustomer) {
+              console.log('🧪 Test notifica compleanno per:', selectedCustomer.name)
+              notifyBirthday(selectedCustomer)
+            } else {
+              console.log('❌ Nessun cliente selezionato')
+            }
+          },
+          // Test compleanno forzato (simula che oggi sia il compleanno)
+          testTodayBirthday: () => {
+            if (selectedCustomer) {
+              console.log('🧪 Simulazione compleanno oggi per:', selectedCustomer.name)
+              const testCustomer = { ...selectedCustomer, birth_date: new Date().toISOString().split('T')[0] }
+              notifyBirthday(testCustomer)
+            } else {
+              console.log('❌ Nessun cliente selezionato')
+            }
+          }
         }
       }
     }
@@ -2085,7 +2120,6 @@ for (const customer of recipients) {
         // Variabili di controllo per evitare notifiche duplicate
         let isNewVIP = false
         let hasLevelUp = false
-        let isBirthday = false
         
         // Controlla se è diventato VIP (100+ GEMME)
         if (selectedCustomer.points < 100 && newPoints >= 100) {
@@ -2119,52 +2153,15 @@ for (const customer of recipients) {
         
         // Milestone disabilitate - solo VIP, livelli e compleanni
         
-        // Controlla se è il compleanno del cliente
-        if (selectedCustomer.birth_date) {
-          const today = new Date()
-          const birthday = new Date(selectedCustomer.birth_date)
-          if (today.getMonth() === birthday.getMonth() && today.getDate() === birthday.getDate()) {
-            isBirthday = true
-          }
-        }
+        // Controllo compleanno spostato in CustomerView quando si seleziona il cliente
         
-        // LOGICA INTELLIGENTE: Una sola notifica combinata
-        if (isNewVIP && hasLevelUp && isBirthday) {
-          // Notifica VIP + Livello + Compleanno combinata (priorità massima)
-          addNotification({
-            type: 'birthday',
-            title: '🎉 SUPER FESTA! VIP + LIVELLO + COMPLEANNO! 🎉',
-            message: `${updatedCustomer.name} è diventato VIP, ha raggiunto il livello ${newLevel.name} ed è il suo compleanno!`,
-            customer: updatedCustomer,
-            level: newLevel,
-            priority: 'high'
-          })
-        } else if (isNewVIP && hasLevelUp) {
+        // LOGICA SEMPLIFICATA: Solo VIP e livelli (compleanno gestito alla selezione cliente)
+        if (isNewVIP && hasLevelUp) {
           // Notifica VIP + Livello combinata (priorità massima)
           addNotification({
             type: 'vip',
             title: '🌟 CLIENTE VIP + NUOVO LIVELLO! 🌟',
             message: `${updatedCustomer.name} è diventato VIP e ha raggiunto il livello ${newLevel.name}!`,
-            customer: updatedCustomer,
-            level: newLevel,
-            priority: 'high'
-          })
-        } else if (hasLevelUp && isBirthday) {
-          // Notifica Livello + Compleanno combinata
-          addNotification({
-            type: 'birthday',
-            title: '🎂 NUOVO LIVELLO NEL GIORNO DEL COMPLEANNO! 🎂',
-            message: `${updatedCustomer.name} ha raggiunto il livello ${newLevel.name} nel giorno del suo compleanno!`,
-            customer: updatedCustomer,
-            level: newLevel,
-            priority: 'high'
-          })
-        } else if (isNewVIP && isBirthday) {
-          // Notifica VIP + Compleanno combinata
-          addNotification({
-            type: 'birthday',
-            title: '🎉 CLIENTE VIP NEL GIORNO DEL COMPLEANNO! 🎉',
-            message: `${updatedCustomer.name} è diventato VIP proprio nel giorno del suo compleanno!`,
             customer: updatedCustomer,
             level: newLevel,
             priority: 'high'
@@ -2175,9 +2172,6 @@ for (const customer of recipients) {
         } else if (isNewVIP) {
           // Solo nuovo VIP
           notifyVIPEntry(updatedCustomer, newLevel)
-        } else if (isBirthday) {
-          // Solo compleanno
-          notifyBirthday(updatedCustomer)
         }
         // Milestone completamente rimosse
       }
@@ -2525,6 +2519,7 @@ for (const customer of recipients) {
               completeReferral={completeReferral} // ✅ AGGIUNTA QUESTA PROP
               fixReferralData={fixReferralData} // ✅ AGGIUNTA FUNZIONE CORREZIONE
               user={user}
+              notifyBirthday={notifyBirthday}
             />
           </ProtectedComponent>
         )
@@ -2568,6 +2563,12 @@ for (const customer of recipients) {
       savedTemplates={savedEmailTemplates}
       onTemplateDeleted={handleTemplateDeleted}
     />
+          </ProtectedComponent>
+        )
+      case 'flow':
+        return (
+          <ProtectedComponent permission="canSendEmails">
+            <FlowEditor />
           </ProtectedComponent>
         )
       case 'templates':

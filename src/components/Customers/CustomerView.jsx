@@ -45,7 +45,8 @@ function CustomerView({
   getReferralPoints,
   getReferralLevelInfo,
   isMultiplierActive,
-  user
+  user,
+  notifyBirthday
 }) {
   const [showGemmeRain, setShowGemmeRain] = useState(false);
   const [showRegistrationWizard, setShowRegistrationWizard] = useState(false)
@@ -121,13 +122,45 @@ function CustomerView({
     }
   }
 
-  // Funzione per gestire cliente trovato via NFC
-  const handleNFCCustomerFound = async (customer) => {
+  // Funzione comune per controllare il compleanno
+  const checkCustomerBirthday = (customer) => {
+    if (customer.birth_date && notifyBirthday) {
+      const today = new Date()
+      const birthday = new Date(customer.birth_date)
+      console.log('🎂 Controllo compleanno per:', {
+        cliente: customer.name,
+        birth_date: customer.birth_date,
+        oggi: today.toDateString(),
+        compleanno: birthday.toDateString(),
+        mese_oggi: today.getMonth(),
+        giorno_oggi: today.getDate(),
+        mese_compleanno: birthday.getMonth(),
+        giorno_compleanno: birthday.getDate()
+      })
+      
+      if (today.getMonth() === birthday.getMonth() && today.getDate() === birthday.getDate()) {
+        console.log('🎉 È IL COMPLEANNO!', customer.name)
+        notifyBirthday(customer)
+      }
+    }
+  }
+
+  // Funzione comune per selezionare un cliente
+  const selectCustomer = async (customer, source = 'unknown') => {
     setSelectedCustomer(customer)
     // Carica anche i referral per mostrare gli amici invitati
     await loadReferredFriends(customer.id)
     await loadCustomerPrizeHistory(customer.id)
-    showNotification(`✅ Cliente trovato: ${customer.name}`, 'success')
+    
+    // Controlla sempre il compleanno quando si seleziona un cliente
+    checkCustomerBirthday(customer)
+    
+    showNotification(`✅ Cliente trovato${source !== 'unknown' ? ` via ${source}` : ''}: ${customer.name}`, 'success')
+  }
+
+  // Funzione per gestire cliente trovato via NFC
+  const handleNFCCustomerFound = async (customer) => {
+    await selectCustomer(customer, 'NFC')
   }
 
   // Funzione per salvare modifiche cliente
@@ -209,12 +242,8 @@ function CustomerView({
 
         if (customer) {
           console.log('✅ Cliente trovato dal QR:', customer)
-          setSelectedCustomer(customer)
-          // Carica anche i referral per mostrare gli amici invitati
-          await loadReferredFriends(customer.id)
-          await loadCustomerPrizeHistory(customer.id)
+          await selectCustomer(customer, 'QR')
           setShowQRScanner(false)
-          showNotification(`✅ Cliente trovato via QR: ${customer.name}`, 'success')
         } else {
           console.log('❌ Nessun cliente trovato con ID:', customerId)
           showNotification(`❌ Nessun cliente trovato con ID: ${customerId}`, 'error')
@@ -424,8 +453,7 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
               onComplete={async (customer, successMessage) => {
                 loadCustomers()
                 setShowRegistrationWizard(false)
-                setSelectedCustomer(customer)
-                showNotification(successMessage || `✅ Cliente ${customer.name} registrato con successo!`, 'success')
+                await selectCustomer(customer, 'registrazione')
                 
                 // 🔔 Invia notifica push agli admin per nuovo cliente registrato
                 try {
@@ -744,10 +772,7 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                       key={customer.id} 
                       className={`customer-card ${customer.is_active === false ? 'customer-deactivated' : ''}`} 
                       onClick={async () => {
-                        setSelectedCustomer(customer)
-                        // Carica anche i referral per mostrare gli amici invitati
-                        await loadReferredFriends(customer.id)
-                        await loadCustomerPrizeHistory(customer.id)
+                        await selectCustomer(customer, 'ricerca')
                       }}
                     >
                       <div className="customer-card-header">
@@ -1589,7 +1614,7 @@ Più acquisti, più gemme accumuli, più premi ottieni! 🎁`
                         <td>
                           <div className="actions-cell">
                             <button
-                              onClick={() => setSelectedCustomer(customer)}
+                              onClick={() => selectCustomer(customer, 'ricerca')}
                               className="action-btn select-btn"
                               title="Seleziona cliente"
                             >

@@ -84,8 +84,13 @@ export const useNotifications = () => {
 
   // Notifica compleanno
   const notifyBirthday = useCallback((customer) => {
-    if (!settings.birthdayEnabled) return
+    console.log('🎂 notifyBirthday chiamata per:', customer.name, 'birthdayEnabled:', settings.birthdayEnabled)
+    if (!settings.birthdayEnabled) {
+      console.log('❌ Notifiche compleanno disabilitate!')
+      return
+    }
     
+    console.log('🎉 Creazione notifica compleanno per:', customer.name)
     return addNotification({
       type: 'birthday',
       title: 'Compleanno Oggi!',
