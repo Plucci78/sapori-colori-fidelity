@@ -83,8 +83,8 @@ export const useNotifications = () => {
   }, [addNotification, settings.milestoneEnabled])
 
   // Notifica compleanno
-  const notifyBirthday = useCallback((customer) => {
-    console.log('🎂 notifyBirthday chiamata per:', customer.name, 'birthdayEnabled:', settings.birthdayEnabled)
+  const notifyBirthday = useCallback((customer, options = {}) => {
+    console.log('🎂 notifyBirthday chiamata per:', customer.name, 'birthdayEnabled:', settings.birthdayEnabled, 'options:', options)
     if (!settings.birthdayEnabled) {
       console.log('❌ Notifiche compleanno disabilitate!')
       return
@@ -96,7 +96,8 @@ export const useNotifications = () => {
       title: 'Compleanno Oggi!',
       message: `È il compleanno di ${customer.name}! 🎉`,
       customer: customer,
-      priority: 'medium'
+      priority: 'medium',
+      skipEmail: options.skipEmail || false // Passa l'opzione skipEmail alla notifica
     })
   }, [addNotification, settings.birthdayEnabled])
 

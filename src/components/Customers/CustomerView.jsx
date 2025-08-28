@@ -123,7 +123,7 @@ function CustomerView({
   }
 
   // Funzione comune per controllare il compleanno
-  const checkCustomerBirthday = (customer) => {
+  const checkCustomerBirthday = async (customer) => {
     console.log('🔍 DEBUG checkCustomerBirthday:', {
       cliente: customer.name,
       birth_date: customer.birth_date,
@@ -147,7 +147,48 @@ function CustomerView({
       
       if (today.getMonth() === birthday.getMonth() && today.getDate() === birthday.getDate()) {
         console.log('🎉 È IL COMPLEANNO!', customer.name)
-        notifyBirthday(customer)
+        
+        // Controlla se email compleanno già inviata oggi per questo cliente
+        if (customer.email) {
+          try {
+            const todayStart = new Date()
+            todayStart.setHours(0, 0, 0, 0)
+            const todayEnd = new Date()
+            todayEnd.setHours(23, 59, 59, 999)
+            
+            const { data: emailLogs, error } = await supabase
+              .from('email_logs')
+              .select('*')
+              .eq('template_name', 'automatic_birthday')
+              .eq('recipient_email', customer.email)
+              .gte('created_at', todayStart.toISOString())
+              .lte('created_at', todayEnd.toISOString())
+            
+            if (error) {
+              console.error('Errore controllo email logs:', error)
+              // Se errore nel database, mostra solo popup senza email
+              notifyBirthday(customer, { skipEmail: true })
+              return
+            }
+            
+            if (emailLogs && emailLogs.length > 0) {
+              console.log('📧 Email compleanno già inviata oggi a', customer.name)
+              // Mostra solo popup e musica, senza inviare email
+              notifyBirthday(customer, { skipEmail: true })
+            } else {
+              console.log('✅ Nessuna email compleanno inviata oggi, procedo con email...')
+              notifyBirthday(customer)
+            }
+            
+          } catch (error) {
+            console.error('Errore controllo duplicati email compleanno:', error)
+            // In caso di errore, mostra comunque il compleanno ma salta l'email
+            notifyBirthday(customer, { skipEmail: true })
+          }
+        } else {
+          // Cliente senza email, solo popup e musica
+          notifyBirthday(customer, { skipEmail: true })
+        }
       }
     } else {
       console.log('❌ Controllo compleanno saltato:', {

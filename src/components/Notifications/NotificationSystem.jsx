@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import './NotificationSystem.css'
+import { emailAutomationService } from '../../services/emailAutomation'
 
 const NotificationSystem = ({ 
   notifications = [], 
@@ -39,6 +40,11 @@ const NotificationSystem = ({
           playNotificationSound(notification.type)
         }
         
+        // Invia email di compleanno se necessario
+        if (notification.type === 'birthday' && !notification.skipEmail && notification.customer?.email) {
+          sendBirthdayEmail(notification.customer)
+        }
+        
         // Auto-dismiss dopo 15 secondi
         setTimeout(() => {
           dismissNotification(notification.id)
@@ -46,6 +52,22 @@ const NotificationSystem = ({
       }
     })
   }, [notifications, visibleNotifications, soundEnabled])
+
+  // Invia email di compleanno
+  const sendBirthdayEmail = async (customer) => {
+    try {
+      console.log('📧 Invio email compleanno per:', customer.name)
+      await emailAutomationService.init()
+      const success = await emailAutomationService.sendBirthdayEmail(customer)
+      if (success) {
+        console.log('✅ Email compleanno inviata con successo')
+      } else {
+        console.error('❌ Fallimento invio email compleanno')
+      }
+    } catch (error) {
+      console.error('💥 Errore invio email compleanno:', error)
+    }
+  }
 
   const playNotificationSound = (type) => {
     try {
@@ -100,6 +122,11 @@ const NotificationSystem = ({
                 {notification.customer && (
                   <div className="notification-customer">
                     👤 {notification.customer.name} • {notification.customer.points} GEMME
+                    {notification.type === 'birthday' && notification.skipEmail && (
+                      <div className="skip-email-notice">
+                        📧 Email già inviata oggi
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
