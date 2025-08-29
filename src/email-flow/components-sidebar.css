@@ -1,0 +1,250 @@
+/* Stili per la sidebar componenti (stile footer) - SOLO per FlowEditor */
+.automation-builder .components-sidebar-container {
+  position: static;
+  left: unset;
+  top: unset;
+  width: 280px;
+  height: calc(100vh - 300px); /* Più spazio per il footer */
+  background: #f8fafc;
+  box-shadow: none;
+  z-index: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #e0e7ef;
+  border-radius: 0;
+  flex-shrink: 0;
+  margin-left: 0;
+  margin-bottom: 20px; /* Margine dal footer */
+}
+
+.automation-builder .components-sidebar-container.visible {
+  display: flex;
+  flex-direction: column;
+}
+
+.automation-builder .components-sidebar-container.hidden {
+  display: none;
+}
+
+/* Pulsante per mostrare/nascondere sidebar */
+.automation-builder .sidebar-show-btn {
+  background: #8B4513;
+  color: white;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  padding: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  position: absolute;
+  left: 0;
+  top: 16px;
+  z-index: 91;
+  transition: all 0.2s;
+}
+
+.automation-builder .sidebar-show-btn:hover {
+  background: #A0522D;
+  transform: scale(1.1);
+}
+
+.automation-builder .component-toggle-btn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.automation-builder .component-toggle-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.automation-builder .components-sidebar-header {
+  background: linear-gradient(135deg, #8B4513 0%, #D4AF37 100%);
+  color: white;
+  padding: 14px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.automation-builder .components-sidebar-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Stile per l'header quando la sidebar è nascosta */
+.automation-builder .header-right {
+  display: flex;
+  align-items: center;
+}
+
+.automation-builder .header-right .header-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 6px;
+  color: white;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.automation-builder .header-right .header-btn:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.automation-builder .components-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.automation-builder .component-action-btn {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.automation-builder .component-action-btn:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.automation-builder .workflow-table-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  max-height: calc(100vh - 400px); /* Meno altezza per evitare overlap */
+}
+
+.automation-builder .component-category {
+  margin-bottom: 20px;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.automation-builder .category-title {
+  background: #e0e7ef;
+  color: #334155;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 1px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.automation-builder .component-list {
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.automation-builder .component-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.automation-builder .component-item:hover {
+  background: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+  transform: translateY(-2px);
+  border-color: #8B4513;
+}
+
+.automation-builder .component-icon {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f9ff;
+  border-radius: 6px;
+  margin-right: 10px;
+  font-size: 16px;
+}
+
+.automation-builder .component-details {
+  flex: 1;
+}
+
+.automation-builder .component-details h4 {
+  margin: 0 0 2px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.automation-builder .component-details p {
+  margin: 0;
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* Personalizzazioni per i diversi tipi */
+.automation-builder .component-item.trigger .component-icon {
+  background: #ede9fe;
+  color: #8b5cf6;
+}
+
+.automation-builder .component-item.notification .component-icon {
+  background: #dcfce7;
+  color: #22c55e;
+}
+
+.component-item.condition .component-icon {
+  background: #fef3c7;
+  color: #eab308;
+}
+
+.component-item.sms .component-icon,
+.component-item.whatsapp .component-icon {
+  background: #e0f2fe;
+  color: #0ea5e9;
+}
+
+/* Scrollbar personalizzata */
+.components-sidebar-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.components-sidebar-content::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.components-sidebar-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.components-sidebar-content::-webkit-scrollbar-thumb:hover {
+  background: #8B4513;
+}

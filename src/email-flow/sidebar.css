@@ -1,0 +1,212 @@
+/* Stile moderno per la sidebar componenti - SOLO FlowEditor */
+.automation-builder .sidebar-components {
+  width: 280px;
+  min-width: 280px;
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  border-radius: 0 16px 16px 0;
+  margin: 8px 0 8px 8px;
+  flex-shrink: 0;
+  height: calc(100vh - 100px);
+  max-height: calc(100vh - 100px);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.automation-builder .sidebar-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #8B4513 0%, #D4AF37 100%);
+  color: white;
+  border-radius: 0 16px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.automation-builder .sidebar-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.automation-builder .sidebar-search {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.automation-builder .search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  background: #f9fafb;
+  transition: all 0.2s;
+}
+
+.automation-builder .search-input:focus {
+  outline: none;
+  border-color: #8B4513;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+}
+
+.automation-builder .sidebar-content {
+  overflow-y: auto;
+  padding: 12px;
+  height: 100%;
+}
+
+.component-category {
+  margin-bottom: 16px;
+}
+
+.category-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 4px solid #8B4513;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.automation-builder .category-title:hover {
+  background: #f1f5f9;
+}
+
+.automation-builder .category-title svg {
+  color: #8B4513;
+}
+
+.component-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding: 0 4px;
+}
+
+.component-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 8px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.automation-builder .component-item:hover {
+  border-color: #8B4513;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transform: translateY(-2px);
+}
+
+.automation-builder .component-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-right: 12px;
+  font-size: 18px;
+}
+
+.automation-builder .component-details {
+  flex: 1;
+}
+
+.automation-builder .component-details h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.automation-builder .component-details p {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+/* Personalizzazione per tipi specifici di componenti */
+.automation-builder .component-item.trigger .component-icon {
+  background: #ede9fe;
+  color: #8b5cf6;
+}
+
+.automation-builder .component-item.notification .component-icon {
+  background: #dcfce7;
+  color: #22c55e;
+}
+
+.automation-builder .component-item.condition .component-icon {
+  background: #fef3c7;
+  color: #eab308;
+}
+
+.automation-builder .component-item.action .component-icon {
+  background: #dbeafe;
+  color: #3b82f6;
+}
+
+.automation-builder .component-item.filter .component-icon {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.automation-builder .component-item.sms .component-icon,
+.automation-builder .component-item.whatsapp .component-icon,
+.automation-builder .component-item.tag .component-icon {
+  background: #f3e8ff;
+  color: #a855f7;
+}
+
+/* Animazioni e indicatori */
+.automation-builder .component-item.dragging {
+  opacity: 0.6;
+  transform: scale(0.95);
+}
+
+.automation-builder .component-favorite {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #f59e0b;
+  font-size: 14px;
+}
+
+/* Custom scrollbar per la sidebar */
+.automation-builder .sidebar-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.automation-builder .sidebar-content::-webkit-scrollbar-track {
+  background: #f9fafb;
+}
+
+.automation-builder .sidebar-content::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.automation-builder .sidebar-content::-webkit-scrollbar-thumb:hover {
+  background: #8B4513;
+}
