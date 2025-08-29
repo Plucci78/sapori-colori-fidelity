@@ -285,21 +285,45 @@ export const workflowExecutor = {
   
   // Trigger quando si scansiona NFC
   async onNFCScan(customer) {
-    await this.executeTrigger('nfc_scan', customer);
+    console.log('🚀 [DEBUG] onNFCScan chiamato per cliente:', customer.id);
     
-    // Aggiungi: Trigger anche la notifica push se il servizio è disponibile
+    // Esegui i workflow email
+    const emailResult = await this.executeTrigger('nfc_scan', customer);
+    console.log('📧 [DEBUG] Risultato workflow email:', emailResult);
+    
+    // Trigger anche la notifica push se il servizio è disponibile
     try {
+      console.log('🔍 [DEBUG] Importazione servizio notifiche...');
+      
       const notificationService = await import('../services/notificationWorkflowService')
-        .then(module => module.notificationWorkflowService)
-        .catch(() => null);
+        .then(module => {
+          console.log('✅ [DEBUG] Modulo importato:', Object.keys(module));
+          return module.notificationWorkflowService;
+        })
+        .catch((err) => {
+          console.error('❌ [DEBUG] Errore importazione:', err);
+          return null;
+        });
+      
+      if (notificationService) {
+        console.log('🔔 [DEBUG] Servizio notifiche trovato:', typeof notificationService.triggerNfcScanNotification);
         
-      if (notificationService && typeof notificationService.triggerNfcScanNotification === 'function') {
-        console.log('🔔 Attivazione notifica push per scansione NFC');
-        await notificationService.triggerNfcScanNotification(customer);
+        if (typeof notificationService.triggerNfcScanNotification === 'function') {
+          console.log('🔔 [DEBUG] Attivazione notifica push per scansione NFC');
+          const notifyResult = await notificationService.triggerNfcScanNotification(customer);
+          console.log('📊 [DEBUG] Risultato notifica push:', notifyResult);
+          return { email: emailResult, notification: notifyResult };
+        } else {
+          console.error('❌ [DEBUG] Metodo triggerNfcScanNotification non trovato');
+        }
+      } else {
+        console.error('❌ [DEBUG] Servizio notifiche non trovato');
       }
     } catch (error) {
-      console.error('❌ Errore attivazione notifica NFC:', error);
+      console.error('❌ [DEBUG] Errore attivazione notifica NFC:', error);
     }
+    
+    return emailResult;
   },
   
   // Trigger per compleanno (chiamato dal birthday scheduler)

@@ -347,14 +347,97 @@ export const notificationWorkflowService = {
 
   // Trigger per scansione NFC
   async triggerNfcScanNotification(customer) {
-    console.log('🔔 Notifica per scansione NFC:', customer.name);
-    return await this.executeActiveWorkflows('nfc_scan', {
-      customerId: customer.id,
-      customerName: customer.name,
-      customerEmail: customer.email,
-      points: customer.points || 0,
-      level: customer.current_level || 'Bronzo'
-    });
+    console.log('🔔 [DEBUG] Notifica per scansione NFC INIZIO:', customer.name);
+    
+    try {
+      // Verifica se esistono workflow attivi per questo trigger
+      const { data: workflows, error } = await supabase
+        .from('notification_workflows')
+        .select('id, name')
+        .eq('is_active', true)
+        .eq('trigger_type', 'nfc_scan');
+      
+      if (error) {
+        console.error('❌ [DEBUG] Errore verifica workflow NFC:', error);
+        return { success: false, error: error.message };
+      }
+      
+      console.log(`📋 [DEBUG] Workflow NFC trovati: ${workflows?.length || 0}`, workflows);
+      
+      // Se non ci sono workflow, creiamo un workflow predefinito
+      if (!workflows || workflows.length === 0) {
+        console.log('⚠️ [DEBUG] Nessun workflow NFC trovato, utilizzo notifica diretta');
+        
+        // Troviamo i player ID del cliente e inviamo direttamente
+        const { data: subscriptions } = await supabase
+          .from('onesignal_subscriptions')
+          .select('player_id')
+          .eq('customer_id', customer.id);
+        
+        console.log('📱 [DEBUG] Abbonamenti OneSignal trovati:', subscriptions);
+        
+        if (subscriptions && subscriptions.length > 0) {
+          const playerIds = subscriptions.map(sub => sub.player_id).filter(Boolean);
+          
+          if (playerIds.length > 0) {
+            console.log('📱 [DEBUG] Invio notifica diretta ai dispositivi:', playerIds);
+            
+            // Invio notifica diretta tramite API OneSignal
+            const ONESIGNAL_CONFIG = {
+              appId: '61a2318f-68f7-4a79-8beb-203c58bf8763',
+              restApiKey: 'os_v2_app_mgrddd3i65fhtc7lea6frp4hmncfypt3q7mugmfh4hi67xyyoz3emmmkj5zd7hwbgt7qwkoxxyavzlux76q47oot2e5e6qieftmnf4a'
+            };
+            
+            const notificationData = {
+              app_id: ONESIGNAL_CONFIG.appId,
+              headings: { en: `Benvenuto ${customer.name}!`, it: `Benvenuto ${customer.name}!` },
+              contents: { en: `Grazie per la visita! Hai ${customer.points || 0} GEMME.`, it: `Grazie per la visita! Hai ${customer.points || 0} GEMME.` },
+              include_subscription_ids: playerIds,
+              target_channel: "push"
+            };
+            
+            try {
+              const response = await fetch('https://api.onesignal.com/notifications', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`,
+                  'Accept': 'application/json'
+                },
+                body: JSON.stringify(notificationData)
+              });
+              
+              const result = await response.json();
+              console.log('✅ [DEBUG] Risposta notifica diretta:', result);
+              
+              return {
+                success: response.ok && result.id,
+                notificationId: result.id,
+                recipients: result.recipients || playerIds.length
+              };
+            } catch (sendError) {
+              console.error('❌ [DEBUG] Errore invio notifica diretta:', sendError);
+              return { success: false, error: sendError.message };
+            }
+          }
+        }
+      }
+      
+      // Esegui normalmente attraverso i workflow configurati
+      const result = await this.executeActiveWorkflows('nfc_scan', {
+        customerId: customer.id,
+        customerName: customer.name,
+        customerEmail: customer.email,
+        points: customer.points || 0,
+        level: customer.current_level || 'Bronzo'
+      });
+      
+      console.log('📊 [DEBUG] Risultato workflow NFC:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ [DEBUG] Errore generale trigger NFC:', error);
+      return { success: false, error: error.message };
+    }
   },
 
   // Trigger per report settimanali

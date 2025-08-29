@@ -124,12 +124,16 @@ const NFCQuickReaderHybrid = ({ onCustomerFound, showNotification }) => {
         
         // NUOVO: Esegui il trigger workflow per NFC scan
         try {
-          console.log('🔄 Esecuzione trigger nfc_scan per cliente:', customer.id)
-          await workflowExecutor.onNFCScan(customer)
-          console.log('✅ Trigger nfc_scan completato')
+          console.log('🔄 [DEBUG] Esecuzione trigger nfc_scan per cliente:', customer.id)
+          showNotification(`Esecuzione trigger NFC per ${customer.name}...`, 'info')
+          
+          const result = await workflowExecutor.onNFCScan(customer)
+          
+          console.log('✅ [DEBUG] Risultato trigger nfc_scan:', result)
+          showNotification(`Trigger NFC completato per ${customer.name}`, 'success')
         } catch (workflowError) {
-          console.error('❌ Errore durante l\'esecuzione del workflow nfc_scan:', workflowError)
-          // Non mostriamo questa notifica all'utente per non confonderlo
+          console.error('❌ [DEBUG] Errore durante l\'esecuzione del workflow nfc_scan:', workflowError)
+          showNotification(`Errore nell'esecuzione del workflow: ${workflowError.message}`, 'error')
         }
       }
     }
