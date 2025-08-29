@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../supabase'
 import { useNFC } from '../../hooks/useNFC'
+import workflowExecutor from '../../services/workflowExecutor' // Aggiunto import per workflowExecutor
 
 const NFCQuickReaderHybrid = ({ onCustomerFound, showNotification }) => {
   const [isScanning, setIsScanning] = useState(false)
@@ -120,6 +121,16 @@ const NFCQuickReaderHybrid = ({ onCustomerFound, showNotification }) => {
       const customer = await findCustomerByTag(tagId)
       if (customer && mounted.current) {
         onCustomerFound(customer)
+        
+        // NUOVO: Esegui il trigger workflow per NFC scan
+        try {
+          console.log('🔄 Esecuzione trigger nfc_scan per cliente:', customer.id)
+          await workflowExecutor.onNFCScan(customer)
+          console.log('✅ Trigger nfc_scan completato')
+        } catch (workflowError) {
+          console.error('❌ Errore durante l\'esecuzione del workflow nfc_scan:', workflowError)
+          // Non mostriamo questa notifica all'utente per non confonderlo
+        }
       }
     }
     
@@ -155,6 +166,15 @@ const NFCQuickReaderHybrid = ({ onCustomerFound, showNotification }) => {
     const customer = await findCustomerByTag(manualTagId.trim())
     if (customer && mounted.current) {
       onCustomerFound(customer)
+      
+      // NUOVO: Esegui il trigger workflow per NFC scan anche per inserimento manuale
+      try {
+        console.log('🔄 Esecuzione trigger nfc_scan per cliente (manuale):', customer.id)
+        await workflowExecutor.onNFCScan(customer)
+        console.log('✅ Trigger nfc_scan completato')
+      } catch (workflowError) {
+        console.error('❌ Errore durante l\'esecuzione del workflow nfc_scan:', workflowError)
+      }
     }
     
     setManualTagId('')
