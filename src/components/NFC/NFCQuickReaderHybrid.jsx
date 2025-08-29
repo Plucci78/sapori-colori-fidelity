@@ -122,14 +122,47 @@ const NFCQuickReaderHybrid = ({ onCustomerFound, showNotification }) => {
       if (customer && mounted.current) {
         onCustomerFound(customer)
         
-        // NUOVO: Esegui il trigger workflow per NFC scan
+        // NUOVO: Esegui il trigger workflow per NFC scan e importa direttamente il servizio notifiche
         try {
           console.log('🔄 [DEBUG] Esecuzione trigger nfc_scan per cliente:', customer.id)
           showNotification(`Esecuzione trigger NFC per ${customer.name}...`, 'info')
           
-          const result = await workflowExecutor.onNFCScan(customer)
+          // Importa e usa direttamente il servizio notificationWorkflowService
+          const notificationModulePromise = import('../../services/notificationWorkflowService')
+            .then(module => {
+              console.log('✅ [DEBUG] Modulo notifiche importato con successo', Object.keys(module));
+              return module.notificationWorkflowService;
+            })
+            .catch(err => {
+              console.error('❌ [DEBUG] Errore importazione modulo notifiche:', err);
+              return null;
+            });
+            
+          // Chiamata parallela al workflow executor per email
+          const workflowPromise = workflowExecutor.onNFCScan(customer)
+            .then(result => {
+              console.log('✅ [DEBUG] Risultato trigger nfc_scan (email):', result);
+              return result;
+            })
+            .catch(err => {
+              console.error('❌ [DEBUG] Errore trigger nfc_scan (email):', err);
+              return null;
+            });
+            
+          // Attendi entrambe le operazioni
+          const [notificationService, workflowResult] = await Promise.all([
+            notificationModulePromise,
+            workflowPromise
+          ]);
           
-          console.log('✅ [DEBUG] Risultato trigger nfc_scan:', result)
+          // Esegui la notifica push direttamente, esattamente come avviene nel test del FlowEditor
+          if (notificationService) {
+            console.log('🔔 [DEBUG] Chiamata diretta triggerNfcScanNotification');
+            const notifyResult = await notificationService.triggerNfcScanNotification(customer);
+            console.log('✅ [DEBUG] Risultato notifica push diretta:', notifyResult);
+            showNotification(`Notifica inviata a ${customer.name}`, 'success');
+          }
+          
           showNotification(`Trigger NFC completato per ${customer.name}`, 'success')
         } catch (workflowError) {
           console.error('❌ [DEBUG] Errore durante l\'esecuzione del workflow nfc_scan:', workflowError)
