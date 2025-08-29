@@ -160,7 +160,15 @@ const NFCQuickReaderHybrid = ({ onCustomerFound, showNotification }) => {
             console.log('🔔 [DEBUG] Chiamata diretta triggerNfcScanNotification');
             const notifyResult = await notificationService.triggerNfcScanNotification(customer);
             console.log('✅ [DEBUG] Risultato notifica push diretta:', notifyResult);
-            showNotification(`Notifica inviata a ${customer.name}`, 'success');
+            
+            // Log risultato workflow (NESSUN fallback - solo workflow FlowEditor)
+            if (notifyResult?.success) {
+              if (notifyResult?.executed > 0) {
+                console.log(`✅ [DEBUG] Push notification inviata tramite workflow (${notifyResult.executed})`);
+              } else {
+                console.log(`⚠️ [DEBUG] Nessun workflow push attivo per NFC scan`);
+              }
+            }
           }
           
           showNotification(`Trigger NFC completato per ${customer.name}`, 'success')
