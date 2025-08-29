@@ -766,7 +766,7 @@ class OneSignalService {
       console.error('❌ Errore invio notifica a tutti:', error);
       return { success: false, error: error.message };
     }
-  },
+  }
 
   // Invia notifica push tramite API route con tracking completo + immagini rich
   async sendNotification({ title, message, playerIds, url, imageUrl, targetType, targetValue, sentBy }) {
