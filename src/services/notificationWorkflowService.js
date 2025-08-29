@@ -345,6 +345,18 @@ export const notificationWorkflowService = {
     });
   },
 
+  // Trigger per scansione NFC
+  async triggerNfcScanNotification(customer) {
+    console.log('🔔 Notifica per scansione NFC:', customer.name);
+    return await this.executeActiveWorkflows('nfc_scan', {
+      customerId: customer.id,
+      customerName: customer.name,
+      customerEmail: customer.email,
+      points: customer.points || 0,
+      level: customer.current_level || 'Bronzo'
+    });
+  },
+
   // Trigger per report settimanali
   async triggerWeeklyReport(stats) {
     return await this.executeActiveWorkflows('weekly_report', {

@@ -286,6 +286,20 @@ export const workflowExecutor = {
   // Trigger quando si scansiona NFC
   async onNFCScan(customer) {
     await this.executeTrigger('nfc_scan', customer);
+    
+    // Aggiungi: Trigger anche la notifica push se il servizio è disponibile
+    try {
+      const notificationService = await import('../services/notificationWorkflowService')
+        .then(module => module.notificationWorkflowService)
+        .catch(() => null);
+        
+      if (notificationService && typeof notificationService.triggerNfcScanNotification === 'function') {
+        console.log('🔔 Attivazione notifica push per scansione NFC');
+        await notificationService.triggerNfcScanNotification(customer);
+      }
+    } catch (error) {
+      console.error('❌ Errore attivazione notifica NFC:', error);
+    }
   },
   
   // Trigger per compleanno (chiamato dal birthday scheduler)
