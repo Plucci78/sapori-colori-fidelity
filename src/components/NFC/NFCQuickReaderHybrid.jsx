@@ -114,6 +114,8 @@ const NFCQuickReaderHybrid = ({ onCustomerFound, showNotification }) => {
       tagId = nfcData.uid || nfcData.data
     } else if (nfcData.method === 'web-nfc') {
       tagId = nfcData.data
+    } else if (nfcData.method === 'manual-input') {
+      tagId = nfcData.data
     }
     
     if (tagId) {
@@ -208,19 +210,14 @@ const NFCQuickReaderHybrid = ({ onCustomerFound, showNotification }) => {
     e.preventDefault()
     if (!manualTagId.trim()) return
 
-    const customer = await findCustomerByTag(manualTagId.trim())
-    if (customer && mounted.current) {
-      onCustomerFound(customer)
-      
-      // NUOVO: Esegui il trigger workflow per NFC scan anche per inserimento manuale
-      try {
-        console.log('🔄 Esecuzione trigger nfc_scan per cliente (manuale):', customer.id)
-        await workflowExecutor.onNFCScan(customer)
-        console.log('✅ Trigger nfc_scan completato')
-      } catch (workflowError) {
-        console.error('❌ Errore durante l\'esecuzione del workflow nfc_scan:', workflowError)
-      }
+    // Simula dati NFC per l'inserimento manuale - usa il flusso unificato
+    const mockNfcData = {
+      method: 'manual-input',
+      data: manualTagId.trim()
     }
+    
+    console.log('📱 Tag inserito manualmente:', manualTagId.trim())
+    await handleNFCData(mockNfcData)
     
     setManualTagId('')
     setShowManualInput(false)
