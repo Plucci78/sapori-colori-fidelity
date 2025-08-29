@@ -397,13 +397,27 @@ const FlowEditor = () => {
       return;
     }
     
+    // 🎯 RILEVAMENTO AUTOMATICO TRIGGER TYPE
+    let detectedTriggerType = 'manual'; // Default
+    
+    // Cerca nodi trigger nel workflow
+    const triggerNodes = nodes.filter(node => node.data?.nodeType === 'trigger');
+    if (triggerNodes.length > 0) {
+      // Prende il primo trigger trovato
+      const mainTrigger = triggerNodes[0];
+      if (mainTrigger.data?.subType) {
+        detectedTriggerType = mainTrigger.data.subType;
+        console.log('🎯 Trigger type rilevato automaticamente:', detectedTriggerType);
+      }
+    }
+    
     const workflowData = {
       id: currentWorkflow.id || crypto.randomUUID(),
       name: currentWorkflow.name.trim(),
       nodes: JSON.stringify(nodes),
       edges: JSON.stringify(edges),
       is_active: false,
-      trigger_type: 'manual', // Default per SaaS
+      trigger_type: detectedTriggerType, // 🚀 Auto-rilevato invece di 'manual'
       created_at: currentWorkflow.id ? undefined : new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
