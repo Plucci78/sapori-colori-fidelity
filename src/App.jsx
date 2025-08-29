@@ -19,6 +19,7 @@ import { getLevelsForEmails, checkLevelUpForEmail, generateLevelEmailContent } f
 // Notification System imports
 import NotificationSystem from './components/Notifications/NotificationSystem'
 import { useNotifications } from './hooks/useNotifications'
+import { notificationScheduler } from './services/notificationScheduler'
 
 // Test component import
 import LevelsTest from './components/Test/LevelsTest'
@@ -100,6 +101,31 @@ function AppContent() {
       }
     }
   }, [sidebarMinimized])
+
+  // Inizializza notification scheduler all'avvio
+  useEffect(() => {
+    const initNotificationScheduler = async () => {
+      try {
+        console.log('🚀 Inizializzazione Notification Scheduler...');
+        await notificationScheduler.init();
+        console.log('✅ Notification Scheduler avviato con successo');
+      } catch (error) {
+        console.error('❌ Errore inizializzazione Notification Scheduler:', error);
+      }
+    };
+
+    // Avvia scheduler solo se autenticato
+    if (isAuthenticated && !authLoading) {
+      initNotificationScheduler();
+    }
+
+    // Cleanup scheduler quando l'utente si disconnette
+    return () => {
+      if (!isAuthenticated) {
+        notificationScheduler.stop();
+      }
+    };
+  }, [isAuthenticated, authLoading])
 
   const [allCustomers, setAllCustomers] = useState([])
   const [customers, setCustomers] = useState([])

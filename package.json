@@ -41,6 +41,7 @@
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.513.0",
     "multer": "^2.0.1",
+    "onesignal-node": "^3.4.0",
     "pako": "^2.1.0",
     "papaparse": "^5.4.1",
     "puppeteer": "^24.17.0",

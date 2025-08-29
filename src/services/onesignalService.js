@@ -724,6 +724,50 @@ class OneSignalService {
     }
   }
 
+  // NUOVO: Invia notifica a tutti gli utenti
+  async sendNotificationToAll({ title, message, url, imageUrl }) {
+    try {
+      console.log(`📤 Invio notifica a TUTTI gli utenti:`, title);
+      
+      // Usa l'API diretta di OneSignal
+      const ONESIGNAL_CONFIG = {
+        appId: '61a2318f-68f7-4a79-8beb-203c58bf8763',
+        restApiKey: 'os_v2_app_mgrddd3i65fhtc7lea6frp4hmncfypt3q7mugmfh4hi67xyyoz3emmmkj5zd7hwbgt7qwkoxxyavzlux76q47oot2e5e6qieftmnf4a'
+      };
+      
+      const notificationData = {
+        app_id: ONESIGNAL_CONFIG.appId,
+        headings: { en: title, it: title },
+        contents: { en: message, it: message },
+        included_segments: ['All'],
+        url: url || window.location.origin,
+        chrome_web_image: imageUrl
+      };
+      
+      const response = await fetch('https://api.onesignal.com/notifications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${ONESIGNAL_CONFIG.restApiKey}`,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(notificationData)
+      });
+      
+      const result = await response.json();
+      console.log('📊 Risposta OneSignal (all):', result);
+      
+      return {
+        success: response.ok && result.id,
+        notificationId: result.id,
+        recipients: result.recipients
+      };
+    } catch (error) {
+      console.error('❌ Errore invio notifica a tutti:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
   // Invia notifica push tramite API route con tracking completo + immagini rich
   async sendNotification({ title, message, playerIds, url, imageUrl, targetType, targetValue, sentBy }) {
     try {

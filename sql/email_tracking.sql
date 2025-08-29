@@ -119,6 +119,7 @@ CREATE TRIGGER update_stats_on_open
   AFTER INSERT ON email_opens
   FOR EACH ROW
   EXECUTE FUNCTION update_campaign_stats();
+  
 
 -- Trigger per click (DROP IF EXISTS per evitare errori)
 DROP TRIGGER IF EXISTS update_stats_on_click ON email_clicks;

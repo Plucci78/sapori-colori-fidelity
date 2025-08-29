@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../supabase'
 import nfcService from '../../services/nfcService'
+import workflowExecutor from '../../services/workflowExecutor' // Aggiunto import per workflowExecutor
 
 const NFCQuickReader = ({ onCustomerFound, showNotification }) => {
   const [isScanning, setIsScanning] = useState(false)
@@ -58,6 +59,17 @@ const NFCQuickReader = ({ onCustomerFound, showNotification }) => {
 
             showNotification(`✅ ${customer.name} - ${customer.points} GEMME`, 'success')
             onCustomerFound(customer)
+            
+            // NUOVO: Esegui il trigger workflow per NFC scan
+            try {
+              console.log('🔄 Esecuzione trigger nfc_scan per cliente:', customer.id)
+              await workflowExecutor.onNFCScan(customer)
+              console.log('✅ Trigger nfc_scan completato')
+            } catch (workflowError) {
+              console.error('❌ Errore durante l\'esecuzione del workflow nfc_scan:', workflowError)
+              // Non mostriamo questa notifica all'utente per non confonderlo
+            }
+            
             setIsScanning(false)
 
           } catch (error) {
