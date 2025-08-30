@@ -1,12 +1,120 @@
-# 🚀 SaaS Loyalty Platform - Roadmap Completa
+# 🚀 OMNILY - SaaS Loyalty Platform Roadmap
 
 ## 📋 Overview del Progetto
 
-**Obiettivo**: Trasformare il sistema loyalty esistente in una piattaforma SaaS multi-tenant enterprise-ready
+**Nome Prodotto**: **OMNILY PRO** - *Everything Simply Professional* (Tutto Semplicemente Professionale)  
+**Brand Promise**: La piattaforma loyalty universale professionale che rende tutto semplice
+
+**Obiettivo**: Trasformare il sistema loyalty esistente in OMNILY PRO, piattaforma SaaS multi-tenant enterprise-ready
 
 **Timeline**: 4-5 mesi  
 **Target Market**: Negozi, ristoranti, centri estetici, palestre in Italia  
 **Pricing Strategy**: Freemium → Basic €29 → Pro €99 → Enterprise €299
+
+## 🏭 **ARCHITETTURA: ACCOUNT COMPLETAMENTE PULITI**
+
+**⚠️ IMPORTANTE**: Il sistema SaaS sarà completamente separato dal sistema attuale per garantire:
+- **Zero impatto** sul sistema in produzione
+- **Database isolati** - nuovo Supabase project dedicato
+- **Codebase separato** - nuovo repository `forno-loyalty-saas`
+- **Infrastruttura indipendente** - account e servizi dedicati
+
+### 🆕 **Setup Account Nuovi:**
+- **Supabase**: Nuovo organization `omnily-pro-org`
+- **Stripe**: Account business dedicato per billing OMNILY PRO
+- **OneSignal**: Progetto separato `omnily-pro-notifications`
+- **GitHub**: Repository `omnily-pro` da zero
+- **Vercel**: Deployment separato `omnilypro.app`
+- **Domini**: `*.omnilypro.app` per subdomain tenants
+
+### 🎯 **Hardware Target: Z108 Android POS**
+**Specifiche Hardware Ottimizzate:**
+- **Android 14.0** - Compatibilità totale con React moderno
+- **2.3GHz Octa-core + 4GB RAM** - Performance enterprise
+- **NFC ISO/IEC 14443 A&B + Mifare** - Tessere loyalty native
+- **8" touchscreen + customer display** - UX dual-screen
+- **Stampante termica integrata** - Ricevute automatiche
+- **WiFi 5G + 4G + Ethernet** - Connettività ridondante
+- **Scanner 1D/2D** - QR codes e integrazioni future
+- **Prezzo: $150** - ROI eccellente per feature enterprise
+
+---
+
+## 🚀 **FASE 0: SETUP INIZIALE ACCOUNT PULITI (Settimana 0)**
+
+### ✅ **COMPLETATO 30 Agosto 2024 - Repository GitHub Setup**
+
+**🎊 MILESTONE RAGGIUNTI:**
+- ✅ **Account GitHub** `linolucci78-omnily` creato con successo
+- ✅ **Repository** `omnilypro` inizializzato e strutturato
+- ✅ **Autenticazione** Personal Access Token configurata
+- ✅ **Struttura professionale** 5 cartelle principali create
+- ✅ **Package.json** frontend (React) e backend (Node.js) configurati  
+- ✅ **Environment template** .env.example con variabili complete
+- ✅ **Sicurezza** .gitignore per proteggere chiavi segrete
+- ✅ **README enterprise** con business model e roadmap Q1 2025
+- ✅ **Git workflow** operativo - commit/push/sync funzionanti
+
+**📊 Risultati Concreti:**
+- Repository URL: https://github.com/linolucci78-omnily/omnilypro
+- Struttura: frontend/ backend/ database/ docs/ hardware/
+- Stack definito: React + Node.js + Supabase + Stripe + Z108
+- Business model: Freemium €0 → Enterprise €299
+
+**📅 Prossimo Step (31 Agosto):** Setup Supabase Multi-Tenant Database
+
+---
+
+### **Step 1: Nuovo Progetto Supabase SaaS**
+
+1. **Creare nuovo Organization Supabase**
+   - Nome: `forno-loyalty-saas-org`
+   - Email business dedicato
+   - Piano Pro per features enterprise
+
+2. **Nuovo Project Database**
+   - Nome: `forno-loyalty-saas-db`
+   - Regione: EU West (Irlanda) per GDPR
+   - Password complessa dedicata
+   - Connection pooling attivo
+
+3. **Setup iniziale Database**
+   ```sql
+   -- Abilita estensioni necessarie
+   CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+   CREATE EXTENSION IF NOT EXISTS "pg_cron";
+   CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
+   ```
+
+### **Step 2: Nuovo Repository GitHub**
+
+```bash
+# Creare nuovo repository
+gh repo create omnily-pro --public --description "OMNILY PRO - SaaS Multi-Tenant Loyalty Platform"
+
+# Setup locale
+mkdir omnily-pro
+cd omnily-pro
+git init
+git remote add origin https://github.com/Plucci78/omnily-pro.git
+```
+
+### **Step 3: Setup Account Servizi**
+
+**Stripe Business Account:**
+- Account business separato
+- Webhook endpoints dedicati
+- Products e pricing configurati
+
+**OneSignal Project:**
+- Nuovo app per SaaS notifications
+- SDK keys separate
+- Segmentazione per tenants
+
+**Domini:**
+- Registrare `fornosaasloyalty.com`
+- Wildcard SSL per `*.fornosaasloyalty.com`
+- DNS configurato per multi-tenant
 
 ---
 
